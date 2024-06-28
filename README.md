@@ -1,6 +1,6 @@
 # XMPro AI Agents & Multi-Agent Repository
 
-Welcome to the XMPro AI Agents repository! This project focuses on generative AI agents and Multi-Agent systems within the XMPro ecosystem, aiming to enhance industrial capabilities through advanced AI technologies.
+> Welcome to the XMPro AI Agents repository! This project focuses on generative AI agents and Multi-Agent systems within the XMPro ecosystem, aiming to enhance industrial capabilities through advanced AI technologies.
 
 ## About XMPro AI Agents
 
@@ -31,7 +31,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The MIT License is a permissive license that allows you to do anything you want with the code as long as you provide attribution back to XMPro and don't hold us liable.
+> The MIT License is a permissive license that allows you to do anything you want with the code as long as you provide attribution back to XMPro and don't hold us liable.
 
 ## Contact
 

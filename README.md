@@ -17,7 +17,7 @@ Our system is built on the concept of Multi-Agent Generative Systems (MAGS), whi
 
 ## Documentation
 
-For detailed information about XMPro AI Agents, including concepts, components, and usage guidelines, please refer to our comprehensive [Glossary](./GLOSSARY.md).
+For detailed information about XMPro AI Agents, including concepts, components, and usage guidelines, please refer to our comprehensive [Glossary](https://github.com/XMPro/Multi-Agent/blob/main/Glossary.md).
 
 The glossary covers a wide range of topics, including:
 - Fundamental concepts in generative AI

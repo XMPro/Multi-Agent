@@ -55,7 +55,7 @@ Remember, this glossary is a living document. Your input and expertise help make
    - **Reasoning Styles**
    - **Memory Systems**
 
-- **Multi-Agent Generative Systems (MAGS)**: XMPro MAGS is designed to enhance industrial capabilities by integrating an "Operate by Wire" philosophy that parallels the "Fly by Autopilot" system in aircraft or autonomous driving in vehicles.
+- **Multi-Agent Generative Systems (MAGS)**: XMPro MAGS is designed to enhance industrial capabilities by integrating an "Operate by Wire" philosophy that parallels the "Fly by Wire" system in aircraft or autonomous driving in vehicles.
    XMPro MAGS aims to augment human capabilities rather than replace human jobs, enabling more efficient and optimized operations.
    Multi-Agent Generative Systems (MAGS) represent an advanced integration of computational software agents and large language models (LLMs), designed to simulate and optimize complex industrial processes and interactions. MAGS    leverage generative AI to create dynamic, adaptive systems that can enhance productivity, efficiency, and decision-making across various operational aspects.
 

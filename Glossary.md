@@ -43,7 +43,8 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### M
 - **MAG Components**: The platform's foundation is built on multi-agent collaboration, where each generative agent is an autonomous unit endowed with subject matter expertise pertinent to its role—such as a Reliability Engineer or Quality Inspector.  The various components of a MAGS are:
-   - **Agent**
+   - **Agent Profile (Template)**
+   - **Agent (Instance of a profile)**
    - **Task & Task Management**
    - **Rules of Engagement**
    - **Tools**

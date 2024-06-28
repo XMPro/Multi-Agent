@@ -1,4 +1,4 @@
-# XMPro AI Agents Repository
+# XMPro AI Agents & Multi-Agent Repository
 
 Welcome to the XMPro AI Agents repository! This project focuses on generative AI agents and Multi-Agent systems within the XMPro ecosystem, aiming to enhance industrial capabilities through advanced AI technologies.
 
@@ -24,18 +24,6 @@ The glossary covers a wide range of topics, including:
 - Multi-Agent system architectures
 - XMPro-specific terminology and tools
 - Industry-standard AI and machine learning terms
-
-## Contributing
-
-We welcome contributions from the community! If you're interested in improving XMPro AI Agents, please:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Please read our [Contributing Guidelines](./CONTRIBUTING.md) for more details.
 
 ## License
 

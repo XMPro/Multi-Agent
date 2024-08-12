@@ -48,16 +48,19 @@ Example: `PLANT1-PROD-QUAL-AGENT-001`
 
 ### For Team:
 Structure: [Site] - [Area] - [Function] - TEAM - [Version]
+
 Example: DALLAS-PROD-OPS-TEAM-001
 
 ### For Agent Profiles:
 Structure: [Area] - [Function] - PROFILE - [Version]
+
 Example: WTR-QUAL-PROFILE-001
 
 Note: Agent Profiles do not include the [Site] component in their identifier. This is because Agent Profiles belong to a team, which already contains the site information. The site context is inherited from the team to which the profile belongs.
 
 ### For Agent Instances:
 Structure: [Area] - [Function] - AGENT - [Instance]
+
 Example: WTR-QUAL-AGENT-001
 
 Note: Agent Instances do not include the [Site] component in their identifier. This is because Agent Instances belong to an Agent Profile, which belongs to a Team, that already contains the site information. The site context is inherited from the team to which the instance belongs.

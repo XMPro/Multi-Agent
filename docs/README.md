@@ -13,7 +13,7 @@ Welcome to the documentation folder for the XMPro AI Agents project. This direct
 
 ## Glossary
 
-`Glossary.md` is a comprehensive document that defines key terms, concepts, and acronyms used throughout the XMPro AI Agents project. It covers:
+[`Glossary.md`](docs/Glossary.md) is a comprehensive document that defines key terms, concepts, and acronyms used throughout the XMPro AI Agents project. It covers:
 
 - Fundamental concepts in generative AI
 - Multi-Agent system architectures
@@ -24,22 +24,21 @@ We recommend starting with the Glossary to familiarize yourself with the termino
 
 ## Folder Structure
 
-- `Glossary.md`: Comprehensive list of terms and definitions
-- `/architecture`: Contains various diagrams illustrating the system's architecture
-- `/naming-conventions`: Detailed explanations of naming conventions used in the project
-- `/technical-details`: In-depth technical explanations and specifications
+- [`Glossary.md`](Glossary.md): Comprehensive list of terms and definitions
+- [`/architecture`](architecture): Contains various diagrams illustrating the system's architecture
+- [`/naming-conventions`](naming-conventions): Detailed explanations of naming conventions used in the project
+- [`/technical-details`](technical-details): In-depth technical explanations and specifications
 
 ## Naming Conventions
 
 Our project uses specific naming conventions for different components. Detailed documentation can be found in the `/naming-conventions` folder:
 
-- `Id.md`: Explains the naming convention for team IDs, agent profile IDs, and agent instance IDs
-- `Vector.md`: Describes the structure and naming convention for vector collections used in agent memories
-- `MQTT-Topic.md`: Outlines the naming convention for MQTT topics used in the system
+- [`Id.md`](naming-conventions/Id.md): Explains the naming convention for team IDs, agent profile IDs, and agent instance IDs
+- [`MQTT-Topic.md`](naming-conventions/MQTT-Topic.md): Outlines the naming convention for MQTT topics used in the system
 
 ## Architecture Diagrams
 
-The `/architecture` folder contains various types of diagrams that illustrate different aspects of our system:
+The [`/architecture`](architecture) folder contains various types of diagrams that illustrate different aspects of our system:
 
 - Interaction Diagrams: Show how different components of the system interact with each other
 - Class Diagrams: Illustrate the structure of classes in our object-oriented design
@@ -51,7 +50,7 @@ While these diagrams cover different aspects of the system, they all contribute 
 
 ## Technical Details
 
-The `/technical-details` folder contains in-depth explanations of various technical aspects of the project. This includes:
+The [`/technical-details`](technical-details) folder contains in-depth explanations of various technical aspects of the project. This includes:
 
 - Detailed explanations of algorithms used
 - Specifications of data structures

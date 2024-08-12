@@ -15,15 +15,25 @@ Our system is built on the concept of Multi-Agent Generative Systems (MAGS), whi
 - **Adaptive Decision Making**: Agents can create and modify plans to achieve goals, adapting to changing circumstances in their environment.
 - **Integration with Industrial Systems**: Seamless connection with real-time sensors, business applications, and other data sources through XMPro Data Streams.
 
+## Repository Structure
+
+- [`/docs`](docs): Comprehensive documentation (see Documentation section for details)
+- [`/src`](src): Source code for XMPro MAGS components
+
 ## Documentation
 
-For detailed information about XMPro AI Agents, including concepts, components, and usage guidelines, please refer to our comprehensive [Glossary](https://github.com/XMPro/Multi-Agent/blob/main/Glossary.md).
+Our comprehensive documentation is organized in the `/docs` folder:
 
-The glossary covers a wide range of topics, including:
-- Fundamental concepts in generative AI
-- Multi-Agent system architectures
-- XMPro-specific terminology and tools
-- Industry-standard AI and machine learning terms
+- [`/architecture`](docs/architecture): Detailed architecture diagrams for MAGS sub-processes
+- [`/naming-conventions`](docs/naming-conventions): Explanation of naming conventions used throughout the project
+- [`/technical-details`](docs/technical-details): In-depth technical explanations with  diagrams
+- [`Glossary.md`](docs/Glossary.md): A comprehensive glossary covering:
+  - Fundamental concepts in generative AI
+  - Multi-Agent system architectures
+  - XMPro-specific terminology and tools
+  - Industry-standard AI and machine learning terms
+
+For a quick start, we recommend beginning with the [Glossary](/docs/Glossary.md) to familiarize yourself with key concepts and terminology used in the XMPro AI Agents project.
 
 ## License
 

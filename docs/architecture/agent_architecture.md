@@ -1,5 +1,21 @@
 # Agent Architecture
 
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Agent Structure](#agent-structure)
+3. [Component Descriptions](#component-descriptions)
+   3.1. [AgentProfile](#agentprofile)
+   3.2. [AgentInstance](#agentinstance)
+   3.3. [Specialized Parameter Classes](#specialized-parameter-classes)
+4. [Relationships](#relationships)
+5. [Memory Parameters in Detail](#memory-parameters-in-detail)
+   5.1. [Overview Table](#overview-table)
+   5.2. [Detailed Explanation](#detailed-explanation)
+   5.3. [Adjusting Parameters in Agent Profiles](#adjusting-parameters-in-agent-profiles)
+   5.4. [Conclusion](#conclusion)
+
+## Introduction
+
 This document provides a detailed explanation of the agent architecture in the XMPro AI Agents system, focusing on the structure of Agent Profile and Agent Instance.
 
 ## Agent Structure
@@ -77,9 +93,7 @@ classDiagram
 
 ### Agent Profile
 
-The Agent Profile class represents the template or blueprint for creating Agent Instances. 
-
-It contains all the configuration parameters that define an agent's behavior, capabilities, and characteristics. The components of Agent Profile are organized into the following categories:
+The Agent Profile class represents the template or blueprint for creating Agent Instances. It contains all the configuration parameters that define an agent's behavior, capabilities, and characteristics. The components of AgentProfile are organized into the following categories:
 
 | Category | Components |
 |----------|------------|
@@ -99,11 +113,9 @@ Each of these components plays a crucial role in defining the agent's capabiliti
 5. **RAG Settings**: Configures the agent's ability to retrieve and utilize additional knowledge.
 6. **Specialized Parameters**: Detailed configurations for decision-making, interactions, memory management, and performance evaluation.
 
-### AgentInstance
+### Agent Instance
 
-The Agent Instance class represents a specific instantiation of an Agent Profile. 
-
-It contains the current state and context of an individual agent. The components of Agent Instance are organized into the following categories:
+The Agent Instance class represents a specific instantiation of an Agent Profile. It contains the current state and context of an individual agent. The components of AgentInstance are organized into the following categories:
 
 | Category | Components |
 |----------|------------|
@@ -130,17 +142,31 @@ An Agent Instance is linked to its corresponding Agent Profile, inheriting all t
 
 These classes provide detailed configurations for specific aspects of agent behavior:
 
-1. **DecisionParameters**: Influences how the agent makes decisions.
-2. **InteractionPreferences**: Defines how the agent interacts with other agents or systems.
-3. **MemoryParameters**: Configures the agent's memory management capabilities.
-4. **PerformanceMetrics**: Tracks and evaluates the agent's performance in its designated tasks.
+1. **Decision Parameters**: Influences how the agent makes decisions.
+   - `collaboration_preference`: Determines the agent's willingness to work with others.
+   - `innovation_factor`: Influences the agent's tendency to propose novel solutions.
+   - `risk_tolerance`: Affects the agent's willingness to take risks in decision-making.
+
+2. **Interaction Preferences**: Defines how the agent interacts with other agents or systems.
+   - `information_sharing_willingness`: Determines how freely the agent shares information.
+   - `preferred_communication_style`: Specifies the agent's communication style (e.g., formal, casual).
+   - `query_response_detail_level`: Sets the level of detail in the agent's responses.
+
+3. **Memory Parameters**: Configures the agent's memory management capabilities.
+   - `max_recent_memories`: Maximum number of recent memories to consider (default: 250).
+   - `memory_decay_factor`: Factor for memory importance decay over time (default: 0.998).
+   - `observation_importance_threshold`: Threshold for determining important observations (default: 0.8).
+   - `reflection_importance_threshold`: Threshold for triggering reflections (default: 9).
+
+4. **Performance Metrics**: Tracks and evaluates the agent's performance in its designated tasks.
+   - `contamination_detection_accuracy`: Measures the agent's accuracy in detecting contamination.
+   - `treatment_optimization_efficiency`: Evaluates the efficiency of the agent's treatment optimization.
+   - `water_quality_compliance_rate`: Tracks the agent's compliance with water quality standards.
 
 ## Relationships
 
 - Each Agent Instance is associated with one Agent Profile.
 - Agent Profile contains (has a composition relationship with) Decision Parameters, Interaction Preferences, Memory Parameters, and Performance Metrics.
-
-This structure allows for flexible and detailed configuration of agents, enabling the creation of specialized agents for various tasks while maintaining a consistent underlying architecture.
 
 ## Memory Parameters in Detail
 

@@ -4,14 +4,22 @@
 1. [Introduction](#introduction)
 2. [Agent Structure](#agent-structure)
 3. [Component Descriptions](#component-descriptions)
+
    3.1. [AgentProfile](#agentprofile)
+
    3.2. [AgentInstance](#agentinstance)
+
    3.3. [Specialized Parameter Classes](#specialized-parameter-classes)
+
 4. [Relationships](#relationships)
 5. [Memory Parameters in Detail](#memory-parameters-in-detail)
+
    5.1. [Overview Table](#overview-table)
+
    5.2. [Detailed Explanation](#detailed-explanation)
+
    5.3. [Adjusting Parameters in Agent Profiles](#adjusting-parameters-in-agent-profiles)
+   
    5.4. [Conclusion](#conclusion)
 
 ## Introduction

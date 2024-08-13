@@ -8,8 +8,9 @@ Welcome to the architecture documentation for the XMPro AI Agents project. This 
 2. [Diagram Types](#diagram-types)
 3. [Naming Convention Hierarchy](#naming-convention-hierarchy)
 4. [Key Components](#key-components)
-5. [Interaction Flows](#interaction-flows)
-6. [Deployment Architecture](#deployment-architecture)
+5. [Agent Architecture](#agent-architecture)
+6. [Interaction Flows](#interaction-flows)
+7. [Deployment Architecture](#deployment-architecture)
 
 ## Overview
 
@@ -44,6 +45,10 @@ This diagram shows how Agent Instances (e.g., WTR-QUAL-AGENT-001) are instances 
 ## Key Components
 
 [Brief description of key components in the system, to be expanded]
+
+## Agent Architecture
+
+For a detailed explanation of our agent architecture, including the structure of AgentProfile and AgentInstance, please refer to the [Agent Architecture Documentation](agent_architecture.md).
 
 ## Interaction Flows
 

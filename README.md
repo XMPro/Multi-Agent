@@ -45,8 +45,10 @@ For detailed information about our agent structure, including concepts, ideas, a
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 > The MIT License is a permissive license that allows you to do anything you want with the code as long as you provide attribution back to XMPro and don't hold us liable.
 

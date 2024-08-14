@@ -38,6 +38,12 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ## Terms
 
+### D
+- **Deontic Principles**: Deontic principles come from a branch of logic that deals with duty, obligation, and permission. In XMPro MAGS, we use these ideas to set clear rules for our AI agents. These rules tell the agents:
+   - What they must do (obligations)
+   - What they can do (permissions)
+   - What they must not do (prohibitions)
+
 ### G
 - **Generative Agents**: A generative agent is an advanced AI entity designed to autonomously recognize patterns, generate predictions, and perform tasks by emulating human reasoning. Unlike traditional computational software, generative agents are trained on extensive data sets to understand context and make informed decisions. They can process large amounts of data, adapt to new information, and optimize workflows, making them valuable for automating complex processes and enhancing productivity across various applications.
 

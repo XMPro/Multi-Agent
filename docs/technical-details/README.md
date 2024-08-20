@@ -4,9 +4,9 @@ This folder contains in-depth technical explanations and specifications for vari
 
 ## Contents
 
-1. [Prompt Manager](#promptmanagermd)
-2. [Graph Database](#graphdatabasemd)
-3. [Vector Database](#vectordatabasemd)
+1. [Prompt Manager](prompt_manager.md)
+2. [Graph Database](graph_database.md)
+3. [Vector Database](vector_database.md)
 
 ### Prompt Manager
 

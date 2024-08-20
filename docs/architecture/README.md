@@ -9,8 +9,9 @@ Welcome to the architecture documentation for the XMPro AI Agents project. This 
 3. [Naming Convention Hierarchy](#naming-convention-hierarchy)
 4. [Key Components](#key-components)
 5. [Agent Architecture](#agent-architecture)
-6. [Interaction Flows](#interaction-flows)
-7. [Deployment Architecture](#deployment-architecture)
+6. [Memory Cycle Instantiation](#memory-cycle-instantiation)
+7. [Interaction Flows](#interaction-flows)
+8. [Deployment Architecture](#deployment-architecture)
 
 ## Overview
 
@@ -40,15 +41,77 @@ graph TD
     G -->|ASSIGNED_TO| H[DALLAS-PLANT-PROD-FAC-001]
 ```
 
-This diagram shows how Agent Instances (e.g., WTR-QUAL-AGENT-001) are instances of Agent Profiles (e.g., WTR-QUAL-PROFILE-001), which are associated with a Team (DALLAS-PROD-OPS-TEAM-001), which is in turn assigned to a Site (DALLAS-PLANT-PROD-FAC-001).
-
 ## Key Components
 
-[Brief description of key components in the system, to be expanded]
+- Agent Profiles
+- Agent Instances
+- Memory Cycle
+- MQTT Manager
+- Database Manager (Neo4j and Vector Database)
+- Language Model
+- Prompt Manager
+- Planning Strategies
 
 ## Agent Architecture
 
 For a detailed explanation of our agent architecture, including the structure of AgentProfile and AgentInstance, please refer to the [Agent Architecture Documentation](agent_architecture.md).
+
+## Memory Cycle Instantiation
+
+The Memory Cycle Instantiation process is a crucial part of our system. Here are the key diagrams illustrating this process:
+
+### Overall Process Flow
+
+```mermaid
+graph TD
+    A[Start] --> B[Configuration Setup]
+    B --> C[MemoryCycle Creation]
+    C --> D[Service Collection Init]
+    D --> E[Core Components Init]
+    E --> F[Service Registration]
+    F --> G[MemoryCycle Instantiation]
+    G --> H[Agent Startup]
+    H --> I[MQTT Startup]
+    I --> J[Memory Cycle Execution]
+    J --> K[Error Handling & Cleanup]
+    K --> L[End]
+```
+
+### Core Components Interaction
+
+```mermaid
+graph TD
+    MC[MemoryCycle] --> |Uses| LM[Language Model]
+    MC --> |Uses| DBM[Database Manager]
+    MC --> |Communicates via| MQTT[MQTT Manager]
+    DBM --> |Interfaces with| Neo4j[Neo4j Database]
+    DBM --> |Interfaces with| VDB[Vector Database]
+    MC --> |Uses| EM[Embedding Model]
+    MC --> |Guided by| PM[Prompt Manager]
+    MC --> |Plans with| PS[Planning Strategies]
+```
+
+### MQTT Startup Process
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant MM as MQTT Manager
+    participant B as MQTT Broker
+    A->>MM: Start MQTT
+    MM->>B: Attempt MQTT 5 Connection
+    alt MQTT 5 Successful
+        B->>MM: MQTT 5 Connected
+    else MQTT 5 Failed
+        MM->>B: Attempt MQTT 3.1.1 Connection
+        B->>MM: MQTT 3.1.1 Connected
+    end
+    MM->>B: Subscribe to Topics
+    MM->>B: Publish Startup Message
+    MM->>A: MQTT Ready
+```
+
+For more detailed information on the Memory Cycle Instantiation process, please refer to the [Memory Cycle Instantiation Documentation](../technical-details/memory_cycle_instantiation.md).
 
 ## Interaction Flows
 

@@ -4,30 +4,45 @@ This folder contains in-depth technical explanations and specifications for vari
 
 ## Contents
 
-1. [Prompt Manager](prompt_manager.md)
-2. [Graph Database](graph_database.md)
-3. [Vector Database](vector_database.md)
+1. [Graph Database](graph_database.md)
+2. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
+3. [Prompt Manager](prompt_manager.md)
+4. [Vector Database](vector_database.md)
 
-### Prompt Manager
-
-This document details the Prompt Manager component of our system. It covers:
-
-- The structure of MAGS System Prompt Ids
-- A comprehensive list of fields used in the Prompt Manager
-- Explanations and rationales for each field
-
-This information is crucial for understanding how prompts are managed, versioned, and utilized within the system.
 
 ### Graph Database
 
 This file provides an in-depth look at our graph database structure. It includes:
 
-- An explanation of the Id structure used in the graph database
+- An explanation of the ID structure used in the graph database
 - Detailed descriptions of each node type (Team, Agent Profile, Agent Instance, Task, Prompt, Memory)
 - Property tables for each node type, outlining the data stored for each entity
 - An overview of the relationships between different node types
 
 This document is essential for understanding how data is structured and related within our system.
+
+### Memory Cycle Instantiation
+
+This document provides a detailed explanation of the Memory Cycle Instantiation Process. It covers:
+
+- Key components involved in the instantiation process
+- The overall process flow and core component interactions
+- Configuration initialization and Memory Cycle creation steps
+- Agent startup process, including MQTT connection and topic subscription
+- Error handling and cleanup procedures
+- Key architectural points of the system
+
+This information is crucial for understanding how agents are initialized and integrated into the multi-agent system.
+
+### Prompt Manager
+
+This document details the Prompt Manager component of our system. It covers:
+
+- The structure of MAGS System Prompt IDs
+- A comprehensive list of fields used in the Prompt Manager
+- Explanations and rationales for each field
+
+This information is crucial for understanding how prompts are managed, versioned, and utilized within the system.
 
 ### Vector Database
 

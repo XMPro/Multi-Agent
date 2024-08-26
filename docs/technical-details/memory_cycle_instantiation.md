@@ -104,7 +104,7 @@ return new MemoryCycle(
 - A Service Collection is created to manage dependencies.
 - Key services are registered as singletons or transients as appropriate.
 
-## 4. Agent Startup
+## 3. Agent Startup
 
 ```csharp
 memoryCycle.Start(AGENT_ID);
@@ -155,7 +155,7 @@ sequenceDiagram
     MM->>A: MQTT Ready
 ```
 
-## 5. Agent Run
+## 4. Agent Run
 
 ```csharp
 memoryCycle.Run();

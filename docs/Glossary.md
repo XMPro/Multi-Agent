@@ -63,6 +63,12 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 - **Multi-Agent Generative Systems (MAGS)**: Multi-Agent Generative Systems (MAGS) represent an advanced integration of computational software agents and large language models (LLMs), designed to simulate and optimize complex industrial processes and interactions. MAGS leverage generative AI to create dynamic, adaptive systems that can enhance productivity, efficiency, and decision-making across various operational aspects.
 
+### O
+- **OpenTelemetry**: An observability framework for cloud-native software, providing a collection of tools, APIs, and SDKs for instrumenting, generating, collecting, and exporting telemetry data (metrics, logs, and traces) to help analyze software performance and behavior.
+
+### P
+- **PPDL**: Planning Domain Definition Language (PDDL) is a formal language used to describe planning problems in artificial intelligence, specifically for "classical" planning tasks. Introduced in 1998 by Drew McDermott and his colleagues, PDDL was designed to provide a standardized way to encode planning problems, facilitating their use in AI research and applications. Since its inception, PDDL has become the de facto standard for representing planning problems in AI research and has evolved through several versions, each enhancing its expressivity and capabilities.
+
 ### X
 - **XMPro Multi-Agent Generative Systems (MAGS)**: XMPro MAGS is designed to enhance industrial capabilities by integrating an "Operate by Wire" philosophy that parallels the "Fly by Wire" system in aircraft or autonomous driving in vehicles.
   

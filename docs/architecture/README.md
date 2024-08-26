@@ -12,6 +12,7 @@ Welcome to the architecture documentation for the XMPro AI Agents project. This 
 6. [Memory Cycle Instantiation](#memory-cycle-instantiation)
 7. [Interaction Flows](#interaction-flows)
 8. [Deployment Architecture](#deployment-architecture)
+9. [Observability Architecture](#observability-architecture)
 
 ## Overview
 
@@ -122,3 +123,58 @@ For more detailed information on the Memory Cycle Instantiation process, please 
 [Description of how the system is deployed, to be expanded]
 
 For more detailed information on specific aspects of the architecture, please refer to the individual diagram files in this folder.
+
+## Observability Architecture
+The following diagram illustrates our observability stack, showing how we collect, process, and visualize logs, metrics, and traces from our system:
+
+```mermaid
+graph TD
+    classDef service fill:#009fde,stroke:#333,stroke-width:2px,color:white;
+    classDef datastore fill:#73cec6,stroke:#333,stroke-width:2px,color:black;
+    classDef external fill:#aab3c3,stroke:#333,stroke-width:2px,color:black;
+    Milvus[Milvus]:::external
+    XMAGS[XMAGS]:::external
+    Agent[Grafana Agent]:::service
+    OTel[OpenTelemetry Collector]:::service
+    Prometheus[Prometheus]:::service
+    Loki[Loki]:::service
+    Jaeger[Jaeger]:::service
+    Grafana[Grafana]:::service
+	
+	XMAGS -->|logs, metrics, traces| OTel
+    Milvus -->|metrics| OTel
+    Agent -->|logs| Loki
+    Agent -->|traces| Jaeger
+    Agent -->|metrics| OTel
+    OTel -->|metrics| Prometheus
+    OTel -->|logs| Agent
+    OTel -->|traces| Jaeger
+    
+    Prometheus -->|metrics| Grafana
+    Loki -->|logs| Grafana
+    Jaeger -->|traces| Grafana
+    subgraph Data Stores
+        PromDB[(Prometheus DB)]:::datastore
+        LokiDB[(Loki DB)]:::datastore
+        JaegerDB[(Jaeger DB)]:::datastore
+    end
+    Prometheus --> PromDB
+    Loki --> LokiDB
+    Jaeger --> JaegerDB
+    
+    Prometheus -. "Metrics query" .-> Grafana
+    Loki -. "Logs query" .-> Grafana
+    Jaeger -. "Traces query" .-> Grafana
+    %% User interface
+    User((User))
+    User -->|"View Dashboards<br/>Query Data"| Grafana
+```
+
+This diagram shows how our system components (XMAGS and Milvus) interact with our observability stack:
+
+- The OpenTelemetry Collector receives logs, metrics, and traces from our XMAGS system and metrics from Milvus.
+- Grafana Agent collects additional logs and metrics.
+- Data is processed and stored in Prometheus (for metrics), Loki (for logs), and Jaeger (for traces).
+- Grafana provides a unified interface for visualizing and querying all this data.
+
+For more detailed information on our observability practices, including our use of OpenTelemetry for tracing, please refer to the [Observability Documentation](../technical-details/open_telemetry_tracing_guide.md).

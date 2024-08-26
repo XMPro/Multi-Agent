@@ -50,3 +50,18 @@ Note: As the system expands, new process codes can be added to accommodate addit
 | reserved_fields    | Object/String    | Any reserved fields                                | Useful for storing prompt-specific metadata that doesn't fit into other categories. This flexibility allows for future expansions without changing the node structure. It can store custom attributes that are specific to certain types of prompts.  |
 | tags               | Array of Strings | Relevant tags or keywords                          | Enhances searchability and categorization. Tags provide a flexible way to associate prompts with multiple concepts, making them easier to find. They can also be used for filtering and analyzing trends in prompt creation and usage.                |
 | version            | Integer          | Current version number of the prompt               | Helps in tracking the evolution of the prompt. This is crucial for version control, allowing users to understand how many iterations a prompt has gone through and potentially rollback to previous versions if needed.                               |
+
+## Root Node
+There is a root node called PromptLibrary to which all prompts are linked.  The reasons for this are:
+
+1. Organization: It provides a clear organizational structure, making it easier to manage and understand the relationship between prompts.
+
+2. Querying: While it adds one more hop in some queries, it makes it much easier to perform operations on all prompts (e.g., finding all prompts, updating properties across all prompts).
+
+3. Consistency: Having a root node allows you to enforce consistent properties or relationships across all prompts more easily.
+
+4. Scalability: As your prompt library grows, having a root node will make it easier to manage and maintain the structure.
+
+5. Flexibility: You can still easily query individual prompts, and the added structure doesn't significantly impact performance for most use cases.
+
+

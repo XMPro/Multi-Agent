@@ -19,10 +19,7 @@ The XMpro AI Agents system is built on a foundation of advanced concepts in arti
 This folder contains detailed explanations of various concepts, including but not limited to:
 
 1. [Deontic Principles](deontic-principles.md): The application of deontic logic in governing agent behavior.
-2. [Multi-Agent Architectures](multi-agent-architectures.md): The structure and interaction patterns of our multi-agent system.
-3. [Decision Making Processes](decision-making.md): How agents make decisions and handle complex scenarios.
-4. [Knowledge Representation](knowledge-representation.md): How information is stored, accessed, and utilized by agents.
-5. [Learning and Adaptation](learning-adaptation.md): Mechanisms for agent learning and system adaptation.
+2. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
 
 ## Document Structure
 

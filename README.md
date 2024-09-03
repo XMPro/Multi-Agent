@@ -19,7 +19,7 @@ Our system is built on the concept of Multi-Agent Generative Systems (MAGS), whi
 ## Repository Structure
 - [`/docs`](docs): Comprehensive documentation (see Documentation section for details)
 - [`/src`](src): Source code for XMPro MAGS components
-- [`/accessibility`](accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
+- [`/accessibility`](docs/accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
 
 ## Documentation
 Our comprehensive documentation is organized in the `/docs` folder:

@@ -18,8 +18,9 @@ The XMpro AI Agents system is built on a foundation of advanced concepts in arti
 
 This folder contains detailed explanations of various concepts, including but not limited to:
 
-1. [Deontic Principles](deontic-principles.md): The application of deontic logic in governing agent behavior.
-2. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
+1. [Agent Types](agent_types.md): An overview of the different types of agents in our Multi-Agent Generative Systems (MAGS) and their roles in industrial applications.
+2. [Deontic Principles](deontic-principles.md): The application of deontic logic in governing agent behavior.
+3. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
 
 ## Document Structure
 

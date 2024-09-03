@@ -189,7 +189,7 @@ graph TD
     A -->|Validate Data| D[Data Validation]
     D -->|If Valid| E[Create/Update Prompt Node]
     E -->|Link Versions| F[Previous Version Node]
-    E --> G[Deactivate/Reactivate Prompt Chain]
+    E --> G[Deactivate/Reactivate Entire Prompt]
     G -->|Create Audit Entry| H[Audit Log]
     H -->|Link to Prompt| E
 ```

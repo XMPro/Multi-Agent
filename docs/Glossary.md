@@ -38,6 +38,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ## Terms
 
+### A
+- **ARIA (Accessible Rich Internet Applications)**: A set of attributes that can be added to HTML elements to improve the accessibility of web content and applications. In XMPro MAGS, ARIA is implemented in the web UI pages to enhance their accessibility for users relying on assistive technologies. ARIA helps convey structure, functionality, and updates to screen readers and other assistive technologies, ensuring that all users can effectively interact with these key interfaces.
+
 ### D
 - **Deontic Principles**: Deontic principles come from a branch of logic that deals with duty, obligation, and permission. In XMPro MAGS, we use these ideas to set clear rules for our AI agents. These rules tell the agents:
    - What they must do (obligations)

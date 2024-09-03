@@ -23,7 +23,7 @@ This folder contains detailed explanations of various concepts, including but no
 
 ## Document Structure
 
-Each concept document follows a standard structure:
+Each concept document typically follows a standard structure:
 
 1. **Introduction**: A brief overview of the concept and its relevance to XMPro MAGS.
 2. **Core Concepts**: Key ideas or components of the concept.

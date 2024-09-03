@@ -19,6 +19,7 @@ Our system is built on the concept of Multi-Agent Generative Systems (MAGS), whi
 ## Repository Structure
 - [`/docs`](docs): Comprehensive documentation (see Documentation section for details)
 - [`/src`](src): Source code for XMPro MAGS components
+- [`/accessibility`](accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
 
 ## Documentation
 Our comprehensive documentation is organized in the `/docs` folder:
@@ -61,6 +62,18 @@ For support, questions, or inquiries about the XMPro AI Agents project, please c
 Email: support@xmpro.com
 
 We value your feedback and are here to assist you with any issues or questions you may have regarding our AI Agents and Multi-Agent systems.
+
+## References
+
+1. [Part 1: From Railroads to AI: The Evolution of Game-Changing Utilities](https://xmpro.com/part-1-from-railroads-to-ai-the-evolution-of-game-changing-utilities/) - XMPRO
+
+2. [Part 2: The Future of Work: Harnessing Generative Agents in Manufacturing](https://xmpro.com/part2-the-future-of-work-harnessing-generative-agents-in-manufacturing/) - XMPRO
+
+3. [Part 3: AI at the Core: LLMs and Data Pipelines for Industrial Multi-Agent Generative Systems](https://xmpro.com/part-3-ai-at-the-core-llms-and-data-pipelines-for-industrial-multi-agent-generative-systems/) - XMPRO
+
+4. [Part 4: Pioneering Progress | Real-World Applications of Multi-Agent Generative Systems](https://xmpro.com/part-4-pioneering-progress-real-world-applications-of-multi-agent-generative-systems/) - XMPRO
+
+5. [Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442) - arXiv:2304.03442
 
 ---
 

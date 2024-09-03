@@ -13,6 +13,7 @@ Welcome to the architecture documentation for the XMPro AI Agents project. This 
 7. [Interaction Flows](#interaction-flows)
 8. [Deployment Architecture](#deployment-architecture)
 9. [Observability Architecture](#observability-architecture)
+10. [Prompt Manager and Library](#prompt-manager-and-library)
 
 ## Overview
 
@@ -178,3 +179,52 @@ This diagram shows how our system components (XMAGS and Milvus) interact with ou
 - Grafana provides a unified interface for visualizing and querying all this data.
 
 For more detailed information on our observability practices, including our use of OpenTelemetry for tracing, please refer to the [Observability Documentation](../technical-details/open_telemetry_tracing_guide.md).
+
+### Prompt Manager and Library
+
+The Prompt Manager and Library is a crucial component of our system, providing a centralized repository for creating, storing, managing, and accessing all prompts used by our AI agents. It uses a root node structure for efficient organization and querying of prompts.
+
+```mermaid
+graph TD
+    A[PromptLibrary] --> B[Prompt 1]
+    A --> C[Prompt 2]
+    A --> D[Prompt 3]
+    B --> E[Version 1]
+    B --> F[Version 2]
+    C --> G[Version 1]
+    D --> H[Version 1]
+    D --> I[Version 2]
+    D --> J[Version 3]
+```
+
+### Audit Log System
+
+The XMPro AI Agents system incorporates a robust audit log system to track changes and actions within the Prompt Library. This system is crucial for maintaining transparency, accountability, and traceability in prompt management operations.  Audit log entries are added when an entire prompt (all versions) is disabled/enabled.  All other changes cause a new version of a prompt to get created with logged creation date/time as well as the user.
+
+#### Audit Log Structure
+
+The audit log is implemented using a graph structure in Neo4j, with the following key elements:
+
+1. **PromptAudit Node**: A central node that acts as a collection point for all audit entries related to a specific prompt.
+
+2. **AuditEntry Node**: Individual entries that record specific changes or actions.
+
+3. **Relationships**: The AuditEntry nodes are linked to both the PromptAudit node and the relevant Prompt node.
+
+```mermaid
+graph TD
+    A[Prompt] --> B[PromptAudit]
+    B --> C1[AuditEntry 1]
+    B --> C2[AuditEntry 2]
+    B --> C3[AuditEntry 3]
+```
+
+#### Audit Entry Properties
+
+Each AuditEntry node contains the following information:
+
+- `change`: Description of the action or change made (e.g., "Deactivated prompt")
+- `user`: The user who performed the action
+- `timestamp`: The date and time when the action occurred
+
+For more detailed information on our prompt library implementation please refer to the [Prompt Manager and Library](../technical-details/prompt_manager.md).

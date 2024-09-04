@@ -9,6 +9,16 @@ XMPro AI Agents represent a cutting-edge approach to industrial process optimiza
 
 Our system is built on the concept of Multi-Agent Generative Systems (MAGS), which integrate computational software agents with large language models to create dynamic, adaptive systems capable of enhancing productivity, efficiency, and decision-making across various operational aspects.
 
+## Installation
+
+To set up the XMPro AI Agents system, follow these main steps:
+
+1. Configure Neo4j database
+2. Install system options
+3. Load the prompt library
+
+For detailed installation instructions, please refer to the [Installation Guide](docs/installation.md).
+
 ## Key Features
 
 - **Generative AI Agents**: Autonomous AI entities capable of recognizing patterns, generating predictions, and performing complex tasks.

@@ -20,6 +20,7 @@ classDiagram
     class AgentProfile {
         +active bool
         +decision_parameters Dictionary~String, Object~
+        +allowed_planning_method List~String~
         +deontic_rules List~String~
         +experience String
         +interaction_preferences Dictionary~String, Object~

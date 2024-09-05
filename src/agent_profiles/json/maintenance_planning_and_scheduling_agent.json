@@ -37,7 +37,7 @@
   ],
   "performance_metrics": {"schedule_efficiency": 0.92, 
   "resource_utilization": 0.85},
-  "profile_id": "MAINT-PLANNER-PROFILE-001",
+  "profile_id": "MAINT-PLAN-PROFILE-001",
   "rag_collection_name": "maintenance_procedures_and_resource_profiles",
   "rag_top_k": 30,
   "rag_vector_size": 768,

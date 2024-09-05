@@ -65,7 +65,6 @@ The primary business objective for implementing the Fermentation Tank Optimizati
   "description": "A team of specialized AI agents for optimizing antibiotic production in fermentation tanks",
   "created_at": "2024-09-04T12:00:00Z",
   "created_by": "System Administrator",
-  "last_updated": "2024-09-04T12:00:00Z",
   "objectives": [
     "Maximize antibiotic yield",
     "Ensure product quality and consistency",

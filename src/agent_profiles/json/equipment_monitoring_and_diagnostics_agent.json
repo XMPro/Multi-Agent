@@ -38,7 +38,7 @@
   "performance_metrics": {
   "anomaly_detection_accuracy": 0.99, 
   "diagnostic_precision": 0.95},
-  "profile_id": "EQUIP-MONITOR-PROFILE-001",
+  "profile_id": "EQUIP-DIAG-PROFILE-001",
   "rag_collection_name": "equipment_specifications_and_manuals",
   "rag_top_k": 30,
   "rag_vector_size": 768,

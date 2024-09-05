@@ -39,7 +39,7 @@
     "root_cause_identification_accuracy": 0.92, 
     "recommendation_effectiveness": 0.88
   },
-  "profile_id": "RCA-AGENT-PROFILE-001",
+  "profile_id": "FAIL-RCA-PROFILE-001",
   "rag_collection_name": "equipment_failure_case_studies",
   "rag_top_k": 30,
   "rag_vector_size": 768,

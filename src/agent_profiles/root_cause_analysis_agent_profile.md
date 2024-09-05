@@ -2,7 +2,7 @@
 
 `general`
 
-[Download JSON](https://raw.githubusercontent.com/XMPro/Multi-Agent/main/src/agent_profiles/json/root_cause_analysis_agent_profile.json)
+[Download JSON](https://raw.githubusercontent.com/XMPro/Multi-Agent/main/src/agent_profiles/json/root_cause_analysis_agent.json)
 
 # User Story
 

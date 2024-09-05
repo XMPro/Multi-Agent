@@ -11,17 +11,34 @@ To create new agent profiles, use the existing examples as templates and modify 
 
 # General
 
-[Compliance and Safety Officer Agent Profile](compliance_and_safety_officer_agent.md)
+[Compliance and Safety Officer Agent Profile](compliance_and_safety_officer_agent.md) - Ensure Regulatory Compliance and Safety in Maintenance Operations
 
-[Equipment Monitoring and Diagnostics Agent Profile](equipment_monitoring_and_diagnostics_agent.md)
+[Equipment Monitoring and Diagnostics Agent Profile](equipment_monitoring_and_diagnostics_agent.md) - Monitor Equipment Health and Perform Diagnostics
 
-[Maintenance Planning and Scheduling Agent Profile](maintenance_planning_and_scheduling_agent.md)
 
-[Predictive Analytics Specialist Agent Profile](predictive_analytics_specialist_agent.md)
+[Maintenance Planning and Scheduling Agent Profile](maintenance_planning_and_scheduling_agent.md) - Optimize Maintenance Planning and Scheduling
 
-[Reporting and KPI Tracking Agent Profile](reporting_and_kpi_tracking_agent.md)
+[Predictive Analytics Specialist Agent Profile](predictive_analytics_specialist_agent.md) - Predict Equipment Failures and Optimize Maintenance Schedules
 
-[Root Cause Analysis Agent Profile](root_cause_analysis_agent_profile.md)
+[Reporting and KPI Tracking Agent Profile](reporting_and_kpi_tracking_agent.md) - Generate Comprehensive Maintenance Performance Reports and Track KPIs
+
+[Root Cause Analysis Agent Profile](root_cause_analysis_agent_profile.md) - Perform In-Depth Root Cause Analysis for Equipment Failures
+
+# Manufacturing
+
+[Anomaly Detection and Root Cause Analysis Agent Profile](../agent_profiles/anomaly_detection_and_rca_agent.md)
+
+[Availability Monitoring Agent Profile](../agent_profiles/availability_monitoring_agent.md)
+
+[Knowledge Synthesis and Decision Support Agent Profile](../agent_profiles/knowledge_synthesis_and_decision_support_agent.md)
+
+[Performance Optimization Agent Profile](../agent_profiles/performance_optimization_agent.md)
+
+[Predictive Maintenance Agent Profile](../agent_profiles/predictive_maintenance_agent.md)
+
+[Quality Control Agent Profile](../agent_profiles/quality_control_agent_profile.md)
+
+[Simulation and Scenario Analysis Agent Profile](../agent_profiles/simulation_and_scenario_analysis_agent.md)
 
 # Pharmaceutical Antibiotic Production
 

@@ -37,7 +37,7 @@
   ],
   "performance_metrics": {"prediction_accuracy": 0.95, 
   "alert_precision": 0.98},
-  "profile_id": "PRED-ANALYTICS-PROFILE-001",
+  "profile_id": "PRED-ANLY-PROFILE-001",
   "rag_collection_name": "equipment_maintenance_records",
   "rag_top_k": 30,
   "rag_vector_size": 768,

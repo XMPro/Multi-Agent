@@ -4,7 +4,7 @@
 
 ### Business Objective
 
-The primary business objective for implementing the Advanced Predictive Maintenance MAGS solution is to maximize the efficiency, reliability, and transparency of maintenance operations in industrial settings. This solution aims to transform reactive maintenance practices into proactive and predictive strategies, ensuring optimal equipment performance and minimizing unplanned downtime.
+The primary business objective for implementing the Advanced Predictive Maintenance MAGS team is to maximize the efficiency, reliability, and transparency of maintenance operations in industrial settings. This team aims to transform reactive maintenance practices into proactive and predictive strategies, ensuring optimal equipment performance and minimizing unplanned downtime.
 
 ### Key Goals
 
@@ -322,8 +322,7 @@ In conclusion, the Advanced Predictive Maintenance MAGS Team represents a powerf
   "version": "1.0.0",
   "description": "An AI-driven team for optimizing industrial maintenance operations through predictive analytics and intelligent decision-making",
   "created_at": "2024-09-01T00:00:00Z",
-  "created_by": "Maintenance Innovation Department",
-  "last_updated": "2024-09-05T12:00:00Z",
+  "created_by": "System Administrator",
   "objectives": [
     "Maximize equipment reliability and uptime",
     "Optimize maintenance planning and resource allocation",
@@ -333,7 +332,7 @@ In conclusion, the Advanced Predictive Maintenance MAGS Team represents a powerf
     "Extend equipment lifespan through proactive maintenance"
   ],
   "performance_metrics": {
-    "overall_equipment_effectiveness": {"target": 0.85, "weight": 0.20},
+    "overall_oee": {"target": 0.85, "weight": 0.20},
     "mean_time_between_failures": {"target": 2000, "unit": "hours", "weight": 0.15},
     "mean_time_to_repair": {"target": 4, "unit": "hours", "weight": 0.15},
     "planned_maintenance_percentage": {"target": 0.80, "weight": 0.10},

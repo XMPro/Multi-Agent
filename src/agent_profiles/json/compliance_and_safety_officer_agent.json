@@ -39,7 +39,7 @@
     "compliance_rate": 0.99, 
     "safety_incident_prevention_rate": 0.95
   },
-  "profile_id": "COMPLIANCE-SAFETY-PROFILE-001",
+  "profile_id": "SAFE-COMPL-PROFILE-001",
   "rag_collection_name": "safety_regulations_and_standards",
   "rag_top_k": 30,
   "rag_vector_size": 768,

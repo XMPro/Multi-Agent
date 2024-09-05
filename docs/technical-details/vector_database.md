@@ -6,20 +6,15 @@ Our vector database is used to store and retrieve agent memories efficiently. He
 
 | Field Name            | Data Type    | Purpose                                                                    |
 |-----------------------|--------------|----------------------------------------------------------------------------|
-| actionable_insights   | VARCHAR      | Contains specific actions or recommendations                               |
-| agent_id              | VARCHAR      | Identifies the agent who created the memory                                |
-| context               | VARCHAR      | Stores relevant contextual information                                     |
-| contributing_memories | VARCHAR      | Stores IDs of memories that contributed to this memory                     |
-| graph_Id              | VARCHAR      | The link back to the graph                                                 |
-| id                    | VARCHAR      | Unique identifier for each memory entry                                    |
+| actionable_insights   | VARCHAR (35000)      | Contains specific actions or recommendations                               |
+| agent_id              | VARCHAR (150)     | Identifies the agent who created the memory                                |
+| contributing_memories | VARCHAR (2500)     | Stores Ids of memories that contributed to this memory                     |
+| id                    | VARCHAR (36)     | Unique identifier for each memory entry                                    |
 | importance            | FLOAT        | Stores the calculated importance score of the memory                       |
-| key_points            | VARCHAR      | Stores main points or insights from the memory                             |
-| outcomes              | VARCHAR      | Records the results of executed plans or actions                           |
-| priority              | INT          | Represents the priority level of a plan or action                          |
-| status                | VARCHAR      | Indicates the current status of a plan or action                           |
-| summary               | VARCHAR      | Contains a brief summary of the memory content                             |
+| key_points            | VARCHAR (35000)     | Stores main points or insights from the memory                             |
+| summary               | VARCHAR (35000)     | Contains a brief summary of the memory content                             |
 | timestamp             | INT64        | Records when the memory was created                                        |
-| type                  | VARCHAR      | Specifies the type of memory (e.g., Observation, Reflection, Plan, Action) |
+| type                  | VARCHAR (25)     | Specifies the type of memory (e.g., Observation, Reflection, Plan, Action) |
 | vector                | FLOAT_VECTOR | Stores the embedding of the combined text fields    
 
 ## Benefits and Reasoning

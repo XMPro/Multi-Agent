@@ -73,8 +73,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 - **PPDL**: Planning Domain Definition Language (PDDL) is a formal language used to describe planning problems in artificial intelligence, specifically for "classical" planning tasks. Introduced in 1998 by Drew McDermott and his colleagues, PDDL was designed to provide a standardized way to encode planning problems, facilitating their use in AI research and applications. Since its inception, PDDL has become the de facto standard for representing planning problems in AI research and has evolved through several versions, each enhancing its expressivity and capabilities.
 
 ### X
-- **XMPro Multi-Agent Generative Systems (MAGS)**: Based on the research papers and your existing definition, here's an updated definition for XMPro MAGS:
-
+- **XMPro Multi-Agent Generative Systems (MAGS)**: 
 XMPro Multi-Agent Generative Systems (XMPro MAGS) are advanced computational frameworks that integrate intelligent software agents with large language models (LLMs) to simulate, optimize, and evolve complex industrial processes and human-like interactions. These systems create dynamic, adaptive environments where multiple AI agents, each with distinct roles and capabilities, collaborate to address challenges and improve outcomes across various operational domains.
 
    **Key features of XMPro MAGS**

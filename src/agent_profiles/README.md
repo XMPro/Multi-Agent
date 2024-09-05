@@ -15,7 +15,6 @@ To create new agent profiles, use the existing examples as templates and modify 
 
 [Equipment Monitoring and Diagnostics Agent Profile](equipment_monitoring_and_diagnostics_agent.md) - Monitor Equipment Health and Perform Diagnostics
 
-
 [Maintenance Planning and Scheduling Agent Profile](maintenance_planning_and_scheduling_agent.md) - Optimize Maintenance Planning and Scheduling
 
 [Predictive Analytics Specialist Agent Profile](predictive_analytics_specialist_agent.md) - Predict Equipment Failures and Optimize Maintenance Schedules
@@ -26,19 +25,19 @@ To create new agent profiles, use the existing examples as templates and modify 
 
 # Manufacturing
 
-[Anomaly Detection and Root Cause Analysis Agent Profile](../agent_profiles/anomaly_detection_and_rca_agent.md)
+[Anomaly Detection and Root Cause Analysis Agent Profile](../agent_profiles/anomaly_detection_and_rca_agent.md) - Detect Anomalies and Perform Root Cause
 
-[Availability Monitoring Agent Profile](../agent_profiles/availability_monitoring_agent.md)
+[Availability Monitoring Agent Profile](../agent_profiles/availability_monitoring_agent.md) - Monitor Equipment Availability
 
-[Knowledge Synthesis and Decision Support Agent Profile](../agent_profiles/knowledge_synthesis_and_decision_support_agent.md)
+[Knowledge Synthesis and Decision Support Agent Profile](../agent_profiles/knowledge_synthesis_and_decision_support_agent.md) - Synthesize Knowledge and Provide Decision Support
 
-[Performance Optimization Agent Profile](../agent_profiles/performance_optimization_agent.md)
+[Performance Optimization Agent Profile](../agent_profiles/performance_optimization_agent.md) - Optimize Equipment Performance
 
-[Predictive Maintenance Agent Profile](../agent_profiles/predictive_maintenance_agent.md)
+[Predictive Maintenance Agent Profile](../agent_profiles/predictive_maintenance_agent.md) - Schedule and Optimize Maintenance Activities
 
-[Quality Control Agent Profile](../agent_profiles/quality_control_agent_profile.md)
+[Quality Control Agent Profile](../agent_profiles/quality_control_agent_profile.md) - Monitor and Improve Product Quality
 
-[Simulation and Scenario Analysis Agent Profile](../agent_profiles/simulation_and_scenario_analysis_agent.md)
+[Simulation and Scenario Analysis Agent Profile](../agent_profiles/simulation_and_scenario_analysis_agent.md) - Simulate and Analyze Production Scenarios
 
 # Pharmaceutical Antibiotic Production
 

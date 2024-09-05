@@ -19,7 +19,7 @@
     ],
     "model_type": "ollama",
     "model_name": "llama3",
-    "max_tokens": 8192,
+    "max_tokens": 2000,
     "rag_collection_name": "industrial_microbiology_knowledge",
     "rag_top_k": 5,
     "rag_vector_size": 768,

@@ -301,6 +301,13 @@ Ensure the plan is properly formatted and includes all necessary elements for a 
 (p)-[:CONTAINS]->(p12)
 ```
 
+### 4. Agent Profiles
+[To be addded]
+
+#### Create Profiles
+
+#### Load Profiles
+
 ## Troubleshooting
 
 ## Next Steps

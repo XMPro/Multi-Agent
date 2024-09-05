@@ -21,6 +21,7 @@ Team manifests define the overall structure, objectives, and operational paramet
 ### Sample Teams:
 - [Advanced Predictive Maintenance Team](team_manifests/advanced_predictive_maintenance_team.md)
 - [Antibiotic Fermentation Optimization Team](team_manifests/antibiotic_fermentation_optimization_team.md)
+- [Expert OEE Optimizer Team](team_manifests/expert_oee_optimizer_team.md)
 
 ## Agent Profiles
 

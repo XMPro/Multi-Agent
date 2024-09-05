@@ -75,8 +75,8 @@ CREATE (so:SystemOptions {
   {"value": "task-specific", "description": "For prompts designed for particular tasks within the application"},
   {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}
 ]',
-  createdAt: datetime(),
-  updatedAt: datetime()
+  created_date: datetime(),
+  last_modified_date: datetime()
 })
 RETURN so
 ```

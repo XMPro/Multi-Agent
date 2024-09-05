@@ -19,7 +19,7 @@ Team manifests define the overall structure, objectives, and operational paramet
 - Escalation policies
 
 ### Sample Teams:
-- [Advanced Predictive Maintenance Team](team_manifests/advanced_predictive_maintenance_team)
+- [Advanced Predictive Maintenance Team](team_manifests/advanced_predictive_maintenance_team.md)
 - [Antibiotic Fermentation Optimization Team](team_manifests/antibiotic_fermentation_optimization_team.md)
 
 ## Agent Profiles

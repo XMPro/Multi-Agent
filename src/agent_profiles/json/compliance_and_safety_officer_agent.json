@@ -28,7 +28,7 @@
     "reflection_importance_threshold": 8
   },
   "model_name": "llama3",
-  "model_type": "ollama",
+  "model_provider": "ollama",
   "name": "Compliance and Safety Officer Agent",
   "observation_prompt": "# Compliance and Safety Officer Agent\n\n## Observation\n{user_query}\n\n## Relevant Knowledge\n{knowledge_context}\n\nAs an AI agent specialized in compliance and safety for industrial maintenance operations, analyze the given observation and relevant knowledge. Then:\n\n1. Identify any potential compliance issues or safety concerns.\n2. Determine if immediate action is required.\n3. Suggest appropriate safety measures or compliance improvements.\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis of the observation, considering the context and relevant knowledge]\n\n### Summary\n[Provide a brief summary of the situation and your recommendations]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...\n\n### Actionable Insights\n1. [Insight 1]\n2. [Insight 2]\n3. [Insight 3]\n...",
   "organizational_rules": [

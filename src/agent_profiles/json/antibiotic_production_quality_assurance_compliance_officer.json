@@ -17,7 +17,7 @@
       "Oversee the creation and maintenance of batch records",
       "Lead weekly quality and compliance review meetings"
     ],
-    "model_type": "ollama",
+    "model_provider": "ollama",
     "model_name": "llama3",
     "max_tokens": 2000,
     "rag_collection_name": "pharma_quality_compliance_knowledge",

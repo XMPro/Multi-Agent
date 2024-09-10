@@ -27,7 +27,7 @@ classDiagram
         +max_tokens int
         +memory_parameters Dictionary~String, Object~
         +model_name String
-        +model_type String
+        +model_provider String
         +name String
         +observation_prompt String
         +organizational_rules List~String~
@@ -92,7 +92,7 @@ The Agent Profile class represents the template or blueprint for creating Agent 
 | Category | Components |
 |----------|------------|
 | Basic Information | name, profile_id, active status |
-| Operational Parameters | max_tokens, model_type, model_name |
+| Operational Parameters | max_tokens, model_provider, model_name |
 | Cognitive Abilities | skills, experience, deontic_rules, organizational_rules |
 | Interaction Settings | observation_prompt, reflection_prompt, system_prompt |
 | RAG (Retrieval-Augmented Generation) Settings | rag_collection_name, rag_top_k, rag_vector_size, use_general_rag |

@@ -106,7 +106,7 @@ CREATE (p1:Prompt {
   tags: ["observation", "reflection"],
   description: "A prompt to rate the importance of an observation or a reflection on a scale of 0 to 1, with a customizable importance threshold.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -130,7 +130,7 @@ CREATE (p2:Prompt {
   tags: ["decision-making", "planning"],
   description: "A prompt to decide whether a new plan is needed based on the agent's current state, goals, and recent memories.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -154,7 +154,7 @@ CREATE (p3:Prompt {
   tags: ["goal-setting", "reflection-analysis", "planning"],
   description: "A prompt to analyze recent reflections, determine if a new plan is needed, and potentially define a new goal.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -178,7 +178,7 @@ CREATE (p4:Prompt {
   tags: ["planning"],
   description: "A prompt to analyze goals, and provide a summary.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -205,7 +205,7 @@ CREATE (p5:Prompt {
   tags: ["task-decomposition", "subtasks", "planning"],
   description: "A prompt to decompose a complex task into smaller, manageable subtasks based on the problem understanding.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -229,7 +229,7 @@ CREATE (p6:Prompt {
   tags: ["subtask-planning", "plan-formulation", "planning"],
   description: "A prompt to formulate a plan for solving a specific subtask within the context of a PDDL problem.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -253,7 +253,7 @@ CREATE (p7:Prompt {
   tags: ["plan-execution", "simulation", "planning"],
   description: "A prompt to simulate the execution of a plan for a specific subtask and describe the outcomes and challenges.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"
@@ -293,7 +293,7 @@ Ensure the plan is properly formatted and includes all necessary elements for a 
   tags: ["PDDL", "plan-generation", "final-plan", "planning"],
   description: "A prompt to generate the final PDDL plan incorporating all improvements and solving the original problem.",
   last_used_date: null,
-  model_type: "Ollama",
+  model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 8192,
   access_level: "system"

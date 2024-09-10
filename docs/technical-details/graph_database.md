@@ -46,7 +46,7 @@ Our graph database consists of several types of nodes, each representing differe
 | max_tokens              | Integer          | Maximum number of tokens for responses                |
 | memory_parameters       | String (JSON)    | Parameters for memory management                      |
 | model_name              | String           | Name of the specific AI model                         |
-| model_type              | String           | Type of AI model used                                 |
+| model_provider          | String           | Provider of the AI model used                         |
 | name                    | String           | Name of the agent profile                             |
 | observation_prompt      | String           | Prompt template for observations                      |
 | organizational_rules    | Array of Strings | Rules specific to the organization                    |
@@ -89,7 +89,7 @@ Our graph database consists of several types of nodes, each representing differe
 | internal_name      | String           | Internal name used for backend operations (indexed)   |
 | last_modified_date | DateTime         | Date and time of the last modification                |
 | model_name         | String           | Specific AI model the prompt is optimized for         |
-| model_type         | String           | Type of AI model the prompt is designed for           |
+| model_provider     | String           | Provider of the AI model the prompt is designed for   |
 | name               | String           | Name of the prompt                                    |
 | prompt             | String           | The actual prompt text                                |
 | prompt_id          | String           | Unique identifier for the prompt                      |

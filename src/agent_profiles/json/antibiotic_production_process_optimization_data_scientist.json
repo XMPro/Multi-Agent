@@ -25,7 +25,7 @@
       "Maintain version control for all predictive models and algorithms",
       "Participate in cross-functional data review meetings"
     ],
-    "model_type": "ollama",
+    "model_provider": "ollama",
     "model_name": "llama3",
     "max_tokens": 2000,
     "rag_collection_name": "pharma_process_optimization_knowledge",

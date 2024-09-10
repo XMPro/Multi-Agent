@@ -17,7 +17,7 @@
       "Maintain detailed records of microbial strain performance",
       "Participate in daily fermentation process review meetings"
     ],
-    "model_type": "ollama",
+    "model_provider": "ollama",
     "model_name": "llama3",
     "max_tokens": 2000,
     "rag_collection_name": "industrial_microbiology_knowledge",

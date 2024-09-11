@@ -50,6 +50,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 ### G
 - **Generative Agents**: A generative agent is an advanced AI entity designed to autonomously recognize patterns, generate predictions, and perform tasks by emulating human reasoning. Unlike traditional computational software, generative agents are trained on extensive data sets to understand context and make informed decisions. They can process large amounts of data, adapt to new information, and optimize workflows, making them valuable for automating complex processes and enhancing productivity across various applications.
 
+### H
+- **Hallucination**: A phenomenon in large language models where the AI generates false, fabricated, or nonsensical information that appears plausible. This occurs due to the model's lack of true understanding, instead relying on learned patterns to produce text. Hallucinations can manifest as incorrect facts, non-existent entities, or logical inconsistencies, posing challenges for AI reliability and accuracy.
+
 ### M
 - **MAG Components**: The platform's foundation is built on multi-agent collaboration, where each generative agent is an autonomous unit endowed with subject matter expertise pertinent to its role—such as a Reliability Engineer or Quality Inspector.  The various components of a MAGS are:
    - Agent Profile (Template)

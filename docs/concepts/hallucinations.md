@@ -19,11 +19,9 @@ Key aspects of LLM hallucinations include:
 
 Hallucinations are a significant challenge in AI development, as they can mislead users who rely on the model for accurate information. 
 
-# Strategies to Reduce Hallucinations in Multi-Agent Generative Systems with XMPro
-
 ![Strategies to Reduce Hallucinations](images/hallucinations.png)
 
-## 1. Knowledge Grounding Techniques
+# 1. Knowledge Grounding Techniques
 
 Grounding LLM outputs in factual information is essential to reduce hallucinations. XMPro uses various techniques to ensure that the outputs of MAGS agents are accurate and based on current data rather than outdated or incorrect information.
 
@@ -33,7 +31,7 @@ Grounding LLM outputs in factual information is essential to reduce hallucinatio
 
 - **Structured Input and Output**: XMPro agents work with standardized input formats, ensuring clear and consistent data flows. This structured approach reduces ambiguity in outputs, leading to more accurate and verifiable responses.
 
-## 2. Validation and Verification Mechanisms
+# 2. Validation and Verification Mechanisms
 
 XMPro employs rigorous validation and verification processes to ensure MAGS outputs meet high standards of accuracy before being presented to users. These processes involve multiple layers of cross-checks and scoring systems.
 
@@ -43,7 +41,7 @@ XMPro employs rigorous validation and verification processes to ensure MAGS outp
 
 - **Separation of Concerns**: XMPro defines distinct roles for each agent, ensuring tasks are handled by agents with specific expertise. This targeted approach minimizes the risk of errors and hallucinations by leveraging agents’ specialized knowledge.
 
-## 3. Human Feedback and Oversight
+# 3. Human Feedback and Oversight
 
 Incorporating human oversight ensures that XMPro’s MAGS maintain high standards of accuracy, particularly in complex or sensitive tasks. Human feedback serves as a crucial checkpoint in the system’s operations.
 
@@ -53,7 +51,7 @@ Incorporating human oversight ensures that XMPro’s MAGS maintain high standard
 
 - **Oversight in Critical Tasks**: XMPro places additional emphasis on human oversight in high-stakes applications. By incorporating human validation in critical scenarios, XMPro adds a robust layer of review that helps catch and correct hallucinations before they impact decisions.
 
-## 4. Continuous Monitoring and Refinement
+# 4. Continuous Monitoring and Refinement
 
 XMPro’s approach to MAGS does not stop at deployment; it includes continuous monitoring and improvement to ensure the system remains effective and accurate over time.
 
@@ -63,7 +61,7 @@ XMPro’s approach to MAGS does not stop at deployment; it includes continuous m
 
 - **Performance Feedback Integration**: XMPro collects feedback from system users and integrates it into the performance evaluation process. This iterative refinement helps tailor agent behavior, minimizing hallucinations and enhancing output quality.
 
-## 5. Structured Workflows and Task Definition
+# 5. Structured Workflows and Task Definition
 
 XMPro’s MAGS operate within clearly defined workflows, with structured task assignments that manage complexity and maintain focus. This structured approach ensures that agents operate within clear boundaries, reducing the potential for errors.
 

@@ -21,6 +21,8 @@ Hallucinations are a significant challenge in AI development, as they can mislea
 
 # Strategies to Reduce Hallucinations in Multi-Agent Generative Systems with XMPro
 
+![Strategies to Reduce Hallucinations](images/hallucinations.png)
+
 ## 1. Knowledge Grounding Techniques
 
 Grounding LLM outputs in factual information is essential to reduce hallucinations. XMPro uses various techniques to ensure that the outputs of MAGS agents are accurate and based on current data rather than outdated or incorrect information.

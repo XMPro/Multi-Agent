@@ -21,7 +21,8 @@ This folder contains detailed explanations of various concepts, including but no
 1. [Agent Types](agent_types.md): An overview of the different types of agents in our Multi-Agent Generative Systems (MAGS) and their roles in industrial applications.
 2. [Deontic Principles](deontic-principles.md): The application of deontic logic in governing agent behavior.
 3. [LLM Hallucinations](hallucinations.md): What are and how to reduce Hallucinations in Multi-Agent Generative Systems with XMPro.
-4. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
+4. [Models - Censored and Uncensored](model_censored_uncensored.md): Leveraging Censored and Uncensored Models for Optimal AI Performance in Industrial Applications
+5. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
 
 ## Document Structure
 

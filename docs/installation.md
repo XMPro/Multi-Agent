@@ -370,7 +370,7 @@ CREATE (p10:Prompt {
   prompt_id: "XMAGS-CONVERSATION-SUMMARY-PROMPT-001",
   name: "Conversation Summary",
   internal_name: "conversation_summary_prompt",
-  prompt: "Summarize the following conversation in one sentence:\nUser: {user_query}\nAssistant: {agent_response}",
+  prompt: "Summarize the following conversation in one sentence:\nUser: {user_query}\nAssistant: {agent_response} [Return ONLY the summary]",
   reserved_fields: ["user_query", "agent_response"],
   author: "XMPro",
   created_date: datetime(),

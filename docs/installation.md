@@ -32,15 +32,17 @@ Run the following commands in your Neo4j database to create necessary constraint
 CREATE CONSTRAINT agent_profile_id_unique IF NOT EXISTS FOR (p:AgentProfile) REQUIRE p.profile_id IS UNIQUE;
 CREATE CONSTRAINT agent_instance_id_unique IF NOT EXISTS FOR (a:AgentInstance) REQUIRE a.agent_id IS UNIQUE;
 CREATE CONSTRAINT memory_id_unique IF NOT EXISTS FOR (m:Memory) REQUIRE m.id IS UNIQUE;
-CREATE CONSTRAINT planning_id_unique IF NOT EXISTS FOR (p:Planning) REQUIRE p.id IS UNIQUE;
+CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (p:Decision) REQUIRE p.id IS UNIQUE;
 CREATE CONSTRAINT prompt_id_unique IF NOT EXISTS FOR (p:Prompt) REQUIRE p.prompt_id IS UNIQUE;
+
+CREATE INDEX team_id_idx IF NOT EXISTS FOR (t:Team) ON (t.team_id);
+
 CREATE INDEX memory_created_at_idx IF NOT EXISTS FOR (m:Memory) ON (m.created_at);
 CREATE INDEX memory_type_idx IF NOT EXISTS FOR (m:Memory) ON (m.type);
 CREATE INDEX memory_importance_idx IF NOT EXISTS FOR (m:Memory) ON (m.importance);
-CREATE INDEX plan_created_at_idx IF NOT EXISTS FOR (p:Planning) ON (p.created_at);
-CREATE INDEX team_id_idx IF NOT EXISTS FOR (t:Team) ON (t.team_id);
+
 CREATE INDEX prompt_internal_name_idx IF NOT EXISTS FOR (p:Prompt) ON (p.internal_name);
-CREATE INDEX prompt_version_idx IF NOT EXISTS FOR (p:Prompt) ON (p.version);
+CREATE INDEX prompt_id_idx IF NOT EXISTS FOR (p:Prompt) ON (p.prompt_id);
 ```
 
 ### 2. System Options Installation
@@ -75,6 +77,31 @@ CREATE (so:SystemOptions {
   {"value": "task-specific", "description": "For prompts designed for particular tasks within the application"},
   {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}
 ]',
+  rag_schema: '{
+    "schemas": {
+      "default": {
+        "id": "string",
+        "title": "string",
+        "content": "string",
+        "summary": "string",
+        "author": "string",
+        "source": "string",
+        "url": "string",
+        "publication_date": "datetime",
+        "last_updated": "datetime",
+        "language": "string",
+        "category": "string",
+        "tags": "list<string>",
+        "version": "string",
+        "vector": "list<float>",
+        "related_documents": "list<string>"
+      }
+    },
+    "citation_structure": {
+      "format": "[{id}] {author}. \"{title}.\" {source}, {publication_date}. {url}. (Accessed: {last_updated})",
+      "fields": ["id", "author", "title", "source", "publication_date", "url", "last_updated"]
+    }
+  }',
   created_date: datetime(),
   last_modified_date: datetime()
 })
@@ -82,6 +109,20 @@ RETURN so
 ```
 
 ### 3. Prompt Library Load
+
+| Internal Name | Description |
+|---------------|-------------|
+| conversation_prompt | A generic prompt for handling conversations with various types of agents. |
+| conversation_summary_prompt | A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant. |
+| final_pddl_plan_prompt | A prompt to generate the final PDDL plan incorporating all improvements and solving the original problem. |
+| importance_prompt | A prompt to rate the importance of an observation or a reflection on a scale of 0 to 1, with a customizable importance threshold. |
+| plan_execution_simulation_prompt | A prompt to simulate the execution of a plan for a specific subtask and describe the outcomes and challenges. |
+| planning_decision_prompt | A prompt to decide whether a new plan is needed based on the agent's current state, goals, and recent memories. |
+| reflection_plan_analysis_prompt | A prompt to analyze recent reflections, determine if a new plan is needed, and potentially define a new goal. |
+| subtask_plan_formulation_prompt | A prompt to formulate a plan for solving a specific subtask within the context of a PDDL problem. |
+| task_decomposition_prompt | A prompt to decompose a complex task into smaller, manageable subtasks based on the problem understanding. |
+| tool_results_prompt | A prompt to generate an updated response based on tool results and check if a new observation is needed. |
+| understand_problem_prompt | A prompt to analyze goals, and provide a summary. |
 
 Execute the following Cypher query to set up system prompts:
 
@@ -108,7 +149,7 @@ CREATE (p1:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p1)
@@ -132,7 +173,7 @@ CREATE (p2:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p2)
@@ -156,7 +197,7 @@ CREATE (p3:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p3)
@@ -180,7 +221,7 @@ CREATE (p4:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p4)
@@ -207,7 +248,7 @@ CREATE (p5:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p5)
@@ -231,7 +272,7 @@ CREATE (p6:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p6)
@@ -255,13 +296,13 @@ CREATE (p7:Prompt {
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p7)
 
 //PLanAndSolveStrategt - GetFallbackPrompt
-CREATE (p12:Prompt {
+CREATE (p8:Prompt {
   prompt_id: "XMAGS-FINALPDDLPLAN-PROMPT-001",
   name: "Final PDDL Plan",
   internal_name: "final_pddl_plan_prompt",
@@ -295,10 +336,82 @@ Ensure the plan is properly formatted and includes all necessary elements for a 
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
-  max_tokens: 8192,
+  max_tokens: 2000,
   access_level: "system"
 }),
-(p)-[:CONTAINS]->(p12)
+(p)-[:CONTAINS]->(p8)
+
+// Create the tool results prompt
+CREATE (p9:Prompt {
+  prompt_id: "XMAGS-TOOL-RESULTS-PROMPT-001",
+  name: "Tool Results",
+  internal_name: "tool_results_prompt",
+  prompt: "Based on the following information:\n\nOriginal prompt: {original_prompt}\n\nPrevious response: {previous_response}\n\nPlease provide an updated response. After your response, on a new line, write 'OBSERVATION_NEEDED: Yes' if you think a new observation should be made based on this interaction, or 'OBSERVATION_NEEDED: No' if not.",
+  reserved_fields: ["original_prompt", "previous_response"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 0o01,
+  type: "system",
+  category: "conversation",
+  tags: ["tool_results", "observation_check"],
+  description: "A prompt to generate an updated response based on tool results and check if a new observation is needed.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p9)
+
+// Create the conversation summary prompt
+CREATE (p10:Prompt {
+  prompt_id: "XMAGS-CONVERSATION-SUMMARY-PROMPT-001",
+  name: "Conversation Summary",
+  internal_name: "conversation_summary_prompt",
+  prompt: "Summarize the following conversation in one sentence:\nUser: {user_query}\nAssistant: {agent_response}",
+  reserved_fields: ["user_query", "agent_response"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 0o01,
+  type: "system",
+  category: "conversation",
+  tags: ["summary"],
+  description: "A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p10)
+
+// Create the conversation prompt
+CREATE (p11:Prompt {
+  prompt_id: "XMAGS-CONVERSATION-PROMPT-001",
+  name: "Generic Conversation",
+  internal_name: "conversation_prompt",
+  prompt: "Conversation history:\n{conversation_history}\n\nContext information:\n{knowledge_context}\n\nAvailable tools:\n{available_tools}\n\nCurrent user input: {user_query}\n\nPlease provide a response that:\n1. Addresses the user's input directly.\n2. Incorporates relevant information from the conversation history and context.\n3. Uses available tools when necessary to provide accurate and helpful information.\n4. Maintains a consistent and appropriate tone throughout the conversation.\n5. Asks for clarification if the user's intent is unclear.\n\nYour response:",
+  reserved_fields: ["conversation_history", "knowledge_context", "available_tools", "user_query"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 0o01,
+  type: "system",
+  category: "conversation",
+  tags: ["generic", "conversation"],
+  description: "A generic prompt for handling conversations with various types of agents.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p11)
 ```
 
 ### 4. Agent Profiles

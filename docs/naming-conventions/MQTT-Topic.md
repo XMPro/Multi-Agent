@@ -21,16 +21,18 @@ Where:
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/EVT/startup` | Outgoing | Publish team startup event |
-| `XMAGS/{team_id}/EVT/startup/{agent_id}` | Outgoing | Publish agent-specific startup event |
-| `XMAGS/{team_id}/EVT/shutdown` | Outgoing | Publish team shutdown event |
-| `XMAGS/{team_id}/EVT/shutdown/{agent_id}` | Outgoing | Publish agent-specific shutdown event |
+| `XMAGS/{team_id}/DATA/chat/{agent_id}` | Incoming | Receive agent-specific conversations |
+| `XMAGS/{team_id}/DATA/chat_response/{agent_id}` | Incoming | Publish agent-specific conversations |
 | `XMAGS/{team_id}/DATA/observation` | Incoming | Receive team-wide observations |
 | `XMAGS/{team_id}/DATA/observation/{agent_id}` | Incoming | Receive agent-specific observations |
-| `XMAGS/{team_id}/EVT/reflection_result` | Outgoing | Publish results of internally triggered team-wide reflections |
-| `XMAGS/{team_id}/EVT/reflection_result/{agent_id}` | Outgoing | Publish results of internally triggered agent-specific reflections |
 | `XMAGS/{team_id}/EVT/observation_result` | Outgoing | Publish results of processed team-wide observations |
 | `XMAGS/{team_id}/EVT/observation_result/{agent_id}` | Outgoing | Publish results of processed agent-specific observations |
+| `XMAGS/{team_id}/EVT/reflection_result` | Outgoing | Publish results of internally triggered team-wide reflections |
+| `XMAGS/{team_id}/EVT/reflection_result/{agent_id}` | Outgoing | Publish results of internally triggered agent-specific reflections |
+| `XMAGS/{team_id}/EVT/shutdown` | Outgoing | Publish team shutdown event |
+| `XMAGS/{team_id}/EVT/shutdown/{agent_id}` | Outgoing | Publish agent-specific shutdown event |
+| `XMAGS/{team_id}/EVT/startup` | Outgoing | Publish team startup event |
+| `XMAGS/{team_id}/EVT/startup/{agent_id}` | Outgoing | Publish agent-specific startup event |
 
 ## Prefix Meanings
 

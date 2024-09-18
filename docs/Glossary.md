@@ -79,9 +79,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 - **XMPro Multi-Agent Generative Systems (MAGS)**: 
 MAGS (Multi-Agent Generative Systems) are dynamic teams of virtual workers powered by advanced artificial intelligence. These self-organizing teams work continuously to optimize operational outcomes and achieve specified goals. Key features of MAGS include:
 
-- Anticipatory and Goal-Seeking: They proactively identify and work towards operational objectives.
-- Always-On: They operate 24/7, constantly monitoring and responding to changes in their environment.
-- Agency: Each virtual worker has the ability to make decisions and take actions independently.
-- Reasoning and Decision-Making: They use advanced AI to analyze situations, solve problems, and make informed choices.
+   - Anticipatory and Goal-Seeking: They proactively identify and work towards operational objectives.
+   - Always-On: They operate 24/7, constantly monitoring and responding to changes in their environment.
+   - Agency: Each virtual worker has the ability to make decisions and take actions independently.
+   - Reasoning and Decision-Making: They use advanced AI to analyze situations, solve problems, and make informed choices.
 
 MAGS combine the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and innovation across various industries and operational scenarios.

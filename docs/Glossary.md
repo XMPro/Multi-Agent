@@ -77,25 +77,11 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### X
 - **XMPro Multi-Agent Generative Systems (MAGS)**: 
-XMPro Multi-Agent Generative Systems (XMPro MAGS) are advanced computational frameworks that integrate intelligent software agents with large language models (LLMs) to simulate, optimize, and evolve complex industrial processes and human-like interactions. These systems create dynamic, adaptive environments where multiple AI agents, each with distinct roles and capabilities, collaborate to address challenges and improve outcomes across various operational domains.
+MAGS (Multi-Agent Generative Systems) are dynamic teams of virtual workers powered by advanced artificial intelligence. These self-organizing teams work continuously to optimize operational outcomes and achieve specified goals. Key features of MAGS include:
 
-   **Key features of XMPro MAGS**
+- Anticipatory and Goal-Seeking: They proactively identify and work towards operational objectives.
+- Always-On: They operate 24/7, constantly monitoring and responding to changes in their environment.
+- Agency: Each virtual worker has the ability to make decisions and take actions independently.
+- Reasoning and Decision-Making: They use advanced AI to analyze situations, solve problems, and make informed choices.
 
-1. Cognitive Simulation: XMPro MAGS agents operate through a sophisticated cycle of observation, memory formation, reflection, planning, and action. This process mirrors human cognitive functions, allowing agents to learn from experiences, form long-term memories, and make informed decisions.
-
-2. Dynamic Interaction: Agents in XMPro MAGS can interact with each other and their environment, forming relationships, sharing information, and coordinating activities. This enables the simulation of complex social dynamics and emergent behaviors within industrial settings.
-
-3. Continuous Learning and Evolution: XMPro MAGS employ strategies like MedAgent-Zero, allowing agents to evolve and improve their performance over time without manually labeled data. This self-improvement occurs through practice, reflection on past experiences, and adaptation to new scenarios.
-
-4. Ethical and Governance Framework: XMPro MAGS are designed to operate within established ethical, legislative, and business governance frameworks. Agents adhere to predefined rules of engagement, ensuring alignment with organizational values, regulatory requirements, and industry standards.
-
-5. Versatile Application: While initially focused on industrial processes, XMPro MAGS can be applied to various scenarios, from healthcare simulations to social system prototyping. They offer a sophisticated approach to problem-solving, process optimization, and innovation across diverse environments.
-
-6. Realistic Environment Simulation: XMPro MAGS can create detailed, interactive environments (like Agent Hospital) that mimic real-world settings. These environments allow for comprehensive testing, training, and scenario planning without real-world risks.
-
-7. Generative Capabilities: Leveraging LLMs, XMPro MAGS can generate human-like responses, create plans, and produce detailed simulations of complex processes. This generative aspect allows for creative problem-solving and the exploration of novel solutions.
-
-8. Scalability and Flexibility: XMPro MAGS can be scaled to handle large numbers of agents and complex scenarios. The system is flexible enough to adapt to different industrial contexts and can be customized to meet specific organizational needs.
-
-By combining multi-agent collaboration with advanced generative AI capabilities, XMPro MAGS offers a powerful tool for simulating, optimizing, and innovating in industrial and business environments. It provides a platform for testing theories, prototyping solutions, and driving continuous improvement while maintaining responsible and compliant behavior.
-
+MAGS combine the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and innovation across various industries and operational scenarios.

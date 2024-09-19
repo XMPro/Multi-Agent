@@ -77,11 +77,22 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### X
 - **XMPro Multi-Agent Generative Systems (MAGS)**: 
-MAGS (Multi-Agent Generative Systems) are dynamic teams of virtual workers powered by advanced artificial intelligence. These self-organizing teams work continuously to optimize operational outcomes and achieve specified goals. Key features of MAGS include:
+MAGS (Multi-Agent Generative Systems) are dynamic teams of virtual workers powered by advanced artificial intelligence. These self-organizing teams work independently and collaboratively to optimize operational outcomes and achieve specified goals. Key features of MAGS include:
 
-   - Anticipatory and Goal-Seeking: They proactively identify and work towards operational objectives.
-   - Always-On: They operate 24/7, constantly monitoring and responding to changes in their environment.
-   - Agency: Each virtual worker has the ability to make decisions and take actions independently.
-   - Reasoning and Decision-Making: They use advanced AI to analyze situations, solve problems, and make informed choices.
+   - **Independence and Agency**: Each virtual worker functions autonomously, making decisions and taking actions independently within their defined scope.
+   
+   - **Planning and Reflection**: They can plan ahead, reflect on past actions, and adjust strategies accordingly, enabling continuous improvement.
+   
+   - **Anticipatory and Goal-Seeking**: They proactively identify and work towards operational objectives, always striving for optimal outcomes.
+   
+   - **Always-On Collaboration**: They operate 24/7, constantly monitoring, communicating, and responding to changes in their environment, ensuring seamless coordination.
+   
+   - **Adaptive Reasoning and Decision-Making**: They use advanced AI to analyze situations, solve problems, and make informed choices, adapting their execution techniques based on inputs and environmental considerations.
+   
+   - **Complex Workflow Execution**: They can handle and optimize intricate operational processes with minimal human intervention, streamlining complex tasks.
+   
+   - **Rules of Engagement**: Agents and teams operate under a structured set of deontic principles, including obligations, permissions, prohibitions, conditional rules, and normative guidelines. These rules govern their behavior, ensure ethical operations, maintain safety standards, and facilitate effective collaboration while providing a framework for autonomous decision-making within predefined boundaries.
 
-MAGS combine the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and innovation across various industries and operational scenarios.
+MAGS combines the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and driving innovation across various industries and operational scenarios. 
+
+The integration of deontic principles through the Rules of Engagement ensures that MAGS operates efficiently, ethically, and safely, particularly in critical industrial environments where reliability and accountability are paramount.

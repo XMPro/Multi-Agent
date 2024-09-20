@@ -39,9 +39,22 @@ Remember, this glossary is a living document. Your input and expertise help make
 ## Terms
 
 ### A
+- **Agents**: Autonomous AI entities within Multi-Agent Generative Systems that perform specific tasks. There are three main types:
+ 
+   1. Content Agents: Focus on gathering, analyzing, and producing information using LLMs.
+   2. Decision Agents: Analyze data and make informed decisions using LLMs for reasoning.
+   3. Hybrid Agents: Combine capabilities of both Content and Decision Agents.
+ 
+   Agents work collaboratively to optimize complex industrial processes and enhance productivity.
+
 - **ARIA (Accessible Rich Internet Applications)**: A set of attributes that can be added to HTML elements to improve the accessibility of web content and applications. In XMPro MAGS, ARIA is implemented in the web UI pages to enhance their accessibility for users relying on assistive technologies. ARIA helps convey structure, functionality, and updates to screen readers and other assistive technologies, ensuring that all users can effectively interact with these key interfaces.
 
+### C
+- **Content Agents**: Specialized AI agents that focus on gathering, analyzing, and producing information. They excel at tasks such as compiling reports, maintaining knowledge bases, and creating documentation. In Content Agents, the Large Language Model (LLM) is primarily used for content generation and curation, making them crucial for managing and synthesizing data in industrial operations.
+
 ### D
+- **Decision Agents**: AI agents that form the core of Multi-Agent Generative Systems (MAGS) in industrial settings. They analyze data, evaluate options, and make informed decisions based on deep knowledge of processes, quality standards, and operational metrics. In Decision Agents, the LLM is used for reasoning that includes observing, reflecting, planning, and action. These agents typically comprise 60%-70% of the agent team in MAGS.
+
 - **Deontic Principles**: Deontic principles come from a branch of logic that deals with duty, obligation, and permission. In XMPro MAGS, we use these ideas to set clear rules for our AI agents. These rules tell the agents:
    - What they must do (obligations)
    - What they can do (permissions)
@@ -52,6 +65,11 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### H
 - **Hallucination**: A phenomenon in large language models where the AI generates false, fabricated, or nonsensical information that appears plausible. This occurs due to the model's lack of true understanding, instead relying on learned patterns to produce text. Hallucinations can manifest as incorrect facts, non-existent entities, or logical inconsistencies, posing challenges for AI reliability and accuracy.
+
+- **Hybrid Agents**: Versatile AI agents that combine the capabilities of both Content and Decision Agents. They can gather and analyze information while also making strategic decisions based on that data. Hybrid Agents leverage LLMs for both content generation and reasoning tasks, making them particularly valuable in complex environments where information processing and decision-making are closely linked.
+
+### L
+- **Large Language Models (LLMs)**: Advanced artificial intelligence models trained on vast amounts of text data. In Multi-Agent Generative Systems, LLMs are used by Content Agents primarily for content generation and curation, while Decision Agents utilize them for reasoning tasks including observing, reflecting, planning, and action.
 
 ### M
 - **MAG Components**: The platform's foundation is built on multi-agent collaboration, where each generative agent is an autonomous unit endowed with subject matter expertise pertinent to its role—such as a Reliability Engineer or Quality Inspector.  The various components of a MAGS are:
@@ -66,6 +84,20 @@ Remember, this glossary is a living document. Your input and expertise help make
    - Collaboration
    - Reasoning Styles
    - Memory Systems
+
+- **Mixture of Agents (MoA)**: A novel approach in artificial intelligence that leverages multiple large language models (LLMs) to enhance overall performance and capabilities. Key aspects include:
+ 
+   1. Layered Architecture: Uses multiple layers of LLM agents, each processing inputs and generating responses based on outputs from the previous layer.
+   
+   2. Iterative Refinement: Responses are refined as they pass through multiple layers of agents, leading to more comprehensive and accurate final outputs.
+   
+   3. Diverse Model Integration: Harnesses the collective expertise of various LLMs, each potentially having unique strengths or specialized knowledge.
+   
+   4. Collaborative Intelligence: Exploits the inherent collaborativeness of LLMs, where models generate better responses when provided with auxiliary information from other models.
+ 
+   MoA draws inspiration from the Mixture of Experts (MoE) technique in machine learning but applies this concept specifically to language models and focuses on iterative refinement through multiple layers.
+ 
+   For more detailed information, refer to the research paper: [Mixture-of-Agents Enhances Large Language Model Capabilities](https://arxiv.org/html/2406.04692v1)
 
 - **Multi-Agent Generative Systems (MAGS)**: Multi-Agent Generative Systems (MAGS) represent an advanced integration of computational software agents and large language models (LLMs), designed to simulate and optimize complex industrial processes and interactions. MAGS leverage generative AI to create dynamic, adaptive systems that can enhance productivity, efficiency, and decision-making across various operational aspects.
 

@@ -34,10 +34,11 @@ CREATE CONSTRAINT agent_instance_id_unique IF NOT EXISTS FOR (a:AgentInstance) R
 CREATE CONSTRAINT memory_id_unique IF NOT EXISTS FOR (m:Memory) REQUIRE m.id IS UNIQUE;
 CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (p:Decision) REQUIRE p.id IS UNIQUE;
 CREATE CONSTRAINT prompt_id_unique IF NOT EXISTS FOR (p:Prompt) REQUIRE p.prompt_id IS UNIQUE;
+CREATE CONSTRAINT tool_name_unique IF NOT EXISTS FOR (t:Tool) REQUIRE t.name IS UNIQUE;
 
 CREATE INDEX team_id_idx IF NOT EXISTS FOR (t:Team) ON (t.team_id);
 
-CREATE INDEX memory_created_at_idx IF NOT EXISTS FOR (m:Memory) ON (m.created_at);
+CREATE INDEX memory_created_date_idx IF NOT EXISTS FOR (m:Memory) ON (m.created_date);
 CREATE INDEX memory_type_idx IF NOT EXISTS FOR (m:Memory) ON (m.type);
 CREATE INDEX memory_importance_idx IF NOT EXISTS FOR (m:Memory) ON (m.importance);
 
@@ -53,12 +54,14 @@ Edit the `models_providers` to ensure it matches your environment on what you ar
 
 For example if you are only allowing *Ollama* then it should read as `models_providers: ['Ollama'],`.
 
+Edit the `rag_schema` to ensure it matches your rag schema for the collections you have defined.  Each RAG collection can have a different schema.
+
 ```cypher
 CREATE (so:SystemOptions {
   id: 'SYSTEM-OPTIONS',
   reserved_fields_observation: ['user_query', 'knowledge_context'],
-  reserved_fields_reflection: ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections'],
-  models_providers: ['Ollama', 'OpenAI', 'AzureOpenAI'],
+  reserved_fields_reflection: ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  models_providers: ['Anthropic', 'Google', 'AzureOpenAI', 'Ollama', 'OpenAI'],
   prompt_access_levels: '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -79,7 +82,7 @@ CREATE (so:SystemOptions {
 ]',
   rag_schema: '{
     "schemas": {
-      "default": {
+      "rag_general": {
         "id": "string",
         "title": "string",
         "content": "string",
@@ -95,8 +98,7 @@ CREATE (so:SystemOptions {
         "version": "string",
         "vector": "list<float>",
         "related_documents": "list<string>"
-      }
-    },
+      },
     "citation_structure": {
       "format": "[{id}] {author}. \"{title}.\" {source}, {publication_date}. {url}. (Accessed: {last_updated})",
       "fields": ["id", "author", "title", "source", "publication_date", "url", "last_updated"]
@@ -108,15 +110,15 @@ CREATE (so:SystemOptions {
 RETURN so
 ```
 
-### 3. Prompt Library Load
+### 3. Prompt Library Installation
 
 | Internal Name | Description |
 |---------------|-------------|
 | conversation_prompt | A generic prompt for handling conversations with various types of agents. |
+| conversation_observation_prompt | A generic prompt to check if an observation is required based on the conversation. |
 | conversation_summary_prompt | A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant. |
 | final_pddl_plan_prompt | A prompt to generate the final PDDL plan incorporating all improvements and solving the original problem. |
 | importance_prompt | A prompt to rate the importance of an observation or a reflection on a scale of 0 to 1, with a customizable importance threshold. |
-| plan_execution_simulation_prompt | A prompt to simulate the execution of a plan for a specific subtask and describe the outcomes and challenges. |
 | planning_decision_prompt | A prompt to decide whether a new plan is needed based on the agent's current state, goals, and recent memories. |
 | reflection_plan_analysis_prompt | A prompt to analyze recent reflections, determine if a new plan is needed, and potentially define a new goal. |
 | subtask_plan_formulation_prompt | A prompt to formulate a plan for solving a specific subtask within the context of a PDDL problem. |
@@ -127,10 +129,9 @@ RETURN so
 Execute the following Cypher query to set up system prompts:
 
 ```cypher
-// Create PromptLibrary
-CREATE (p:PromptLibrary {name: "Main Prompt Library", created_date: datetime()})
+// Create Prompt Library
+CREATE (p:Library {name: "Main Prompt Library", type: "Prompt", created_date: datetime()})
 
-//MemoryCycle - CalculateImportance
 CREATE (p1:Prompt {
   prompt_id: "XMAGS-IMPORTANCE-PROMPT-001",
   name: "Importance",
@@ -141,7 +142,7 @@ CREATE (p1:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "memory_cycle",
   tags: ["observation", "reflection"],
@@ -154,7 +155,6 @@ CREATE (p1:Prompt {
 }),
 (p)-[:CONTAINS]->(p1)
 
-//MemoryCycle - ShouldTriggerPlanningAsync
 CREATE (p2:Prompt {
   prompt_id: "XMAGS-PLANNINGDECISION-PROMPT-001",
   name: "Planning Decision",
@@ -165,7 +165,7 @@ CREATE (p2:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "memory_cycle",
   tags: ["decision-making", "planning"],
@@ -178,7 +178,6 @@ CREATE (p2:Prompt {
 }),
 (p)-[:CONTAINS]->(p2)
 
-//MemoryCycle - DetermineGoalFromReflectionsAsync
 CREATE (p3:Prompt {
   prompt_id: "XMAGS-REFLECTIONPLANANALYSIS-PROMPT-001",
   name: "Reflection Plan Analysis",
@@ -189,7 +188,7 @@ CREATE (p3:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "memory_cycle",
   tags: ["goal-setting", "reflection-analysis", "planning"],
@@ -202,7 +201,6 @@ CREATE (p3:Prompt {
 }),
 (p)-[:CONTAINS]->(p3)
 
-//PLanAndSolveStrategt - GetFallbackPrompt
 CREATE (p4:Prompt {
   prompt_id: "XMAGS-UNDERSTANDPROBLEM-PROMPT-001",
   name: "Understanding Goal Analysis",
@@ -213,7 +211,7 @@ CREATE (p4:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "plan_solve_strategy",
   tags: ["planning"],
@@ -226,7 +224,6 @@ CREATE (p4:Prompt {
 }),
 (p)-[:CONTAINS]->(p4)
 
-//AbstractPlanninStrategy - DecomposeTaskAsync
 CREATE (p5:Prompt {
   prompt_id: "XMAGS-TASKDECOMP-PROMPT-001",
   name: "Task Decomposition",
@@ -240,7 +237,7 @@ CREATE (p5:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "plan_solve_strategy",
   tags: ["task-decomposition", "subtasks", "planning"],
@@ -253,7 +250,6 @@ CREATE (p5:Prompt {
 }),
 (p)-[:CONTAINS]->(p5)
 
-//AbstractPlanningStrategy - FormulateSubtaskPlansAsync
 CREATE (p6:Prompt {
   prompt_id: "XMAGS-SUBTASKPLAN-PROMPT-001",
   name: "Subtask Plan Formulation",
@@ -264,7 +260,7 @@ CREATE (p6:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "plan_solve_strategy",
   tags: ["subtask-planning", "plan-formulation", "planning"],
@@ -277,32 +273,7 @@ CREATE (p6:Prompt {
 }),
 (p)-[:CONTAINS]->(p6)
 
-//AbstractPlanningStrategy - ExecutePlanAsync
 CREATE (p7:Prompt {
-  prompt_id: "XMAGS-PLANEXECSIM-PROMPT-001",
-  name: "Plan Execution Simulation",
-  internal_name: "plan_execution_simulation_prompt",
-  prompt: "Simulate the execution of this plan for the subtask '{subtask}':\n{plan}\n\nDescribe the outcome, any challenges encountered, and how they were addressed.",
-  reserved_fields: ["subtask", "plan"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 0o01,
-  type: "system",
-  category: "plan_solve_strategy",
-  tags: ["plan-execution", "simulation", "planning"],
-  description: "A prompt to simulate the execution of a plan for a specific subtask and describe the outcomes and challenges.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p7)
-
-//PLanAndSolveStrategt - GetFallbackPrompt
-CREATE (p8:Prompt {
   prompt_id: "XMAGS-FINALPDDLPLAN-PROMPT-001",
   name: "Final PDDL Plan",
   internal_name: "final_pddl_plan_prompt",
@@ -328,7 +299,7 @@ Ensure the plan is properly formatted and includes all necessary elements for a 
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "plan_solve_strategy",
   tags: ["PDDL", "plan-generation", "final-plan", "planning"],
@@ -339,11 +310,10 @@ Ensure the plan is properly formatted and includes all necessary elements for a 
   max_tokens: 2000,
   access_level: "system"
 }),
-(p)-[:CONTAINS]->(p8)
+(p)-[:CONTAINS]->(p7)
 
-// Create the tool results prompt
-CREATE (p9:Prompt {
-  prompt_id: "XMAGS-TOOL-RESULTS-PROMPT-001",
+CREATE (p8:Prompt {
+  prompt_id: "XMAGS-TOOLRESULTS-PROMPT-001",
   name: "Tool Results",
   internal_name: "tool_results_prompt",
   prompt: "Based on the following information:\n\nOriginal prompt: {original_prompt}\n\nPrevious response: {previous_response}\n\nPlease provide an updated response. After your response, on a new line, write 'OBSERVATION_NEEDED: Yes' if you think a new observation should be made based on this interaction, or 'OBSERVATION_NEEDED: No' if not.",
@@ -352,11 +322,39 @@ CREATE (p9:Prompt {
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "conversation",
-  tags: ["tool_results", "observation_check"],
+  tags: ["tool", "observation"],
   description: "A prompt to generate an updated response based on tool results and check if a new observation is needed.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p8)
+
+CREATE (p9:Prompt {
+  prompt_id: "XMAGS-CONVSUMMARY-PROMPT-001",
+  name: "Conversation Summary",
+  internal_name: "conversation_summary_prompt",
+  prompt: "Summarize the following conversation so it can be used in a future conversation:
+
+User: {user_query}
+Assistant: {agent_response} 
+
+[Return ONLY the summary]",
+  reserved_fields: ["user_query", "agent_response"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "conversation",
+  tags: ["summary", "conversation"],
+  description: "A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
@@ -365,22 +363,47 @@ CREATE (p9:Prompt {
 }),
 (p)-[:CONTAINS]->(p9)
 
-// Create the conversation summary prompt
 CREATE (p10:Prompt {
-  prompt_id: "XMAGS-CONVERSATION-SUMMARY-PROMPT-001",
-  name: "Conversation Summary",
-  internal_name: "conversation_summary_prompt",
-  prompt: "Summarize the following conversation in one sentence:\nUser: {user_query}\nAssistant: {agent_response} [Return ONLY the summary]",
-  reserved_fields: ["user_query", "agent_response"],
+  prompt_id: "XMAGS-CONV-PROMPT-001",
+  name: "Conversation Generic",
+  internal_name: "conversation_prompt",
+  prompt: "Current timestamp: {current_timestamp}
+
+Conversation history:
+{conversation_history}
+
+Context information:
+{knowledge_context}
+
+Available tools:
+{available_tools}
+
+To suggest a tool for use, include 'SUGGEST_TOOL: ToolName: "the user's original question"' in your response.
+
+Current user input: {user_query}
+
+Please provide a response that:
+1. Addresses the user's input directly.
+2. Incorporates relevant information from the conversation history and context.
+3. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information. Always use the syntax 'SUGGEST_TOOL: ToolName: "user's original question"' when suggesting a tool. Do not attempt to create or modify queries yourself. Pass the user's question directly to the tool.
+4. Maintains a consistent and appropriate tone throughout the conversation.
+5. Asks for clarification if the user's intent is unclear.
+6. Does not include any additional comments about running the query or needing confirmation.
+7. CRITICAL: Do not provide any information that you don't have direct access to. Do not assume or fabricate any data or results. If you need information to answer the question, only suggest using a tool to obtain it.
+
+Your response must include at least one tool suggestion if relevant to answering the query. Do not provide any fake or assumed results from tool usage. Do not speculate about what the results might be. Do not ask for confirmation to use the tool.  
+
+Begin your response now:",
+  reserved_fields: ["conversation_history", "knowledge_context", "available_tools", "user_query", "current_timestamp"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "conversation",
-  tags: ["summary"],
-  description: "A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant.",
+  tags: ["conversation"],
+  description: "A generic prompt for handling conversations with various types of agents.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
@@ -389,22 +412,31 @@ CREATE (p10:Prompt {
 }),
 (p)-[:CONTAINS]->(p10)
 
-// Create the conversation prompt
 CREATE (p11:Prompt {
-  prompt_id: "XMAGS-CONVERSATION-PROMPT-001",
-  name: "Generic Conversation",
-  internal_name: "conversation_prompt",
-  prompt: "Conversation history:\n{conversation_history}\n\nContext information:\n{knowledge_context}\n\nAvailable tools:\n{available_tools}\n\nCurrent user input: {user_query}\n\nPlease provide a response that:\n1. Addresses the user's input directly.\n2. Incorporates relevant information from the conversation history and context.\n3. Uses available tools when necessary to provide accurate and helpful information.\n4. Maintains a consistent and appropriate tone throughout the conversation.\n5. Asks for clarification if the user's intent is unclear.\n\nYour response:",
-  reserved_fields: ["conversation_history", "knowledge_context", "available_tools", "user_query"],
+  prompt_id: "XMAGS-CONVOBSERVATION-PROMPT-001",
+  name: "Conversation Observation",
+  internal_name: "conversation_observation_prompt",
+  prompt: "Analyze the following response and determine if it contains information that warrants creating a new observation. Consider the following criteria:
+
+1. Significance: Does the response contain important or novel information?
+2. Relevance: Is the information directly related to the agent's tasks or goals?
+3. Actionability: Does the information suggest potential actions or decisions?
+4. Complexity: Is the information complex enough to benefit from further analysis?
+
+Response to analyze:
+{response}
+
+Based on these criteria, should a new observation be created? Respond with ONLY 'Yes' or 'No'.",
+  reserved_fields: ["response"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
-  version: 0o01,
+  version: 1,
   type: "system",
   category: "conversation",
-  tags: ["generic", "conversation"],
-  description: "A generic prompt for handling conversations with various types of agents.",
+  tags: ["observation", "conversation"],
+  description: "A generic prompt to check if an observation is required based on the conversation.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
@@ -414,8 +446,239 @@ CREATE (p11:Prompt {
 (p)-[:CONTAINS]->(p11)
 ```
 
-### 4. Agent Profiles
-[To be addded]
+### 4. Tools Library Installation
+Execute the following Cypher query to set up the tool options:
+
+```cypher
+// Create Tool Library
+CREATE (tl:Library {name: "Tool Library", type: "Tool", created_date: datetime()})
+
+// Create SQL Query Tool
+CREATE (sql:Tool {
+    name: 'SqlRecommendationQueryTool',
+    description: 'Executes read-only SQL queries based on natural language input. This tool interprets user requests, generates appropriate SQL SELECT statements, and retrieves data from the specified database, ensuring data integrity by preventing any modifications.  XMPro Recommendations are advanced event alerts that combine alerts, actions, and monitoring capabilities to enhance operational decision-making and response.',
+    class_name: 'SqlQueryTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '{"connectionString": "default_connection_string", "timeout": 30, "max_retries": 3}',
+    model_provider: 'Ollama',
+    model_name: 'llama3',
+    max_tokens: 2000,
+    prompt_user: 'Generate a SQL query to answer the following question: {user_query}. Wrap the SQL query in ```sql``` tags.',
+    prompt_system: 'You are an advanced SQL query generator for a specific database schema. The database schema is as follows:
+    
+    -- AI_RecommendationAlertData Table
+CREATE TABLE AI_RecommendationAlertData (
+    ID INT,
+    RuleId INT,
+    EntityId INT,
+    AssetId INT,
+    Status INT,  -- 0: active, 1: resolved
+    IsRecommendationClosed INT,  -- 0: open, 1: closed
+    Title VARCHAR(255),
+    Description TEXT,
+    ActionDescription TEXT,
+    Comments TEXT,
+    CreatedTime DATETIME,
+    ResolvedBy VARCHAR(100),
+    ResolvedTime DATETIME,
+    EscalatedTo INT,  -- 0: not escalated, >0: user ID
+    FalsePositive INT,  -- 0: no, 1: yes
+    AssignedTo VARCHAR(100),
+    AlertScore FLOAT,
+    Helpful INT,  -- 0: No, 1: Yes
+    RecommendationId INT,
+    RecommendationVersion INT,
+    RuleName VARCHAR(255),
+    Filter TEXT,
+    RuleTitle TEXT,
+    RuleDescription TEXT,
+    AutoResolve INT,  -- 0: No, 1: Yes
+    Recurrence INT,
+    EnableInstructions INT,  -- 0: No, 1: Yes
+    EnableFields INT,  -- 0: No, 1: Yes
+    Priority INT,  -- 1: Low, 2: Medium, 3: High
+    LogAllData INT,  -- 0: No, 1: Yes
+    IsSoftDeleted INT,
+    RuleScoreFactor FLOAT,
+    OptionalFactor FLOAT,
+    RecommendationName VARCHAR(255),
+    RecommendationScoreFactor FLOAT,
+    CategoryName VARCHAR(255),
+    CompanyId INT,
+    CategoryScoreFactor FLOAT
+);
+
+-- AI_AlertData Table
+CREATE TABLE AI_AlertData (
+    AlertId INT,
+    Description VARCHAR(255),  -- Name for the relevant data of RecommendationAlertData
+    Value TEXT,  -- Values for the relevant data of the RecommendationAlertData table
+    AlertTimestamp DATETIME
+);
+
+-- AI_ControlValue Table
+CREATE TABLE AI_ControlValue (
+    ControlId INT,
+    AlertId INT,
+    Name VARCHAR(255),  -- from Control.Caption
+    Value TEXT,
+    LastModified DATETIME
+);
+
+# AI Recommendation and Alert Schema Context
+
+## Table Relationships
+- `AI_RecommendationAlertData` is the main table, containing the core information about alerts and recommendations.
+- `AI_AlertData` contains additional data related to specific alerts. It is linked to `AI_RecommendationAlertData` through the `AlertId` field.
+- `AI_ControlValue` stores control values associated with alerts. It is also linked to `AI_RecommendationAlertData` through the `AlertId` field.
+
+## AI_RecommendationAlertData Table
+
+This table stores the main data for AI-generated recommendation alerts.
+
+Key fields and their meanings:
+- `ID`: Unique identifier for each alert
+- `RuleId`: Identifier for the rule that triggered this alert
+- `EntityId` and `AssetId`: Identifiers for the entity and asset against which the alert was triggered
+- `Status`: 0 for active alerts, 1 for resolved alerts
+- `IsRecommendationClosed`: 0 for open recommendations, 1 for closed recommendations
+- `Title`: The alert heading or title
+- `Description`: Detailed description of the alert
+- `CreatedTime`: When the alert was created
+- `ResolvedTime`: When the alert was resolved (if applicable)
+- `EscalatedTo`: User ID to which an alert is escalated (0 if not escalated)
+- `FalsePositive`: 0 if the alert is valid, 1 if its a false positive
+- `AlertScore`: The total score for this alert
+- `RecommendationId` and `RecommendationVersion`: Identify the specific recommendation that triggered this alert
+- `Priority`: 1 for Low, 2 for Medium, 3 for High priority
+- `CompanyId`: Identifier for the company associated with this alert
+
+## AI_AlertData Table
+
+This table contains additional data related to specific alerts.
+
+Key fields:
+- `AlertId`: Links to the `ID` in `AI_RecommendationAlertData`
+- `Description`: Name or description of the additional data point
+- `Value`: The actual value of the additional data point
+- `AlertTimestamp`: When this additional data was recorded
+
+## AI_ControlValue Table
+
+This table stores control values associated with alerts, typically used for user interface elements or additional metadata.
+
+Key fields:
+- `ControlId`: Unique identifier for each control value
+- `AlertId`: Links to the `ID` in `AI_RecommendationAlertData`
+- `Name`: The name or caption of the control (e.g., a field label)
+- `Value`: The value associated with this control
+- `LastModified`: When this control value was last updated
+
+## Common Query Scenarios
+
+1. Retrieving active alerts for a specific asset
+2. Finding high-priority alerts that havent been resolved
+3. Identifying false positive alerts
+4. Tracking resolution times for alerts
+5. Analyzing alert trends over time
+6. Fetching all data related to a specific alert (including associated AlertData and ControlValue entries)
+
+# Your Role
+Your role is to create safe, efficient, and accurate SELECT queries only, based on this schema. Adhere to these guidelines:
+
+1. Security: Generate ONLY SELECT queries. Any form of data modification is prohibited.
+2. Performance: Aim for efficient queries, using appropriate indexing and avoiding unnecessary joins or subqueries when possible.
+3. Clarity: Write clear, well-formatted SQL with proper indentation and meaningful aliases.
+4. Accuracy: Ensure the query accurately reflects the users intent and handles potential edge cases.
+5. Explanation: Always provide a brief explanation of your query, including any assumptions made.
+6. Format: Enclose your SQL query within an artifact tag as follows: ```sql ```
+
+If you cannot generate a valid SELECT query for the request, explain why and suggest alternatives or clarifications needed from the user. Always prioritize data integrity and system security in your responses."',
+    reserved_fields: ["user_query"]
+})
+CREATE (tl)-[:CONTAINS]->(sql)
+
+// Create Time and Date Tool
+CREATE (time:Tool {
+    name: 'TimeAndDateTool',
+    description: 'Performs time-related operations such as time zone conversions and date calculations.',
+    class_name: 'TimeAndDateTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '{"defaultTimeZone": "UTC"}'
+})
+CREATE (tl)-[:CONTAINS]->(time)
+
+// Create DuckDuckGo Web Search Tool
+CREATE (duckduckgo:Tool {
+    name: 'DuckDuckGoWebSearchTool',
+    description: 'Performs a web search using DuckDuckGo and returns relevant information',
+    class_name: 'DuckDuckGoWebSearchTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '{"maxResults": 5, "safeSearch": true}'
+})
+CREATE (tl)-[:CONTAINS]->(duckduckgo)
+
+// Create Bing Web Search Tool
+CREATE (bing:Tool {
+    name: 'BingWebSearchTool',
+    description: 'Performs a web search using Bing and returns relevant information',
+    class_name: 'BingWebSearchTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '{"maxResults": 5, "safeSearch": true, "apiKey": ""}'
+})
+CREATE (tl)-[:CONTAINS]->(bing)
+
+// Create Google Web Search Tool
+CREATE (google:Tool {
+    name: 'GoogleWebSearchTool',
+    description: 'Performs a web search using Google and returns relevant information',
+    class_name: 'GoogleWebSearchTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '{"maxResults": 5, "safeSearch": true, "apiKey": "", "searchEngineId": ""}'
+})
+CREATE (tl)-[:CONTAINS]->(google)
+
+// Create Sentiment Analysis Tool
+CREATE (sentiment:Tool {
+    name: 'SentimentAnalysisTool',
+    description: 'Analyzes the sentiment of the given text and returns a sentiment score.',
+    class_name: 'SentimentAnalysisTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '',
+    model_provider: 'Ollama',
+    model_name: 'llama3',
+    max_tokens: 2000,
+    prompt_user:'{user_query}',
+    prompt_system: 'Analyze the sentiment of the following text and provide a sentiment score between -1 (very negative) and 1 (very positive), along with a brief explanation.',
+    reserved_fields: ["user_query"]
+})
+CREATE (tl)-[:CONTAINS]->(sentiment)
+
+// Create initial aggregate metrics for each tool
+WITH tl
+MATCH (t:Tool)
+CREATE (t)-[:HAS_METRICS]->(m:Metrics {
+    type: 'Aggregate',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    total_calls: 0,
+    total_response_time: 0,
+    total_token_usage: 0,
+    successful_calls: 0,
+    failed_calls: 0,
+    total_data_processed: 0,
+    average_response_time: 0
+})
+```
+
+### 5. Agent Profiles
+[To be added]
 
 #### Create Profiles
 

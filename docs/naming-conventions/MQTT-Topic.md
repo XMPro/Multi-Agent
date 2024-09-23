@@ -25,6 +25,7 @@ Where:
 | `XMAGS/{team_id}/DATA/chat_response/{agent_id}` | Incoming | Publish agent-specific conversations |
 | `XMAGS/{team_id}/DATA/observation` | Incoming | Receive team-wide observations |
 | `XMAGS/{team_id}/DATA/observation/{agent_id}` | Incoming | Receive agent-specific observations |
+| `XMAGS/{team_id}/EVT/error/{agent_id}` | Outgoing | Publish any errors the agent encounters |
 | `XMAGS/{team_id}/EVT/observation_result` | Outgoing | Publish results of processed team-wide observations |
 | `XMAGS/{team_id}/EVT/observation_result/{agent_id}` | Outgoing | Publish results of processed agent-specific observations |
 | `XMAGS/{team_id}/EVT/reflection_result` | Outgoing | Publish results of internally triggered team-wide reflections |

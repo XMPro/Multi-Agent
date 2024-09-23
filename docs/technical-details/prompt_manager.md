@@ -228,6 +228,7 @@ The Prompt Library implements a role-based access control system with four level
 
 | Type                 | Description                                   |
 | -------------------- | --------------------------------------------- |
+| conversation         | For the conversation functionality            |
 | memory_cycle         | For core memory_cycle functionality           |
 | plan_solve_strategy  | For the plan and solve strategy functionality |
 | team_creation_wizard | For the team wizard functionality             |
@@ -249,7 +250,7 @@ The Prompt Library implements a role-based access control system with four level
 | utility        | For helper prompts that support other processes but aren't main functionalities  |
 
 ## Root Node
-There is a root node called PromptLibrary to which all prompts are linked.  The reasons for this are:
+There is a root node called Library (type: `prompt`) to which all prompts are linked.  The reasons for this are:
 
 1. Organization: It provides a clear organizational structure, making it easier to manage and understand the relationship between prompts.
 

@@ -186,7 +186,7 @@ The Prompt Manager and Library is a crucial component of our system, providing a
 
 ```mermaid
 graph TD
-    A[Library (Prompt)] --> B[Prompt 1]
+    A[Library - Prompt] --> B[Prompt 1]
     A --> C[Prompt 2]
     A --> D[Prompt 3]
     B --> E[Version 1]

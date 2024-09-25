@@ -71,8 +71,8 @@ Our graph database consists of several types of nodes, each representing differe
 | created_date       | DateTime | Timestamp of when the instance was created     |
 | last_modified_date | DateTime | Timestamp of when the instance was last modified |
 | name               | String   | Name of the agent instance                     |
-| plan_prompt        | String   | The prompt used for planning                   |
 | profile_id         | String   | Id of the associated agent profile             |
+| task_prompt        | String   | The prompt used for the tasks of a plan        |
 | type               | String   | The type of agent instance                     |
 | user_prompt        | String   | The initial prompt given to the agent instance |
 

@@ -4,11 +4,23 @@ This folder contains in-depth technical explanations and specifications for vari
 
 ## Contents
 
-1. [Graph Database](graph_database.md)
-2. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
-3. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
-4. [Prompt Manager and Library](prompt_manager.md)
-5. [Vector Database](vector_database.md)
+1. [Agent Status Monitoring and Error Handling](agent_status_monitoring.md)
+2. [Graph Database](graph_database.md)
+3. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
+4. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
+5. [Prompt Manager and Library](prompt_manager.md)
+6. [Vector Database](vector_database.md)
+
+### Agent Status Monitoring and Error Handling
+
+This document provides a detailed explanation of the Agent Status Monitoring and Error Handling System. It covers:
+
+- Key components of the system
+- Implementation details for status updates, error handling, and performance metrics
+- System architecture and data flow diagrams
+- Reasoning behind the design and its benefits
+
+This information is crucial for understanding how agent health and performance are monitored and how errors are handled within the system.
 
 ### Graph Database
 

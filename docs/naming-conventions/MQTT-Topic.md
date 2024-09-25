@@ -34,6 +34,8 @@ Where:
 | `XMAGS/{team_id}/EVT/shutdown/{agent_id}` | Outgoing | Publish agent-specific shutdown event |
 | `XMAGS/{team_id}/EVT/startup` | Outgoing | Publish team startup event |
 | `XMAGS/{team_id}/EVT/startup/{agent_id}` | Outgoing | Publish agent-specific startup event |
+| `XMAGS/{team_id}/EVT/status` | Outgoing | Publish agent status event |
+| `XMAGS/{team_id}/EVT/status/{agent_id}` | Outgoing | Publish agent-specific status event |
 
 ## Prefix Meanings
 

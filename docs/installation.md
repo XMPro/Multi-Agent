@@ -159,8 +159,20 @@ CREATE (p2:Prompt {
   prompt_id: "XMAGS-PLANNINGDECISION-PROMPT-001",
   name: "Planning Decision",
   internal_name: "planning_decision_prompt",
-  prompt: "Based on the following information, decide if a new plan is needed:\n\nRecent memories: {recent_memories}\nCurrent state: {current_state}\nCurrent goals: {current_goals}\nNew goal from reflections: {new_goal_from_reflections}\nTime for planning: {time_for_planning}\nCurrent plan valid: {current_plan_valid}\nGoals being met: {goals_being_met}\nNew plan needed based on reflections: {new_plan_needed}\n\nProvide your decision as 'Yes' or 'No', followed by a brief explanation.",
-  reserved_fields: ["recent_memories", "current_state", "current_goals", "new_goal_from_reflections", "time_for_planning", "current_plan_valid", "goals_being_met", "new_plan_needed"],
+  prompt: "Based on the following information, decide if a new plan is needed:
+
+Recent memories: {recent_memories}
+Current state: {current_state}
+Current goals: {current_goals}
+New goal from reflections: {new_goal_from_reflections}
+Time for planning: {time_for_planning}
+Current plan valid: {current_plan_valid}
+Current plan details: {current_plan_details}
+Goals being met: {goals_being_met}
+New plan needed based on reflections: {new_plan_needed}
+
+Provide your decision as 'Yes' or 'No', followed by a brief explanation.",
+  reserved_fields: ["recent_memories", "current_state", "current_goals", "new_goal_from_reflections", "time_for_planning", "current_plan_valid", "current_plan_details", "goals_being_met", "new_plan_needed"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),

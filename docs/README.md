@@ -52,6 +52,7 @@ While these diagrams cover different aspects of the system, they all contribute 
 
 The [`/technical-details`](technical-details) folder contains in-depth explanations of various technical aspects of the project. This includes:
 
+- Agent status monitoring and error handling
 - Detailed explanations of algorithms used
 - Specifications of data structures
 - Description of key processes and workflows

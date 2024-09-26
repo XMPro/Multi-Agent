@@ -4,6 +4,7 @@ This guide provides detailed instructions for setting up the XMPro AI Agents sys
 
 ## Required Prerequisites
 
+- A licenced installation of XMPro
 - Neo4j Graph Database
 - Milvus Vector Database (Multiple collection support)
 - MQTT Broker
@@ -15,7 +16,6 @@ This guide provides detailed instructions for setting up the XMPro AI Agents sys
     - Azure Open AI
     - Ollama
     - Open AI
-- XMPro Stream Host
 
 ## Optional
 - Open Telemetry (If required)

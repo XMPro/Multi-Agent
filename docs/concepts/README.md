@@ -24,6 +24,7 @@ This folder contains detailed explanations of various concepts, including but no
 4. [LLM Hallucinations](hallucinations.md): What are and how to reduce Hallucinations in Multi-Agent Generative Systems with XMPro.
 5. [Models - Censored and Uncensored](model_censored_uncensored.md): Leveraging Censored and Uncensored Models for Optimal AI Performance in Industrial Applications
 6. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
+7. [APEX AgentOps for MAGS](agentopsapex.dm): How to scale MAGS using APEX for AgentOps 
 
 ## Document Structure
 

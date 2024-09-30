@@ -20,8 +20,6 @@ XMPro's Decision Agents, in particular, were inspired by groundbreaking research
 The Stanford research describes an architecture that extends large language models to store a complete record of an agent's experiences in natural language, synthesize those memories into higher-level reflections over time, and dynamically retrieve them to plan behavior. This approach allows for the creation of believable individual and emergent social behaviors in simulated environments.
 
 ![XMPro ORPA Memory Cycle:](docs/concepts/images/XMProORPAMemoryCycle.png)
-
-![Screenshot: Prompt Library Overview](images/prompt_administration.png)
  
 XMPro's Decision Agents build upon this foundation, adapting and extending these concepts for industrial applications. By incorporating the principles of observation, planning, and reflection from the Stanford research, XMPro's Decision Agents can make complex, context-aware decisions in industrial settings, continuously learning and adapting to changing conditions.
 

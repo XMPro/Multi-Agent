@@ -5,7 +5,7 @@ This article explains how MAGS, APEX and AgentOp form a comprehensive solution f
 ## MAGS (Multi-Agent Generative Systems):
 
 ### What it is:
-MAGS is a unique Decision AI Agent framework designed specifically for complex, large-scale industrial and enterprise environments.
+[MAGS](https://github.com/XMPro/Multi-Agent/blob/main/docs/Glossary.md#m) is a unique Decision AI Agent framework designed specifically for complex, large-scale industrial and enterprise environments.
 
 ### What it does:
 - Implements a sophisticated agent architecture with advanced memory cycles, reflection capabilities, and planning strategies.

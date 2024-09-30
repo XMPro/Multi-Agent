@@ -18,6 +18,8 @@ XMPro's MAGS implementation utilizes [three distinct types of agents](docs/conce
 XMPro's Decision Agents, in particular, were inspired by groundbreaking research from Stanford University, as detailed in "Generative Agents: Interactive Simulacra of Human Behavior" by Joon Sung Park, Joseph C. O'Brien, Carrie J. Cai, Meredith Ringel Morris, Percy Liang, and Michael S. Bernstein. This research introduced the concept of generative agents - computational software agents that simulate believable human behavior. These agents can perform a wide range of human-like activities, from daily routines to complex social interactions, and are capable of forming opinions, initiating conversations, and planning future actions based on past experiences. [[2304.03442] Generative Agents: Interactive Simulacra of Human Behavior (arxiv.org)](https://arxiv.org/abs/2304.03442 "https://arxiv.org/abs/2304.03442")
  
 The Stanford research describes an architecture that extends large language models to store a complete record of an agent's experiences in natural language, synthesize those memories into higher-level reflections over time, and dynamically retrieve them to plan behavior. This approach allows for the creation of believable individual and emergent social behaviors in simulated environments.
+
+[XMPro ORPA Memory Cycle:](/concepts/images/XMProORPAMemoryCycle.png)
  
 XMPro's Decision Agents build upon this foundation, adapting and extending these concepts for industrial applications. By incorporating the principles of observation, planning, and reflection from the Stanford research, XMPro's Decision Agents can make complex, context-aware decisions in industrial settings, continuously learning and adapting to changing conditions.
 

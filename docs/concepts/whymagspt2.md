@@ -2,7 +2,7 @@
 
 ## Introduction
 
-In the rapidly evolving landscape of industrial AI, XMPro's Multi-Agent Generative Systems (MAGS) stands out as a groundbreaking solution for complex, large-scale operations. This document provides a comprehensive comparison between XMPro MAGS and traditional agent frameworks, highlighting why MAGS is the superior choice for organizations looking to scale their AI capabilities across thousands of agents and processes.
+In the rapidly evolving landscape of industrial AI, XMPro's Multi-Agent Generative Systems (MAGS) stands out as a solution for complex, large-scale operations. This document provides a  comparison between XMPro MAGS and traditional agent frameworks such as LangGraph, Autogen, and CrewAI. It highlighting why MAGS is the superior choice for organizations looking to scale their AI capabilities across thousands of agents and processes.
 
 ## XMPro MAGS vs. Other Agentic AI Frameworks
 
@@ -59,7 +59,7 @@ At the heart of XMPro MAGS lies the MemoryCycle, a sophisticated cognitive engin
 - Enables sophisticated reasoning by synthesizing current and historical data
 - Facilitates adaptive learning through continuous feedback loops
 
-> While traditional frameworks often rely on predefined rules or simple decision trees, XMPro MAGS' MemoryCycle allows for dynamic, context-aware decision-making that evolves over time.
+> While traditional frameworks often rely on predefined rules, procedural code, or simple decision trees, XMPro MAGS' MemoryCycle allows for dynamic, context-aware decision-making that evolves over time.
 
 ### 4. Scalability and Flexibility
 

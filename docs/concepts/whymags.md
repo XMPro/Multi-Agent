@@ -5,6 +5,9 @@
 
 Multi-agent systems have become increasingly important in solving complex problems in industrial and enterprise settings. XMPro's Multi-Agent Generative Systems (MAGS) and Agent Platform EXperience (APEX) offer advanced capabilities in both functionality and scalability. This article examines the technical details of XMPro's approach and compares it to other agent frameworks in the market.
 
+In this article we cover:
+- The ability of XMPro MAGS to scale in complex industrial environments 
+- How XMPro MAGS differ from other agent frameworks in how it's unique cognitive decision approach
 
 ## MAGS: Advanced Communication Architecture
 

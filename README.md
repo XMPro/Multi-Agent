@@ -25,30 +25,30 @@ XMPro's Decision Agents build upon this foundation, adapting and extending these
 
 ## Key Features
 
+- **APEX AgentOps**: [AgentOps](docs/concepts/agentopsapex.md) for Scaling Multi Agent Generative Systems in complex industrial environments
+- **Adaptive Decision Making**: Agents can create and modify plans to achieve goals, adapting to changing circumstances in their environment.
 - **Generative AI Agents**: Autonomous AI entities capable of recognizing patterns, generating predictions, and performing complex tasks.
+- **Integration**: Seamless connection with real-time sensors, business applications, and other data sources through XMPro Data Streams, for continuous improvement in equipment failure prevention and process optimization.
 - **Multi-Agent Collaboration**: AI agents functioning as virtual workers to perform various operational roles and tasks.
 - **Real-time**: Execution of specialized functions such as reliability engineering and root cause analysis by agent teams.
-- **Adaptive Decision Making**: Agents can create and modify plans to achieve goals, adapting to changing circumstances in their environment.
-- **Integration**: Seamless connection with real-time sensors, business applications, and other data sources through XMPro Data Streams, for continuous improvement in equipment failure prevention and process optimization.
 - **Scalable architecture**: Capable of deploying multiple agent teams based on specific operational needs and complexities.
-- **APEX AgentOps**: [AgentOps](docs/concepts/agentopsapex.md) for Scaling Multi Agent Generative Systems in complex industrial environments
 
 ## Repository Structure
 - [`/docs`](docs): Comprehensive documentation (see Documentation section for details)
 - [`/src`](src): Source code for XMPro MAGS components
-- [`/accessibility`](docs/accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
 
 ## Documentation
 Our comprehensive documentation is organized in the `/docs` folder:
+- [`/accessibility`](docs/accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
 - [`/architecture`](docs/architecture): Detailed architecture diagrams for MAGS sub-processes
-- [`/naming-conventions`](docs/naming-conventions): Explanation of naming conventions used throughout the project
-- [`/technical-details`](docs/technical-details): In-depth technical explanations with diagrams
 - [`/concepts`](docs/concepts): Exploration of key concepts, ideas, and methodologies underlying XMPro AI Agents
 - [`Glossary.md`](docs/Glossary.md): A comprehensive glossary covering:
   - Fundamental concepts in generative AI
   - Multi-Agent system architectures
   - XMPro-specific terminology and tools
   - Industry-standard AI and machine learning terms
+- [`/naming-conventions`](docs/naming-conventions): Explanation of naming conventions used throughout the project
+- [`/technical-details`](docs/technical-details): In-depth technical explanations with diagrams
 
 For a quick start, we recommend beginning with the [Glossary](/docs/Glossary.md) to familiarize yourself with key concepts and terminology used in the XMPro AI Agents project.
 
@@ -56,9 +56,11 @@ For a quick start, we recommend beginning with the [Glossary](/docs/Glossary.md)
 
 To set up the XMPro AI Agents system, follow these main steps:
 
-1. Configure Neo4j database
-2. Install system options
-3. Load the prompt library
+1. Ensure you have the pre-requisites installed and available
+2. Configure the Neo4j graph database
+    - Install system options
+    - Load the prompt library
+    - Load the tool library
 
 For detailed installation instructions, please refer to the [Installation Guide](docs/installation.md).
 
@@ -72,7 +74,7 @@ For detailed information about our agent structure, including concepts, ideas, a
 
 ## License
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -90,15 +92,17 @@ We value your feedback and are here to assist you with any issues or questions y
 
 ## References
 
-1. [[2304.03442] Generative Agents: Interactive Simulacra of Human Behavior (arxiv.org)](https://arxiv.org/abs/2304.03442 "https://arxiv.org/abs/2304.03442")
+- [[2304.03442] Generative Agents - Interactive Simulacra of Human Behavior (arxiv.org)](https://arxiv.org/abs/2304.03442 "https://arxiv.org/abs/2304.03442")
 
-2. [Part 1: From Railroads to AI: The Evolution of Game-Changing Utilities](https://xmpro.com/part-1-from-railroads-to-ai-the-evolution-of-game-changing-utilities/)
+- [Part 1: From Railroads to AI - The Evolution of Game-Changing Utilities](https://xmpro.com/part-1-from-railroads-to-ai-the-evolution-of-game-changing-utilities/)
 
-3. [Part 2: The Future of Work: Harnessing Generative Agents in Manufacturing](https://xmpro.com/part2-the-future-of-work-harnessing-generative-agents-in-manufacturing/)
+- [Part 2: The Future of Work - Harnessing Generative Agents in Manufacturing](https://xmpro.com/part2-the-future-of-work-harnessing-generative-agents-in-manufacturing/)
 
-4. [Part 3: AI at the Core: LLMs and Data Pipelines for Industrial Multi-Agent Generative Systems](https://xmpro.com/part-3-ai-at-the-core-llms-and-data-pipelines-for-industrial-multi-agent-generative-systems/)
+- [Part 3: AI at the Core - LLMs and Data Pipelines for Industrial Multi-Agent Generative Systems](https://xmpro.com/part-3-ai-at-the-core-llms-and-data-pipelines-for-industrial-multi-agent-generative-systems/)
 
-5. [Part 4: Pioneering Progress | Real-World Applications of Multi-Agent Generative Systems](https://xmpro.com/part-4-pioneering-progress-real-world-applications-of-multi-agent-generative-systems/)
+- [Part 4: Pioneering Progress - Real-World Applications of Multi-Agent Generative Systems](https://xmpro.com/part-4-pioneering-progress-real-world-applications-of-multi-agent-generative-systems/)
+
+- [Part 5: Rules of Engagement - Establishing Governance for Multi-Agent Generative Systems](https://xmpro.com/part-5-rules-of-engagement-establishing-governance-for-multi-agent-generative-systems/)
 
 ---
 

@@ -59,7 +59,7 @@ Tag naming and value conventions:
 
 The tracing functionality is implemented in the `OpenTelemetrySetup` class:
 
-```csharp
+```C#
 public class OpenTelemetrySetup : IDisposable
 {
     // ... other members ...
@@ -92,7 +92,7 @@ public class OpenTelemetrySetup : IDisposable
 
 To create a new activity:
 
-```csharp
+```C#
 using var activity = _otelSetup.StartActivity("plan and solve strategy", "generate plan", Agent.AgentId);
 ```
 
@@ -135,7 +135,7 @@ This results in:
 
 ### Tracing in a Strategy Class
 
-```csharp
+```C#
 public class PlanAndSolveStrategy
 {
     private readonly OpenTelemetrySetup _otelSetup;

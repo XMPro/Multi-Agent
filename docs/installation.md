@@ -4,23 +4,25 @@ This guide provides detailed instructions for setting up the XMPro AI Agents sys
 
 ## Required Prerequisites
 
-- A licenced installation of XMPro
+- A licensed installation of XMPro
 - Neo4j Graph Database
-- Milvus Vector Database (Multiple collection support)
-- MQTT Broker
+- Milvus or Qdrant Vector Database (Multiple collection support)
+- Message broker: MQTT Broker
 - A Large Language Model Provider - for embedding (minimum 1, maximum 1)
     - Azure Open AI
+    - Google
     - Ollama
     - Open AI
-- A Large Language Model Provider - for inference (minimum 1, all 3)
+- A Large Language Model Provider - for inference (minimum 1, maximum 5)
     - Azure Open AI
+    - Anthropic
+    - Google
     - Ollama
     - Open AI
 
 ## Optional
 - Open Telemetry (If required)
     - OTLP
-    - Azure Monitor
 
 ## Setup Steps
 
@@ -32,18 +34,21 @@ Run the following commands in your Neo4j database to create necessary constraint
 CREATE CONSTRAINT agent_profile_id_unique IF NOT EXISTS FOR (p:AgentProfile) REQUIRE p.profile_id IS UNIQUE;
 CREATE CONSTRAINT agent_instance_id_unique IF NOT EXISTS FOR (a:AgentInstance) REQUIRE a.agent_id IS UNIQUE;
 CREATE CONSTRAINT memory_id_unique IF NOT EXISTS FOR (m:Memory) REQUIRE m.id IS UNIQUE;
-CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (p:Decision) REQUIRE p.id IS UNIQUE;
 CREATE CONSTRAINT prompt_id_unique IF NOT EXISTS FOR (p:Prompt) REQUIRE p.prompt_id IS UNIQUE;
 CREATE CONSTRAINT tool_name_unique IF NOT EXISTS FOR (t:Tool) REQUIRE t.name IS UNIQUE;
+CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (d:Decision) REQUIRE d.decision_id IS UNIQUE;
+CREATE CONSTRAINT artifact_id_unique IF NOT EXISTS FOR (a:Artifact) REQUIRE a.id IS UNIQUE;
+CREATE CONSTRAINT plan_id_unique IF NOT EXISTS FOR (p:Artifact) REQUIRE (p.id IS UNIQUE AND p.type = 'Plan');
 
 CREATE INDEX team_id_idx IF NOT EXISTS FOR (t:Team) ON (t.team_id);
-
 CREATE INDEX memory_created_date_idx IF NOT EXISTS FOR (m:Memory) ON (m.created_date);
 CREATE INDEX memory_type_idx IF NOT EXISTS FOR (m:Memory) ON (m.type);
 CREATE INDEX memory_importance_idx IF NOT EXISTS FOR (m:Memory) ON (m.importance);
-
 CREATE INDEX prompt_internal_name_idx IF NOT EXISTS FOR (p:Prompt) ON (p.internal_name);
 CREATE INDEX prompt_id_idx IF NOT EXISTS FOR (p:Prompt) ON (p.prompt_id);
+CREATE INDEX artifact_type_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type);
+CREATE INDEX plan_status_idx IF NOT EXISTS FOR (p:Artifact) ON (p.status) WHERE p.type = 'Plan';
+CREATE INDEX plan_active_idx IF NOT EXISTS FOR (p:Artifact) ON (p.active) WHERE p.type = 'Plan';
 ```
 
 ### 2. System Options Installation
@@ -61,7 +66,7 @@ CREATE (so:SystemOptions {
   id: 'SYSTEM-OPTIONS',
   reserved_fields_observation: ['user_query', 'knowledge_context'],
   reserved_fields_reflection: ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
-  models_providers: ['Anthropic', 'Google', 'AzureOpenAI', 'Ollama', 'OpenAI'],
+  models_providers: ['Anthropic', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   prompt_access_levels: '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -112,32 +117,28 @@ RETURN so
 
 ### 3. Prompt Library Installation
 
-| Internal Name | Description |
-|---------------|-------------|
-| conversation_prompt | A generic prompt for handling conversations with various types of agents. |
-| conversation_observation_prompt | A generic prompt to check if an observation is required based on the conversation. |
-| conversation_summary_prompt | A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant. |
-| final_pddl_plan_prompt | A prompt to generate the final PDDL plan incorporating all improvements and solving the original problem. |
-| importance_prompt | A prompt to rate the importance of an observation or a reflection on a scale of 0 to 1, with a customizable importance threshold. |
-| planning_decision_prompt | A prompt to decide whether a new plan is needed based on the agent's current state, goals, and recent memories. |
-| reflection_plan_analysis_prompt | A prompt to analyze recent reflections, determine if a new plan is needed, and potentially define a new goal. |
-| subtask_plan_formulation_prompt | A prompt to formulate a plan for solving a specific subtask within the context of a PDDL problem. |
-| task_decomposition_prompt | A prompt to decompose a complex task into smaller, manageable subtasks based on the problem understanding. |
-| tool_results_prompt | A prompt to generate an updated response based on tool results and check if a new observation is needed. |
-| understand_problem_prompt | A prompt to analyze goals, and provide a summary. |
-
 Execute the following Cypher query to set up system prompts:
 
 ```cypher
 // Create Prompt Library
-CREATE (p:Library {name: "Main Prompt Library", type: "Prompt", created_date: datetime()})
+MERGE (p:Library {name: "Main Prompt Library"})
+ON CREATE SET p.type = "Prompt", p.created_date = datetime()
 
+// Create Prompts
 CREATE (p1:Prompt {
-  prompt_id: "XMAGS-IMPORTANCE-PROMPT-001",
-  name: "Importance",
-  internal_name: "importance_prompt",
-  prompt: "Rate the importance of the following observation on a scale of 0 to 1, where 0 is completely unimportant and 1 is extremely important. The threshold for importance is {threshold}:\n\n{content}\n\nImportance score:",
-  reserved_fields: ["threshold", "content"],
+  prompt_id: "XMAGS-TOOLRESULT-PROMPT-001",
+  name: "Tool Results",
+  internal_name: "tool_results_prompt",
+  prompt: "
+Based on the following information:
+
+Original prompt: {original_prompt}
+
+Previous response: {previous_response}
+
+Please provide an updated response.
+  ",
+  reserved_fields: ["original_prompt", "previous_response"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),
@@ -146,7 +147,7 @@ CREATE (p1:Prompt {
   type: "system",
   category: "memory_cycle",
   tags: ["observation", "reflection"],
-  description: "A prompt to rate the importance of an observation or a reflection on a scale of 0 to 1, with a customizable importance threshold.",
+  description: "Instructs the AI to provide an updated response based on the results of tool usage.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
@@ -156,32 +157,46 @@ CREATE (p1:Prompt {
 (p)-[:CONTAINS]->(p1)
 
 CREATE (p2:Prompt {
-  prompt_id: "XMAGS-PLANNINGDECISION-PROMPT-001",
-  name: "Planning Decision",
-  internal_name: "planning_decision_prompt",
-  prompt: "Based on the following information, decide if a new plan is needed:
+  prompt_id: "XMAGS-CONVERSATION-PROMPT-001",
+  name: "Conversation",
+  internal_name: "conversation_prompt",
+  prompt: "Current timestamp: {current_timestamp}
 
-Recent memories: {recent_memories}
-Current state: {current_state}
-Current goals: {current_goals}
-New goal from reflections: {new_goal_from_reflections}
-Time for planning: {time_for_planning}
-Current plan valid: {current_plan_valid}
-Current plan details: {current_plan_details}
-Goals being met: {goals_being_met}
-New plan needed based on reflections: {new_plan_needed}
+Conversation history:
+{conversation_history}
 
-Provide your decision as 'Yes' or 'No', followed by a brief explanation.",
-  reserved_fields: ["recent_memories", "current_state", "current_goals", "new_goal_from_reflections", "time_for_planning", "current_plan_valid", "current_plan_details", "goals_being_met", "new_plan_needed"],
+Context information:
+{knowledge_context}
+
+Available tools:
+{available_tools}
+
+To suggest a tool for use, include 'SUGGEST_TOOL: ToolName: <the user's original question>' in your response.
+
+Current user input: {user_query}
+
+Please provide a response that:
+1. Addresses the user's input directly.
+2. Incorporates relevant information from the conversation history and context.
+3. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information. Always use the syntax 'SUGGEST_TOOL: ToolName: <user's original question>' when suggesting a tool. Do not attempt to create or modify queries yourself. Pass the user's question directly to the tool.
+4. Maintains a consistent and appropriate tone throughout the conversation.
+5. Asks for clarification if the user's intent is unclear.
+6. Does not include any additional comments about running the query or needing confirmation.
+7. CRITICAL: Do not provide any information that you don't have direct access to. Do not assume or fabricate any data or results. If you need information to answer the question, only suggest using a tool to obtain it.
+
+Your response must include at least one tool suggestion if relevant to answering the query. Do not provide any fake or assumed results from tool usage. Do not speculate about what the results might be. Do not ask for confirmation to use the tool.  
+
+Begin your response now:",
+  reserved_fields: ["current_timestamp", "conversation_history", "knowledge_context", "available_tools", "user_query"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),
   active: true,
   version: 1,
   type: "system",
-  category: "memory_cycle",
-  tags: ["decision-making", "planning"],
-  description: "A prompt to decide whether a new plan is needed based on the agent's current state, goals, and recent memories.",
+  category: "conversation",
+  tags: ["conversation"],
+  description: "Guides the AI in generating contextual responses during conversations, considering history, available tools, and user input.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
@@ -191,164 +206,7 @@ Provide your decision as 'Yes' or 'No', followed by a brief explanation.",
 (p)-[:CONTAINS]->(p2)
 
 CREATE (p3:Prompt {
-  prompt_id: "XMAGS-REFLECTIONPLANANALYSIS-PROMPT-001",
-  name: "Reflection Plan Analysis",
-  internal_name: "reflection_plan_analysis_prompt",
-  prompt: "Analyze the following recent reflections and determine if a new plan is needed. If so, provide a concise goal statement.\n\nRecent reflections:\n{recent_reflections}\nCurrent goals: \n{current_goals}\n\nRespond with 'New plan needed: Yes/No' followed by 'New goal: [goal statement]' if a new plan is needed.",
-  reserved_fields: ["recent_reflections", "current_goals"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "memory_cycle",
-  tags: ["goal-setting", "reflection-analysis", "planning"],
-  description: "A prompt to analyze recent reflections, determine if a new plan is needed, and potentially define a new goal.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p3)
-
-CREATE (p4:Prompt {
-  prompt_id: "XMAGS-UNDERSTANDPROBLEM-PROMPT-001",
-  name: "Understanding Goal Analysis",
-  internal_name: "understand_problem_prompt",
-  prompt: "Analyze the following goal and provide a concise summary of the key elements, objectives, and constraints:\n\nGoal: {goal}",
-  reserved_fields: ["goal"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "plan_solve_strategy",
-  tags: ["planning"],
-  description: "A prompt to analyze goals, and provide a summary.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p4)
-
-CREATE (p5:Prompt {
-  prompt_id: "XMAGS-TASKDECOMP-PROMPT-001",
-  name: "Task Decomposition",
-  internal_name: "task_decomposition_prompt",
-  prompt: "Based on this understanding of the problem:\n{understanding}\n\nDecompose the overall task into a list of smaller, manageable subtasks. Each subtask should be a step towards solving the overall problem.  I want a MAXIMUM of 5 subtasks do NOT exceed this. Choose the top 5 as the most important subtasks.  You do not have to create 5 if you can accomplish this in fewer subtasks, 5 is your MAXIMUM.\n\n## Response Format
-
-### Subtasks
-[Provide a numbered list of subtasks, you can provide sub bullets if required.]",
-  reserved_fields: ["understanding"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "plan_solve_strategy",
-  tags: ["task-decomposition", "subtasks", "planning"],
-  description: "A prompt to decompose a complex task into smaller, manageable subtasks based on the problem understanding.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p5)
-
-CREATE (p6:Prompt {
-  prompt_id: "XMAGS-SUBTASKPLAN-PROMPT-001",
-  name: "Subtask Plan Formulation",
-  internal_name: "subtask_plan_formulation_prompt",
-  prompt: "Formulate a plan for solving this subtask within the context of the PDDL problem: '{subtask}'. Describe the approach and any key actions or decisions.",
-  reserved_fields: ["subtask"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "plan_solve_strategy",
-  tags: ["subtask-planning", "plan-formulation", "planning"],
-  description: "A prompt to formulate a plan for solving a specific subtask within the context of a PDDL problem.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p6)
-
-CREATE (p7:Prompt {
-  prompt_id: "XMAGS-FINALPDDLPLAN-PROMPT-001",
-  name: "Final PDDL Plan",
-  internal_name: "final_pddl_plan_prompt",
-  prompt: "Given the following information:
-
-Goal: {goal}
-
-Problem Understanding: {understanding}
-
-Subtasks: {sub_tasks}
-
-Subtask Plans: {sub_task_Plans}
-
-Generate a complete PDDL plan that solves the problem. Your response should include:
-
-1. A PDDL domain definition with appropriate types, predicates, and actions.
-2. A PDDL problem definition that matches the domain and represents the initial state and goal.
-3. A sequence of PDDL actions that solve the problem, incorporating the plans for each subtask.
-
-Ensure the plan is properly formatted and includes all necessary elements for a valid PDDL representation. The actions should be in the correct order to achieve the goal, taking into account the relationships between subtasks.",
-  reserved_fields: ["goal", "understanding", "sub_tasks", "sub_task_Plans"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "plan_solve_strategy",
-  tags: ["PDDL", "plan-generation", "final-plan", "planning"],
-  description: "A prompt to generate the final PDDL plan incorporating all improvements and solving the original problem.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p7)
-
-CREATE (p8:Prompt {
-  prompt_id: "XMAGS-TOOLRESULTS-PROMPT-001",
-  name: "Tool Results",
-  internal_name: "tool_results_prompt",
-  prompt: "Based on the following information:\n\nOriginal prompt: {original_prompt}\n\nPrevious response: {previous_response}\n\nPlease provide an updated response. After your response, on a new line, write 'OBSERVATION_NEEDED: Yes' if you think a new observation should be made based on this interaction, or 'OBSERVATION_NEEDED: No' if not.",
-  reserved_fields: ["original_prompt", "previous_response"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "conversation",
-  tags: ["tool", "observation"],
-  description: "A prompt to generate an updated response based on tool results and check if a new observation is needed.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p8)
-
-CREATE (p9:Prompt {
-  prompt_id: "XMAGS-CONVSUMMARY-PROMPT-001",
+  prompt_id: "XMAGS-CONVOSUMMARY-PROMPT-001",
   name: "Conversation Summary",
   internal_name: "conversation_summary_prompt",
   prompt: "Summarize the following conversation so it can be used in a future conversation:
@@ -365,67 +223,18 @@ Assistant: {agent_response}
   version: 1,
   type: "system",
   category: "conversation",
-  tags: ["summary", "conversation"],
-  description: "A prompt to generate a one-sentence summary of a conversation between a user and an AI assistant.",
-  last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p9)
-
-CREATE (p10:Prompt {
-  prompt_id: "XMAGS-CONV-PROMPT-001",
-  name: "Conversation Generic",
-  internal_name: "conversation_prompt",
-  prompt: "Current timestamp: {current_timestamp}
-
-Conversation history:
-{conversation_history}
-
-Context information:
-{knowledge_context}
-
-Available tools:
-{available_tools}
-
-To suggest a tool for use, include 'SUGGEST_TOOL: ToolName: "the user's original question"' in your response.
-
-Current user input: {user_query}
-
-Please provide a response that:
-1. Addresses the user's input directly.
-2. Incorporates relevant information from the conversation history and context.
-3. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information. Always use the syntax 'SUGGEST_TOOL: ToolName: "user's original question"' when suggesting a tool. Do not attempt to create or modify queries yourself. Pass the user's question directly to the tool.
-4. Maintains a consistent and appropriate tone throughout the conversation.
-5. Asks for clarification if the user's intent is unclear.
-6. Does not include any additional comments about running the query or needing confirmation.
-7. CRITICAL: Do not provide any information that you don't have direct access to. Do not assume or fabricate any data or results. If you need information to answer the question, only suggest using a tool to obtain it.
-
-Your response must include at least one tool suggestion if relevant to answering the query. Do not provide any fake or assumed results from tool usage. Do not speculate about what the results might be. Do not ask for confirmation to use the tool.  
-
-Begin your response now:",
-  reserved_fields: ["conversation_history", "knowledge_context", "available_tools", "user_query", "current_timestamp"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "conversation",
   tags: ["conversation"],
-  description: "A generic prompt for handling conversations with various types of agents.",
+  description: "Instructs the AI to create a concise summary of a conversation for future reference.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
   max_tokens: 2000,
   access_level: "system"
 }),
-(p)-[:CONTAINS]->(p10)
+(p)-[:CONTAINS]->(p3)
 
-CREATE (p11:Prompt {
-  prompt_id: "XMAGS-CONVOBSERVATION-PROMPT-001",
+CREATE (p4:Prompt {
+  prompt_id: "XMAGS-CONVOOBSERVE-PROMPT-001",
   name: "Conversation Observation",
   internal_name: "conversation_observation_prompt",
   prompt: "Analyze the following response and determine if it contains information that warrants creating a new observation. Consider the following criteria:
@@ -438,7 +247,7 @@ CREATE (p11:Prompt {
 Response to analyze:
 {response}
 
-Based on these criteria, should a new observation be created? Respond with ONLY 'Yes' or 'No'.",
+Based on these criteria, should a new observation be created? Respond with only 'Yes' or 'No'.",
   reserved_fields: ["response"],
   author: "XMPro",
   created_date: datetime(),
@@ -447,8 +256,287 @@ Based on these criteria, should a new observation be created? Respond with ONLY 
   version: 1,
   type: "system",
   category: "conversation",
-  tags: ["observation", "conversation"],
-  description: "A generic prompt to check if an observation is required based on the conversation.",
+  tags: ["conversation", "observation"],
+  description: "Directs the AI to analyze a conversation response and determine if it warrants creating a new observation.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p4)
+
+CREATE (p5:Prompt {
+  prompt_id: "XMAGS-MEMORYIMPORTANT-PROMPT-001",
+  name: "Memory Importance",
+  internal_name: "importance_prompt",
+  prompt: "Rate the importance of the following observation on a scale of 0 to 1, where 0 is completely unimportant and 1 is extremely important. The threshold for importance is {threshold}:
+
+{content}
+
+Importance score:",
+  reserved_fields: ["threshold", "content"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "memory_cycle",
+  tags: ["conversation", "observation"],
+  description: "Asks the AI to rate the importance of an observation or reflection on a scale of 0 to 1.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p5)
+
+CREATE (p6:Prompt {
+  prompt_id: "XMAGS-PLANDECISION-PROMPT-001",
+  name: "Plan Decision",
+  internal_name: "plan_decision_prompt",
+  prompt: "Based on the following information, decide if a new plan is needed or if the current plan should be adjusted or if the current plan is sufficient:
+
+### Current plan: 
+{current_plan}
+
+### Current state: 
+{current_state}
+
+### Adaptation factors: 
+{adaptation_factors}
+
+### New goal from reflections: 
+{new_goal_from_reflections}
+
+### Current plan valid: 
+{current_plan_valid}
+
+### Initial assessment: 
+{initial_assessment}
+
+## Response Format
+Provide your decision as 'Yes' for a new plan or a plan adjustment is needed or 'No' if no plan is needed or the current plan is sufficient. 
+[Reply ONLY Yes/No]
+### Explanation
+[provide a brief explanation for your decision]",
+  reserved_fields: ["current_plan", "current_state", "adaptation_factors", "new_goal_from_reflections", "current_plan_valid", "initial_assessment"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan", "reflection"],
+  description: "Directs the AI to decide whether a new plan is needed or if the current plan should be adjusted based on various factors",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p6)
+
+CREATE (p7:Prompt {
+  prompt_id: "XMAGS-PLANREFLECT-PROMPT-001",
+  name: "Planning Reflection",
+  internal_name: "planning_reflection_analysis_prompt",
+  prompt: "Analyze the following recent reflections and determine if a new goal is needed. Consider the current plan and goals when making your decision.
+        
+Recent reflections:
+{recent_reflections}
+        
+Current goals: 
+{current_goals}
+        
+Current plan:
+{current_plan}
+
+## Response Format
+'Yes/No' 
+### New goal
+[goal statement if a new plan or an update is needed].
+
+Provide a brief explanation for your decision, considering how the recent reflections align with or diverge from the current plan and goals.",
+  reserved_fields: ["recent_reflections", "current_goals", "current_plan"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan", "reflection"],
+  description: "Guides the AI in analyzing recent reflections to determine if a new goal is needed.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p7)
+
+CREATE (p8:Prompt {
+  prompt_id: "XMAGS-PLANCHANGERSS-PROMPT-001",
+  name: "Planning Change Resources",
+  internal_name: "planning_resource_changes_prompt",
+  prompt: "Analyze the current plan, its goal, and the agent's available resources. 
+Identify any resource changes that might require plan adaptation:
+Current Plan Goal: {plan_goal}
+Agent Resources:
+- Available Tools: {available_tools}
+Consider the following:
+1. Are all tools necessary for achieving the plan's goal still available?
+2. Are there new tools available that could help achieve the goal more efficiently?
+3. Have any changes in tool availability significantly impacted the feasibility of achieving the goal?
+
+Provide a list of adaptation factors in the following structured format:
+
+## Response Format
+
+1. Description: [Describe the adaptation factor]
+   Impact Level: [High/Medium/Low]
+   Recommended Action: [Describe the recommended action]
+2. Description: [Describe the adaptation factor]
+   Impact Level: [High/Medium/Low]
+   Recommended Action: [Describe the recommended action]
+[Continue with additional factors as needed]
+
+Focus on how changes in tool availability might affect the agent's ability to achieve the stated goal. Ensure each factor is numbered and follows the exact format provided above.",
+  reserved_fields: ["plan_goal", "available_tools"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan"],
+  description: "Directs the AI to identify resource changes that might require plan adaptation.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p8)
+
+CREATE (p9:Prompt {
+  prompt_id: "XMAGS-PLANCHANGETIME-PROMPT-001",
+  name: "Planning Change Time",
+  internal_name: "planning_time_constraints_prompt",
+  prompt: "Analyze the current plan, its goal, and time constraints. Identify any time-related issues that might require plan adaptation:
+
+Current Plan Goal: {plan_goal}
+Current Time: {current_time}
+
+Consider how any changes in time constraints might affect the agent's ability to achieve the stated goal.
+
+Provide a list of adaptation factors in the following structured format:
+
+## Response Format
+
+1. Description: [Describe the adaptation factor]
+   Impact Level: [High/Medium/Low]
+   Recommended Action: [Describe the recommended action]
+2. Description: [Describe the adaptation factor]
+   Impact Level: [High/Medium/Low]
+   Recommended Action: [Describe the recommended action]
+[Continue with additional factors as needed]
+
+Focus on how changes in timing might affect the agent's ability to achieve the stated goal. Ensure each factor is numbered and follows the exact format provided above.",
+  reserved_fields: ["plan_goal", "current_time"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan"],
+  description: "Instructs the AI to analyze time-related issues that might necessitate plan adaptation.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p9)
+
+CREATE (p10:Prompt {
+  prompt_id: "XMAGS-PLANCHANGEINFO-PROMPT-001",
+  name: "Planning Change New Information",
+  internal_name: "planning_new_information_prompt",
+  prompt: "Analyze the current plan, its goal, and recent memories. Identify any new information that might require plan adaptation:
+
+Current Plan Goal: {plan_goal}
+Recent Memories: {recent_memories}
+
+Consider how any new information might affect the agent's ability to achieve the stated goal.
+
+Provide a list of adaptation factors in the following structured format:
+
+## Response Format
+
+1. Description: [Describe the adaptation factor]
+   Impact Level: [High/Medium/Low]
+   Recommended Action: [Describe the recommended action]
+2. Description: [Describe the adaptation factor]
+   Impact Level: [High/Medium/Low]
+   Recommended Action: [Describe the recommended action]
+[Continue with additional factors as needed]
+
+Focus on how new information might affect the agent's ability to achieve the stated goal. Ensure each factor is numbered and follows the exact format provided above.",
+  reserved_fields: ["plan_goal", "recent_memories"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan"],
+  description: "Guides the AI in identifying new information that might require plan adaptation.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p10)
+
+CREATE (p11:Prompt {
+  prompt_id: "XMAGS-PLANPROBLEMUNDERSTAND-PROMPT-001",
+  name: "Planning Understanding Problem",
+  internal_name: "plan_understand_problem_prompt",
+  prompt: "Analyze the following goal and provide a concise summary of the key elements, objectives, and constraints, considering the capabilities of the team:
+
+Goal: {goal}
+
+Team Capabilities:
+{team_capabilities}
+
+Your response should include:
+1. A brief restatement of the main objective
+2. Identification of key components or sub-goals
+3. Any implicit or explicit constraints
+4. Potential challenges or considerations
+5. How different team members' capabilities might be leveraged to achieve the goal
+
+Provide your analysis in a clear, structured format.",
+  reserved_fields: ["goal", "team_capabilities"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan"],
+  description: "Guides the AI in analyzing a goal and team capabilities to provide a comprehensive problem understanding.",
   last_used_date: null,
   model_provider: "Ollama",
   model_name: "llama3",
@@ -456,10 +544,205 @@ Based on these criteria, should a new observation be created? Respond with ONLY 
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p11)
+
+CREATE (p12:Prompt {
+  prompt_id: "XMAGS-PLANPDDL-PROMPT-001",
+  name: "Planning Generate PDDL",
+  internal_name: "plan_generate_pddl_prompt",
+  prompt: "Given the following goal, problem understanding, team capabilities, and available actions, generate a complete PDDL plan:
+
+Goal: {goal}
+Problem Understanding:
+{understanding}
+
+Team Capabilities:
+{team_capabilities}
+
+Available Actions:
+{available_actions}
+
+Your response should include the following PDDL components, each clearly labeled and properly formatted:
+
+1. PDDL Domain Definition:
+   - Define appropriate types
+   - List all predicates
+   - Detail each action, including:
+     - Parameters
+     - Preconditions
+     - Effects
+   Note: Only include actions from the Available Actions list.
+
+2. PDDL Problem Definition:
+   - Define objects
+   - Specify the initial state
+   - State the goal condition
+
+3. PDDL Plan:
+   - Provide a sequence of actions that solve the problem
+   - Assign each action to a specific team member based on their capabilities
+   - Ensure the plan is valid and achieves the stated goal
+   - Only use actions defined in the domain and listed in Available Actions
+
+4. Plan Validation:
+   - Briefly explain why the plan is valid and how it achieves the goal
+   - If a valid plan cannot be generated, explain why and suggest what additional information or actions might be needed
+
+5. Optional: Efficiency Analysis
+   - Comment on the efficiency of the plan
+   - Suggest any potential optimizations or alternative approaches
+
+Please use proper PDDL syntax for each component. Separate each section clearly and use comments to explain any complex parts of the domain, problem, or plan.
+
+Example structure:
+
+```
+;; Domain Definition
+(define (domain domain-name)
+  (:requirements :typing :negative-preconditions)
+  (:types
+    ; List types here
+  )
+  (:predicates
+    ; List predicates here
+  )
+  (:action action-name
+    :parameters ()
+    :precondition ()
+    :effect ()
+  )
+  ; Add more actions as needed
+)
+
+;; Problem Definition
+(define (problem problem-name)
+  (:domain domain-name)
+  (:objects
+    ; List objects here
+  )
+  (:init
+    ; Specify initial state here
+  )
+  (:goal
+    ; State goal condition here
+  )
+)
+
+;; Plan
+; Action 1: (action-name parameters) ; Assigned to: Team Member
+; Action 2: (action-name parameters) ; Assigned to: Team Member
+; ...
+```
+
+Ensure that all PDDL elements are syntactically correct and logically consistent with the given goal, problem understanding, and team capabilities.",
+  reserved_fields: ["goal", "team_capabilities", "understanding", "available_actions"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan"],
+  description: "Directs the AI to create a complete PDDL plan based on a goal, problem understanding, and team capabilities.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p12)
+
+CREATE (p13:Prompt {
+  prompt_id: "XMAGS-PLANSOLVEADJ-PROMPT-001",
+  name: "Plan Solve Adjustment",
+  internal_name: "plan_solve_adjustment_prompt",
+  prompt: "Given the current plan and a new planning decision, adjust the PDDL plan to incorporate the new goal while maintaining relevant parts of the current plan:
+
+Current Plan:
+Goal: {current_goal}
+PDDL Plan: 
+```
+{current_pddl_plan}
+```
+
+New Planning Decision:
+Goal: {new_goal}
+Reasoning: {decision_reasoning}
+
+Please provide an adjusted PDDL plan that incorporates the new planning decision. Your response should include:
+
+1. Updated PDDL Domain Definition (if necessary):
+   - Highlight any new types, predicates, or actions added
+   - Explain why these additions are necessary
+
+2. Updated PDDL Problem Definition:
+   - Show changes to the initial state or objects (if any)
+   - Clearly state the new goal condition
+
+3. Adjusted PDDL Plan:
+   - Provide the full sequence of actions in the new plan
+   - Highlight which actions are new or modified
+   - Explain how these changes address the new goal
+
+4. Reasoning:
+   - Briefly explain how the adjusted plan incorporates the new planning decision
+   - Describe which parts of the original plan were maintained and why
+   - Justify any significant changes or removals from the original plan
+
+Please use proper PDDL syntax for all components. Separate each section clearly and use comments to explain any complex adjustments or reasoning.
+
+Example structure for your response:
+
+```
+;; Updated Domain Definition (if necessary)
+(define (domain updated-domain-name)
+  ; ... (include full updated domain definition)
+  ; Use comments to explain new or modified elements
+)
+
+;; Updated Problem Definition
+(define (problem updated-problem-name)
+  ; ... (include full updated problem definition)
+  ; Clearly show the new goal condition
+)
+
+;; Adjusted Plan
+; Action 1: (action-name parameters) ; New/Modified/Unchanged
+; Action 2: (action-name parameters) ; New/Modified/Unchanged
+; ...
+
+;; Reasoning
+; Explain adjustments and their rationale here
+```
+
+Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision.",
+  reserved_fields: ["current_goal", "current_pddl_plan", "new_goal", "decision_reasoning"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan", "plan_solve"],
+  description: "Instructs the AI to adjust an existing PDDL plan to incorporate new goals or planning decisions.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p13)
+
 ```
 
 ### 4. Tools Library Installation
 Execute the following Cypher query to set up the tool options:
+
+Edit the `SentimentAnalysisTool` to ensure it matches your environment on what you are enabling as model providers.
+
+For example if you are using *Ollama* then it should read as `models_providers: 'Ollama'`, there can only be one provider and model configured.
+
 
 ```cypher
 // Create Tool Library
@@ -690,13 +973,228 @@ CREATE (t)-[:HAS_METRICS]->(m:Metrics {
 ```
 
 ### 5. Agent Profiles
-[To be added]
+Agent profiles are essential components of the XMPro AI Agents system, defining the characteristics, capabilities, and behavior of each agent. They serve as templates for creating agent instances.
 
 #### Create Profiles
+XMPro MAGS provides a user-friendly interface for creating and managing agent profiles. You have three main options for creating profiles:
+
+1. **Wizard Creation**: 
+   The Team Creation or the Profile Creation Wizard guides you through the process of creating a new agent profile step-by-step. This option is ideal for users who are new to the system or prefer a guided approach. The wizard includes the following steps:
+
+   a. **Basic Information**: 
+      - Enter the agent's name and profile ID (following the naming convention).
+      - Select the agent's primary function (e.g., Water Quality Management, Predictive Maintenance).
+      - Choose the active status of the profile.
+
+   b. **Model Configuration**:
+      - Select the model provider and specific model to be used.
+      - Set the maximum token limit for responses.
+
+   c. **Cognitive Parameters**:
+      - Define decision parameters like collaboration preference and risk tolerance.
+      - Set memory parameters such as max recent memories and importance thresholds.
+
+   d. **Skills and Experience**:
+      - Add relevant skills from a predefined list or create custom skills.
+      - Describe the agent's simulated experience.
+
+   e. **Rules and Prompts**:
+      - Add deontic and organizational rules.
+      - Customize observation, reflection, and system prompts using templates.
+
+   f. **RAG Configuration**:
+      - Set up Retrieval-Augmented Generation parameters.
+      - Choose whether to use general RAG or specify a collection.
+
+   g. **Review and Create**:
+      - Review all entered information.
+      - Create the profile or go back to make changes.
+
+2. **Manual Creation**: 
+   Use the agent profile creation UI to manually input all the necessary details for a new agent profile. This option provides more flexibility and is suitable for experienced users who want fine-grained control over all aspects of the profile.
+
+3. **Import Existing**: 
+   Import pre-configured agent profiles from JSON files. This is useful for quickly setting up profiles that have been prepared in advance or for transferring profiles between different instances of the system.
+
+To create a new profile manually or import an existing one:
+
+Navigate to the Agent Profile management section in the XMPro MAGS administration interface.
+
+Choose either "Create New Profile" or "Import Profile" based on your preference.
+If creating manually, fill in all the required fields in the provided form.
+If importing, select the JSON file containing the agent profile configuration.
+
+#### Import Examples and Empty Template
+
+In the `./src/agent_profiles` directory, you'll find several examples of agent profiles that can be imported:
+
+- `predictive_maintenance_agent.md`
+- `simulation_and_scenario_analysis_agent.md`
+- `equipment_monitoring_and_diagnostics_agent.md`
+
+Additionally, an empty template is provided below for creating new profiles from scratch:
+
+```JSON
+{
+    "active": true,
+    "allowed_planning_method": ["Plan & Solve"],
+    "decision_parameters": {
+      "collaboration_preference": 0.9,
+      "innovation_factor": 0.85,
+      "planning_cycle_interval_seconds": 14400,
+      "risk_tolerance": 0.2
+    },
+    "deontic_rules": [
+      "MODIFY: Add or modify rules specific to the agent's role",
+      "Must provide evidence-based analysis",
+      "Must collaborate with other agents for comprehensive insights"
+    ],
+    "experience": "MODIFY: Describe the agent's simulated experience relevant to its role",
+    "interaction_preferences": {
+      "information_sharing_willingness": 0.95,
+      "preferred_communication_style": "MODIFY: Set to analytical, formal, or informal",
+      "query_response_detail_level": "medium"
+    },
+    "max_tokens": 2000,
+    "memory_parameters": {
+      "max_recent_memories": 150,
+      "memory_decay_factor": 0.994,
+      "observation_importance_threshold": 0.65,
+      "reflection_importance_threshold": 8
+    },
+    "model_name": "MODIFY: Set to the desired model name",
+    "model_provider": "MODIFY: Set to the desired model provider",
+    "name": "MODIFY: Set the agent's name",
+    "observation_prompt": "#MODIFY: Update the name here and below reference to reflect the agent profile. Logistics Coordination Specialist
+
+## Observation
+{user_query}
+
+## Relevant Knowledge
+{knowledge_context}
+
+As an AI agent specialized in logistics coordination for vaccine supply chains, analyze the given observation and relevant knowledge. Then:
+
+Optimize routes and modes of transport for vaccine shipments. Consider potential disruptions and provide contingency plans.
+
+## Response Format
+
+### Analysis
+[Provide a detailed analysis of the observation, considering the context and relevant knowledge, and provide me a summary and key points.]
+
+### Summary
+[Provide a brief and concise summary of the situation]
+
+### Key Points
+- [Key point 1]
+- [Key point 2]
+- [Key point 3]
+...",
+    "organizational_rules": [
+      "MODIFY: Add rules specific to the organization and agent's role",
+      "Ensure timely communication of critical information",
+      "Maintain a knowledge base of past experiences and resolutions"
+    ],
+    "performance_metrics": {
+        "MODIFY": "Add or modify metrics relevant to the agent's role",
+        "response_time": 45
+    },
+    "profile_id": "MODIFY: Set a unique profile ID following the naming convention",
+    "rag_collection_name": "MODIFY: Set the appropriate RAG collection name",
+    "rag_top_k": 10,
+    "rag_vector_size": 1536,
+    "reflection_prompt": "MODIFY: Update the first part of this and the consider section below. As a Logistics Coordination Specialist, reflect on these observations and past reflections, focusing on your performance in managing vaccine transportation and distribution.
+
+Consider the following:
+
+1. How effective were your route optimization strategies in ensuring timely and cost-effective deliveries?
+2. Are there any recurring logistical challenges or bottlenecks that need addressing?
+3. How well are you coordinating with other agents, especially the Cold Chain Integrity Manager, to ensure seamless and safe vaccine transport?
+4. Are there any areas where you can improve your disruption management and contingency planning?
+5. What new transportation technologies or methodologies should you explore to enhance logistics efficiency?
+
+Provide insights and actionable steps to enhance your performance as a logistics coordination specialist.
+
+You have the following characteristics:
+
+Skills:
+{skills}
+
+Experience:
+{experience}
+
+Deontic rules:
+{deontic_rules}
+
+Organizational rules:
+{organizational_rules}
+
+Relevant Knowledge:
+{knowledge_context}
+
+Recent observations:
+{recent_observations}
+
+Past reflections:
+{past_reflections}
+
+Available Tools:
+{available_tools}
+
+## Response Format
+
+### Analysis
+[Provide a detailed analysis, considering the context and relevant knowledge]
+
+### Summary
+[Provide a brief and concise summary of the situation and your recommendations]
+
+### Key Points
+- [Key point 1]
+- [Key point 2]
+- [Key point 3]
+...
+
+### Actionable Insights
+1. [Insight 1]
+2. [Insight 2]
+3. [Insight 3]
+...",
+    "skills": [
+      "MODIFY: List skills relevant to the agent's role",
+      "Statistical analysis",
+      "Machine learning techniques"
+    ],
+    "system_prompt": "MODIFY: Customize this prompt to define the agent's role and primary objectives",
+    "use_general_rag": true
+}
+```
+
+To use this template:
+
+1. Fields marked with "MODIFY:" should be customized for your specific agent profile.
+2. Fields without "MODIFY:" can typically be left as-is, but feel free to adjust if needed for your use case.
+3. For array fields (like "deontic_rules" or "skills"), you can add, remove, or modify items as necessary.
+4. Ensure all "MODIFY:" markers are removed from the final JSON before importing.
+5. **Important**: When setting the `profile_id`, make sure to follow the ID naming convention: `[Area]-[Function]-PROFILE-[Version]`. For example: `WTR-QUAL-PROFILE-001` for a Water Quality Profile.
+
+The ID naming convention ensures consistency across your agent profiles and aligns with the overall system architecture. Refer to the [Naming Convention - Id](naming-conventions/Id.md) document for more details on the naming structure.
+
+6. Copy the contents of above JSON.
+7. Create a new JSON file and paste the template contents.
+8. Fill in the details specific to your new agent profile.
+9. Save the file and use the "Import Profile" feature in the UI to add it to your system.
 
 #### Load Profiles
 
-## Troubleshooting
+Once profiles are created or imported, they can be easily loaded and managed through the XMPro MAGS administration interface:
+
+1. Navigate to the Agent Profile management section.
+2. You'll see a list of all available agent profiles.
+3. Use the search and filter options to find specific profiles if needed.
+4. Select a profile to view its details, edit its configuration, or use it to create agent instances.
+
+Remember to regularly review and update your agent profiles to ensure they remain aligned with your operational needs and take advantage of new capabilities as they're added to the system.
 
 ## Next Steps
 

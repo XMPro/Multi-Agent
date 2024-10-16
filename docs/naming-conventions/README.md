@@ -5,7 +5,7 @@ This folder contains documentation for the various naming conventions used in th
 ## Contents
 
 1. [Id.md](Id.md) - Naming conventions for identifiers
-2. [MQTT-Topic.md](MQTT-Topic.md) - Naming conventions for MQTT topics
+2. [Message-Broker-Topic.md](message-broker-topic.md) - Naming conventions for the Message Broker topics
 
 ## Overview
 
@@ -22,19 +22,19 @@ This convention is based on ISA-95 standards and adapted for our specific needs.
 
 For detailed information, please refer to [Id.md](Id.md).
 
-### MQTT Topic Naming Convention
+### Message Broker Topic Naming Convention
 
-The [MQTT Topic naming convention](MQTT-Topic.md) document describes the structure and rules for creating MQTT topics in our system. This convention is based on Unified Namespace (UNS) principles and is designed to:
+The [Message Broker Topic naming convention](message-broker-topic.md) document describes the structure and rules for creating message broker topics in our system. This convention is based on Unified Namespace (UNS) principles and is designed to:
 
 - Facilitate efficient communication
 - Allow easy topic filtering
 - Maintain alignment with industry standards
 
-For detailed information, please refer to [MQTT-Topic.md](MQTT-Topic.md).
+For detailed information, please refer to [Message-Broker-Topic.md](message-broker-topic.md).
 
 ## Usage
 
-When working on any part of the XMPro MAGS, please refer to these naming conventions to ensure consistency. If you're creating new entities, MQTT topics, or working with vector data, these documents will guide you in choosing appropriate names and structures.
+When working on any part of the XMPro MAGS, please refer to these naming conventions to ensure consistency. If you're creating new entities, topics, or working with vector data, these documents will guide you in choosing appropriate names and structures.
 
 ## Updating Conventions
 

@@ -1,12 +1,12 @@
-# Naming Convention - MQTT Topic
+# Naming Convention - Message Broker Topic
 
 ## Summary
 
-This document outlines the naming convention for MQTT topics used in the XMPro AI Agents system. The convention is based on Unified Namespace (UNS) principles, adapted for our specific Multi-Agent System (MAGS) needs. It provides a clear, hierarchical structure that facilitates efficient communication and easy topic filtering while maintaining alignment with industry standards.
+This document outlines the naming convention for the message broker topics used in the XMPro AI Agents system. The convention is based on Unified Namespace (UNS) principles, adapted for our specific Multi-Agent System (MAGS) needs. It provides a clear, hierarchical structure that facilitates efficient communication and easy topic filtering while maintaining alignment with industry standards.
 
 ## Structure
 
-The MQTT topic structure follows this UNS-aligned pattern:
+The topic structure follows this UNS-aligned pattern:
 
 `XMAGS/{team_id}/{prefix}/{message_type}/{agent_id}`
 
@@ -19,22 +19,47 @@ Where:
 
 ## Topic Types and Examples
 
+### 1. Conversation
+
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/DATA/chat/{agent_id}` | Incoming | Receive agent-specific conversations |
-| `XMAGS/{team_id}/DATA/chat_response/{agent_id}` | Incoming | Publish agent-specific conversations |
-| `XMAGS/{team_id}/DATA/observation` | Incoming | Receive team-wide observations |
-| `XMAGS/{team_id}/DATA/observation/{agent_id}` | Incoming | Receive agent-specific observations |
-| `XMAGS/{team_id}/EVT/error/{agent_id}` | Outgoing | Publish any errors the agent encounters |
-| `XMAGS/{team_id}/EVT/observation_result` | Outgoing | Publish results of processed team-wide observations |
+| `XMAGS/{team_id}/DATA/chat/{agent_id}`           | Incoming | Receive agent-specific conversations |
+| `XMAGS/{team_id}/EVT/chat_response/{agent_id}`   | Outgoing | Publish agent-specific conversations |
+
+### 2. Observation and Reflection
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/DATA/observation`                  | Incoming | Receive team-wide observations |
+| `XMAGS/{team_id}/DATA/observation/{agent_id}`       | Incoming | Receive agent-specific observations |
+| `XMAGS/{team_id}/EVT/observation_result`            | Outgoing | Publish results of processed team-wide observations |
 | `XMAGS/{team_id}/EVT/observation_result/{agent_id}` | Outgoing | Publish results of processed agent-specific observations |
-| `XMAGS/{team_id}/EVT/reflection_result` | Outgoing | Publish results of internally triggered team-wide reflections |
-| `XMAGS/{team_id}/EVT/reflection_result/{agent_id}` | Outgoing | Publish results of internally triggered agent-specific reflections |
-| `XMAGS/{team_id}/EVT/shutdown` | Outgoing | Publish team shutdown event |
-| `XMAGS/{team_id}/EVT/shutdown/{agent_id}` | Outgoing | Publish agent-specific shutdown event |
-| `XMAGS/{team_id}/EVT/startup` | Outgoing | Publish team startup event |
-| `XMAGS/{team_id}/EVT/startup/{agent_id}` | Outgoing | Publish agent-specific startup event |
-| `XMAGS/{team_id}/EVT/status` | Outgoing | Publish agent status event |
+| `XMAGS/{team_id}/EVT/reflection_result`             | Outgoing | Publish results of internally triggered team-wide reflections |
+| `XMAGS/{team_id}/EVT/reflection_result/{agent_id}`  | Outgoing | Publish results of internally triggered agent-specific reflections |
+
+### 3. Planning
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/CMD/plan_action`             | Outgoing | Publish the plan task actions in PDDL |
+| `XMAGS/{team_id}/EVT/plan_new`                | Outgoing | Publish the new plan |
+| `XMAGS/{team_id}/EVT/plan_new/{agent_id}`     | Outgoing | Publish the new plan |
+| `XMAGS/{team_id}/CMD/plan_task`               | Outgoing | Publish team-wide tasks in PDDL |
+| `XMAGS/{team_id}/EVT/plan_update`             | Outgoing | Publish the updated plan |
+| `XMAGS/{team_id}/EVT/plan_update/{agent_id}`  | Outgoing | Publish the updated plan |
+
+### 4. Lifecycle Events
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/EVT/shutdown/{agent_id}`  | Outgoing | Publish agent-specific shutdown event |
+| `XMAGS/{team_id}/EVT/startup/{agent_id}`   | Outgoing | Publish agent-specific startup event |
+
+### 5. Status and Errors
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/EVT/error/{agent_id}`  | Outgoing | Publish any errors the agent encounters |
 | `XMAGS/{team_id}/EVT/status/{agent_id}` | Outgoing | Publish agent-specific status event |
 
 ## Prefix Meanings
@@ -63,7 +88,7 @@ Where:
 ## Notes
 
 - All agents in a team subscribe to both their specific topics and the team-wide topics.
-- The structure allows for efficient use of MQTT wildcards for flexible subscriptions.
+- The structure allows for efficient use of wildcards for flexible subscriptions.
 - This naming convention aligns with Unified Namespace (UNS) principles while being tailored for the XMPro MAGS application.
 
 ## UNS Alignment
@@ -83,14 +108,14 @@ For more information on the naming conventions for team_id and agent_id, please 
 
 ## Rationale
 
-This MQTT topic structure, based on UNS principles, was designed with the following considerations:
+This topic structure, based on UNS principles, was designed with the following considerations:
 
 1. UNS Compatibility: Aligns with industry standards while meeting our specific needs.
 2. Hierarchy: Reflects the organizational structure from team to agent.
 3. Prefix-first approach: Allows easy querying of all messages of a certain type across teams and agents.
 4. Consistency: Maintains a consistent structure across all topic types.
 5. Scalability: Can accommodate additional teams, agents, or message types without structural changes.
-6. Efficiency: Optimized for MQTT wildcard subscriptions and message filtering.
+6. Efficiency: Optimized for wildcard subscriptions and message filtering.
 
 By following this UNS-based convention, we ensure clear, consistent, and efficient communication within our Multi-Agent System while maintaining alignment with broader industry practices.
 

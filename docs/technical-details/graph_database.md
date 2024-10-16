@@ -17,7 +17,9 @@ Components:
 
 ## Graph Database Nodes
 
-Our graph database consists of several types of nodes, each representing different entities in the XMPro AI Agents system. Here's an overview of the main node types and their properties:
+Our graph database consists of several types of nodes, each representing different entities in the XMPro MAGS system. 
+
+Here's an overview of the main node types and their properties:
 
 ### Artifact
 
@@ -25,32 +27,26 @@ Our graph database consists of several types of nodes, each representing differe
 |-------------|----------|------------------------------------------------|
 | created_date  | DateTime | Timestamp of when the instance was created     |
 | id          | String   | Unique identifier for the artifact       |
-| type        | String   | The type of artifact ( `Audit` or `Conversation` or `Plan` or `Subtask` or `Tool` )|
+| type        | String   | The type of artifact ( `Audit` or `Conversation` or `Plan` or `Tool` )|
 
 #### `Plan` Specific properties
 
 | Property             | Type     | Description                                              |
 |----------------------|----------|----------------------------------------------------------|
 | active               | Boolean  | Indicates if the plan is currently active                |
+| agent_id             | String  | The agent instances this plan belongs to                |
 | goal                 | String  | The goal of the plan                                     |
 | last_modified_date   | DateTime | Date and time when the plan was last modified            |
 | pddl_domain          | String  | PDDL domain description for the plan                     |
 | pddl_plan            | String  | PDDL plan generated                                      |
 | pddl_problem         | String  | PDDL problem description for the plan                    |
+| prompt               | String  | The prompt used                       |
 | response             | String  | Response associated with the plan                        |
 | status               | String  | Current status of the plan                               |
 | timestamp            | Integer  | Timestamp of the plan                                    |
 | total_api_calls      | Integer  | Total number of API calls made for the plan              |
 | total_response_time  | Integer  | Total time taken for responses related to the plan       |
 | total_token_usage    | Integer  | Total number of tokens used for the plan                 |
-
-#### `Subtask` Specific Properties
-
-| Property             | Type     | Description                                              |
-|----------------------|----------|----------------------------------------------------------|
-| description                 | String  | The description of the subtask                                     |
-| name               | String  | The name of the subtask                |
-| order   | Integer | The order of the subtask            |
 
 #### `Tool` Specific Properties
 
@@ -67,13 +63,15 @@ Our graph database consists of several types of nodes, each representing differe
 
 | Property           | Type     | Description                                    |
 |--------------------|----------|------------------------------------------------|
+| active             | Boolean  | Indicates if the instance is currently active  |
 | agent_id           | String   | Unique identifier for the agent instance       |
+| available_actions  | String (JSON) | List of available actions for this agent instance |
 | created_date       | DateTime | Timestamp of when the instance was created     |
 | last_modified_date | DateTime | Timestamp of when the instance was last modified |
 | name               | String   | Name of the agent instance                     |
 | profile_id         | String   | Id of the associated agent profile             |
 | task_prompt        | String   | The prompt used for the tasks of a plan        |
-| type               | String   | The type of agent instance                     |
+| type               | String   | The type of agent instance (`standard`, `content`) |
 | user_prompt        | String   | The initial prompt given to the agent instance |
 
 ---
@@ -84,7 +82,7 @@ Our graph database consists of several types of nodes, each representing differe
 |-------------------------|------------------|-------------------------------------------------------|
 | active                  | Boolean          | Indicates if the profile is currently active          |
 | allowed_planning_method | Array of Strings | List of planning methods available to this agent profile|
-| category                | String           | Category of the prompt                                |
+| category                | String           | Category of the profile                               |
 | created_date            | DateTime         | Timestamp of when the profile was created             |
 | decision_parameters     | String (JSON)    | Parameters for decision making                        |
 | deontic_rules           | Array of Strings | Rules governing the agent's behavior                  |
@@ -106,7 +104,7 @@ Our graph database consists of several types of nodes, each representing differe
 | reflection_prompt       | String           | Prompt template for reflections                       |
 | skills                  | Array of Strings | List of skills the agent possesses                    |
 | system_prompt           | String           | The system prompt for the agent                       |
-| tags                    | Array of Strings | Tags associated with the prompt                       |
+| tags                    | Array of Strings | Tags associated with the profile                      |
 | use_general_rag         | Boolean          | Whether to use general RAG or not                     |
 
 ---
@@ -115,21 +113,21 @@ Our graph database consists of several types of nodes, each representing differe
 
 | Property         | Type     | Description                                               |
 |------------------|----------|-----------------------------------------------------------|
-| created_date     | DateTime | Date and time when the observation was created            |
-| decision_id      | String  | Unique identifier for the decision                        |
-| goal             | String  | The goal of the observation                               |
-| max_tokens       | Integer          | Maximum number of tokens for responses                |
-| model_name       | String           | Name of the specific AI model                         |
-| model_provider   | String           | Provider of the AI model used                         |
-| reasoning        | String  | Reasoning behind the observation                          |
-| response_time    | String  | Time taken to generate the observation                    |
-| selected_method  | String  | Method selected for the observation                       |
-| timestamp        | Integer  | Timestamp of the observation                              |
-| token_usage      | Integer  | Number of tokens used in generating the observation       |
-| trigger_context  | String  | Context that triggered the observation                    |
-| trigger_reason   | String  | Reason for triggering the observation                     |
-| trigger_response | String  | Response to the trigger                                   |
-| type             | String   | Type of the artifact ( `Observation` or `Planning` )  |
+| created_date     | DateTime | Date and time when the decision was created            |
+| decision_id      | String   | Unique identifier for the decision                     |
+| goal             | String   | The goal of the decision                               |
+| max_tokens       | Integer  | Maximum number of tokens for responses                 |
+| model_name       | String   | Name of the specific AI model                          |
+| model_provider   | String   | Provider of the AI model used                          |
+| reasoning        | String   | Reasoning behind the decision                          |
+| response_time    | String   | Time taken to generate the decision                    |
+| selected_method  | String   | Method selected for the decision                       |
+| timestamp        | Integer  | Timestamp of the decision                              |
+| token_usage      | Integer  | Number of tokens used in generating the decision       |
+| trigger_context  | String   | Context that triggered the decision                    |
+| trigger_reason   | String   | Reason for triggering the decision                     |
+| trigger_response | String   | Response to the trigger                                |
+| type             | String   | Type of the decision ( `Observation` or `Planning` )   |
 
 #### `Planning` Specific Properties
 
@@ -145,10 +143,17 @@ Our graph database consists of several types of nodes, each representing differe
 
 | Property        | Type     | Description                                              |
 |-----------------|----------|----------------------------------------------------------|
-| created_date    | DateTime | Date and time when the entry was created    |
-| id              | String   | Unique identifier for the entry |
-| timestamp       | Integer  | Timestamp of the entry                      |
-| type            | String   | Type of the entry ( `Audit` or `Conversation` or `Planning` or `Tool` or `ToolLLM` )   |
+| created_date    | DateTime | Date and time when the entry was created                 |
+| id              | String   | Unique identifier for the entry                          |
+| timestamp       | Integer  | Timestamp of the entry                                   |
+| type            | String   | Type of the entry ( `Action` or `Audit` or `Conversation` or `Planning` or `Task` or `Tool` or `ToolLLM` )   |
+
+#### `Action` Specific Properties
+
+| Property       | Type     | Description                                        |
+|----------------|----------|----------------------------------------------------|
+| name           | String        | Name of the action                               |
+| last_modified_date | DateTime  | Timestamp of when the action was last modified   |
 
 #### `Audit` Specific Properties
 
@@ -161,26 +166,37 @@ Our graph database consists of several types of nodes, each representing differe
 
 | Property        | Type     | Description                                              |
 |-----------------|----------|----------------------------------------------------------|
-| prompt          | String  | The prompt used                       |
+| prompt          | String   | The prompt used                                          |
 | rag_query_time  | Integer  | Time taken for RAG (Retrieval-Augmented Generation) query|
-| response        | String  | The response generated                |
+| response        | String   | The response generated                                   |
 | response_time   | Integer  | Time taken to generate the response                      |
-| summary         | String  | Summary                               |
-| timestamp       | Integer  | Timestamp of the entry                      |
-| token_usage     | Integer  | Number of tokens used                 |
-| user_query      | String  | The query provided by the user                           |
+| summary         | String   | Summary                                                  |
+| timestamp       | Integer  | Timestamp of the entry                                   |
+| token_usage     | Integer  | Number of tokens used                                    |
+| user_query      | String   | The query provided by the user                           |
 
 #### `Planning` Specific Properties
 
 | Property        | Type     | Description                                              |
 |-----------------|----------|----------------------------------------------------------|
-| name            | String  | Name of the planning entry                               |
-| prompt          | String  | The prompt used                       |
+| name            | String   | Name of the planning entry                               |
+| prompt          | String   | The prompt used                                          |
 | rag_query_time  | Integer  | Time taken for RAG (Retrieval-Augmented Generation) query|
-| response        | String  | The response generated                |
+| response        | String   | The response generated                                   |
 | response_time   | Integer  | Time taken to generate the response                      |
-| timestamp       | Integer  | Timestamp of the entry                      |
-| token_usage     | Integer  | Number of tokens used                 |
+| timestamp       | Integer  | Timestamp of the entry                                   |
+| token_usage     | Integer  | Number of tokens used                                    |
+
+#### `Task` Specific Properties
+
+| Property       | Type     | Description                                        |
+|----------------|----------|----------------------------------------------------|
+| agent_id        | String           | Agent Instance this task is linked to                   |
+| description        | String           | Description of the task                   |
+| number        | Integer           | No of the task                   |
+| last_modified_date | DateTime  | Timestamp of when the task was last modified   |
+| pddl_step     | String           | The PDDL description of the task                   |
+| status        | String           | Status of the task                   |
 
 #### `Tool` Specific Properties
 
@@ -242,13 +258,12 @@ Our graph database consists of several types of nodes, each representing differe
 | average_response_time  | Float    | Average time taken for responses                      |
 | created_date           | DateTime | Timestamp of when the aggregate was created           |
 | failed_calls           | Integer  | Number of failed calls                                |
-| id                     | Integer  | Unique identifier for the aggregate                   |
 | last_modified_date     | DateTime | Timestamp of when the aggregate was last modified     |
 | successful_calls       | Integer  | Number of successful calls                            |
 | total_calls            | Integer  | Total number of calls made                            |
 | total_data_processed   | Integer  | Total amount of data processed                        |
 | total_response_time    | Float    | Total time taken for all responses                    |
-| type                   | String   | Type of the metrics ( `Aggregate` )          |
+| type                   | String   | Type of the metrics ( `Aggregate` )                   |
 
 ---
 
@@ -262,7 +277,7 @@ Our graph database consists of several types of nodes, each representing differe
 | category           | String           | Category of the prompt                                |
 | created_date       | DateTime         | Date and time when the prompt was created             |
 | description        | String           | Description of the prompt's purpose                   |
-| internal_name      | String           | Internal name used for backend operations (indexed)   |
+| internal_name      | String           | Internal name used for backend operations             |
 | last_modified_date | DateTime         | Date and time of the last modification                |
 | max_tokens         | Integer          | Maximum number of tokens for responses                |
 | model_name         | String           | Specific AI model the prompt is optimized for         |
@@ -272,8 +287,8 @@ Our graph database consists of several types of nodes, each representing differe
 | prompt_id          | String           | Unique identifier for the prompt                      |
 | reserved_fields    | Array of Strings | Fields reserved for specific use in the prompt        |
 | tags               | Array of Strings | Tags associated with the prompt                       |
-| type               | String           | The type of prompt                       |
-| version            | Integer          | Version number of the prompt (indexed)                |
+| type               | String           | The type of prompt                                    |
+| version            | Integer          | Version number of the prompt                          |
 
 ---
 
@@ -287,7 +302,7 @@ Our graph database consists of several types of nodes, each representing differe
 | models_providers              | Array of Strings | List of model providers                               |
 | prompt_access_levels          | JSON String      | List of access levels with values and descriptions    |
 | prompt_types                  | JSON String      | List of prompt types with values and descriptions     |
-| rag_schema                    | JSON String | List of the RAG collection schemas used                      |
+| rag_schema                    | JSON String      | List of the RAG collection schemas used               |
 | reserved_fields_observation   | Array of Strings | Fields reserved for observations                      |
 | reserved_fields_reflection    | Array of Strings | Fields reserved for reflections                       |
 
@@ -334,3 +349,49 @@ Our graph database consists of several types of nodes, each representing differe
 | reserved_fields    | Array of Strings | Fields reserved for the user prompt |
 
 This graph structure allows for efficient querying and analysis of the relationships between different entities in the XMPro AI Agents system.
+
+## Sample Cyphers
+
+### Agent: Get the current active plan
+
+> [!NOTE]  
+> Adjust the `$agent_id` with the Agent Instance to get their specific active plan
+
+```cypher
+MATCH (p:Artifact {type: 'Plan', active: true, agent_id: $agentId})
+OPTIONAL MATCH (p)-[:HAS_TASK]->(t:Entry {type: 'Task'})
+WHERE t.status <> 'Cancelled' OR t.status IS NULL
+OPTIONAL MATCH (t)-[:HAS_ACTION]->(a:Entry {type: 'Action'})
+RETURN p, 
+ t,
+ collect(a) as actions
+```
+
+### Agent: Return a Specific Instance (all nodes + relationships)
+
+> [!CAUTION]
+> Use with caution can return a lot of data if not filtered
+
+> [!NOTE]  
+> Adjust the `$agent_id` with the Agent Instance your looking for
+
+```cypher
+MATCH (n:AgentInstance {agent_id: $agent_id})
+OPTIONAL MATCH (n)-[r*1..]->(m)
+RETURN n, r, m
+```
+
+### Conversation: Get History
+
+> [!NOTE]  
+> Adjust the `$conversationId` to get a specific conversation thread
+
+```cypher
+MATCH (c:Artifact {id: $conversationId})-[:HAS_ENTRY]->(e:Entry)
+OPTIONAL MATCH (e)-[:TRIGGERED]->(o:Observation)
+RETURN e.prompt as prompt, e.response as response, e.summary as summary, e.user_query as user_query, 
+        e.timestamp as timestamp, e.token_usage as token_usage, e.response_time as response_time, e.tools_used as toolsUsed,
+        o.id as observationId
+ORDER BY e.timestamp ASC
+```
+

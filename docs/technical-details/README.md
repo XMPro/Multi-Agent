@@ -26,7 +26,7 @@ This information is crucial for understanding how agent health and performance a
 
 This file provides an in-depth look at our graph database structure. It includes:
 
-- An explanation of the ID structure used in the graph database
+- An explanation of the Id structure used in the graph database
 - Detailed descriptions of each node type (Team, Agent Profile, Agent Instance, Task, Prompt, Memory)
 - Property tables for each node type, outlining the data stored for each entity
 - An overview of the relationships between different node types
@@ -90,7 +90,9 @@ This information is crucial for understanding how agent memories are stored, ret
 
 ## Usage
 
-These technical details are intended for developers, system architects, and anyone needing a deep understanding of the XMPro AI Agents system's internal workings. They provide the necessary information for:
+These technical details are intended for developers, system architects, and anyone needing a deep understanding of the XMPro AI Agents system's internal workings. 
+
+They provide the necessary information for:
 
 - Implementing or extending system components
 - Troubleshooting complex issues

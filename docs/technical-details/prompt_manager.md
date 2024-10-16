@@ -23,6 +23,7 @@ The Prompt Library is a centralized repository for all prompts in the system. It
    - [Category Types](#category-types)
    - [Prompt Types](#prompt-types)
 10. [Root Node](#root-node)
+11. [Graph Querying Examples](#querying-examples)
 
 ## Introduction
 The Prompt Management System is a web-based application designed to create, manage, and version control AI prompts. It provides a user-friendly interface for prompt engineers and administrators to efficiently handle a large number of prompts used in various AI applications.
@@ -262,4 +263,23 @@ There is a root node called Library (type: `prompt`) to which all prompts are li
 
 5. Flexibility: You can still easily query individual prompts, and the added structure doesn't significantly impact performance for most use cases.
 
+## Querying Examples
 
+These example Cyphers can be run on the graph database to return the specific details:
+
+- Latest Versions Only:
+
+```Cypher
+   MATCH (p:Prompt)
+   WHERE p.active = true
+   RETURN p
+   ORDER BY p.prompt_id
+```
+
+-  Full Version of history:
+
+```Cypher
+MATCH path = (p:Prompt {internal_name: "planning_decision_prompt"})<-[:PREVIOUS_VERSION*]-(older:Prompt)
+RETURN path```
+
+Replace `internal_name` with the prompt in question to query.

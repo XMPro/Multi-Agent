@@ -125,6 +125,6 @@ MAGS (Multi-Agent Generative Systems) are dynamic teams of virtual workers power
    
    - **Rules of Engagement**: Agents and teams operate under a structured set of deontic principles, including obligations, permissions, prohibitions, conditional rules, and normative guidelines. These rules govern their behavior, ensure ethical operations, maintain safety standards, and facilitate effective collaboration while providing a framework for autonomous decision-making within predefined boundaries.
 
-MAGS combines the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and driving innovation across various industries and operational scenarios. 
+   MAGS combines the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and driving innovation across various industries and operational scenarios. 
 
-The integration of deontic principles through the Rules of Engagement ensures that MAGS operates efficiently, ethically, and safely, particularly in critical industrial environments where reliability and accountability are paramount.
+   The integration of deontic principles through the Rules of Engagement ensures that MAGS operates efficiently, ethically, and safely, particularly in critical industrial environments where reliability and accountability are paramount.

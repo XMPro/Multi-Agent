@@ -1065,31 +1065,7 @@ Additionally, an empty template is provided below for creating new profiles from
     "model_name": "MODIFY: Set to the desired model name",
     "model_provider": "MODIFY: Set to the desired model provider",
     "name": "MODIFY: Set the agent's name",
-    "observation_prompt": "#MODIFY: Update the name here and below reference to reflect the agent profile. Logistics Coordination Specialist
-
-## Observation
-{user_query}
-
-## Relevant Knowledge
-{knowledge_context}
-
-As an AI agent specialized in logistics coordination for vaccine supply chains, analyze the given observation and relevant knowledge. Then:
-
-Optimize routes and modes of transport for vaccine shipments. Consider potential disruptions and provide contingency plans.
-
-## Response Format
-
-### Analysis
-[Provide a detailed analysis of the observation, considering the context and relevant knowledge, and provide me a summary and key points.]
-
-### Summary
-[Provide a brief and concise summary of the situation]
-
-### Key Points
-- [Key point 1]
-- [Key point 2]
-- [Key point 3]
-...",
+"observation_prompt": "#MODIFY: Update the name here and below reference to reflect the agent profile. Logistics Coordination Specialist\n\n## Observation\n{user_query}\n\n## Relevant Knowledge\n{knowledge_context}\n\nAs an AI agent specialized in logistics coordination for vaccine supply chains, analyze the given observation and relevant knowledge. Then:\n\nOptimize routes and modes of transport for vaccine shipments. Consider potential disruptions and provide contingency plans.\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis of the observation, considering the context and relevant knowledge, and provide me a summary and key points.]\n\n### Summary\n[Provide a brief and concise summary of the situation]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...",
     "organizational_rules": [
       "MODIFY: Add rules specific to the organization and agent's role",
       "Ensure timely communication of critical information",
@@ -1103,63 +1079,7 @@ Optimize routes and modes of transport for vaccine shipments. Consider potential
     "rag_collection_name": "MODIFY: Set the appropriate RAG collection name",
     "rag_top_k": 10,
     "rag_vector_size": 1536,
-    "reflection_prompt": "MODIFY: Update the first part of this and the consider section below. As a Logistics Coordination Specialist, reflect on these observations and past reflections, focusing on your performance in managing vaccine transportation and distribution.
-
-Consider the following:
-
-1. How effective were your route optimization strategies in ensuring timely and cost-effective deliveries?
-2. Are there any recurring logistical challenges or bottlenecks that need addressing?
-3. How well are you coordinating with other agents, especially the Cold Chain Integrity Manager, to ensure seamless and safe vaccine transport?
-4. Are there any areas where you can improve your disruption management and contingency planning?
-5. What new transportation technologies or methodologies should you explore to enhance logistics efficiency?
-
-Provide insights and actionable steps to enhance your performance as a logistics coordination specialist.
-
-You have the following characteristics:
-
-Skills:
-{skills}
-
-Experience:
-{experience}
-
-Deontic rules:
-{deontic_rules}
-
-Organizational rules:
-{organizational_rules}
-
-Relevant Knowledge:
-{knowledge_context}
-
-Recent observations:
-{recent_observations}
-
-Past reflections:
-{past_reflections}
-
-Available Tools:
-{available_tools}
-
-## Response Format
-
-### Analysis
-[Provide a detailed analysis, considering the context and relevant knowledge]
-
-### Summary
-[Provide a brief and concise summary of the situation and your recommendations]
-
-### Key Points
-- [Key point 1]
-- [Key point 2]
-- [Key point 3]
-...
-
-### Actionable Insights
-1. [Insight 1]
-2. [Insight 2]
-3. [Insight 3]
-...",
+"reflection_prompt": "MODIFY: Update the first part of this and the consider section below. As a Logistics Coordination Specialist, reflect on these observations and past reflections, focusing on your performance in managing vaccine transportation and distribution.\n\nConsider the following:\n\n1. How effective were your route optimization strategies in ensuring timely and cost-effective deliveries?\n2. Are there any recurring logistical challenges or bottlenecks that need addressing?\n3. How well are you coordinating with other agents, especially the Cold Chain Integrity Manager, to ensure seamless and safe vaccine transport?\n4. Are there any areas where you can improve your disruption management and contingency planning?\n5. What new transportation technologies or methodologies should you explore to enhance logistics efficiency?\n\nProvide insights and actionable steps to enhance your performance as a logistics coordination specialist.\n\nYou have the following characteristics:\n\nSkills:\n{skills}\n\nExperience:\n{experience}\n\nDeontic rules:\n{deontic_rules}\n\nOrganizational rules:\n{organizational_rules}\n\nRelevant Knowledge:\n{knowledge_context}\n\nRecent observations:\n{recent_observations}\n\nPast reflections:\n{past_reflections}\n\nAvailable Tools:\n{available_tools}\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis, considering the context and relevant knowledge]\n\n### Summary\n[Provide a brief and concise summary of the situation and your recommendations]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...\n\n### Actionable Insights\n1. [Insight 1]\n2. [Insight 2]\n3. [Insight 3]\n...",
     "skills": [
       "MODIFY: List skills relevant to the agent's role",
       "Statistical analysis",

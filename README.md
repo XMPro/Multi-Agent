@@ -42,6 +42,7 @@ Our comprehensive documentation is organized in the `/docs` folder:
 - [`/accessibility`](docs/accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
 - [`/architecture`](docs/architecture): Detailed architecture diagrams for MAGS sub-processes
 - [`/concepts`](docs/concepts): Exploration of key concepts, ideas, and methodologies underlying XMPro AI Agents
+- [`/faq`](docs/faq.md): Frequently Asked Questions about XMPro MAGS
 - [`Glossary.md`](docs/Glossary.md): A comprehensive glossary covering:
   - Fundamental concepts in generative AI
   - Multi-Agent system architectures
@@ -50,7 +51,10 @@ Our comprehensive documentation is organized in the `/docs` folder:
 - [`/naming-conventions`](docs/naming-conventions): Explanation of naming conventions used throughout the project
 - [`/technical-details`](docs/technical-details): In-depth technical explanations with diagrams
 
-For a quick start, we recommend beginning with the [Glossary](/docs/Glossary.md) to familiarize yourself with key concepts and terminology used in the XMPro AI Agents project.
+For a quick start, we recommend:
+1. Review the [FAQ](docs/faq.md) for common questions and answers
+2. Explore the [Glossary](/docs/Glossary.md) to familiarize yourself with key concepts and terminology
+3. Dive into specific topics in the [concepts](docs/concepts) folder
 
 ## Installation
 

@@ -21,11 +21,12 @@ This folder contains detailed explanations of various concepts, including but no
 1. [Why XMPro MAGS Part 1](whymags.md): This article examines the technical details of XMPro's approach and compares it to other agent frameworks in the market.
 2. [Why XMPro MAGS Part 2](whymagspt2.md): This article expands on part 1 and explains XMPro's Inter-Agent Interoperability approach for other agent frameworks.
 3. [Agent Types](agent_types.md): An overview of the different types of agents in our Multi-Agent Generative Systems (MAGS) and their roles in industrial applications.
-4. [Deontic Principles](deontic-principles.md): The application of deontic logic in governing agent behavior.
-5. [LLM Hallucinations](hallucinations.md): What are and how to reduce Hallucinations in Multi-Agent Generative Systems with XMPro.
-6. [Models - Censored and Uncensored](model_censored_uncensored.md): Leveraging Censored and Uncensored Models for Optimal AI Performance in Industrial Applications
-7. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
-8. [APEX AgentOps for MAGS](agentopsapex.dm): How to scale MAGS using APEX for AgentOps 
+4. [Agent Training](agent_training.md): A comprehensive explanation of how MAGS agents acquire and develop their capabilities.
+5. [Deontic Principles](deontic-principles.md): The application of deontic logic in governing agent behavior.
+6. [LLM Hallucinations](hallucinations.md): What are and how to reduce Hallucinations in Multi-Agent Generative Systems with XMPro.
+7. [Models - Censored and Uncensored](model_censored_uncensored.md): Leveraging Censored and Uncensored Models for Optimal AI Performance in Industrial Applications
+8. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
+9. [APEX AgentOps for MAGS](agentopsapex.dm): How to scale MAGS using APEX for AgentOps 
 
 ## Document Structure
 

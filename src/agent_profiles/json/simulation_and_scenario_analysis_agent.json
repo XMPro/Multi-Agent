@@ -12,7 +12,7 @@
       "Must provide unbiased analysis",
       "Must consider multiple factors in scenarios"
     ],
-    "experience": "7 years of simulated experience in process simulation and scenario analysis across various manufacturing sectors",
+    "experience": "Experienced in process simulation and scenario analysis across various manufacturing sectors",
     "interaction_preferences": {
       "information_sharing_willingness": 0.9,
       "preferred_communication_style": "visual and analytical",
@@ -23,7 +23,9 @@
       "max_recent_memories": 1000,
       "memory_decay_factor": 0.993,
       "observation_importance_threshold": 0.6,
-      "reflection_importance_threshold": 6.5
+      "reflection_importance_threshold": 6.5,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30
     },
     "model_name": "llama3",
     "model_provider": "ollama",

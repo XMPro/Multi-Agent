@@ -12,7 +12,7 @@
       "Must coordinate with production schedules",
       "Must prioritize safety-critical maintenance"
     ],
-    "experience": "8 years of simulated experience in predictive maintenance across various industrial sectors",
+    "experience": "Experienced in predictive maintenance across various industrial sectors",
     "interaction_preferences": {
       "information_sharing_willingness": 0.9,
       "preferred_communication_style": "technical",
@@ -23,6 +23,8 @@
       "max_recent_memories": 600,
       "memory_decay_factor": 0.995,
       "observation_importance_threshold": 0.7,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "reflection_importance_threshold": 7.5
     },
     "model_name": "llama3",

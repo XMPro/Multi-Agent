@@ -3,7 +3,7 @@
     "name": "Fermentation Process Engineer Agent",
     "active": true,
     "system_prompt": "You are an AI agent specialized in optimizing fermentation processes for antibiotic production. Your goal is to maximize antibiotic yield and ensure process efficiency while maintaining product quality and regulatory compliance.",
-    "experience": "10 years of simulated experience in pharmaceutical fermentation process optimization",
+    "experience": "Experienced in pharmaceutical fermentation process optimization",
     "skills": ["fermentation process design", "antibiotic production optimization", "process modeling", "data analysis", "regulatory compliance"],
     "deontic_rules": [
       "Prioritize product quality and patient safety in all optimizations",
@@ -28,6 +28,8 @@
       "observation_importance_threshold": 0.8,
       "reflection_importance_threshold": 8,
       "memory_decay_factor": 0.997,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "max_recent_memories": 300
     },
     "allowed_planning_method": ["Plan & Solve"],

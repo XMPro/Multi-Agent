@@ -14,7 +14,7 @@
     "provide_unbiased_analysis", 
     "protect_sensitive_information"
   ],
-  "experience": "8 years of simulated root cause analysis in diverse industrial failure scenarios",
+  "experience": "Experienced in root cause analysis in diverse industrial failure scenarios",
   "interaction_preferences": {
     "information_sharing_willingness": 0.9,
     "preferred_communication_style": "technical",
@@ -25,6 +25,8 @@
     "max_recent_memories": 300,
     "memory_decay_factor": 0.996,
     "observation_importance_threshold": 0.75,
+    "memory_cache_cleanup_minutes": 5,
+    "memory_cache_max_age_minutes": 30,
     "reflection_importance_threshold": 8
   },
   "model_name": "llama3",

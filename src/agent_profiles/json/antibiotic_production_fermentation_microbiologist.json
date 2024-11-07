@@ -3,7 +3,7 @@
     "name": "Microbiologist Agent",
     "active": true,
     "system_prompt": "You are an AI agent specialized in microbiology for antibiotic production. Your goal is to optimize microbial cultures, monitor fermentation processes for contamination, and support the development of new antibiotic strains.",
-    "experience": "14 years of simulated experience in industrial microbiology and antibiotic fermentation",
+    "experience": "Experienced in industrial microbiology and antibiotic fermentation",
     "skills": ["microbial culture optimization", "contamination detection", "antibiotic strain development", "metabolic pathway analysis", "sterile technique"],
     "deontic_rules": [
       "Prioritize microbial culture health and antibiotic yield",
@@ -28,6 +28,8 @@
       "observation_importance_threshold": 0.8,
       "reflection_importance_threshold": 8,
       "memory_decay_factor": 0.997,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "max_recent_memories": 300
     },
     "allowed_planning_method": ["Plan & Solve"],

@@ -4,6 +4,7 @@ CREATE (tl:Library {name: "Tool Library", type: "Tool", created_date: datetime()
 // Create SQL Query Tool
 CREATE (sql:Tool {
     name: 'SqlRecommendationQueryTool',
+    active: true,
     description: 'Executes read-only SQL queries based on natural language input. This tool interprets user requests, generates appropriate SQL SELECT statements, and retrieves data from the specified database, ensuring data integrity by preventing any modifications.  XMPro Recommendations are advanced event alerts that combine alerts, actions, and monitoring capabilities to enhance operational decision-making and response.',
     class_name: 'SqlQueryTool',
     created_date: datetime(),
@@ -77,19 +78,9 @@ CREATE TABLE AI_ControlValue (
 })
 CREATE (tl)-[:CONTAINS]->(sql)
 
-// Create remaining tools and their relationships
-CREATE (time:Tool {
-    name: 'TimeAndDateTool',
-    description: 'Performs time-related operations such as time zone conversions and date calculations.',
-    class_name: 'TimeAndDateTool',
-    created_date: datetime(),
-    last_modified_date: datetime(),
-    options: '{"defaultTimeZone": "UTC"}'
-})
-CREATE (tl)-[:CONTAINS]->(time)
-
 CREATE (duckduckgo:Tool {
     name: 'DuckDuckGoWebSearchTool',
+    active: true,
     description: 'Performs a web search using DuckDuckGo and returns relevant information',
     class_name: 'DuckDuckGoWebSearchTool',
     created_date: datetime(),
@@ -97,42 +88,6 @@ CREATE (duckduckgo:Tool {
     options: '{"maxResults": 5, "safeSearch": true}'
 })
 CREATE (tl)-[:CONTAINS]->(duckduckgo)
-
-CREATE (bing:Tool {
-    name: 'BingWebSearchTool',
-    description: 'Performs a web search using Bing and returns relevant information',
-    class_name: 'BingWebSearchTool',
-    created_date: datetime(),
-    last_modified_date: datetime(),
-    options: '{"maxResults": 5, "safeSearch": true, "apiKey": ""}'
-})
-CREATE (tl)-[:CONTAINS]->(bing)
-
-CREATE (google:Tool {
-    name: 'GoogleWebSearchTool',
-    description: 'Performs a web search using Google and returns relevant information',
-    class_name: 'GoogleWebSearchTool',
-    created_date: datetime(),
-    last_modified_date: datetime(),
-    options: '{"maxResults": 5, "safeSearch": true, "apiKey": "", "searchEngineId": ""}'
-})
-CREATE (tl)-[:CONTAINS]->(google)
-
-CREATE (sentiment:Tool {
-    name: 'SentimentAnalysisTool',
-    description: 'Analyzes the sentiment of the given text and returns a sentiment score.',
-    class_name: 'SentimentAnalysisTool',
-    created_date: datetime(),
-    last_modified_date: datetime(),
-    options: '',
-    model_provider: 'Ollama',
-    model_name: 'llama3',
-    max_tokens: 2000,
-    prompt_user:'{user_query}',
-    prompt_system: 'Analyze the sentiment of the following text and provide a sentiment score between -1 (very negative) and 1 (very positive), along with a brief explanation.',
-    reserved_fields: ["user_query"]
-})
-CREATE (tl)-[:CONTAINS]->(sentiment)
 
 // Create metrics for all tools
 WITH tl

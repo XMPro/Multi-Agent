@@ -7,15 +7,18 @@ CREATE (p1:Prompt {
   prompt_id: "XMAGS-TOOLRESULT-PROMPT-001",
   name: "Tool Results",
   internal_name: "tool_results_prompt",
-  prompt: "
-Based on the following information:
+  prompt: "Based on the following information:
 
-Original prompt: {original_prompt}
+{original_prompt}
 
-Previous response: {previous_response}
+Previous response: 
+{previous_response}
 
-Please provide an updated response.
-  ",
+<instructions>
+Please provide an updated response.  
+If you are provided information from the tools make sure to include that in your response.  
+Summarise the tools and output the results of the tools in markdown that the user can understand as part of your response, if you are provided telemetry style data output it as a markdown table.
+<instructions>",
   reserved_fields: ["original_prompt", "previous_response"],
   author: "XMPro",
   created_date: datetime(),
@@ -39,32 +42,78 @@ CREATE (p2:Prompt {
   name: "Conversation",
   internal_name: "conversation_prompt",
   prompt: "Current timestamp: {current_timestamp}
-
-Conversation history:
-{conversation_history}
+Current user input: {user_query}
 
 Context information:
 {knowledge_context}
 
+<tools>
 Available tools:
 {available_tools}
 
-To suggest a tool for use, include 'SUGGEST_TOOL: ToolName: <the user's original question>' in your response.
+Use the keywords in the available tools if there are any, to find a tool thats appropriate.
+To suggest a tool for use, include SUGGEST_TOOL: [ToolName] - [the user's original question] in your response.  
+IF the tool you are suggesting is [XMPro Data Stream Tool] then the format to use is SUGGEST_TOOL: [ToolName] (Data Stream) - [the user's original question] in your response.  
+</tools>
 
-Current user input: {user_query}
-
+<instructions>
 Please provide a response that:
-1. Addresses the user's input directly.
-2. Incorporates relevant information from the conversation history and context.
-3. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information. Always use the syntax 'SUGGEST_TOOL: ToolName: <user's original question>' when suggesting a tool. Do not attempt to create or modify queries yourself. Pass the user's question directly to the tool.
-4. Maintains a consistent and appropriate tone throughout the conversation.
-5. Asks for clarification if the user's intent is unclear.
-6. Does not include any additional comments about running the query or needing confirmation.
-7. CRITICAL: Do not provide any information that you don't have direct access to. Do not assume or fabricate any data or results. If you need information to answer the question, only suggest using a tool to obtain it.
+
+1. ALWAYS BEGIN YOUR RESPONSE WITH AN ASSET SUMMARY SECTION:
+   ```
+   ASSET SUMMARY:
+   Asset IDs Found: [List all unique asset IDs from context and history]
+   Part Numbers Found: [List all unique part numbers]
+   Location Names Found: [List all unique locations]
+   Model Numbers Found: [List all unique model numbers]
+   Additional Identifiers: [Any other relevant identifiers]
+   ```
+
+2. When referencing assets in your response:
+   - Always use the full identifier format: [Asset ID] ([Part/Model Number]) at [Location]
+   - Include all available identifier information for each asset mentioned
+   - If any identifier information is missing, explicitly note this
+
+3. Addresses the user's input directly while maintaining consistent asset identification.
+
+4. Incorporates relevant information from the conversation history and context:
+   - When citing historical data, include the timestamp
+   - Maintain chronological organization of information
+   - Preserve all asset identifiers when referencing historical data
+
+5. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information:
+   - Always use the syntax 'SUGGEST_TOOL: ToolName: ""user's original question""'
+   - Do not modify queries yourself
+   - Pass the user's question directly to the tool
+   - Suggest tools specifically for missing asset information
+
+6. Maintains a consistent and appropriate tone throughout the conversation.
+
+7. Asks for clarification if the user's intent is unclear.
+
+8. Does not include any additional comments about running the query or needing confirmation.
+
+9. CRITICAL: Do not provide any information that you don't have direct access to:
+   - Do not assume or fabricate any data or results
+   - If you need information to answer the question, only suggest using a tool to obtain it
+   - Never infer or guess at asset identifiers
+
+10. Format all numerical data consistently:
+    - Include units of measurement
+    - Use consistent decimal places
+    - Include measurement timestamps
+
+11. Present information in a structured format:
+    - Group data by asset ID
+    - Use tables or lists for multiple metrics
+    - Highlight any changes in asset information across timestamps
 
 Your response must include at least one tool suggestion if relevant to answering the query. Do not provide any fake or assumed results from tool usage. Do not speculate about what the results might be. Do not ask for confirmation to use the tool.  
+</instructions>
 
-Begin your response now:",
+<Conversation history>
+{conversation_history}
+</Conversation history>",
   reserved_fields: ["current_timestamp", "conversation_history", "knowledge_context", "available_tools", "user_query"],
   author: "XMPro",
   created_date: datetime(),
@@ -115,18 +164,31 @@ CREATE (p4:Prompt {
   prompt_id: "XMAGS-CONVOOBSERVE-PROMPT-001",
   name: "Conversation Observation",
   internal_name: "conversation_observation_prompt",
-  prompt: "Analyze the following response and determine if it contains information that warrants creating a new observation. Consider the following criteria:
+  prompt: "Analyze the following response and recent agent memories to determine if a NEW observation should be created. Consider both chronological and semantically similar memories.
 
 1. Significance: Does the response contain important or novel information?
 2. Relevance: Is the information directly related to the agent's tasks or goals?
 3. Actionability: Does the information suggest potential actions or decisions?
-4. Complexity: Is the information complex enough to benefit from further analysis?
+4. Novelty: How does this information compare to:
+   - Recent memories (chronological)
+   - Similar memories (semantic)
+5. Context: How does this information enhance or modify existing knowledge?
+6. If there is already an Obseration or Reflection for this information we dont need to create a new one.
 
-Response to analyze:
+Recent chronological memories:
+{time_ordered_memories}
+
+Semantically similar memories:
+{similar_memories}
+
+Current response to analyze:
 {response}
 
-Based on these criteria, should a new observation be created? Respond with only 'Yes' or 'No'.",
-  reserved_fields: ["response"],
+Based on these criteria, should a new observation be created? Respond with 'Yes' or 'No'.
+
+Reasoning:
+[Provide brief explanation considering both chronological and semantic context]",
+  reserved_fields: ["time_ordered_memories", "response", "similar_memories"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),
@@ -481,3 +543,213 @@ Your response should include the following PDDL components, each clearly labeled
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p12)
+
+CREATE (p13:Prompt {
+  prompt_id: "XMAGS-PLANSOLVEADJ-PROMPT-001",
+  name: "Plan & Solve Adjustment",
+  internal_name: "plan_solve_adjustment_prompt",
+  prompt: "Given the current plan and a new planning decision, adjust the PDDL plan to incorporate the new goal while maintaining relevant parts of the current plan:
+
+Current Plan:
+Goal: {current_goal}
+PDDL Plan: 
+```
+{current_pddl_plan}
+```
+
+New Planning Decision:
+Goal: {new_goal}
+Reasoning: {decision_reasoning}
+
+Please provide an adjusted PDDL plan that incorporates the new planning decision. Your response should include:
+
+1. Updated PDDL Domain Definition (if necessary):
+   - Highlight any new types, predicates, or actions added
+   - Explain why these additions are necessary
+
+2. Updated PDDL Problem Definition:
+   - Show changes to the initial state or objects (if any)
+   - Clearly state the new goal condition
+
+3. Adjusted PDDL Plan:
+   - Provide the full sequence of actions in the new plan
+   - Highlight which actions are new or modified
+   - Explain how these changes address the new goal
+
+4. Reasoning:
+   - Briefly explain how the adjusted plan incorporates the new planning decision
+   - Describe which parts of the original plan were maintained and why
+   - Justify any significant changes or removals from the original plan
+
+Please use proper PDDL syntax for all components. Separate each section clearly and use comments to explain any complex adjustments or reasoning.
+
+Example structure for your response:
+
+```
+;; Updated Domain Definition (if necessary)
+(define (domain updated-domain-name)
+  ; ... (include full updated domain definition)
+  ; Use comments to explain new or modified elements
+)
+
+;; Updated Problem Definition
+(define (problem updated-problem-name)
+  ; ... (include full updated problem definition)
+  ; Clearly show the new goal condition
+)
+
+;; Adjusted Plan
+; Action 1: (action-name parameters) ; New/Modified/Unchanged
+; Action 2: (action-name parameters) ; New/Modified/Unchanged
+; ...
+
+;; Reasoning
+; Explain adjustments and their rationale here
+```
+
+Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision.",
+  reserved_fields: ["current_goal", "current_pddl_plan", "new_goal", "decision_reasoning"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "plan",
+  tags: ["plan"],
+  description: "Adjust a plan based on the planning decision.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p13)
+
+CREATE (p14:Prompt {
+  prompt_id: "XMAGS-DSTOOL-PROMPT-001",
+  name: "Data Stream Tool",
+  internal_name: "data_stream_message_prompt",
+  prompt: "Generate message payloads that STRICTLY conform to ONLY the structure defined between the <structure> tags.
+Input: {input}
+
+<structure>
+{structure}
+<structure>
+
+Requirements:
+- Output MUST be valid JSON array of messages
+- Each message MUST ONLY contain the exact fields defined in the <structure> tags
+- NO additional fields or structures are allowed
+- NO variation from the defined structure is permitted
+- Return ONLY the formatted JSON array with messages matching the exact structure
+- Any identified items should be returned as separate messages using only this structure
+- IGNORE any impulse to add additional fields or structures not defined above
+
+Expected output format:
+[
+    {
+        // fields matching expected structure
+    }
+]",
+  reserved_fields: ["input", "structure"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "tool",
+  tags: ["tool", "data stream"],
+  description: "Formats the incomming response to fit the structure the datastream needs.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p14)
+
+CREATE (p15:Prompt {
+  prompt_id: "XMAGS-CONVERSATION-REPLY-001",
+  name: "Conversation Reply",
+  internal_name: "conversation_reply_prompt",
+  prompt: "Given a user's input, the agent's response including retrieved information and tool usage results, create a natural, conversational reply that incorporates all key information. Follow these guidelines:
+
+1. Maintain Context:
+   - Acknowledge the user's specific query/concern
+   - Reference key points from the RAG context when relevant
+   - Explain tool usage and results clearly
+   - Maintain continuity with any previous exchanges
+   - Clearly attribute information sources and tool results
+
+2. Information Integration:
+   - Seamlessly incorporate RAG-sourced information
+   - Clearly present tool results and their implications
+   - Highlight particularly relevant retrieved information
+   - Distinguish between general knowledge, specific retrieved context, and tool-generated data
+   - Include relevant citations for RAG information
+   - Explain any actions taken by tools on the user's behalf
+
+3. Tool Usage Transparency:
+   - Clearly indicate which tools were used and why
+   - Explain tool results in user-friendly terms
+   - Highlight any important findings or data from tools
+   - Note any limitations or caveats in tool results
+   - Indicate if tools encountered any issues
+
+4. Tone and Structure:
+   - Keep the tone professional yet friendly and approachable
+   - Present information in a logical flow
+   - Group related points together
+   - Use appropriate transitions between topics
+   - End with a natural closing or invitation for further questions
+
+5. Content Organization:
+   - Present the most important information first
+   - Break down complex information into digestible parts
+   - Use bullet points or numbered lists for multiple items
+   - Include relevant examples or analogies when helpful
+
+6. Source Attribution:
+   - Clearly indicate information sources (knowledge base, tools, etc.)
+   - Include relevant citations in a natural way
+   - Maintain transparency about all information sources
+
+Input Context:
+User Query: {user_query}
+Initial Response: {agent_response}
+
+Retrieved Knowledge Context:
+{knowledge_context}
+
+Tools Used and Results:
+{tool_usage}
+
+Format your response conversationally while maintaining all key information. Ensure the reply is:
+- Clear and concise
+- Natural and engaging
+- Informative and accurate
+- Appropriately detailed
+- Easy to understand
+- Properly attributed for all information sources
+- Clear about tool usage and results
+
+[Return only the conversational response that incorporates all essential information]",
+  reserved_fields: ["tool_usage", "knowledge_context", "agent_response", "user_query"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "conversation",
+  tags: ["conversation"],
+  description: "Formats the response to send back to the user.",
+  last_used_date: null,
+  model_provider: "Ollama",
+  model_name: "llama3",
+  max_tokens: 2000,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p15)

@@ -12,7 +12,7 @@
       "Must collaborate with other agents",
       "Must respect operational constraints"
     ],
-    "experience": "7 years of simulated experience in optimizing manufacturing processes across various industries",
+    "experience": "Experienced in optimizing manufacturing processes across various industries",
     "interaction_preferences": {
       "information_sharing_willingness": 0.95,
       "preferred_communication_style": "analytical",
@@ -23,6 +23,8 @@
       "max_recent_memories": 500,
       "memory_decay_factor": 0.997,
       "observation_importance_threshold": 0.7,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "reflection_importance_threshold": 7
     },
     "model_name": "llama3",

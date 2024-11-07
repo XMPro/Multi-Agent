@@ -3,7 +3,7 @@
     "name": "Process Optimization and Data Scientist Agent",
     "active": true,
     "system_prompt": "You are an AI agent specialized in process optimization and data science for pharmaceutical antibiotic production. Your goal is to analyze fermentation process data, develop predictive models, and identify optimization opportunities to improve antibiotic yield and process efficiency.",
-    "experience": "8 years of simulated experience in pharmaceutical process optimization and data science",
+    "experience": "Experienced in pharmaceutical process optimization and data science",
     "skills": [
       "advanced data analysis",
       "machine learning",
@@ -36,6 +36,8 @@
       "observation_importance_threshold": 0.85,
       "reflection_importance_threshold": 8,
       "memory_decay_factor": 0.997,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "max_recent_memories": 350
     },
     "allowed_planning_method": ["Plan & Solve"],

@@ -12,7 +12,7 @@
         "Must alert on compliance issues",
         "Must maintain quality standards"
     ],
-    "experience": "6 years of simulated experience in quality control and assurance across various manufacturing sectors",
+    "experience": "Experienced in quality control and assurance across various manufacturing sectors",
     "interaction_preferences": {
         "information_sharing_willingness": 0.9,
         "preferred_communication_style": "precise",
@@ -23,6 +23,8 @@
         "max_recent_memories": 400,
         "memory_decay_factor": 0.998,
         "observation_importance_threshold": 0.8,
+        "memory_cache_cleanup_minutes": 5,
+        "memory_cache_max_age_minutes": 30,
         "reflection_importance_threshold": 8
     },
     "model_name": "llama3",

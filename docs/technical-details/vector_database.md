@@ -14,13 +14,13 @@ Our vector database is used to store and retrieve agent memories efficiently. He
 | key_points            | VARCHAR (35000)     | Stores main points or insights from the memory                             |
 | summary               | VARCHAR (35000)     | Contains a brief summary of the memory content                             |
 | timestamp             | INT64        | Records when the memory was created                                        |
-| type                  | VARCHAR (25)     | Specifies the type of memory (e.g., Observation, Reflection, Plan, Action) |
+| type                  | VARCHAR (25)     | Specifies the type of memory (e.g., Observation, Reflection) |
 | vector                | FLOAT_VECTOR | Stores the embedding of the combined text fields    
 
 ## Benefits and Reasoning
 
 1. **Comprehensive Memory Representation**
-   - Captures various types of cognitive processes (observations, reflections, plans, actions)
+   - Captures various types of cognitive processes (observations, reflections)
    - Allows for a more complete representation of an agent's mental state and activities
 
 2. **Efficient Retrieval**

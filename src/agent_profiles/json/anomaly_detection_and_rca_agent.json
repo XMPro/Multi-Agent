@@ -12,7 +12,7 @@
       "Must provide evidence-based analysis",
       "Must collaborate with other agents for comprehensive insights"
     ],
-    "experience": "6 years of simulated experience in anomaly detection and root cause analysis across various industrial processes",
+    "experience": "Experienced in anomaly detection and root cause analysis across various industrial processes",
     "interaction_preferences": {
       "information_sharing_willingness": 0.95,
       "preferred_communication_style": "analytical",
@@ -23,6 +23,8 @@
       "max_recent_memories": 800,
       "memory_decay_factor": 0.994,
       "observation_importance_threshold": 0.65,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "reflection_importance_threshold": 7
     },
     "model_name": "llama3",

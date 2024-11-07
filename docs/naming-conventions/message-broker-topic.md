@@ -23,8 +23,10 @@ Where:
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/DATA/chat/{agent_id}`           | Incoming | Receive agent-specific conversations |
-| `XMAGS/{team_id}/EVT/chat_response/{agent_id}`   | Outgoing | Publish agent-specific conversations |
+| `XMAGS/{team_id}/CMD/chat_new/{agent_id}`                          | Incoming | Initiate a new conversation thread |
+| `XMAGS/{team_id}/DATA/chat/{agent_id}/{conversation_id}`           | Incoming | Receive agent-specific conversations |
+| `XMAGS/{team_id}/EVT/chat_progress/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation progress |
+| `XMAGS/{team_id}/EVT/chat_response/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation result |
 
 ### 2. Observation and Reflection
 

@@ -13,6 +13,30 @@ The Agent Status Monitoring and Error Handling System is designed to provide rea
 
 ## Sample Message Broker Payloads
 
+### Startup
+
+```json
+{
+  "agent_id": "FERM-DATA-AGENT-001",
+  "event": "memory_cycle_started",
+  "service_name": "XMPRO-MAGS-Memory-Cycle",
+  "team_id": "AUSTIN-PROD-FERM-TEAM-001",
+  "timestamp": "2024-11-06T19:27:22.5448234Z"
+}
+```
+
+### Shutdown
+
+```json
+{
+  "agent_id": "FERM-DATA-AGENT-001",
+  "event": "memory_cycle_shutdown",
+  "service_name": "XMPRO-MAGS-Memory-Cycle",
+  "team_id": "AUSTIN-PROD-FERM-TEAM-001",
+  "timestamp": "2024-11-06T19:34:05.5395374Z"
+}
+```
+
 ### Status
 
 ```json
@@ -32,7 +56,13 @@ The Agent Status Monitoring and Error Handling System is designed to provide rea
 ### Error
 
 ```json
-
+{
+  "agent_id": "FERM-DATA-AGENT-001",
+  "exception_type": "",
+  "message": "",
+  "stack_trace": "",
+  "timestamp": "2024-11-06T19:34:05.5395374Z"
+}
 ```
 
 ## Implementation Details

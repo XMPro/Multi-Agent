@@ -119,7 +119,7 @@ The `CreateMemoryCycle` method performs the following steps:
 |                                 | d. Initialize LanguageModel   | - Set up all language models (These are created on demand within the code when needed) |
 |                                 | e. Create DatabaseManager     | - Set up manager for database operations |
 |                                 | f. Load SystemOptions         | - Load system-wide options |
-|                                 | g. Initialize MQTTManager     | - Set up manager for message broker communications |
+|                                 | g. Initialize Message Broker     | - Set up manager for message broker communications |
 |                                 | h. Initialize GlobalExceptionHandler | - Set up global exception handling |
 |                                 | i. Initialize ToolLibrary     | - Set up library for agent tools |
 | 3. Register Services            | a. Add singletons             | - Register Database Manager, Language Model, Message Broker, Open Telemetry Setup, Prompt Manager, Planning Strategy Factory, Tool Library, Plan Adapter Detector as singletons |
@@ -243,21 +243,21 @@ The primary purpose of this method is to retrieve or create an agent instance ba
 
 ### Key Features
 1. Primary Agent Initialization:
-    - Retrieves the full agent instance for the specified agentId.
+    - Retrieves the agent instance for the specified agentId.
     - Sets up the agent's profile, type, and other essential properties.
 
 2. Team Awareness:
     - Retrieves the team associated with the agent.
 
 3. Tool Initialization:
-    - Initializes the tools available to the agent based on its profile and permissions.
+    - Initializes the tools available to the agent instance based on its profile and permissions.
 
 4. Planning Cycle Setup:
     - Initiates the planning cycle for the agent if it hasn't been started already.
 
 ### Process Flow
 1. Retrieve agent and team data from the database.
-2. Create the Agent Instance with full details.
+2. Create the Agent Instance with all its details.
 3. Initialize the Team object.
 4. Set up tools and permissions for the agent.
 5. Initialize the planning cycle if needed.

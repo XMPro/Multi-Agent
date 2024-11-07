@@ -168,6 +168,7 @@ Here's an overview of the main node types and their properties:
 |-----------------|----------|----------------------------------------------------------|
 | prompt          | String   | The prompt used                                          |
 | rag_query_time  | Integer  | Time taken for RAG (Retrieval-Augmented Generation) query|
+| reply           | String   | The reply to the user                                    |
 | response        | String   | The response generated                                   |
 | response_time   | Integer  | Time taken to generate the response                      |
 | summary         | String   | Summary                                                  |

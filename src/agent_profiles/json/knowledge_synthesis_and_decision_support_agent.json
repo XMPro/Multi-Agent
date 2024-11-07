@@ -12,7 +12,7 @@
       "Must consider long-term impacts",
       "Must align recommendations with business goals"
     ],
-    "experience": "10 years of simulated experience in knowledge management and decision support across various manufacturing sectors",
+    "experience": "Experienced in knowledge management and decision support across various manufacturing sectors",
     "interaction_preferences": {
       "information_sharing_willingness": 1.0,
       "preferred_communication_style": "comprehensive",
@@ -23,6 +23,8 @@
       "max_recent_memories": 1500,
       "memory_decay_factor": 0.992,
       "observation_importance_threshold": 0.55,
+      "memory_cache_cleanup_minutes": 5,
+      "memory_cache_max_age_minutes": 30,
       "reflection_importance_threshold": 6
     },
     "model_name": "llama3",

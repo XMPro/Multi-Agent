@@ -14,7 +14,7 @@
     "provide_explainable_predictions", 
     "continuous_model_improvement"
   ],
-  "experience": "5 years of simulated predictive maintenance in various industrial settings",
+  "experience": "Experienced in  predictive maintenance in various industrial settings",
   "interaction_preferences": {
     "information_sharing_willingness": 0.9,
     "preferred_communication_style": "technical",
@@ -25,6 +25,8 @@
     "max_recent_memories": 300,
     "memory_decay_factor": 0.996,
     "observation_importance_threshold": 0.75,
+    "memory_cache_cleanup_minutes": 5,
+    "memory_cache_max_age_minutes": 30,
     "reflection_importance_threshold": 8
   },
   "model_name": "llama3",

@@ -13,7 +13,9 @@ Before you can start chatting with an agent, you MUST initialize a conversation:
 **Payload**:
 ```json
 {
-    "conversation_id": "550e8400-e29b-41d4-a716-446655440000"
+    "agent_id": "CNT-SPEC-AGENT-001",
+    "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
+    "content": " "
 }
 ```
 

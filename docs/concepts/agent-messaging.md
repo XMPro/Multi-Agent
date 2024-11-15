@@ -64,6 +64,22 @@ After initialization, you can send messages using the conversation Id received:
 }
 ```
 
+#### 2.1 Cancelling a Message
+
+To cancel a chat thats in progress:
+
+**Topic**: `XMAGS/{teamId}/DATA/chat/{agentId}/{conversationId}`
+
+**Payload**:
+```json
+{
+    "agent_id": "{agentId}",
+    "command": "cancel",
+    "content": " ",
+    "conversation_id": "{conversationId}"
+}
+```
+
 ### 3. Receiving Agent Responses
 
 The agent sends two types of responses:

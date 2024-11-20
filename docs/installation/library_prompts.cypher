@@ -30,8 +30,8 @@ Summarise the tools and output the results of the tools in markdown that the use
   tags: ["observation", "reflection"],
   description: "Instructs the AI to provide an updated response based on the results of tool usage.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -52,8 +52,8 @@ Available tools:
 {available_tools}
 
 Use the keywords in the available tools if there are any, to find a tool thats appropriate.
-To suggest a tool for use, include SUGGEST_TOOL: [ToolName] - [the user's original question] in your response.  
-IF the tool you are suggesting is [XMPro Data Stream Tool] then the format to use is SUGGEST_TOOL: [ToolName] (Data Stream) - [the user's original question] in your response.  
+To suggest a tool for use, include SUGGEST_TOOL: [ToolName] - [the users original question] in your response.  
+IF the tool you are suggesting is [XMPro Data Stream Tool] then the format to use is SUGGEST_TOOL: [ToolName] (Data Stream) - [the users original question] in your response.  
 </tools>
 
 <instructions>
@@ -74,7 +74,7 @@ Please provide a response that:
    - Include all available identifier information for each asset mentioned
    - If any identifier information is missing, explicitly note this
 
-3. Addresses the user's input directly while maintaining consistent asset identification.
+3. Addresses the users input directly while maintaining consistent asset identification.
 
 4. Incorporates relevant information from the conversation history and context:
    - When citing historical data, include the timestamp
@@ -82,14 +82,14 @@ Please provide a response that:
    - Preserve all asset identifiers when referencing historical data
 
 5. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information:
-   - Always use the syntax 'SUGGEST_TOOL: ToolName: ""user's original question""'
+   - Always use the syntax 'SUGGEST_TOOL: ToolName: [the users original question]'
    - Do not modify queries yourself
-   - Pass the user's question directly to the tool
+   - Pass the users question directly to the tool
    - Suggest tools specifically for missing asset information
 
 6. Maintains a consistent and appropriate tone throughout the conversation.
 
-7. Asks for clarification if the user's intent is unclear.
+7. Asks for clarification if the users intent is unclear.
 
 8. Does not include any additional comments about running the query or needing confirmation.
 
@@ -125,8 +125,8 @@ Your response must include at least one tool suggestion if relevant to answering
   tags: ["conversation"],
   description: "Guides the AI in generating contextual responses during conversations, considering history, available tools, and user input.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -153,8 +153,8 @@ Assistant: {agent_response}
   tags: ["conversation"],
   description: "Instructs the AI to create a concise summary of a conversation for future reference.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -199,8 +199,8 @@ Reasoning:
   tags: ["conversation", "observation"],
   description: "Directs the AI to analyze a conversation response and determine if it warrants creating a new observation.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -226,8 +226,8 @@ Importance score:",
   tags: ["conversation", "observation"],
   description: "Asks the AI to rate the importance of an observation or reflection on a scale of 0 to 1.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -273,8 +273,8 @@ Provide your decision as 'Yes' for a new plan or a plan adjustment is needed or 
   tags: ["plan", "reflection"],
   description: "Directs the AI to decide whether a new plan is needed or if the current plan should be adjusted based on various factors",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -312,8 +312,8 @@ Provide a brief explanation for your decision, considering how the recent reflec
   tags: ["plan", "reflection"],
   description: "Guides the AI in analyzing recent reflections to determine if a new goal is needed.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -357,8 +357,8 @@ Focus on how changes in tool availability might affect the agent's ability to ac
   tags: ["plan"],
   description: "Directs the AI to identify resource changes that might require plan adaptation.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -399,8 +399,8 @@ Focus on how changes in timing might affect the agent's ability to achieve the s
   tags: ["plan"],
   description: "Instructs the AI to analyze time-related issues that might necessitate plan adaptation.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -441,8 +441,8 @@ Focus on how new information might affect the agent's ability to achieve the sta
   tags: ["plan"],
   description: "Guides the AI in identifying new information that might require plan adaptation.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -478,8 +478,8 @@ Provide your analysis in a clear, structured format.",
   tags: ["plan"],
   description: "Guides the AI in analyzing a goal and team capabilities to provide a comprehensive problem understanding.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -537,8 +537,8 @@ Your response should include the following PDDL components, each clearly labeled
   tags: ["plan"],
   description: "Creates a comprehensive PDDL plan based on given parameters and constraints.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -619,8 +619,8 @@ Ensure that all PDDL elements are syntactically correct and logically consistent
   tags: ["plan"],
   description: "Adjust a plan based on the planning decision.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
@@ -663,21 +663,21 @@ Expected output format:
   tags: ["tool", "data stream"],
   description: "Formats the incomming response to fit the structure the datastream needs.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p14)
 
 CREATE (p15:Prompt {
-  prompt_id: "XMAGS-CONVERSATION-REPLY-001",
+  prompt_id: "XMAGS-CONREPLY-PROMPT-001",
   name: "Conversation Reply",
   internal_name: "conversation_reply_prompt",
-  prompt: "Given a user's input, the agent's response including retrieved information and tool usage results, create a natural, conversational reply that incorporates all key information. Follow these guidelines:
+  prompt: "Given a users input, the agent's response including retrieved information and tool usage results, create a natural, conversational reply that incorporates all key information. Follow these guidelines:
 
 1. Maintain Context:
-   - Acknowledge the user's specific query/concern
+   - Acknowledge the users specific query/concern
    - Reference key points from the RAG context when relevant
    - Explain tool usage and results clearly
    - Maintain continuity with any previous exchanges
@@ -689,7 +689,7 @@ CREATE (p15:Prompt {
    - Highlight particularly relevant retrieved information
    - Distinguish between general knowledge, specific retrieved context, and tool-generated data
    - Include relevant citations for RAG information
-   - Explain any actions taken by tools on the user's behalf
+   - Explain any actions taken by tools on the users behalf
 
 3. Tool Usage Transparency:
    - Clearly indicate which tools were used and why
@@ -747,8 +747,8 @@ Format your response conversationally while maintaining all key information. Ens
   tags: ["conversation"],
   description: "Formats the response to send back to the user.",
   last_used_date: null,
-  model_provider: "Ollama",
-  model_name: "llama3",
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
   max_tokens: 2000,
   access_level: "system"
 }),

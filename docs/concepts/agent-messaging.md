@@ -68,7 +68,7 @@ After initialization, you can send messages using the conversation Id received:
 
 To cancel a chat thats in progress:
 
-**Topic**: `XMAGS/{teamId}/DATA/chat/{agentId}/{conversationId}`
+**Topic**: `XMAGS/{teamId}/CMD/chat_cancel/{agentId}/{conversationId}`
 
 **Payload**:
 ```json

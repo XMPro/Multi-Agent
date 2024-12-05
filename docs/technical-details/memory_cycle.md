@@ -76,6 +76,7 @@ graph TB
     class MQTT,LLM external
     class VectorDBAbstract,Milvus,Qdrant,MongoDB vectorDB
     class MilvusCollections,QdrantCollections,MongoCollections,MilvusAgent,MilvusGeneral,QdrantAgent,QdrantGeneral,MongoAgent,MongoGeneral collection
+```
 
 ## Components
 

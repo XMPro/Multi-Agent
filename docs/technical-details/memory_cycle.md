@@ -30,10 +30,10 @@ graph TB
     ObsM -->|Triggers| RefM
     RefM -->|Influences| Plan
     
-    MC -->|1. Sends Content| EmbeddingModel
-    EmbeddingModel -->|2. Creates Embeddings| RAGProcessor
-    RAGProcessor -->|3. Queries Vector DB| VectorDBAbstract
-    RAGProcessor -->|4. Returns Context| MC
+    MC -->|1 Sends Content| EmbeddingModel
+    EmbeddingModel -->|2 Creates Embeddings| RAGProcessor
+    RAGProcessor -->|3 Queries Vector DB| VectorDBAbstract
+    RAGProcessor -->|4 Returns Context| MC
     
     ObsM -->|Stores| Neo4j
     ObsM -->|Vectorizes & Stores| VectorDBAbstract

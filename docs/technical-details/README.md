@@ -6,10 +6,11 @@ This folder contains in-depth technical explanations and specifications for vari
 
 1. [Agent Status Monitoring and Error Handling](agent_status_monitoring.md)
 2. [Graph Database](graph_database.md)
-3. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
-4. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
-5. [Prompt Manager and Library](prompt_manager.md)
-6. [Vector Database](vector_database.md)
+3. [Memory Cycle](memory_cycle.md)
+4. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
+5. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
+6. [Prompt Manager and Library](prompt_manager.md)
+7. [Vector Database](vector_database.md)
 
 ### Agent Status Monitoring and Error Handling
 
@@ -33,6 +34,19 @@ This file provides an in-depth look at our graph database structure. It includes
 
 This document is essential for understanding how data is structured and related within our system.
 
+### Memory Cycle
+
+[memory_cycle.md](memory_cycle.md) provides a comprehensive explanation of our cognitive processing system. It covers:
+
+- Detailed architecture with component interactions
+- The complete memory creation process for both observations and reflections
+- Implementation details of Retrieval-Augmented Generation (RAG)
+- Integration with the planning system
+- Dual storage strategy using Neo4j and vector databases
+- Comprehensive metrics and monitoring approach
+
+This document is essential for understanding how agents process information, make decisions, and maintain their knowledge base. It includes detailed diagrams and explanations of the data flow between components.
+
 ### Memory Cycle Instantiation
 
 This document provides a detailed explanation of the Memory Cycle Instantiation Process. It covers:
@@ -47,12 +61,13 @@ This document provides a detailed explanation of the Memory Cycle Instantiation 
 This information is crucial for understanding how agents are initialized and integrated into the multi-agent system.
 
 ### Open Telemetry Tracing
+
 XMPro MAGS uses OpenTelemetry for distributed tracing to monitor and analyze the performance of our multi-agent system. This helps in debugging, performance optimization, and understanding system behavior.
 Key features of our OpenTelemetry implementation:
 
-Consistent naming conventions for activities and tags
-Tracing of important operations across all components
-Best practices for effective and efficient tracing
+- Consistent naming conventions for activities and tags
+- Tracing of important operations across all components
+- Best practices for effective and efficient tracing
 
 For detailed information on how to implement and use OpenTelemetry tracing in MAGS, please refer to our [OpenTelemetry Tracing Guide](open_telemetry_tracing_guide.md).
 
@@ -74,8 +89,7 @@ This document provides a comprehensive overview of our Prompt Management System.
 - The structure of the Prompt Library, including the root node concept
 - User interface components
 
-This information is crucial for understanding how prompts are created, stored, managed, and accessed within our system. The document also includes placeholders for screenshots to visually represent key concepts and interfaces.
-
+This information is crucial for understanding how prompts are created, stored, managed, and accessed within our system.
 
 ### Vector Database
 

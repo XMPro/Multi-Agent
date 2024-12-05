@@ -6,7 +6,7 @@ This guide provides detailed instructions for setting up the XMPro AI Agents sys
 
 - A licensed installation of XMPro
 - Neo4j Graph Database
-- Milvus or Qdrant Vector Database (Multiple collection support)
+- Milvus, Qdrant or MongoDB Atlas Vector Database (Multiple collection support)
 - Message broker: MQTT Broker
 - A Large Language Model Provider - for embedding (minimum 1, maximum 1)
     - Azure Open AI

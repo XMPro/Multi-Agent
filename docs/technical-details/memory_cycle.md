@@ -121,6 +121,45 @@ When a new observation is triggered:
    - Additional metadata and metrics
 ```
 
+```mermaid
+sequenceDiagram
+    participant Input
+    participant MC as Memory Cycle
+    participant EM as Embedding Model
+    participant VDB as Vector DB
+    participant LLM
+    participant Neo4j
+    
+    Input->>MC: New Observation
+    
+    rect rgb(200, 255, 200)
+        Note over MC,VDB: RAG Processing
+        MC->>EM: Generate Embedding
+        EM->>VDB: Query Similar Memories
+        VDB-->>MC: Return Similar Memories
+        MC->>VDB: Query RAG Collections
+        VDB-->>MC: Return Context
+    end
+    
+    rect rgb(255, 230, 200)
+        Note over MC,LLM: Content Generation
+        MC->>LLM: Process with Context
+        LLM-->>MC: Return Generated Content
+        Note right of LLM: - Summary<br/>- Key Points<br/>- Context Info
+    end
+    
+    rect rgb(200, 230, 255)
+        Note over MC,Neo4j: Importance & Storage
+        MC->>LLM: Calculate Importance
+        LLM-->>MC: Return Score (0-1)
+        par Store in Vector DB
+            MC->>VDB: Store Vector Representation
+        and Store in Graph DB
+            MC->>Neo4j: Store Relationships & Metadata
+        end
+    end
+```
+
 #### 3.2 Reflection Creation
 
 ```plaintext
@@ -146,6 +185,57 @@ Process:
    - Additional metadata for reflection chain
 ```
 
+```mermaid
+sequenceDiagram
+    participant T as Trigger System
+    participant MC as Memory Cycle
+    participant VDB as Vector Database
+    participant Neo4j
+    participant EM as Embedding Model
+    participant LLM
+    
+    Note over T: Triggered by:<br/>1. Importance Threshold
+    
+    T->>MC: Initiate Reflection
+    
+    rect rgb(200, 230, 255)
+        Note over MC,Neo4j: Memory Collection Phase
+        MC->>Neo4j: Fetch Recent Memories
+        Neo4j-->>MC: Return Memory Records
+        MC->>MC: Apply Time Decay
+        MC->>EM: Generate Memory Embeddings
+        EM->>VDB: Query Similar Memories
+        VDB-->>MC: Return Similar Memories
+    end
+    
+    rect rgb(200, 255, 200)
+        Note over MC,VDB: RAG Enhancement
+        MC->>VDB: Query Past Reflections
+        VDB-->>MC: Return Similar Reflections
+        MC->>VDB: Query Knowledge Base
+        VDB-->>MC: Return Relevant Context
+        MC->>MC: Aggregate RAG Context
+    end
+    
+    rect rgb(255, 230, 200)
+        Note over MC,LLM: Content Generation
+        MC->>LLM: Generate Reflection
+        Note right of LLM: Process with:<br/>- Key Insights<br/>- Action Items<br/>- Understanding Updates
+        LLM-->>MC: Return Generated Content
+    end
+    
+    rect rgb(230, 200, 255)
+        Note over MC,Neo4j: Storage
+        par Store in Vector DB
+            MC->>EM: Generate Embedding
+            EM->>VDB: Store Vector
+        and Store in Graph DB
+            MC->>Neo4j: Store Reflection
+            MC->>Neo4j: Create Memory Links
+        end
+    end
+```
+
 ### 4. Planning Integration
 
 The memory cycle integrates with planning through:
@@ -165,6 +255,85 @@ The memory cycle integrates with planning through:
    - Tasks are distributed to appropriate agents
    - Progress is monitored and stored
    - Outcomes feed back into memory cycle
+```
+
+```mermaid
+sequenceDiagram
+    participant Timer as Planning Timer
+    participant RefD as Reflection System
+    participant Env as Environmental Changes
+    participant Goals as Goal Monitor
+    participant MC as Memory Cycle
+    participant PlanA as PlanAdaptationDetector
+    participant Plan as PlanningSystem
+    participant LLM
+    participant Neo4j
+    participant VDB as Vector DB
+    participant Agent as Other Agents
+    participant MB as Message Broker
+
+    rect rgb(200, 255, 200)
+        Note over Timer,Plan: Plan Detection Phase - Multiple Triggers
+        
+        alt Time-based Check
+            Timer->>MC: IsTimeForPlanning()
+            MC->>PlanA: ShouldTriggerPlanningAsync
+        end
+        
+        alt Reflection Trigger
+            RefD->>MC: New Reflection Created
+            MC->>PlanA: ShouldTriggerPlanningAsync
+        end
+
+        alt Environmental Change
+            Env->>MC: New Information Received
+            MC->>PlanA: ShouldTriggerPlanningAsync
+        end
+
+        alt Goal Not Met
+            Goals->>MC: Goal Status Update
+            MC->>PlanA: ShouldTriggerPlanningAsync
+        end
+
+        alt Resource Changes
+            Agent->>MC: Resource Status Update
+            MC->>PlanA: ShouldTriggerPlanningAsync
+        end
+
+        PlanA->>Neo4j: Get Current Plan
+        Neo4j-->>PlanA: Return Plan Details
+        PlanA->>VDB: Query Similar Memories
+        VDB-->>PlanA: Return Relevant Context
+        PlanA->>LLM: Evaluate Planning Need
+        LLM-->>PlanA: Return Decision & Reasoning
+        PlanA-->>MC: Return Planning Decision
+    end
+
+    alt Plan Update Needed
+        rect rgb(255, 230, 200)
+            Note over MC,MB: Plan Adaptation Phase
+            MC->>Plan: TriggerPlanningProcessAsync
+            Plan->>Plan: SelectPlanningMethod
+            Plan->>LLM: Generate/Adjust Plan
+            LLM-->>Plan: Return PDDL Plan
+            Plan->>Neo4j: Store Plan & Tasks
+            Plan->>MB: PublishNewPlan or PublishUpdatedPlan
+            MB-->>Agent: Notify Plan Changes
+        end
+
+        rect rgb(200, 230, 255)
+            Note over Plan,MB: Task Distribution Phase
+            MB->>Agent: PublishTasksToAgents
+            MB->>Agent: PublishActionsToAgents
+            Agent-->>MB: Report Task Status
+            MB->>Neo4j: Update Task Status
+            Agent->>MC: Feed Outcomes to Memory
+        end
+    else No Update Needed
+        PlanA->>MC: Return NoUpdateNeeded Decision
+    end
+
+    Note over MC,Agent: Continuous Monitoring & Feedback Loop
 ```
 
 ### 5. RAG Implementation

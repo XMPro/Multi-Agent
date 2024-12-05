@@ -92,7 +92,7 @@ The Memory Cycle initializes with several key components:
 
 ### 2. Core Input Processing
 
-When input is received through MQTT, it is:
+When input is received through the message broker, it is:
 1. Validated and routed based on type:
    - Chat messages
    - Observations
@@ -165,8 +165,6 @@ sequenceDiagram
 ```plaintext
 Reflections are triggered when:
 1. Accumulated observation importance exceeds threshold
-2. Significant time has passed
-3. Critical new information is received
 
 Process:
 1. Recent memories are collected and ranked:

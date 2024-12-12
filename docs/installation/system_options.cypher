@@ -42,7 +42,7 @@ ON CREATE SET
       }
     },
     "citation_structure": {
-      "format": "[{0}] {1}. \"{2}\". {3}, {4}. Available at: {5}",
+      "format": "[{0}] {1}. {2}. {3}, {4}. Available at: {5}",
       "fields": [
         "id",
         "author",
@@ -97,7 +97,7 @@ ON MATCH SET
       }
     },
     "citation_structure": {
-      "format": "[{0}] {1}. \"{2}\". {3}, {4}. Available at: {5}",
+      "format": "[{0}] {1}. {2}. {3}, {4}. Available at: {5}",
       "fields": [
         "id",
         "author",

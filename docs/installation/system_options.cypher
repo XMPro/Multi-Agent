@@ -21,7 +21,7 @@ ON CREATE SET
   {"value": "task-specific", "description": "For prompts designed for particular tasks within the application"},
   {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}
 ]',
-  so.rag_schema = '"{
+  so.rag_schema = '{
     "schemas": {
       "rag_general_knowledge": {
         "id": "string",
@@ -52,7 +52,7 @@ ON CREATE SET
         "url"
       ]
     }
-  }"',
+  }',
   so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
@@ -76,7 +76,7 @@ ON MATCH SET
   {"value": "task-specific", "description": "For prompts designed for particular tasks within the application"},
   {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}
 ]',
-  so.rag_schema = '"{
+  so.rag_schema = '{
     "schemas": {
       "rag_general_knowledge": {
         "id": "string",
@@ -107,6 +107,6 @@ ON MATCH SET
         "url"
       ]
     }
-  }"',
+  }',
   so.last_modified_date = datetime()
 RETURN so

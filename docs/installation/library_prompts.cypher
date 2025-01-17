@@ -206,33 +206,6 @@ Reasoning:
 }),
 (p)-[:CONTAINS]->(p4)
 
-CREATE (p5:Prompt {
-  prompt_id: "XMAGS-MEMORYIMPORTANT-PROMPT-001",
-  name: "Memory Importance",
-  internal_name: "importance_prompt",
-  prompt: "Rate the importance of the following observation on a scale of 0 to 1, where 0 is completely unimportant and 1 is extremely important. The threshold for importance is {threshold}:
-
-{content}
-
-Importance score:",
-  reserved_fields: ["threshold", "content"],
-  author: "XMPro",
-  created_date: datetime(),
-  last_modified_date: datetime(),
-  active: true,
-  version: 1,
-  type: "system",
-  category: "memory_cycle",
-  tags: ["conversation", "observation"],
-  description: "Asks the AI to rate the importance of an observation or reflection on a scale of 0 to 1.",
-  last_used_date: null,
-  model_provider: "OpenAI",
-  model_name: "gpt-4o-mini",
-  max_tokens: 2000,
-  access_level: "system"
-}),
-(p)-[:CONTAINS]->(p5)
-
 CREATE (p6:Prompt {
   prompt_id: "XMAGS-PLANDECISION-PROMPT-001",
   name: "Plan Decision",

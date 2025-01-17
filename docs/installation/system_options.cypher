@@ -55,7 +55,29 @@ ON CREATE SET
       ]
     }
   }',
-  so.created_date = datetime()
+  so.importance_scoring = '{
+    "frequency": {
+        "scale_factor": 2.0,
+        "log_base": 2.0,
+        "input_scale": 1.0,
+        "offset": 0.1
+    },
+    "duration": {
+        "threshold": 60.0,
+        "log_scale": 1.0,
+        "log_base": 2.0,
+        "log_offset": 0.1,
+        "linear_scale": 0.5,
+        "linear_factor": 0.01
+    },
+    "agent_weights": {
+        "assistant_frequency_weight": 0.7,
+        "assistant_duration_weight": 0.3,
+        "content_frequency_weight": 0.3,
+        "content_duration_weight": 0.7
+    }
+}',
+so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
@@ -111,6 +133,28 @@ ON MATCH SET
         "url"
       ]
     }
+  }',
+  so.importance_scoring = '{
+      "frequency": {
+          "scale_factor": 2.0,
+          "log_base": 2.0,
+          "input_scale": 1.0,
+          "offset": 0.1
+      },
+      "duration": {
+          "threshold": 60.0,
+          "log_scale": 1.0,
+          "log_base": 2.0,
+          "log_offset": 0.1,
+          "linear_scale": 0.5,
+          "linear_factor": 0.01
+      },
+      "agent_weights": {
+          "assistant_frequency_weight": 0.7,
+          "assistant_duration_weight": 0.3,
+          "content_frequency_weight": 0.3,
+          "content_duration_weight": 0.7
+      }
   }',
   so.last_modified_date = datetime()
 RETURN so

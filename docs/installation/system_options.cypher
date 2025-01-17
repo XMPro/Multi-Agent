@@ -55,6 +55,10 @@ ON CREATE SET
       ]
     }
   }',
+  so.timing_config = '{
+    "status_update_interval_ms": 60000,
+    "counter_reset_interval_ms":  86400000
+  }',
   so.importance_scoring = '{
     "frequency": {
         "scale_factor": 2.0,
@@ -133,6 +137,10 @@ ON MATCH SET
         "url"
       ]
     }
+  }',
+  so.timing_config = '{
+    "status_update_interval_ms": 60000,
+    "counter_reset_interval_ms":  86400000
   }',
   so.importance_scoring = '{
       "frequency": {

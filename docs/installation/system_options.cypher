@@ -2,6 +2,8 @@ MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'conversation_history'],
+  so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
   so.models_providers = ['Anthropic', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
@@ -57,6 +59,8 @@ ON CREATE SET
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'conversation_history'],
+  so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
   so.models_providers = ['Anthropic', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},

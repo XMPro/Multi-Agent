@@ -313,7 +313,9 @@ Here's an overview of the main node types and their properties:
 
 | Property                  | Type             | Description |
 |---------------------------|------------------|----------------------------------------------------------------|
+| active                    | Boolean          | Indicates if the team is currently active                |
 | author                    | String           | Author of the team |
+| category                  | String           | Category of the prompt                                |
 | communication_protocol    | JSON String      | Details of communication channels, frequencies, and reporting schedules |
 | compliance_requirements   | Array of Strings | List of regulatory compliance standards |
 | created_date              | DateTime         | Date and time when the team was created |
@@ -326,6 +328,7 @@ Here's an overview of the main node types and their properties:
 | objectives                | Array of Strings | List of team objectives |
 | operational_constraints   | JSON String      | Operational limits and parameters for the team's activities |
 | performance_metrics       | JSON String      | Key performance indicators with targets and weights |
+| tags                      | Array of Strings | Tags associated with the prompt                       |
 | team_id                   | String           | Unique identifier for the team within the organization |
 | version                   | String           | Version number of the team configuration |
 
@@ -335,6 +338,7 @@ Here's an overview of the main node types and their properties:
 
 | Property           | Type     | Description |
 |--------------------|----------|-------------------------------------------------------------------------------------------|
+| active             | Boolean  | Indicates if the tool is currently active                |
 | class_name         | String   | The class name of the tool |
 | created_date       | DateTime | Date and time when the tool was created |
 | description        | String   | A brief description of the tool's functionality |

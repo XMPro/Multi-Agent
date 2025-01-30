@@ -9,8 +9,9 @@ This folder contains in-depth technical explanations and specifications for vari
 3. [Memory Cycle](memory_cycle.md)
 4. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
 5. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
-6. [Prompt Manager and Library](prompt_manager.md)
-7. [Vector Database](vector_database.md)
+6. [Prompt Injection Protection](prompt-injection-protection.md)
+7. [Prompt Manager and Library](prompt_manager.md)
+8. [Vector Database](vector_database.md)
 
 ### Agent Status Monitoring and Error Handling
 
@@ -70,6 +71,16 @@ Key features of our OpenTelemetry implementation:
 - Best practices for effective and efficient tracing
 
 For detailed information on how to implement and use OpenTelemetry tracing in MAGS, please refer to our [OpenTelemetry Tracing Guide](open_telemetry_tracing_guide.md).
+
+### Prompt Injection Protection
+
+The Prompt Injection Protection documentation specifically details how MAGS implements security through:
+- Controlled user interfaces for all interactions
+- Internal security mechanisms
+- System-enforced protections
+- Safe usage patterns through provided UIs
+
+For conceptual understanding of prompt injection, see [Prompt Injection Concepts](../concepts/prompt-injection.md).
 
 ### Prompt Manager
 

@@ -27,6 +27,7 @@ XMPro's Decision Agents build upon this foundation, adapting and extending these
 
 - **APEX AgentOps**: [AgentOps](docs/concepts/agentopsapex.md) for Scaling Multi Agent Generative Systems in complex industrial environments
 - **Adaptive Decision Making**: Agents can create and modify plans to achieve goals, adapting to changing circumstances in their environment.
+- **Built-in Prompt Injection Protection**: Comprehensive safeguards against prompt injection through controlled UIs and architectural security. [Learn more](docs/concepts/prompt-injection.md)
 - **Generative AI Agents**: Autonomous AI entities capable of recognizing patterns, generating predictions, and performing complex tasks.
 - **Integration**: Seamless connection with real-time sensors, business applications, and other data sources through XMPro Data Streams, for continuous improvement in equipment failure prevention and process optimization.
 - **Multi-Agent Collaboration**: AI agents functioning as virtual workers to perform various operational roles and tasks.

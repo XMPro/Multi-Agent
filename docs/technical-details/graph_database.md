@@ -71,7 +71,7 @@ Here's an overview of the main node types and their properties:
 | name               | String   | Name of the agent instance                     |
 | profile_id         | String   | Id of the associated agent profile             |
 | task_prompt        | String   | The prompt used for the tasks of a plan        |
-| type               | String   | The type of agent instance (`standard`, `content`, 'assistant') |
+| type               | String   | The type of agent instance (`standard`, `content`, `assistant`) |
 | user_prompt        | String   | The initial prompt given to the agent instance |
 
 ---

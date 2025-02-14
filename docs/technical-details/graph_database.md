@@ -71,7 +71,7 @@ Here's an overview of the main node types and their properties:
 | name               | String   | Name of the agent instance                     |
 | profile_id         | String   | Id of the associated agent profile             |
 | task_prompt        | String   | The prompt used for the tasks of a plan        |
-| type               | String   | The type of agent instance (`standard`, `content`) |
+| type               | String   | The type of agent instance (`standard`, `content`, `assistant`) |
 | user_prompt        | String   | The initial prompt given to the agent instance |
 
 ---
@@ -391,11 +391,9 @@ RETURN n, r, m
 > Adjust the `$conversationId` to get a specific conversation thread
 
 ```cypher
-MATCH (c:Artifact {id: $conversationId})-[:HAS_ENTRY]->(e:Entry)
-OPTIONAL MATCH (e)-[:TRIGGERED]->(o:Observation)
-RETURN e.prompt as prompt, e.response as response, e.summary as summary, e.user_query as user_query, 
-        e.timestamp as timestamp, e.token_usage as token_usage, e.response_time as response_time, e.tools_used as toolsUsed,
-        o.id as observationId
+MATCH (c:Artifact {id: $conversationId})-[r1:HAS_ENTRY]->(e:Entry)
+OPTIONAL MATCH (e)-[r2:MADE]->(o:Decision {type: 'Observation'})
+RETURN c, r1, e, r2, o
 ORDER BY e.timestamp ASC
 ```
 

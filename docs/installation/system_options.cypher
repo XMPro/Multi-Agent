@@ -4,7 +4,7 @@ ON CREATE SET
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'conversation_history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
-  so.models_providers = ['Anthropic', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
+  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -80,14 +80,42 @@ ON CREATE SET
         "content_frequency_weight": 0.3,
         "content_duration_weight": 0.7
     }
-}',
+  }',
+  so.surprise_scoring = '{
+    "novelty_threshold": 0.7,
+    "pattern_deviation_weight": 0.6,
+    "context_unexpectedness_weight": 0.4,
+    "historical_window_size": 100,
+    "temporal_decay": {
+        "decay_rate": 0.9,
+        "half_life_hours": 24
+    }
+  }',
+  so.memory_retrieval = '{
+    "weights": {
+        "similarity_weight": 0.4,
+        "importance_weight": 0.3,
+        "surprise_weight": 0.2,
+        "recency_weight": 0.1
+    },
+    "type_weights": {
+        "observation_weight": 0.6,
+        "reflection_weight": 1.2,
+        "plan_weight": 0.5,
+        "decision_weight": 0.9,
+        "action_weight": 1.0,
+        "default_weight": 0.5
+    },
+    "max_candidates": 100,
+    "min_similarity_threshold": 0.3
+  }',
 so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'conversation_history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
-  so.models_providers = ['Anthropic', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
+  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -163,6 +191,34 @@ ON MATCH SET
           "content_frequency_weight": 0.3,
           "content_duration_weight": 0.7
       }
+  }',
+  so.surprise_scoring = '{
+    "novelty_threshold": 0.7,
+    "pattern_deviation_weight": 0.6,
+    "context_unexpectedness_weight": 0.4,
+    "historical_window_size": 100,
+    "temporal_decay": {
+        "decay_rate": 0.9,
+        "half_life_hours": 24
+    }
+  }',
+  so.memory_retrieval = '{
+    "weights": {
+        "similarity_weight": 0.4,
+        "importance_weight": 0.3,
+        "surprise_weight": 0.2,
+        "recency_weight": 0.1
+    },
+    "type_weights": {
+        "observation_weight": 0.6,
+        "reflection_weight": 1.2,
+        "plan_weight": 0.5,
+        "decision_weight": 0.9,
+        "action_weight": 1.0,
+        "default_weight": 0.5
+    },
+    "max_candidates": 100,
+    "min_similarity_threshold": 0.3
   }',
   so.last_modified_date = datetime()
 RETURN so

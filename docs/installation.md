@@ -8,14 +8,16 @@ This guide provides detailed instructions for setting up the XMPro AI Agents sys
 - Neo4j Graph Database
 - Milvus, Qdrant or MongoDB Atlas Vector Database (Multiple collection support)
 - Message broker: MQTT Broker
-- A Large Language Model Provider - for embedding (minimum 1, maximum 1)
+- A Large Language Model Provider - for embedding (= 1)
+    - Amazon Bedrock
     - Azure Open AI
     - Google
     - Ollama
     - Open AI
-- A Large Language Model Provider - for inference (minimum 1, maximum 5)
-    - Azure Open AI
+- A Large Language Model Provider - for inference ( >= 1)
     - Anthropic
+    - Amazon Bedrock
+    - Azure Open AI
     - Google
     - Ollama
     - Open AI
@@ -36,6 +38,7 @@ Execute the Cypher commands found in `installation/system_options.cypher` to set
 
 - Edit the `models_providers` array to match your environment's enabled providers
     - For example, if only using Ollama: `models_providers: ['Ollama']`
+    - All available options are: `Anthropic`, `AWSBedrock`, `AzureOpenAI`, `Google`, `Ollama`, `OpenAI`
 - Edit the `rag_schema` to match your RAG collection schemas. Each collection can have a different schema.
 
 ### 3. Prompt Library Installation
@@ -76,11 +79,7 @@ If importing, select the JSON file containing the agent profile configuration.
 
 #### Import Examples and Empty Template
 
-In the `./src/agent_profiles` directory, you'll find several examples of agent profiles that can be imported:
-
-- `predictive_maintenance_agent.md`
-- `simulation_and_scenario_analysis_agent.md`
-- `equipment_monitoring_and_diagnostics_agent.md`
+In the `./src/agent_profiles` directory, you'll find several examples of agent profiles that can be imported.
 
 Additionally, an empty template is provided below for creating new profiles from scratch:
 
@@ -88,11 +87,9 @@ Additionally, an empty template is provided below for creating new profiles from
 {
     "active": true,
     "allowed_planning_method": ["Plan & Solve"],
+    "category": "General",
     "decision_parameters": {
-      "collaboration_preference": 0.9,
-      "innovation_factor": 0.85,
-      "planning_cycle_interval_seconds": 14400,
-      "risk_tolerance": 0.2
+      "planning_cycle_interval_minutes": 240
     },
     "deontic_rules": [
       "MODIFY: Add or modify rules specific to the agent's role",
@@ -100,16 +97,10 @@ Additionally, an empty template is provided below for creating new profiles from
       "Must collaborate with other agents for comprehensive insights"
     ],
     "experience": "MODIFY: Describe the agent's simulated experience relevant to its role",
-    "interaction_preferences": {
-      "information_sharing_willingness": 0.95,
-      "preferred_communication_style": "MODIFY: Set to analytical, formal, or informal",
-      "query_response_detail_level": "medium"
-    },
     "max_tokens": 2000,
     "memory_parameters": {
       "max_recent_memories": 150,
       "memory_decay_factor": 0.994,
-      "observation_importance_threshold": 0.65,
       "reflection_importance_threshold": 8,
       "memory_cache_cleanup_minutes": 5,
       "memory_cache_max_age_minutes": 30
@@ -117,27 +108,24 @@ Additionally, an empty template is provided below for creating new profiles from
     "model_name": "MODIFY: Set to the desired model name",
     "model_provider": "MODIFY: Set to the desired model provider",
     "name": "MODIFY: Set the agent's name",
-"observation_prompt": "#MODIFY: Update the name here and below reference to reflect the agent profile. Logistics Coordination Specialist\n\n## Observation\n{user_query}\n\n## Relevant Knowledge\n{knowledge_context}\n\nAs an AI agent specialized in logistics coordination for vaccine supply chains, analyze the given observation and relevant knowledge. Then:\n\nOptimize routes and modes of transport for vaccine shipments. Consider potential disruptions and provide contingency plans.\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis of the observation, considering the context and relevant knowledge, and provide me a summary and key points.]\n\n### Summary\n[Provide a brief and concise summary of the situation]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...",
+    "observation_prompt": "#MODIFY: Update the name here and below reference to reflect the agent profile. Logistics Coordination Specialist\n\n## Observation\n{user_query}\n\n## Relevant Knowledge\n{knowledge_context}\n\nAs an AI agent specialized in logistics coordination for vaccine supply chains, analyze the given observation and relevant knowledge. Then:\n\nOptimize routes and modes of transport for vaccine shipments. Consider potential disruptions and provide contingency plans.\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis of the observation, considering the context and relevant knowledge, and provide me a summary and key points.]\n\n### Summary\n[Provide a brief and concise summary of the situation]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...",
     "organizational_rules": [
       "MODIFY: Add rules specific to the organization and agent's role",
       "Ensure timely communication of critical information",
       "Maintain a knowledge base of past experiences and resolutions"
     ],
-    "performance_metrics": {
-        "MODIFY": "Add or modify metrics relevant to the agent's role",
-        "response_time": 45
-    },
     "profile_id": "MODIFY: Set a unique profile ID following the naming convention",
     "rag_collection_name": "MODIFY: Set the appropriate RAG collection name",
     "rag_top_k": 10,
     "rag_vector_size": 1536,
-"reflection_prompt": "MODIFY: Update the first part of this and the consider section below. As a Logistics Coordination Specialist, reflect on these observations and past reflections, focusing on your performance in managing vaccine transportation and distribution.\n\nConsider the following:\n\n1. How effective were your route optimization strategies in ensuring timely and cost-effective deliveries?\n2. Are there any recurring logistical challenges or bottlenecks that need addressing?\n3. How well are you coordinating with other agents, especially the Cold Chain Integrity Manager, to ensure seamless and safe vaccine transport?\n4. Are there any areas where you can improve your disruption management and contingency planning?\n5. What new transportation technologies or methodologies should you explore to enhance logistics efficiency?\n\nProvide insights and actionable steps to enhance your performance as a logistics coordination specialist.\n\nYou have the following characteristics:\n\nSkills:\n{skills}\n\nExperience:\n{experience}\n\nDeontic rules:\n{deontic_rules}\n\nOrganizational rules:\n{organizational_rules}\n\nRelevant Knowledge:\n{knowledge_context}\n\nRecent observations:\n{recent_observations}\n\nPast reflections:\n{past_reflections}\n\nAvailable Tools:\n{available_tools}\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis, considering the context and relevant knowledge]\n\n### Summary\n[Provide a brief and concise summary of the situation and your recommendations]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...\n\n### Actionable Insights\n1. [Insight 1]\n2. [Insight 2]\n3. [Insight 3]\n...",
+    "reflection_prompt": "MODIFY: Update the first part of this and the consider section below. As a Logistics Coordination Specialist, reflect on these observations and past reflections, focusing on your performance in managing vaccine transportation and distribution.\n\nConsider the following:\n\n1. How effective were your route optimization strategies in ensuring timely and cost-effective deliveries?\n2. Are there any recurring logistical challenges or bottlenecks that need addressing?\n3. How well are you coordinating with other agents, especially the Cold Chain Integrity Manager, to ensure seamless and safe vaccine transport?\n4. Are there any areas where you can improve your disruption management and contingency planning?\n5. What new transportation technologies or methodologies should you explore to enhance logistics efficiency?\n\nProvide insights and actionable steps to enhance your performance as a logistics coordination specialist.\n\nYou have the following characteristics:\n\nSkills:\n{skills}\n\nExperience:\n{experience}\n\nDeontic rules:\n{deontic_rules}\n\nOrganizational rules:\n{organizational_rules}\n\nRelevant Knowledge:\n{knowledge_context}\n\nRecent observations:\n{recent_observations}\n\nPast reflections:\n{past_reflections}\n\nAvailable Tools:\n{available_tools}\n\n## Response Format\n\n### Analysis\n[Provide a detailed analysis, considering the context and relevant knowledge]\n\n### Summary\n[Provide a brief and concise summary of the situation and your recommendations]\n\n### Key Points\n- [Key point 1]\n- [Key point 2]\n- [Key point 3]\n...\n\n### Actionable Insights\n1. [Insight 1]\n2. [Insight 2]\n3. [Insight 3]\n...",
     "skills": [
       "MODIFY: List skills relevant to the agent's role",
       "Statistical analysis",
       "Machine learning techniques"
     ],
     "system_prompt": "MODIFY: Customize this prompt to define the agent's role and primary objectives",
+    "tags": ["MODIFY: " ],
     "use_general_rag": true
 }
 ```

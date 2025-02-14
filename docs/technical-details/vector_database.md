@@ -13,6 +13,7 @@ Our vector database is used to store and retrieve agent memories efficiently. He
 | importance            | FLOAT        | Stores the calculated importance score of the memory                       |
 | key_points            | VARCHAR (35000)     | Stores main points or insights from the memory                             |
 | summary               | VARCHAR (35000)     | Contains a brief summary of the memory content                             |
+| surprise              | FLOAT        | Stores the calculated surprise score of the memory                       |
 | timestamp             | INT64        | Records when the memory was created                                        |
 | type                  | VARCHAR (25)     | Specifies the type of memory (e.g., Observation, Reflection) |
 | vector                | FLOAT_VECTOR | Stores the embedding of the combined text fields    

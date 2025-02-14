@@ -87,7 +87,6 @@ Here's an overview of the main node types and their properties:
 | decision_parameters     | String (JSON)    | Parameters for decision making                        |
 | deontic_rules           | Array of Strings | Rules governing the agent's behavior                  |
 | experience              | String           | Description of the agent's simulated experience       |
-| interaction_preferences | String (JSON)    | Preferences for interaction                           |
 | last_modified_date      | DateTime         | Timestamp of when the profile was last modified       |
 | max_tokens              | Integer          | Maximum number of tokens for responses                |
 | memory_parameters       | String (JSON)    | Parameters for memory management                      |
@@ -96,7 +95,6 @@ Here's an overview of the main node types and their properties:
 | name                    | String           | Name of the agent profile                             |
 | observation_prompt      | String           | Prompt template for observations                      |
 | organizational_rules    | Array of Strings | Rules specific to the organization                    |
-| performance_metrics     | String (JSON)    | Metrics for measuring performance                     |
 | profile_id              | String           | Unique identifier for the agent profile               |
 | rag_collection_name     | String           | Name of the RAG collection used                       |
 | rag_top_k               | Integer          | Number of top results to retrieve from RAG            |
@@ -246,6 +244,7 @@ Here's an overview of the main node types and their properties:
 | rag_query_time | Float    | Time taken for RAG query                             |
 | response       | String   | The response content                                           |
 | response_time  | Float    | Time taken for the response           |
+| surprise       | Float    | Surprise score of the memory  |
 | timestamp      | Integer  | Unix timestamp                               |
 | token_usage    | Integer  | Number of tokens used                               |
 | type           | String   | Type of memory ( `Observation` or `Reflection` )                              |

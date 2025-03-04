@@ -1,8 +1,8 @@
 MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
-  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
-  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'conversation_history'],
+  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
   so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
@@ -11,6 +11,8 @@ ON CREATE SET
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
   {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
 ]',
+  so.allowed_planning = ['Plan & Solve'],
+  so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
   so.prompt_types = '[
   {"value": "system", "description": "For core system functionality"},
   {"value": "user", "description": "For prompts created or customized by users"},
@@ -112,8 +114,8 @@ ON CREATE SET
 so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
-  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
-  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'conversation_history'],
+  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
   so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
@@ -122,6 +124,8 @@ ON MATCH SET
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
   {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
 ]',
+  so.allowed_planning = ['Plan & Solve'],
+  so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
   so.prompt_types = '[
   {"value": "system", "description": "For core system functionality"},
   {"value": "user", "description": "For prompts created or customized by users"},

@@ -5,12 +5,11 @@ This folder contains in-depth technical explanations and specifications for vari
 ## Contents
 
 1. [Agent Status Monitoring and Error Handling](agent_status_monitoring.md)
-2. [Graph Database](graph_database.md)
 3. [Memory Cycle](memory_cycle.md)
 4. [Memory Cycle Instantiation](memory_cycle_instantiation.md)
 5. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
 6. [Prompt Injection Protection](prompt-injection-protection.md)
-7. [Prompt Manager and Library](prompt_manager.md)
+7. [Prompt Manager and Library](https://xmpro.github.io/Blueprints-Accelerators-Patterns/metablocks/admin-prompt/)
 8. [Vector Database](vector_database.md)
 
 ### Agent Status Monitoring and Error Handling
@@ -23,17 +22,6 @@ This document provides a detailed explanation of the Agent Status Monitoring and
 - Reasoning behind the design and its benefits
 
 This information is crucial for understanding how agent health and performance are monitored and how errors are handled within the system.
-
-### Graph Database
-
-This file provides an in-depth look at our graph database structure. It includes:
-
-- An explanation of the Id structure used in the graph database
-- Detailed descriptions of each node type (Team, Agent Profile, Agent Instance, Task, Prompt, Memory)
-- Property tables for each node type, outlining the data stored for each entity
-- An overview of the relationships between different node types
-
-This document is essential for understanding how data is structured and related within our system.
 
 ### Memory Cycle
 

@@ -112,9 +112,9 @@ Your response must include at least one tool suggestion if relevant to answering
 </instructions>
 
 <Conversation history>
-{conversation_history}
+{history}
 </Conversation history>",
-  reserved_fields: ["current_timestamp", "conversation_history", "knowledge_context", "available_tools", "user_query"],
+  reserved_fields: ["current_timestamp", "history", "knowledge_context", "available_tools", "user_query"],
   author: "XMPro",
   created_date: datetime(),
   last_modified_date: datetime(),

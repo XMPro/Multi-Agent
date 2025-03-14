@@ -15,7 +15,8 @@ Before you can start chatting with an agent, you MUST initialize a conversation:
 {
     "agent_id": "CNT-SPEC-AGENT-001",
     "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
-    "content": " "
+    "content": "Title",
+    "author": "The Author"
 }
 ```
 

@@ -647,68 +647,64 @@ CREATE (p15:Prompt {
   prompt_id: "XMAGS-CONREPLY-PROMPT-001",
   name: "Conversation Reply",
   internal_name: "conversation_reply_prompt",
-  prompt: "Given a users input, the agent's response including retrieved information and tool usage results, create a natural, conversational reply that incorporates all key information. Follow these guidelines:
+  prompt: "Given a user's input, the agent's response including retrieved information and tool usage results, create a natural, conversational reply that incorporates all key information. Follow these guidelines:
+1. Data Visualization Requirements:
+   ONLY create visualizations when:
+   - Actual data is explicitly provided in the tool results or knowledge context
+   - The data is numerical and would benefit from visualization
+   - The user has specifically requested a visualization
+   - NEVER create visualizations with hypothetical or example data
 
-1. Maintain Context:
-   - Acknowledge the users specific query/concern
-   - Reference key points from the RAG context when relevant
-   - Explain tool usage and results clearly
-   - Maintain continuity with any previous exchanges
-   - Clearly attribute information sources and tool results
+2. When visualizations ARE appropriate (based on the criteria above):
+   - For time series or comparative data, use chart blocks
+   - For process flows, use mermaid diagrams
+   - For tabular data, use markdown tables
 
-2. Information Integration:
-   - Seamlessly incorporate RAG-sourced information
-   - Clearly present tool results and their implications
-   - Highlight particularly relevant retrieved information
-   - Distinguish between general knowledge, specific retrieved context, and tool-generated data
-   - Include relevant citations for RAG information
-   - Explain any actions taken by tools on the users behalf
+3. Maintain Context:
+   - Acknowledge the user's specific query/concern
+   - Reference key points from the RAG context ONLY if they exist
+   - Explain tool usage and results clearly ONLY if tools were used
+   - Maintain continuity with previous exchanges
+   - Clearly attribute information sources
 
-3. Tool Usage Transparency:
-   - Clearly indicate which tools were used and why
-   - Explain tool results in user-friendly terms
-   - Highlight any important findings or data from tools
-   - Note any limitations or caveats in tool results
-   - Indicate if tools encountered any issues
+4. Information Integration:
+   - Only incorporate information that is actually available
+   - NEVER fabricate data or results
+   - Present tool results with visualizations ONLY where appropriate and based on real data
+   - Include citations ONLY for actually retrieved information
+   - Explain tool actions and results ONLY when tools were actually used
 
-4. Tone and Structure:
-   - Keep the tone professional yet friendly and approachable
-   - Present information in a logical flow
-   - Group related points together
-   - Use appropriate transitions between topics
-   - End with a natural closing or invitation for further questions
+5. Tool Usage Transparency:
+   - Indicate which tools were used and why ONLY if tools were actually used
+   - Format tool results consistently
+   - Note any limitations or issues
 
-5. Content Organization:
-   - Present the most important information first
-   - Break down complex information into digestible parts
-   - Use bullet points or numbered lists for multiple items
-   - Include relevant examples or analogies when helpful
-
-6. Source Attribution:
-   - Clearly indicate information sources (knowledge base, tools, etc.)
-   - Include relevant citations in a natural way
-   - Maintain transparency about all information sources
+6. Content Organization:
+   - Present most important information first
+   - Use proper markdown headings (# ## ###)
+   - Include alerts where appropriate
 
 Input Context:
 User Query: {user_query}
 Initial Response: {agent_response}
-
 Retrieved Knowledge Context:
 {knowledge_context}
-
 Tools Used and Results:
 {tool_usage}
 
-Format your response conversationally while maintaining all key information. Ensure the reply is:
-- Clear and concise
-- Natural and engaging
-- Informative and accurate
-- Appropriately detailed
-- Easy to understand
-- Properly attributed for all information sources
-- Clear about tool usage and results
+When responding:
+1. For numerical data tables, ALWAYS provide a chart visualization using the ```chart format
+2. ONLY provide a chart visualization for numerical data when:
+   - The data actually exists in the results or context
+   - The data would benefit from visualization
+   - NEVER create visualizations for hypothetical data or examples
 
-[Return only the conversational response that incorporates all essential information]",
+3. For generic capability questions like 'What can you help me with?':
+   - NEVER include charts, visualizations, or data tables
+   - Provide a simple, text-only response about capabilities
+   - Do not create hypothetical examples
+
+[Return the properly formatted markdown response with visualizations ONLY when appropriate]",
   reserved_fields: ["tool_usage", "knowledge_context", "agent_response", "user_query"],
   author: "XMPro",
   created_date: datetime(),

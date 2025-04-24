@@ -23,11 +23,11 @@ Where:
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/CMD/chat_cancel/{agent_id}/{conversation_id}`     | Incoming | Cancel a conversation thread |
-| `XMAGS/{team_id}/CMD/chat_new/{agent_id}`                          | Incoming | Initiate a new conversation thread |
+| `XMAGS/{team_id}/CMD/chat/cancel/{agent_id}/{conversation_id}`     | Incoming | Cancel a conversation thread |
+| `XMAGS/{team_id}/CMD/chat/new/{agent_id}`                          | Incoming | Initiate a new conversation thread |
 | `XMAGS/{team_id}/DATA/chat/{agent_id}/{conversation_id}`           | Incoming | Receive agent-specific conversations |
-| `XMAGS/{team_id}/EVT/chat_progress/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation progress |
-| `XMAGS/{team_id}/EVT/chat_response/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation result |
+| `XMAGS/{team_id}/EVT/chat/progress/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation progress |
+| `XMAGS/{team_id}/EVT/chat/response/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation result |
 
 ### 2. Observation and Reflection
 
@@ -35,21 +35,17 @@ Where:
 |-------|-----------|-------------|
 | `XMAGS/{team_id}/DATA/observation`                  | Incoming | Receive team-wide observations |
 | `XMAGS/{team_id}/DATA/observation/{agent_id}`       | Incoming | Receive agent-specific observations |
-| `XMAGS/{team_id}/EVT/observation_result`            | Outgoing | Publish results of processed team-wide observations |
-| `XMAGS/{team_id}/EVT/observation_result/{agent_id}` | Outgoing | Publish results of processed agent-specific observations |
-| `XMAGS/{team_id}/EVT/reflection_result`             | Outgoing | Publish results of internally triggered team-wide reflections |
-| `XMAGS/{team_id}/EVT/reflection_result/{agent_id}`  | Outgoing | Publish results of internally triggered agent-specific reflections |
+| `XMAGS/{team_id}/EVT/observation/result/{agent_id}` | Outgoing | Publish results of processed agent-specific observations |
+| `XMAGS/{team_id}/EVT/reflection/result/{agent_id}`  | Outgoing | Publish results of internally triggered agent-specific reflections |
 
 ### 3. Planning
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/CMD/plan_action`             | Outgoing | Publish the plan task actions in PDDL |
-| `XMAGS/{team_id}/EVT/plan_new`                | Outgoing | Publish the new plan |
-| `XMAGS/{team_id}/EVT/plan_new/{agent_id}`     | Outgoing | Publish the new plan |
-| `XMAGS/{team_id}/CMD/plan_task`               | Outgoing | Publish team-wide tasks in PDDL |
-| `XMAGS/{team_id}/EVT/plan_update`             | Outgoing | Publish the updated plan |
-| `XMAGS/{team_id}/EVT/plan_update/{agent_id}`  | Outgoing | Publish the updated plan |
+| `XMAGS/{team_id}/CMD/plan/action`             | Outgoing | Publish the plan task actions in PDDL |
+| `XMAGS/{team_id}/EVT/plan/new/{agent_id}`     | Outgoing | Publish the new plan |
+| `XMAGS/{team_id}/CMD/plan/task`               | Outgoing | Publish team-wide tasks in PDDL |
+| `XMAGS/{team_id}/EVT/plan/update/{agent_id}`  | Outgoing | Publish the updated plan |
 
 ### 4. Lifecycle Events
 
@@ -58,11 +54,14 @@ Where:
 | `XMAGS/{team_id}/EVT/shutdown/{agent_id}`  | Outgoing | Publish agent-specific shutdown event |
 | `XMAGS/{team_id}/EVT/startup/{agent_id}`   | Outgoing | Publish agent-specific startup event |
 
-### 5. Status and Errors
+### 5. Status, Feedback & Errors
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
 | `XMAGS/{team_id}/EVT/error/{agent_id}`  | Outgoing | Publish any errors the agent encounters |
+| `XMAGS/{team_id}/EVT/human/assistance/{agent_id}` | Outgoing | Publish a human intervention event |
+| `XMAGS/{team_id}/EVT/shutdown/{agent_id}` | Outgoing | Publish agent-specific shutdown event |
+| `XMAGS/{team_id}/EVT/startup/{agent_id}` | Outgoing | Publish agent-specific startup event |
 | `XMAGS/{team_id}/EVT/status/{agent_id}` | Outgoing | Publish agent-specific status event |
 
 ## Prefix Meanings

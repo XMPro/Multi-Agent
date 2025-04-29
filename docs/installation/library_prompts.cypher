@@ -32,7 +32,7 @@ Summarise the tools and output the results of the tools in markdown that the use
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p1)
@@ -127,7 +127,7 @@ Your response must include at least one tool suggestion if relevant to answering
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p2)
@@ -155,7 +155,7 @@ Assistant: {agent_response}
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p3)
@@ -201,7 +201,7 @@ Reasoning:
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p4)
@@ -248,7 +248,7 @@ Provide your decision as 'Yes' for a new plan or a plan adjustment is needed or 
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p6)
@@ -287,7 +287,7 @@ Provide a brief explanation for your decision, considering how the recent reflec
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p7)
@@ -332,7 +332,7 @@ Focus on how changes in tool availability might affect the agent's ability to ac
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p8)
@@ -374,7 +374,7 @@ Focus on how changes in timing might affect the agent's ability to achieve the s
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p9)
@@ -416,7 +416,7 @@ Focus on how new information might affect the agent's ability to achieve the sta
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p10)
@@ -453,7 +453,7 @@ Provide your analysis in a clear, structured format.",
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p11)
@@ -512,7 +512,7 @@ Your response should include the following PDDL components, each clearly labeled
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p12)
@@ -594,7 +594,7 @@ Ensure that all PDDL elements are syntactically correct and logically consistent
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p13)
@@ -638,7 +638,7 @@ Expected output format:
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p14)
@@ -718,7 +718,100 @@ When responding:
   last_used_date: null,
   model_provider: "OpenAI",
   model_name: "gpt-4o-mini",
-  max_tokens: 2000,
+  max_tokens: 8192,
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p15)
+
+CREATE (p16:Prompt {
+  prompt_id: "XMAGS-COMMDECISION-PROMPT-001",
+  name: "Communication Decision",
+  internal_name: "communication_decision_prompt",
+  prompt: "Analyze the following reflection and determine if this information should be communicated to other agents:
+
+## Reflection: 
+{content}
+
+## Memory Metadata:
+- Importance: {importance}
+- Surprise Score: {surprise_score}
+- Contributing Memories: {contributing_memories_count}
+- Confidence: {confidence}
+
+## Current Team: 
+{team}
+
+## Communication Decision
+Determine if this reflection contains information that should be shared with other agents on your team. Consider:
+1. The importance and confidence level of your insights
+2. Whether to communicate directly with specific agents or with the entire team
+3. Which specific agents would benefit from this information
+
+## Response Format
+SHARE_DECISION: [Yes/No]
+COMMUNICATION_TYPE: [Direct/Team]
+TARGET_AGENTS: [List specific agent IDs or 'All' if relevant to everyone]
+AGENT_RESPONSES: [AgentID1:Yes, AgentID2:No, ...] - Specify which agents should respond
+JUSTIFICATION: [Brief explanation of your decision including how confidence level influenced the decision]",
+  reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "memory_cycle",
+  tags: ["reflection", "communication", "team"],
+  description: "Determines if a reflection should be shared with other agents in the team.",
+  last_used_date: null,
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
+  max_tokens: 8192,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p16)
+
+CREATE (p17:Prompt {
+  prompt_id: "XMAGS-COMMRESPONSE-PROMPT-001",
+  name: "Agent Message Reponse",
+  internal_name: "agent_message_response_prompt",
+  prompt: "Analyze the following message from another agent and generate an appropriate response:
+
+## Message from Agent {sender_id}: 
+{content}
+
+## Your Agent Information:
+- Agent ID: {agent_id}
+- Role: {role}
+
+## Team Context: 
+{team_context}
+
+## Response Guidelines
+1. Address the specific content and intent of the message
+2. Provide relevant information or assistance based on your role
+3. Maintain consistency with your agent's responsibilities and knowledge
+4. Consider how your response contributes to team objectives
+5. Include any relevant information from your knowledge that would be helpful
+
+## Response Format
+RESPONSE_CONTENT: [Your detailed response to the agent]
+REASONING: [Brief explanation of why this response is appropriate]
+RELEVANCE_TO_TEAM_GOALS: [How this response aligns with or advances team objectives]",
+  reserved_fields: ["sender_id", "content", "agent_id", "role", "team_context"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "memory_cycle",
+  tags: ["communication", "team"],
+  description: "Prompt for generating responses to agent messages.",
+  last_used_date: null,
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
+  max_tokens: 8192,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p17)

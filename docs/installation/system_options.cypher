@@ -12,6 +12,7 @@ ON CREATE SET
   {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
 ]',
   so.allowed_planning = ['Plan & Solve'],
+  so.allowed_consensus = ['SimpleMajority', 'WeightedMajority', 'Unanimous', 'BordaCount', 'ApprovalVoting', 'Supermajority'],
   so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
   so.prompt_types = '[
   {"value": "system", "description": "For core system functionality"},
@@ -89,8 +90,31 @@ ON CREATE SET
     "context_unexpectedness_weight": 0.4,
     "historical_window_size": 100,
     "temporal_decay": {
-        "decay_rate": 0.9,
         "half_life_hours": 24
+    }
+  }',
+  so.confidence_scoring = '{
+    "thresholds": {
+      "low_confidence": 0.4,
+      "medium_confidence": 0.6,
+      "high_confidence": 0.8,
+      "critical_threshold": 0.7
+    },
+    "factor_weights": {
+      "evidence_weight": 0.3,
+      "consistency_weight": 0.25,
+      "reasoning_weight": 0.2,
+      "uncertainty_weight": 0.15,
+      "stability_weight": 0.1,
+      "observation_decision_weight": 0.2
+    },
+    "memory_weights": {
+      "observation_weight": 0.8,
+      "reflection_weight": 1.2,
+      "plan_weight": 0.7,
+      "decision_weight": 1.0,
+      "action_weight": 0.9,
+      "default_weight": 0.6
     }
   }',
   so.memory_retrieval = '{
@@ -108,10 +132,12 @@ ON CREATE SET
         "action_weight": 1.0,
         "default_weight": 0.5
     },
-    "max_candidates": 100,
     "min_similarity_threshold": 0.3
   }',
-so.created_date = datetime()
+  so.agent_communication = '{
+    "trust_factor": 0.8
+  }',
+  so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
@@ -125,6 +151,7 @@ ON MATCH SET
   {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
 ]',
   so.allowed_planning = ['Plan & Solve'],
+  so.allowed_consensus = ['SimpleMajority', 'WeightedMajority', 'Unanimous', 'BordaCount', 'ApprovalVoting', 'Supermajority'],
   so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
   so.prompt_types = '[
   {"value": "system", "description": "For core system functionality"},
@@ -202,8 +229,31 @@ ON MATCH SET
     "context_unexpectedness_weight": 0.4,
     "historical_window_size": 100,
     "temporal_decay": {
-        "decay_rate": 0.9,
         "half_life_hours": 24
+    }
+  }',
+  so.confidence_scoring = '{
+    "thresholds": {
+      "low_confidence": 0.4,
+      "medium_confidence": 0.6,
+      "high_confidence": 0.8,
+      "critical_threshold": 0.7
+    },
+    "factor_weights": {
+      "evidence_weight": 0.3,
+      "consistency_weight": 0.25,
+      "reasoning_weight": 0.2,
+      "uncertainty_weight": 0.15,
+      "stability_weight": 0.1,
+      "observation_decision_weight": 0.2
+    },
+    "memory_weights": {
+      "observation_weight": 0.8,
+      "reflection_weight": 1.2,
+      "plan_weight": 0.7,
+      "decision_weight": 1.0,
+      "action_weight": 0.9,
+      "default_weight": 0.6
     }
   }',
   so.memory_retrieval = '{
@@ -221,8 +271,10 @@ ON MATCH SET
         "action_weight": 1.0,
         "default_weight": 0.5
     },
-    "max_candidates": 100,
     "min_similarity_threshold": 0.3
+  }',
+  so.agent_communication = '{
+    "trust_factor": 0.8
   }',
   so.last_modified_date = datetime()
 RETURN so

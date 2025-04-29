@@ -47,12 +47,11 @@ Where:
 | `XMAGS/{team_id}/CMD/plan/task`               | Outgoing | Publish team-wide tasks in PDDL |
 | `XMAGS/{team_id}/EVT/plan/update/{agent_id}`  | Outgoing | Publish the updated plan |
 
-### 4. Lifecycle Events
+### 4. Agent-to-Agent
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/EVT/shutdown/{agent_id}`  | Outgoing | Publish agent-specific shutdown event |
-| `XMAGS/{team_id}/EVT/startup/{agent_id}`   | Outgoing | Publish agent-specific startup event |
+| `XMAGS/{team_id}/DATA/communication/{agent_id}`  | Incoming | Receive agent-specific messages |
 
 ### 5. Status, Feedback & Errors
 

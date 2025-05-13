@@ -1,7 +1,7 @@
 MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
-  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
   so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
@@ -130,6 +130,7 @@ ON CREATE SET
         "plan_weight": 0.5,
         "decision_weight": 0.9,
         "action_weight": 1.0,
+        "synthetic_weight": 1.1,
         "default_weight": 0.5
     },
     "min_similarity_threshold": 0.3
@@ -140,7 +141,7 @@ ON CREATE SET
   so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
-  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools'],
+  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
   so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
@@ -269,6 +270,7 @@ ON MATCH SET
         "plan_weight": 0.5,
         "decision_weight": 0.9,
         "action_weight": 1.0,
+        "synthetic_weight": 1.1,
         "default_weight": 0.5
     },
     "min_similarity_threshold": 0.3

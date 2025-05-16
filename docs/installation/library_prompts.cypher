@@ -815,3 +815,46 @@ RELEVANCE_TO_TEAM_GOALS: [How this response aligns with or advances team objecti
   access_level: "system"
 }),
 (p)-[:CONTAINS]->(p17)
+
+CREATE (p18:Prompt {
+  prompt_id: "XMAGS-CONSENSUSIMP-PROMPT-001",
+  name: "Component Impact Analysis",
+  internal_name: "components_batch_impact_analysis_prompt",
+  prompt: "Analyze the following planning decision to determine which components of an objective function it would impact.
+
+Planning Decision:
+- Goal: {planning_decision_goal}
+- Reasoning: {planning_decision_reasoning}
+- Context: {planning_decision_context}
+- Response: {planning_decision_response}
+
+Components to analyze:
+{components_list}
+
+Consider both explicit mentions and implicit impacts. A planning decision may impact a component even if it doesn't explicitly mention it by name. Consider relationships between systems, dependencies, and potential side effects.
+
+For each component, provide your analysis in the following format:
+
+COMPONENT: [component name]
+IMPACT_DETECTED: [Yes/No]
+CONFIDENCE: [0-1 scale, e.g., 0.85]
+REASONING: [Brief explanation of why this component is or is not impacted]
+
+Analyze each component separately and provide a complete analysis for all listed components.",
+  reserved_fields: ["planning_decision_goal", "planning_decision_reasoning", "planning_decision_context", "planning_decision_response", "components_list"],
+  author: "XMPro",
+  created_date: datetime(),
+  last_modified_date: datetime(),
+  active: true,
+  version: 1,
+  type: "system",
+  category: "memory_cycle",
+  tags: ["consensus", "team"],
+  description: "Prompt for determining if a planning decision impacts a specific component.",
+  last_used_date: null,
+  model_provider: "OpenAI",
+  model_name: "gpt-4o-mini",
+  max_tokens: 8192,
+  access_level: "system"
+}),
+(p)-[:CONTAINS]->(p18)

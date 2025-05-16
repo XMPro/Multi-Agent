@@ -138,7 +138,17 @@ ON CREATE SET
   so.agent_communication = '{
     "trust_factor": 0.8
   }',
-  so.created_date = datetime()
+  so.consensus_config = '{
+    "enabled": true,
+    "confidence_threshold": 0.5,
+    "cooldown_minutes": 30,
+    "max_ci_rounds": 3,
+    "timeout_minutes": 60,
+    "default_protocol": "SimpleMajority",
+    "default_consensus_threshold": 0.5,
+    "enable_formal_voting": true
+  }',
+so.created_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
@@ -277,6 +287,16 @@ ON MATCH SET
   }',
   so.agent_communication = '{
     "trust_factor": 0.8
+  }',
+  so.consensus_config = '{
+    "enabled": true,
+    "confidence_threshold": 0.5,
+    "cooldown_minutes": 30,
+    "max_ci_rounds": 3,
+    "timeout_minutes": 60,
+    "default_protocol": "SimpleMajority",
+    "default_consensus_threshold": 0.5,
+    "enable_formal_voting": true
   }',
   so.last_modified_date = datetime()
 RETURN so

@@ -2,7 +2,7 @@
 
 `pharmaceutical_manufacturing`
 
-[Download JSON](https://github.com/XMPro/Multi-Agent/blob/main/src/agent_profiles/json/equipment_reliability_agent.json)
+[Download JSON](../agent_profiles/json/Pharmaceutical_equipment_reliability_agent.json)
 
 # User Story
 

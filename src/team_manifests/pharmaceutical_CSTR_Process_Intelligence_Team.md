@@ -24,7 +24,7 @@ The primary business objective for implementing the Pharmaceutical CSTR Process 
    - **Goal:** Achieve >99% data completeness and 100% parameter compliance with automated audit trail management.
    - **Benefit:** Enhanced regulatory compliance, reduced audit findings, and improved inspection readiness through continuous compliance monitoring.
 
-5. **Optimize Resource Planning and Utilization**
+5. **Optimize Resource Planning and Utilization** 
    - **Goal:** Improve equipment utilization from 75-80% to 85-90% through intelligent production planning and resource allocation.
    - **Benefit:** Increased facility capacity, reduced inventory costs, improved schedule adherence, and optimized changeover efficiency.
 
@@ -121,7 +121,7 @@ mindmap
 
 ## 5. Agent Profiles Summary
 
-### CSTR Process Control Agent
+### [CSTR Process Control Agent](../agent_profiles/pharmaceutical_cstr_process_control_agent_profile.md)
 - **Focus:** Real-time optimization of temperature stability (±0.5°C), flow control (±1%), pressure management, and energy efficiency
 - **Key Capabilities:** Advanced PID control, multi-variable optimization, heat transfer analysis, residence time control
 - **Objective:** Maximize space-time yield and energy efficiency while maintaining pharmaceutical process validation requirements
@@ -131,17 +131,17 @@ mindmap
 - **Key Capabilities:** Motor signature analysis, vibration trend detection, heat exchanger fouling assessment, seal integrity monitoring
 - **Objective:** Achieve 92% equipment availability through condition-based maintenance and equipment protection
 
-### CSTR Quality Control Agent
+### [CSTR Quality Control Agent](../agent_profiles/pharmaceutical_cstr_quality_control_agent_profile.md)
 - **Focus:** Process consistency monitoring using pH, conductivity, turbidity as quality indicators
 - **Key Capabilities:** Statistical process control, real-time quality trending, process-quality correlation analysis
 - **Objective:** Maintain <3% process variability and ensure pharmaceutical quality consistency
 
-### CSTR Regulatory Compliance Agent
+### [CSTR Regulatory Compliance Agent](../agent_profiles/pharmaceutical_cstr_regulatory_compliance_agent_profile.md)
 - **Focus:** FDA cGMP compliance through data integrity monitoring and electronic documentation
 - **Key Capabilities:** 21 CFR Part 11 compliance, audit trail management, parameter limit checking, batch record validation
 - **Objective:** Achieve >99% data completeness and 100% regulatory compliance
 
-### CSTR Resource Planning & Scheduling Agent
+### [CSTR Resource Planning & Scheduling Agent](../agent_profiles/pharmaceutical_cstr_planning_agent_profile.md)
 - **Focus:** Production planning optimization, equipment utilization, and resource allocation
 - **Key Capabilities:** Batch sequencing optimization, capacity planning, inventory management, maintenance coordination
 - **Objective:** Improve equipment utilization to 85-90% and optimize resource allocation efficiency

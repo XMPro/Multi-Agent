@@ -2,7 +2,7 @@
 
 `pharmaceutical`
 
-[Download JSON](../src/agent_profiles/json/pharmaceutical_cstr_process_control_agent.json)
+[Download JSON](../agent_profiles/json/pharmaceutical_cstr_process_control_agent.json) 
 
 # User Story
 

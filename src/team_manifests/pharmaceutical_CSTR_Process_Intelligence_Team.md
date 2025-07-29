@@ -126,7 +126,7 @@ mindmap
 - **Key Capabilities:** Advanced PID control, multi-variable optimization, heat transfer analysis, residence time control
 - **Objective:** Maximize space-time yield and energy efficiency while maintaining pharmaceutical process validation requirements
 
-### CSTR Equipment Reliability Agent  
+### [CSTR Equipment Reliability Agent](../agent_profiles/pharmaceutical_cstr_equipment_reliability_agent_profile.md)  
 - **Focus:** Predictive maintenance through motor power analysis, vibration monitoring, and mechanical integrity assessment
 - **Key Capabilities:** Motor signature analysis, vibration trend detection, heat exchanger fouling assessment, seal integrity monitoring
 - **Objective:** Achieve 92% equipment availability through condition-based maintenance and equipment protection

@@ -2,7 +2,7 @@
 
 `pharmaceutical`
 
-[Download JSON](https://raw.githubusercontent.com/XMPro/Multi-Agent/main/src/agent_profiles/json/pharma_cstr_process_control_agent.json)
+[Download JSON](../src/agent_profiles/json/pharmaceutical_cstr_process_control_agent.json)
 
 # User Story
 

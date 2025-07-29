@@ -2,7 +2,7 @@
 
 `pharmaceutical_manufacturing`
 
-[Download JSON](https://raw.githubusercontent.com/XMPro/Multi-Agent/main/src/agent_profiles/json/cstr_quality_control_agent.json)
+[Download JSON](../agent_profiles/json/pharmaceutical_quality_control_agent.json)
 
 # User Story
 

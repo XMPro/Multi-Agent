@@ -1,10 +1,19 @@
+MATCH (n:SystemOptions)
+REMOVE n.agent_communication
+REMOVE n.consensus_config
+REMOVE n.memory_retrieval
+REMOVE n.confidence_scoring
+REMOVE n.timing_config
+REMOVE n.importance_scoring
+REMOVE n.surprise_scoring
+
 MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
-  so.reserved_fields_observation = ['user_query', 'knowledge_context'],
-  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
+  so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
+  so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
-  so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
-  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
+  so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
+  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -12,7 +21,7 @@ ON CREATE SET
   {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
 ]',
   so.allowed_planning = ['Plan & Solve'],
-  so.allowed_consensus = ['SimpleMajority', 'WeightedMajority', 'Unanimous', 'BordaCount', 'ApprovalVoting', 'Supermajority'],
+  so.allowed_consensus = ['SimpleMajority'],
   so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
   so.prompt_types = '[
   {"value": "system", "description": "For core system functionality"},
@@ -58,11 +67,11 @@ ON CREATE SET
       ]
     }
   }',
-  so.timing_config = '{
+  so.config_timing = '{
     "status_update_interval_ms": 60000,
     "counter_reset_interval_ms":  86400000
   }',
-  so.importance_scoring = '{
+  so.config_importance_scoring = '{
     "frequency": {
         "scale_factor": 2.0,
         "log_base": 2.0,
@@ -84,7 +93,7 @@ ON CREATE SET
         "content_duration_weight": 0.7
     }
   }',
-  so.surprise_scoring = '{
+  so.config_surprise_scoring = '{
     "novelty_threshold": 0.7,
     "pattern_deviation_weight": 0.6,
     "context_unexpectedness_weight": 0.4,
@@ -93,12 +102,14 @@ ON CREATE SET
         "half_life_hours": 24
     }
   }',
-  so.confidence_scoring = '{
+  so.config_confidence_scoring = '{
     "thresholds": {
       "low_confidence": 0.4,
       "medium_confidence": 0.6,
       "high_confidence": 0.8,
-      "critical_threshold": 0.7
+      "critical_threshold": 0.7,
+      "min_objective_alignment_factor": 0.8,
+      "max_objective_alignment_factor": 1.2
     },
     "factor_weights": {
       "evidence_weight": 0.3,
@@ -106,7 +117,9 @@ ON CREATE SET
       "reasoning_weight": 0.2,
       "uncertainty_weight": 0.15,
       "stability_weight": 0.1,
-      "observation_decision_weight": 0.2
+      "observation_decision_weight": 0.2,
+      "objective_alignment_weight": 0.3,
+      "team_objective_weight": 0.7
     },
     "memory_weights": {
       "observation_weight": 0.8,
@@ -117,7 +130,7 @@ ON CREATE SET
       "default_weight": 0.6
     }
   }',
-  so.memory_retrieval = '{
+  so.config_memory_retrieval = '{
     "weights": {
         "similarity_weight": 0.4,
         "importance_weight": 0.3,
@@ -135,26 +148,26 @@ ON CREATE SET
     },
     "min_similarity_threshold": 0.3
   }',
-  so.agent_communication = '{
+  so.config_agent_communication = '{
     "trust_factor": 0.8
   }',
-  so.consensus_config = '{
-    "enabled": true,
+  so.config_consensus = '{
     "confidence_threshold": 0.5,
     "cooldown_minutes": 30,
-    "max_ci_rounds": 3,
-    "timeout_minutes": 60,
     "default_protocol": "SimpleMajority",
-    "default_consensus_threshold": 0.5,
-    "enable_formal_voting": true
+    "enabled": true,
+    "enable_formal_voting": false,
+    "objective_function_conflict_threshold": 0.2,
+    "max_ci_rounds": 3,
+    "timeout_minutes": 60
   }',
 so.created_date = datetime()
 ON MATCH SET
-  so.reserved_fields_observation = ['user_query', 'knowledge_context'],
-  so.reserved_fields_reflection = ['skills', 'experience', 'deontic_rules', 'organizational_rules', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
+  so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
+  so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
-  so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'available_actions'],
-  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Ollama', 'OpenAI'],
+  so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
+  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[
   {"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -162,7 +175,7 @@ ON MATCH SET
   {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
 ]',
   so.allowed_planning = ['Plan & Solve'],
-  so.allowed_consensus = ['SimpleMajority', 'WeightedMajority', 'Unanimous', 'BordaCount', 'ApprovalVoting', 'Supermajority'],
+  so.allowed_consensus = ['SimpleMajority'],
   so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
   so.prompt_types = '[
   {"value": "system", "description": "For core system functionality"},
@@ -208,11 +221,11 @@ ON MATCH SET
       ]
     }
   }',
-  so.timing_config = '{
+  so.config_timing = '{
     "status_update_interval_ms": 60000,
     "counter_reset_interval_ms":  86400000
   }',
-  so.importance_scoring = '{
+  so.config_importance_scoring = '{
       "frequency": {
           "scale_factor": 2.0,
           "log_base": 2.0,
@@ -234,7 +247,7 @@ ON MATCH SET
           "content_duration_weight": 0.7
       }
   }',
-  so.surprise_scoring = '{
+  so.config_surprise_scoring = '{
     "novelty_threshold": 0.7,
     "pattern_deviation_weight": 0.6,
     "context_unexpectedness_weight": 0.4,
@@ -243,12 +256,14 @@ ON MATCH SET
         "half_life_hours": 24
     }
   }',
-  so.confidence_scoring = '{
+  so.config_confidence_scoring = '{
     "thresholds": {
       "low_confidence": 0.4,
       "medium_confidence": 0.6,
       "high_confidence": 0.8,
-      "critical_threshold": 0.7
+      "critical_threshold": 0.7,
+      "min_objective_alignment_factor": 0.8,
+      "max_objective_alignment_factor": 1.2
     },
     "factor_weights": {
       "evidence_weight": 0.3,
@@ -256,7 +271,9 @@ ON MATCH SET
       "reasoning_weight": 0.2,
       "uncertainty_weight": 0.15,
       "stability_weight": 0.1,
-      "observation_decision_weight": 0.2
+      "observation_decision_weight": 0.2,
+      "objective_alignment_weight": 0.3,
+      "team_objective_weight": 0.7
     },
     "memory_weights": {
       "observation_weight": 0.8,
@@ -267,7 +284,7 @@ ON MATCH SET
       "default_weight": 0.6
     }
   }',
-  so.memory_retrieval = '{
+  so.config_memory_retrieval = '{
     "weights": {
         "similarity_weight": 0.4,
         "importance_weight": 0.3,
@@ -285,18 +302,18 @@ ON MATCH SET
     },
     "min_similarity_threshold": 0.3
   }',
-  so.agent_communication = '{
+  so.config_agent_communication = '{
     "trust_factor": 0.8
   }',
-  so.consensus_config = '{
-    "enabled": true,
+  so.config_consensus = '{
     "confidence_threshold": 0.5,
     "cooldown_minutes": 30,
-    "max_ci_rounds": 3,
-    "timeout_minutes": 60,
     "default_protocol": "SimpleMajority",
-    "default_consensus_threshold": 0.5,
-    "enable_formal_voting": true
+    "enabled": true,
+    "enable_formal_voting": false,
+    "objective_function_conflict_threshold": 0.2,
+    "max_ci_rounds": 3,
+    "timeout_minutes": 60
   }',
   so.last_modified_date = datetime()
 RETURN so

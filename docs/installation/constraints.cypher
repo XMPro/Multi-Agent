@@ -1,10 +1,45 @@
-// First drop redundant or obsolete constraints and indexes
+// ============================================================================
+// PART 1: DROP EXISTING INDEXES BY THEIR ACTUAL NAMES (from your JSON data)
+// ============================================================================
+
+// Plan-related constraints and indexes (not found in your JSON data)
 DROP CONSTRAINT plan_id_unique IF EXISTS;
-DROP CONSTRAINT conversation_id_unique IF EXISTS;
 DROP INDEX plan_status_idx IF EXISTS;
 DROP INDEX plan_active_idx IF EXISTS;
+
+// Conversation-related constraints and indexes (not found in your JSON data)
+DROP CONSTRAINT conversation_id_unique IF EXISTS;
 DROP INDEX conversation_id_idx IF EXISTS;
 
+// Measure-related indexes - using exact names from your JSON data
+DROP INDEX measure_measure_id_index IF EXISTS;
+DROP INDEX measure_name_index IF EXISTS;
+
+// Drop any measure constraints that might exist but aren't visible in the data
+DROP CONSTRAINT measure_id_unique IF EXISTS;
+DROP CONSTRAINT measure_measure_id_unique IF EXISTS;
+
+// ============================================================================
+// PART 2: RE-ADDING CONSTRAINTS AND INDEXES
+// ============================================================================
+
+// Re-add Plan-related constraints and indexes
+CREATE CONSTRAINT plan_id_unique IF NOT EXISTS FOR (p:Plan) REQUIRE p.plan_id IS UNIQUE;
+CREATE INDEX plan_status_idx IF NOT EXISTS FOR (p:Plan) ON (p.status);
+CREATE INDEX plan_active_idx IF NOT EXISTS FOR (p:Plan) ON (p.active);
+
+// Re-add Conversation-related constraints and indexes
+CREATE CONSTRAINT conversation_id_unique IF NOT EXISTS FOR (c:Conversation) REQUIRE c.conversation_id IS UNIQUE;
+CREATE INDEX conversation_id_idx IF NOT EXISTS FOR (c:Conversation) ON (c.conversation_id);
+
+// Re-add Measure-related constraints and indexes
+CREATE CONSTRAINT measure_id_unique IF NOT EXISTS FOR (m:Measure) REQUIRE m.id IS UNIQUE;
+CREATE CONSTRAINT measure_measure_id_unique IF NOT EXISTS FOR (m:Measure) REQUIRE m.measure_id IS UNIQUE;
+CREATE INDEX measure_type_idx IF NOT EXISTS FOR (m:Measure) ON (m.type);
+CREATE INDEX measure_type_id_idx IF NOT EXISTS FOR (m:Measure) ON (m.type, m.id);
+CREATE INDEX measure_created_date_idx IF NOT EXISTS FOR (m:Measure) ON (m.created_date);
+
+// Re-add other constraints from your original script
 CREATE CONSTRAINT agent_profile_id_unique IF NOT EXISTS FOR (p:AgentProfile) REQUIRE p.profile_id IS UNIQUE;
 CREATE CONSTRAINT agent_instance_id_unique IF NOT EXISTS FOR (a:AgentInstance) REQUIRE a.agent_id IS UNIQUE;
 CREATE CONSTRAINT memory_id_unique IF NOT EXISTS FOR (m:Memory) REQUIRE m.id IS UNIQUE;
@@ -14,6 +49,7 @@ CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (d:Decision) REQUIRE d.de
 CREATE CONSTRAINT artifact_id_unique IF NOT EXISTS FOR (a:Artifact) REQUIRE a.id IS UNIQUE;
 CREATE CONSTRAINT objective_function_id_unique IF NOT EXISTS FOR (of:ObjectiveFunction) REQUIRE of.id IS UNIQUE;
 
+// Re-add other indexes from your original script
 CREATE INDEX team_id_idx IF NOT EXISTS FOR (t:Team) ON (t.team_id);
 CREATE INDEX memory_created_date_idx IF NOT EXISTS FOR (m:Memory) ON (m.created_date);
 CREATE INDEX memory_type_idx IF NOT EXISTS FOR (m:Memory) ON (m.type);
@@ -29,10 +65,6 @@ CREATE INDEX objective_function_created_date_idx IF NOT EXISTS FOR (of:Objective
 CREATE CONSTRAINT entry_id_unique IF NOT EXISTS FOR (e:Entry) REQUIRE e.id IS UNIQUE;
 CREATE CONSTRAINT entry_entry_id_unique IF NOT EXISTS FOR (e:Entry) REQUIRE e.entry_id IS UNIQUE;
 
-// Constraints for Measure types
-CREATE CONSTRAINT measure_id_unique IF NOT EXISTS FOR (m:Measure) REQUIRE m.id IS UNIQUE;
-CREATE CONSTRAINT measure_measure_id_unique IF NOT EXISTS FOR (m:Measure) REQUIRE m.measure_id IS UNIQUE;
-
 // Constraints for Location
 CREATE CONSTRAINT location_id_unique IF NOT EXISTS FOR (l:Location) REQUIRE l.id IS UNIQUE;
 CREATE CONSTRAINT location_location_id_unique IF NOT EXISTS FOR (l:Location) REQUIRE l.location_id IS UNIQUE;
@@ -45,8 +77,6 @@ CREATE INDEX artifact_type_id_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type, a.i
 CREATE INDEX entry_type_idx IF NOT EXISTS FOR (e:Entry) ON (e.type);
 CREATE INDEX entry_type_id_idx IF NOT EXISTS FOR (e:Entry) ON (e.type, e.id);
 CREATE INDEX decision_type_idx IF NOT EXISTS FOR (d:Decision) ON (d.type);
-CREATE INDEX measure_type_idx IF NOT EXISTS FOR (m:Measure) ON (m.type);
-CREATE INDEX measure_type_id_idx IF NOT EXISTS FOR (m:Measure) ON (m.type, m.id);
 
 // Compound indexes for common queries
 CREATE INDEX artifact_type_status_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type, a.status);
@@ -59,7 +89,6 @@ CREATE INDEX entry_timestamp_idx IF NOT EXISTS FOR (e:Entry) ON (e.timestamp);
 CREATE INDEX entry_created_date_idx IF NOT EXISTS FOR (e:Entry) ON (e.created_date);
 CREATE INDEX artifact_created_date_idx IF NOT EXISTS FOR (a:Artifact) ON (a.created_date);
 CREATE INDEX decision_timestamp_idx IF NOT EXISTS FOR (d:Decision) ON (d.timestamp);
-CREATE INDEX measure_created_date_idx IF NOT EXISTS FOR (m:Measure) ON (m.created_date);
 
 // Relationship property indexes (for common relationship property filters)
 CREATE INDEX has_sbom_is_latest_idx IF NOT EXISTS FOR ()-[r:HAS_SBOM]-() ON (r.is_latest);
@@ -72,10 +101,6 @@ CREATE INDEX memory_created_timestamp_idx IF NOT EXISTS FOR (m:Memory) ON (m.tim
 CREATE INDEX memory_agent_type_idx IF NOT EXISTS FOR (m:Memory) ON (m.type, m.created_date);
 // If you frequently query memories by importance + type
 CREATE INDEX memory_importance_type_idx IF NOT EXISTS FOR (m:Memory) ON (m.importance, m.type);
-
-// For Entry nodes
-CREATE INDEX entry_type_timestamp_idx IF NOT EXISTS FOR (e:Entry) ON (e.type, e.timestamp);
-CREATE INDEX entry_created_date_idx IF NOT EXISTS FOR (e:Entry) ON (e.created_date);
 
 // For Decision nodes
 CREATE INDEX decision_type_status_idx IF NOT EXISTS FOR (d:Decision) ON (d.type, d.status);

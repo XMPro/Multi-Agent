@@ -42,26 +42,46 @@ Where:
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/CMD/plan/action`             | Outgoing | Publish the plan task actions in PDDL |
+| `XMAGS/{team_id}/CMD/plan/action/{agent_id}`  | Outgoing | Publish the plan actions in PDDL |
+| `XMAGS/{team_id}/CMD/plan/task/{agent_id}`    | Outgoing | Publish the plan tasks in PDDL |
 | `XMAGS/{team_id}/EVT/plan/new/{agent_id}`     | Outgoing | Publish the new plan |
-| `XMAGS/{team_id}/CMD/plan/task`               | Outgoing | Publish team-wide tasks in PDDL |
 | `XMAGS/{team_id}/EVT/plan/update/{agent_id}`  | Outgoing | Publish the updated plan |
 
-### 4. Agent-to-Agent
+### 4. Agent-to-Agent Communication
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/DATA/communication/{agent_id}`  | Incoming | Receive agent-specific messages |
+| `XMAGS/{team_id}/DATA/communication/{agent_id}`  | Bidirectional | Agent-specific messages |
 
 ### 5. Status, Feedback & Errors
 
 | Topic | Direction | Description |
 |-------|-----------|-------------|
-| `XMAGS/{team_id}/EVT/error/{agent_id}`  | Outgoing | Publish any errors the agent encounters |
-| `XMAGS/{team_id}/EVT/human/assistance/{agent_id}` | Outgoing | Publish a human intervention event |
-| `XMAGS/{team_id}/EVT/shutdown/{agent_id}` | Outgoing | Publish agent-specific shutdown event |
-| `XMAGS/{team_id}/EVT/startup/{agent_id}` | Outgoing | Publish agent-specific startup event |
-| `XMAGS/{team_id}/EVT/status/{agent_id}` | Outgoing | Publish agent-specific status event |
+| `XMAGS/{team_id}/CMD/sbom/verify/{agent_id}`           | Incoming | Request verification of an agent's SBOM |
+| `XMAGS/{team_id}/EVT/error/{agent_id}`                 | Outgoing | Publish any errors the agent encounters |
+| `XMAGS/{team_id}/EVT/sbom/verification/{agent_id}`     | Outgoing | Respond to SBOM verification requests |
+| `XMAGS/{team_id}/EVT/shutdown/{agent_id}`              | Outgoing | Publish agent-specific shutdown event |
+| `XMAGS/{team_id}/EVT/startup/{agent_id}`               | Outgoing | Publish agent-specific startup event |
+| `XMAGS/{team_id}/EVT/status/{agent_id}`                | Outgoing | Publish agent-specific status event |
+
+### 6. Registry
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/REGISTRY/agent/{agent_id}` | Outgoing | Long-lived registration of an agent with retain flag |
+| `XMAGS/REGISTRY/team/{team_id}` | Outgoing | Long-lived registration of a team with retain flag |
+
+### 7. Consensus Communication
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/CMD/consensus/cancel/{process_id}` | Incoming | Instruction to cancel the consensus process |
+| `XMAGS/{team_id}/CMD/consensus/humanintervention/{initiator_agent_id}` | Outgoing | Consensus human intervention |
+| `XMAGS/{team_id}/DATA/consensus/conflict/{affected_agent_id}` | Bidirectional | Consensus conflict reports |
+| `XMAGS/{team_id}/DATA/consensus/draftplan/{initiator_agent_id}` | Bidirectional | Consensus draft plan submissions |
+| `XMAGS/{team_id}/DATA/consensus/result` | Bidirectional | Consensus results |
+| `XMAGS/{team_id}/EVT/consensus/invitation` | Bidirectional | Consensus invitations |
+| `XMAGS/{team_id}/EVT/consensus/progress/{process_id}` | Outgoing | Consensus progress updates |
 
 ## Prefix Meanings
 

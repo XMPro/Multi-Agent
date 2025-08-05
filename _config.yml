@@ -1,0 +1,321 @@
+# _config.yml
+title: "XMPro MAGS Documentation"
+description: "Multi-Agent Generative Systems - Architecture and Implementation Guide"
+baseurl: "" # Leave empty for root domain
+url: "https://your-username.github.io/multi-agent"
+
+# Markdown settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+
+# Collections based on MAGS architecture layers
+collections:
+  # Foundation Layer
+  foundation:
+    output: true
+    permalink: /foundation/:name/
+    
+  # Layer 1: LLM Logic - Utility Layer  
+  llm-logic:
+    output: true
+    permalink: /llm-logic/:name/
+    
+  # Layer 2: Business Process Logic - Intelligence Layer
+  cognitive-intelligence:
+    output: true
+    permalink: /cognitive-intelligence/:name/
+  decision-orchestration:
+    output: true
+    permalink: /decision-orchestration/:name/
+  performance-optimization:
+    output: true
+    permalink: /performance-optimization/:name/
+  integration-execution:
+    output: true
+    permalink: /integration-execution/:name/
+    
+  # Supporting Documentation Sections
+  implementation:
+    output: true
+    permalink: /implementation/:name/
+  operations:
+    output: true
+    permalink: /operations/:name/
+  business-integration:
+    output: true
+    permalink: /business-integration/:name/
+    
+  # Keep your existing sections that map to architecture
+  architecture:
+    output: true
+    permalink: /architecture/:name/
+  concepts:
+    output: true  
+    permalink: /concepts/:name/
+  installation:
+    output: true
+    permalink: /installation/:name/
+  technical-details:
+    output: true
+    permalink: /technical-details/:name/
+  naming-conventions:
+    output: true
+    permalink: /naming-conventions/:name/
+
+# Primary Navigation (Architecture-Based)
+navigation:
+  - title: "Getting Started"
+    url: /foundation/
+    icon: "🏗️"
+    description: "Foundation layer - System overview and quick start"
+    items:
+      - title: "What is XMPro MAGS?"
+        url: /foundation/overview/
+      - title: "Quick Start Guide"
+        url: /foundation/quick-start/
+      - title: "Installation & Setup"
+        url: /installation/
+      - title: "Architecture Overview"
+        url: /architecture/agent_architecture/
+        
+  - title: "LLM Utility Layer"
+    url: /llm-logic/
+    icon: "🧠"
+    description: "Language model capabilities and processing"
+    items:
+      - title: "Text Generation & Processing"
+        url: /llm-logic/text-generation/
+      - title: "Language Understanding & Parsing"
+        url: /llm-logic/language-understanding/
+      - title: "Reasoning Support"
+        url: /llm-logic/reasoning-support/
+      - title: "Communication & Interaction"
+        url: /llm-logic/communication/
+      - title: "Knowledge Processing"
+        url: /llm-logic/knowledge-processing/
+        
+  - title: "Cognitive Intelligence"
+    url: /cognitive-intelligence/
+    icon: "🎯"
+    description: "Memory and reasoning systems"
+    items:
+      - title: "Memory Significance Calculation"
+        url: /cognitive-intelligence/memory-significance/
+      - title: "Memory Management & Retrieval"
+        url: /technical-details/memory_cycle/
+      - title: "Synthetic Memory Generation"
+        url: /cognitive-intelligence/synthetic-memory/
+      - title: "Confidence Scoring System"
+        url: /cognitive-intelligence/confidence-scoring/
+      - title: "Content Processing Framework"
+        url: /cognitive-intelligence/content-processing/
+      - title: "Plan Adaptation Detection"
+        url: /cognitive-intelligence/plan-adaptation/
+        
+  - title: "Decision Orchestration"
+    url: /decision-orchestration/ 
+    icon: "🤝"
+    description: "Coordination and consensus management"
+    items:
+      - title: "Consensus Management System"
+        url: /decision-orchestration/consensus/
+      - title: "Communication Decision Framework"
+        url: /concepts/agent-messaging/
+      - title: "Agent Lifecycle & Governance"
+        url: /technical-details/agent_status_monitoring/
+        
+  - title: "Performance Optimization"
+    url: /performance-optimization/
+    icon: "📊"
+    description: "Measurement and optimization systems"
+    items:
+      - title: "Objective Function Framework"
+        url: /performance-optimization/objective-functions/
+      - title: "Plan Optimization Algorithms"
+        url: /performance-optimization/plan-optimization/
+      - title: "Performance Monitoring System"
+        url: /technical-details/open_telemetry_tracing_guide/
+        
+  - title: "Integration & Execution"
+    url: /integration-execution/
+    icon: "🔧"
+    description: "Tools and data processing"
+    items:
+      - title: "Tool Orchestration & Execution"
+        url: /integration-execution/tool-orchestration/
+      - title: "Data Stream Integration"
+        url: /integration-execution/data-streams/
+      - title: "Telemetry & Observability"
+        url: /technical-details/open_telemetry_tracing_guide/
+        
+  - title: "Implementation"
+    url: /implementation/
+    icon: "⚙️"
+    description: "Development and deployment"
+    items:
+      - title: "Development Environment Setup"
+        url: /installation/
+      - title: "API Documentation"
+        url: /implementation/api-docs/
+      - title: "Database Schema"
+        url: /technical-details/vector_database/
+      - title: "Security Implementation"
+        url: /implementation/security/
+      - title: "Deployment Guides"
+        url: /implementation/deployment/
+        
+  - title: "Operations"
+    url: /operations/
+    icon: "🛠️"
+    description: "Administration and maintenance"
+    items:
+      - title: "System Administration"
+        url: /operations/admin/
+      - title: "Troubleshooting Guides"
+        url: /operations/troubleshooting/
+      - title: "Performance Tuning"
+        url: /operations/performance-tuning/
+      - title: "Backup & Recovery"
+        url: /operations/backup-recovery/
+      - title: "Monitoring Setup"
+        url: /operations/monitoring/
+
+# Secondary Navigation (Functional)
+secondary_navigation:
+  - title: "Search by Component"
+    url: /search-components/
+  - title: "Cross-References"
+    url: /cross-references/
+  - title: "API Quick Reference"
+    url: /api-reference/
+  - title: "Troubleshooting Index"
+    url: /troubleshooting-index/
+  - title: "Examples Gallery"
+    url: /examples/
+
+# Quick Access Sections
+quick_access:
+  - title: "Agent Profiles"
+    url: "https://github.com/your-username/multi-agent/tree/main/agent_profiles"
+    description: "Ready-to-use agent configurations"
+    icon: "🤖"
+    
+  - title: "Team Manifests"  
+    url: "https://github.com/your-username/multi-agent/tree/main/team_manifests"
+    description: "Team coordination templates" 
+    icon: "👥"
+    
+  - title: "Source Code"
+    url: "https://github.com/your-username/multi-agent/tree/main/src"
+    description: "Implementation examples"
+    icon: "💻"
+    
+  - title: "Standards & Conventions"
+    url: /naming-conventions/ld/
+    description: "Naming and message broker standards"
+    icon: "📋"
+
+# Architecture layers for content organization
+architecture_layers:
+  foundation:
+    title: "Foundation Layer"
+    description: "Getting Started"
+    color: "#e1f5fe"
+    
+  llm_logic:
+    title: "LLM Logic Layer" 
+    description: "The Utility Layer"
+    color: "#f3e5f5"
+    
+  cognitive_intelligence:
+    title: "Cognitive Intelligence"
+    description: "Memory and reasoning"
+    color: "#fff3e0"
+    
+  decision_orchestration:
+    title: "Decision Orchestration"
+    description: "Coordination and consensus"
+    color: "#fce4ec"
+    
+  performance_optimization:
+    title: "Performance Optimization" 
+    description: "Measurement and optimization"
+    color: "#f1f8e9"
+    
+  integration_execution:
+    title: "Integration & Execution"
+    description: "Tools and data processing"
+    color: "#e0f2f1"
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - src/
+  - agent_profiles/
+  - team_manifests/
+  - links/
+
+# Defaults for different content types
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "foundation"
+      type: "foundation"
+    values:
+      layout: "default"
+      category: "foundation"
+      layer: "foundation"
+  - scope:
+      path: "llm-logic"
+      type: "llm-logic"
+    values:
+      layout: "default"
+      category: "llm-logic"
+      layer: "llm_logic"
+  - scope:
+      path: "cognitive-intelligence"
+      type: "cognitive-intelligence"
+    values:
+      layout: "default"
+      category: "cognitive-intelligence"
+      layer: "cognitive_intelligence"
+  - scope:
+      path: "decision-orchestration"
+      type: "decision-orchestration"
+    values:
+      layout: "default"
+      category: "decision-orchestration"
+      layer: "decision_orchestration"
+  - scope:
+      path: "performance-optimization"
+      type: "performance-optimization"
+    values:
+      layout: "default"
+      category: "performance-optimization"
+      layer: "performance_optimization"
+  - scope:
+      path: "integration-execution"
+      type: "integration-execution"
+    values:
+      layout: "default"
+      category: "integration-execution"
+      layer: "integration_execution"

@@ -1,0 +1,82 @@
+/* assets/css/custom.css - Optional additional styling */
+
+/* Custom color scheme for MAGS architecture layers */
+.layer-foundation { background-color: #e1f5fe; }
+.layer-llm-logic { background-color: #f3e5f5; }
+.layer-cognitive { background-color: #fff3e0; }
+.layer-orchestration { background-color: #fce4ec; }
+.layer-performance { background-color: #f1f8e9; }
+.layer-integration { background-color: #e0f2f1; }
+
+/* Enhanced Mermaid diagram styling */
+.mermaid {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* JSON code block enhancements */
+.language-json {
+    background: #f6f8fa;
+    border-left: 4px solid #0366d6;
+}
+
+/* Architecture component cards */
+.component-card {
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.component-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #0366d6;
+}
+
+/* Navigation enhancements */
+.nav-section-header {
+    background: linear-gradient(90deg, #f6f8fa 0%, transparent 100%);
+    border-radius: 4px;
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 544px) {
+    .docs-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .container-xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .d-flex.flex-wrap > .col-6 {
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+/* Print styles */
+@media print {
+    .docs-header,
+    .docs-nav,
+    .sidebar,
+    footer {
+        display: none;
+    }
+    
+    .content-area {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+    }
+}
+
+/* Dark mode support (if you want to add it later) */
+@media (prefers-color-scheme: dark) {
+    /* Add dark mode styles here */
+}

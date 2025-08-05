@@ -1,0 +1,37 @@
+<header class="site-header" role="banner">
+  <div class="header-wrapper">
+    <div class="site-header-content">
+      <!-- Logo and Site Title -->
+      <div class="site-title-container">
+        {%- if site.logo -%}
+          <img src="{{ '/assets/images/logo/logo.png' | relative_url }}" alt="{{ site.title | escape }}" class="site-logo">
+        {%- endif -%}
+        <a class="site-title" rel="author" href="{{ "/" | relative_url }}">{{ site.title | escape }}</a>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- GitHub Link -->
+        <a href="https://github.com/XMPro/Multi-Agent" class="github-link" target="_blank" rel="noopener">
+          <span class="github-text">View on GitHub</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Description -->
+    <div class="site-description">
+      {{ site.description }}
+    </div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="nav-wrapper">
+      {%- for nav_item in site.navigation limit:6 -%}
+        <a href="{{ nav_item.url | relative_url }}" class="nav-item {% if page.url contains nav_item.url %}active{% endif %}">
+          <span class="nav-title">{{ nav_item.title }}</span>
+        </a>
+      {%- endfor -%}
+    </div>
+  </nav>
+</header>

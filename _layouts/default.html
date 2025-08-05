@@ -1,330 +1,253 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
-    <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
-    
-    <!-- Primer CSS (GitHub's framework) -->
-    <link href="https://unpkg.com/@primer/css@^21.0.0/dist/primer.css" rel="stylesheet">
-    
-    <!-- Prism.js for syntax highlighting -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
-    
-    <!-- Lightbox for images -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
-    
-    <!-- Custom styles -->
-    <style>
-        .docs-header {
-            background: linear-gradient(135deg, #0366d6 0%, #0969da 100%);
-            color: white;
-            padding: 2rem 0;
-        }
-        
-        .docs-nav {
-            background: white;
-            border-bottom: 1px solid #e1e4e8;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .sidebar {
-            position: sticky;
-            top: 80px;
-            height: calc(100vh - 80px);
-            overflow-y: auto;
-            border-right: 1px solid #e1e4e8;
-        }
-        
-        .content-area {
-            max-width: none;
-        }
-        
-        .mermaid {
-            text-align: center;
-            margin: 2rem 0;
-            background: white;
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            padding: 1rem;
-        }
-        
-        /* Markdown content styling */
-        .markdown-body {
-            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;
-            line-height: 1.6;
-        }
-        
-        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
-            border-bottom: 1px solid #e1e4e8;
-            padding-bottom: 0.3em;
-        }
-        
-        .markdown-body code {
-            background: #f6f8fa;
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-size: 85%;
-        }
-        
-        .markdown-body pre {
-            background: #f6f8fa;
-            border-radius: 6px;
-            padding: 16px;
-            overflow-x: auto;
-        }
-        
-        .architecture-layer {
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            background: #f6f8fa;
-        }
-        
-        .nav-section {
-            margin-bottom: 1rem;
-        }
-        
-        .nav-section-header {
-            font-weight: 600;
-            color: #586069;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 8px 16px;
-            margin-bottom: 4px;
-        }
-        
-        .SideNav-item.active {
-            background-color: #f6f8fa;
-            font-weight: 600;
-        }
-        
-        .SideNav-subItem {
-            padding-left: 32px;
-            font-size: 14px;
-        }
-        
-        .architecture-icon {
-            margin-right: 8px;
-        }
-        
-        @media (max-width: 768px) {
-            .docs-layout {
-                display: block !important;
-            }
-            .sidebar {
-                position: static;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid #e1e4e8;
-                margin-bottom: 1rem;
-            }
-            .docs-header {
-                padding: 1rem 0;
-            }
-            .docs-header h1 {
-                font-size: 1.5rem;
-            }
-        }
-        
-        /* JSON viewer styling */
-        .json-container {
-            background: #f6f8fa;
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            overflow-x: auto;
-        }
-        
-        /* Image styling */
-        .architecture-img {
-            max-width: 100%;
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin: 1rem 0;
-        }
-        
-        /* Breadcrumb styling */
-        .breadcrumb {
-            font-size: 14px;
-            color: #586069;
-            margin-bottom: 1rem;
-        }
-        
-        .breadcrumb a {
-            color: #0366d6;
-            text-decoration: none;
-        }
-        
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-    </style>
-    
-    {% seo %}
-</head>
-<body>
-    <!-- Header -->
-    <header class="docs-header">
-        <div class="container-xl px-3">
-            <div class="d-flex flex-items-center">
-                <h1 class="f00-light m-0">
-                    <a href="{{ '/' | relative_url }}" style="color: white; text-decoration: none;">
-                        {{ site.title }}
-                    </a>
-                </h1>
-                <div class="ml-auto">
-                    <a href="https://github.com/{{ site.github.owner_name }}/{{ site.github.repository_name }}" class="btn btn-outline" style="color: white; border-color: white;">
-                        <svg class="octicon octicon-mark-github mr-2" height="16" viewBox="0 0 16 16" width="16" fill="currentColor">
-                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                        </svg>
-                        View on GitHub
-                    </a>
-                </div>
-            </div>
-            <p class="f3 text-normal mt-2 mb-0">{{ site.description }}</p>
-        </div>
-    </header>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
 
-    <!-- Top Navigation -->
-    <nav class="docs-nav">
-        <div class="container-xl px-3">
-            <div class="UnderlineNav">
-                <div class="UnderlineNav-body">
-                    {% for item in site.navigation limit:6 %}
-                    <a href="{{ item.url | relative_url }}" class="UnderlineNav-item {% if page.url contains item.url %}selected{% endif %}">
-                        <span class="architecture-icon">{{ item.icon }}</span>{{ item.title }}
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </nav>
+  {%- include head.html -%}
 
-    <!-- Main Content -->
-    <div class="container-xl px-3 py-4">
-        <div class="docs-layout d-flex">
-            <!-- Sidebar -->
-            <div class="sidebar col-3 pr-4">
-                {% include nav.html %}
-            </div>
+  <body>
 
-            <!-- Content -->
-            <div class="content-area col-9 pl-4">
-                <!-- Breadcrumb -->
-                {% if page.category %}
-                <nav class="breadcrumb">
-                    <a href="{{ '/' | relative_url }}">Home</a> 
-                    <span> / </span>
-                    {% for nav_item in site.navigation %}
-                        {% if nav_item.url contains page.category or page.url contains nav_item.url %}
-                            <a href="{{ nav_item.url | relative_url }}">{{ nav_item.title }}</a>
-                            {% if page.title != nav_item.title %}
-                                <span> / </span>
-                                <span>{{ page.title }}</span>
-                            {% endif %}
-                            {% break %}
-                        {% endif %}
-                    {% endfor %}
-                </nav>
-                {% endif %}
+    {%- include header.html -%}
 
-                <!-- Page Content -->
-                <div class="markdown-body">
-                    {{ content }}
-                </div>
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="docs-layout">
+          <!-- Sidebar with collapsible navigation -->
+          <aside class="sidebar">
+            {% include nav.html %}
+          </aside>
 
-                <!-- Related Links -->
-                {% if page.category %}
-                <div class="mt-6 pt-4 border-top">
-                    <h3>Related Documentation</h3>
-                    <div class="d-flex flex-wrap">
-                        {% for nav_item in site.navigation %}
-                            {% if nav_item.url contains page.category %}
-                                {% for sub_item in nav_item.items limit:3 %}
-                                    {% unless sub_item.url == page.url %}
-                                    <div class="col-6 pr-2 mb-2">
-                                        <a href="{{ sub_item.url | relative_url }}" class="d-block p-2 border rounded-2 text-decoration-none">
-                                            <strong>{{ sub_item.title }}</strong>
-                                        </a>
-                                    </div>
-                                    {% endunless %}
-                                {% endfor %}
-                                {% break %}
-                            {% endif %}
+          <!-- Main content area -->
+          <div class="content-area">
+            <!-- Breadcrumb -->
+            {% if page.category %}
+            <nav class="breadcrumb">
+              <a href="{{ '/' | relative_url }}">Home</a> 
+              <span> / </span>
+              {% for nav_item in site.navigation %}
+                  {% if nav_item.url contains page.category or page.url contains nav_item.url %}
+                      <a href="{{ nav_item.url | relative_url }}">{{ nav_item.title }}</a>
+                      {% if page.title != nav_item.title %}
+                          <span> / </span>
+                          <span>{{ page.title }}</span>
+                      {% endif %}
+                      {% break %}
+                  {% endif %}
+              {% endfor %}
+            </nav>
+            {% endif %}
+
+            <!-- Page content -->
+            <article class="post">
+              {% if page.title %}
+              <header class="post-header">
+                <h1 class="post-title">{{ page.title | escape }}</h1>
+              </header>
+              {% endif %}
+
+              <div class="post-content">
+                {{ content }}
+              </div>
+            </article>
+
+            <!-- Related Links -->
+            {% if page.category %}
+            <div class="related-links">
+              <h3>Related Documentation</h3>
+              <div class="related-grid">
+                {% for nav_item in site.navigation %}
+                    {% if nav_item.url contains page.category %}
+                        {% for sub_item in nav_item.items limit:3 %}
+                            {% unless sub_item.url == page.url %}
+                            <div class="related-item">
+                                <a href="{{ sub_item.url | relative_url }}" class="related-link">
+                                    <strong>{{ sub_item.title }}</strong>
+                                </a>
+                            </div>
+                            {% endunless %}
                         {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
+                        {% break %}
+                    {% endif %}
+                {% endfor %}
+              </div>
             </div>
+            {% endif %}
+          </div>
         </div>
-    </div>
+      </div>
+    </main>
 
-    <!-- Footer -->
-    <footer class="border-top py-4 mt-6">
-        <div class="container-xl px-3">
-            <div class="d-flex flex-justify-between flex-items-center">
-                <p class="f6 color-fg-muted mb-0">
-                    © 2025 {{ site.title }}
-                </p>
-                <div class="d-flex">
-                    <a href="#" class="ml-3 color-fg-muted">Documentation</a>
-                    <a href="#" class="ml-3 color-fg-muted">Support</a>
-                    <a href="https://github.com/{{ site.github.owner_name }}/{{ site.github.repository_name }}" class="ml-3 color-fg-muted">GitHub</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    {%- include footer.html -%}
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+    <!-- Enhanced Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
     
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({ 
-            startOnLoad: true,
-            theme: 'github',
-            securityLevel: 'loose'
-        });
-
-        // Smooth scrolling for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Highlight current page in navigation
-        const currentPath = window.location.pathname;
-        document.querySelectorAll('.SideNav-item').forEach(link => {
-            if (link.getAttribute('href') === currentPath || 
-                (currentPath !== '/' && currentPath.includes(link.getAttribute('href')))) {
-                link.classList.add('active');
+        // Initialize Mermaid with proper configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({ 
+                    startOnLoad: true,
+                    theme: 'default',
+                    securityLevel: 'loose',
+                    flowchart: {
+                        useMaxWidth: true,
+                        htmlLabels: true
+                    }
+                });
             }
         });
 
-        // Mobile menu toggle (if needed)
-        function toggleMobileNav() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+        // Collapsible Navigation Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleNav();
+            initSearchFunctionality();
+            initMobileNav();
+        });
+
+        function initCollapsibleNav() {
+            const navToggle = document.getElementById('nav-toggle');
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+            const collapsibleItems = document.querySelectorAll('.collapsible-item');
+
+            // Global toggle functionality
+            if (navToggle) {
+                let allCollapsed = false;
+                navToggle.addEventListener('click', function() {
+                    const sections = document.querySelectorAll('.nav-section-content');
+                    const headers = document.querySelectorAll('.collapsible-header');
+                    const toggleText = document.querySelector('.nav-toggle-text');
+                    
+                    allCollapsed = !allCollapsed;
+                    
+                    sections.forEach(section => {
+                        if (allCollapsed) {
+                            section.classList.add('collapsed');
+                        } else {
+                            section.classList.remove('collapsed');
+                        }
+                    });
+                    
+                    headers.forEach(header => {
+                        if (allCollapsed) {
+                            header.classList.add('collapsed');
+                        } else {
+                            header.classList.remove('collapsed');
+                        }
+                    });
+                    
+                    toggleText.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
+                });
+            }
+
+            // Individual section toggle
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const targetContent = document.getElementById(targetId);
+                    
+                    if (targetContent) {
+                        const isCollapsed = targetContent.classList.contains('collapsed');
+                        
+                        if (isCollapsed) {
+                            targetContent.classList.remove('collapsed');
+                            this.classList.remove('collapsed');
+                        } else {
+                            targetContent.classList.add('collapsed');
+                            this.classList.add('collapsed');
+                        }
+                    }
+                });
+            });
+
+            // Submenu toggle functionality
+            collapsibleItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const submenuId = this.getAttribute('data-submenu');
+                    if (submenuId) {
+                        e.preventDefault();
+                        const submenu = document.getElementById(submenuId);
+                        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                        
+                        if (submenu) {
+                            if (isExpanded) {
+                                submenu.classList.remove('expanded');
+                                this.setAttribute('aria-expanded', 'false');
+                            } else {
+                                submenu.classList.add('expanded');
+                                this.setAttribute('aria-expanded', 'true');
+                            }
+                        }
+                    }
+                });
+            });
         }
+
+        function initSearchFunctionality() {
+            const searchInput = document.getElementById('docs-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const navItems = document.querySelectorAll('.SideNav-item');
+                    const sections = document.querySelectorAll('.nav-section');
+                    
+                    if (searchTerm === '') {
+                        navItems.forEach(item => item.style.display = 'flex');
+                        sections.forEach(section => section.style.display = 'block');
+                    } else {
+                        navItems.forEach(item => {
+                            const text = item.textContent.toLowerCase();
+                            if (text.includes(searchTerm)) {
+                                item.style.display = 'flex';
+                                const parentSection = item.closest('.nav-section');
+                                if (parentSection) {
+                                    parentSection.style.display = 'block';
+                                }
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        });
+                        
+                        sections.forEach(section => {
+                            const visibleItems = section.querySelectorAll('.SideNav-item[style*="flex"]');
+                            if (visibleItems.length === 0) {
+                                section.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        function initMobileNav() {
+            const mobileToggle = document.getElementById('mobile-nav-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (mobileToggle && sidebar) {
+                mobileToggle.addEventListener('click', function() {
+                    const isHidden = sidebar.style.display === 'none';
+                    sidebar.style.display = isHidden ? 'block' : 'none';
+                    this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                });
+            }
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.querySelector('.sidebar');
+                
+                // Handle mobile sidebar
+                if (window.innerWidth <= 768 && sidebar && sidebar.style.display !== 'none') {
+                    sidebar.style.display = 'none';
+                    const mobileToggle = document.getElementById('mobile-nav-toggle');
+                    if (mobileToggle) {
+                        mobileToggle.setAttribute('aria-expanded', 'false');
+                        mobileToggle.focus();
+                    }
+                }
+            }
+        });
     </script>
-</body>
+
+  </body>
+
 </html>

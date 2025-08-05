@@ -1,163 +1,179 @@
 <!-- _includes/nav.html -->
-<nav class="SideNav">
+<nav class="SideNav" id="sidebar-nav">
+    <!-- Sidebar Toggle Button -->
+    <div class="nav-toggle-container">
+        <button class="nav-toggle-btn" id="nav-toggle" aria-label="Toggle navigation sections">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M1.75 2a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75zM1.75 7a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75zM1.75 12a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75z"/>
+            </svg>
+            <span class="nav-toggle-text">Collapse All</span>
+        </button>
+    </div>
+
     <!-- Architecture-Based Navigation -->
     {% for nav_item in site.navigation %}
-    <div class="nav-section">
-        <div class="nav-section-header">
-            {{ nav_item.icon }} {{ nav_item.title }}
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-{{ forloop.index }}">
+            <span class="nav-icon">{{ nav_item.icon }}</span>
+            <span class="nav-title">{{ nav_item.title }}</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
         </div>
         
-        <a class="SideNav-item {% if page.url == nav_item.url %}selected{% endif %}" 
-           href="{{ nav_item.url | relative_url }}">
-            <span>📋 Overview</span>
-        </a>
-        
-        {% if nav_item.items %}
-            {% for sub_item in nav_item.items %}
-            <a class="SideNav-item {% if page.url == sub_item.url %}selected{% endif %}" 
-               href="{{ sub_item.url | relative_url }}">
-                <span>{{ sub_item.title }}</span>
+        <div class="nav-section-content" id="section-{{ forloop.index }}">
+            <a class="SideNav-item {% if page.url == nav_item.url %}selected{% endif %}" 
+               href="{{ nav_item.url | relative_url }}">
+                <span>📋 Overview</span>
             </a>
-            {% endfor %}
-        {% endif %}
+            
+            {% if nav_item.items %}
+                {% for sub_item in nav_item.items %}
+                <a class="SideNav-item {% if page.url == sub_item.url %}selected{% endif %}" 
+                   href="{{ sub_item.url | relative_url }}">
+                    <span>{{ sub_item.title }}</span>
+                </a>
+                {% endfor %}
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 
     <!-- Quick Access Section -->
-    <div class="nav-section">
-        <div class="nav-section-header">
-            🚀 Quick Access
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="quick-access-section">
+            <span class="nav-icon">🚀</span>
+            <span class="nav-title">Quick Access</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
         </div>
         
-        {% for quick_item in site.quick_access %}
-        <a class="SideNav-item" href="{{ quick_item.url }}" target="_blank">
-            <span>{{ quick_item.icon }} {{ quick_item.title }}</span>
-        </a>
-        {% endfor %}
+        <div class="nav-section-content" id="quick-access-section">
+            {% for quick_item in site.quick_access %}
+            <a class="SideNav-item" href="{{ quick_item.url }}" target="_blank">
+                <span>{{ quick_item.icon }} {{ quick_item.title }}</span>
+            </a>
+            {% endfor %}
+        </div>
     </div>
 
-    <!-- Your Existing Content Navigation -->
-    <div class="nav-section">
-        <div class="nav-section-header">
-            📚 Current Documentation
+    <!-- Current Documentation Section -->
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="current-docs-section">
+            <span class="nav-icon">📚</span>
+            <span class="nav-title">Current Documentation</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
         </div>
         
-        <a class="SideNav-item {% if page.url contains '/architecture/' %}selected{% endif %}" 
-           href="{{ '/architecture/' | relative_url }}">
-            <span>🏗️ Architecture</span>
-        </a>
-        
-        <a class="SideNav-item {% if page.url contains '/concepts/' %}selected{% endif %}" 
-           href="{{ '/concepts/' | relative_url }}">
-            <span>🧠 Core Concepts</span>
-        </a>
-        
-        <!-- Concepts submenu -->
-        {% if page.url contains '/concepts/' %}
-        <div class="ml-3">
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/whymags' %}selected{% endif %}" 
-               href="{{ '/concepts/whymags' | relative_url }}">
-                <span>Why MAGS?</span>
+        <div class="nav-section-content" id="current-docs-section">
+            <a class="SideNav-item {% if page.url contains '/architecture/' %}selected{% endif %}" 
+               href="{{ '/architecture/' | relative_url }}">
+                <span>🏗️ Architecture</span>
             </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/agent_types' %}selected{% endif %}" 
-               href="{{ '/concepts/agent_types' | relative_url }}">
-                <span>Agent Types</span>
+            
+            <a class="SideNav-item collapsible-item {% if page.url contains '/concepts/' %}selected{% endif %}" 
+               href="{{ '/concepts/' | relative_url }}"
+               data-submenu="concepts-submenu">
+                <span>🧠 Core Concepts</span>
+                <svg class="submenu-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                    <path d="M3 2L7 5L3 8V2Z"/>
+                </svg>
             </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/agent_training' %}selected{% endif %}" 
-               href="{{ '/concepts/agent_training' | relative_url }}">
-                <span>Agent Training</span>
+            
+            <!-- Concepts submenu -->
+            <div class="submenu {% if page.url contains '/concepts/' %}expanded{% endif %}" id="concepts-submenu">
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/whymags' %}selected{% endif %}" 
+                   href="{{ '/concepts/whymags' | relative_url }}">
+                    <span>Why MAGS?</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/agent_types' %}selected{% endif %}" 
+                   href="{{ '/concepts/agent_types' | relative_url }}">
+                    <span>Agent Types</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/agent_training' %}selected{% endif %}" 
+                   href="{{ '/concepts/agent_training' | relative_url }}">
+                    <span>Agent Training</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/agent-messaging' %}selected{% endif %}" 
+                   href="{{ '/concepts/agent-messaging' | relative_url }}">
+                    <span>Agent Messaging</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/howmagusememory' %}selected{% endif %}" 
+                   href="{{ '/concepts/howmagusememory' | relative_url }}">
+                    <span>Memory Usage</span>
+                </a>
+            </div>
+            
+            <a class="SideNav-item {% if page.url contains '/installation/' %}selected{% endif %}" 
+               href="{{ '/installation/' | relative_url }}">
+                <span>⚙️ Installation</span>
             </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/agent-messaging' %}selected{% endif %}" 
-               href="{{ '/concepts/agent-messaging' | relative_url }}">
-                <span>Agent Messaging</span>
+            
+            <a class="SideNav-item collapsible-item {% if page.url contains '/technical-details/' %}selected{% endif %}" 
+               href="{{ '/technical-details/' | relative_url }}"
+               data-submenu="technical-submenu">
+                <span>🔧 Technical Details</span>
+                <svg class="submenu-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                    <path d="M3 2L7 5L3 8V2Z"/>
+                </svg>
             </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/concepts/howmagusememory' %}selected{% endif %}" 
-               href="{{ '/concepts/howmagusememory' | relative_url }}">
-                <span>Memory Usage</span>
+            
+            <!-- Technical Details submenu -->
+            <div class="submenu {% if page.url contains '/technical-details/' %}expanded{% endif %}" id="technical-submenu">
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/memory_cycle' %}selected{% endif %}" 
+                   href="{{ '/technical-details/memory_cycle' | relative_url }}">
+                    <span>Memory Cycle</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/agent_status_monitoring' %}selected{% endif %}" 
+                   href="{{ '/technical-details/agent_status_monitoring' | relative_url }}">
+                    <span>Status Monitoring</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/vector_database' %}selected{% endif %}" 
+                   href="{{ '/technical-details/vector_database' | relative_url }}">
+                    <span>Vector Database</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/open_telemetry_tracing_guide' %}selected{% endif %}" 
+                   href="{{ '/technical-details/open_telemetry_tracing_guide' | relative_url }}">
+                    <span>Telemetry & Tracing</span>
+                </a>
+            </div>
+            
+            <a class="SideNav-item {% if page.url contains '/naming-conventions/' %}selected{% endif %}" 
+               href="{{ '/naming-conventions/' | relative_url }}">
+                <span>📋 Standards</span>
             </a>
         </div>
-        {% endif %}
-        
-        <a class="SideNav-item {% if page.url contains '/installation/' %}selected{% endif %}" 
-           href="{{ '/installation/' | relative_url }}">
-            <span>⚙️ Installation</span>
-        </a>
-        
-        <a class="SideNav-item {% if page.url contains '/technical-details/' %}selected{% endif %}" 
-           href="{{ '/technical-details/' | relative_url }}">
-            <span>🔧 Technical Details</span>
-        </a>
-        
-        <!-- Technical Details submenu -->
-        {% if page.url contains '/technical-details/' %}
-        <div class="ml-3">
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/memory_cycle' %}selected{% endif %}" 
-               href="{{ '/technical-details/memory_cycle' | relative_url }}">
-                <span>Memory Cycle</span>
-            </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/agent_status_monitoring' %}selected{% endif %}" 
-               href="{{ '/technical-details/agent_status_monitoring' | relative_url }}">
-                <span>Status Monitoring</span>
-            </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/vector_database' %}selected{% endif %}" 
-               href="{{ '/technical-details/vector_database' | relative_url }}">
-                <span>Vector Database</span>
-            </a>
-            <a class="SideNav-item SideNav-subItem {% if page.url contains '/technical-details/open_telemetry_tracing_guide' %}selected{% endif %}" 
-               href="{{ '/technical-details/open_telemetry_tracing_guide' | relative_url }}">
-                <span>Telemetry & Tracing</span>
-            </a>
-        </div>
-        {% endif %}
-        
-        <a class="SideNav-item {% if page.url contains '/naming-conventions/' %}selected{% endif %}" 
-           href="{{ '/naming-conventions/' | relative_url }}">
-            <span>📋 Standards</span>
-        </a>
     </div>
 
     <!-- Search Section -->
-    <div class="nav-section">
-        <div class="nav-section-header">
-            🔍 Find Content
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="search-section">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-title">Find Content</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
         </div>
         
-        <div class="p-2">
-            <input type="search" class="form-control input-sm" placeholder="Search docs..." id="docs-search">
+        <div class="nav-section-content" id="search-section">
+            <div class="p-2">
+                <input type="search" class="form-control input-sm" placeholder="Search docs..." id="docs-search">
+            </div>
+            
+            <a class="SideNav-item" href="{{ '/search-components/' | relative_url }}">
+                <span>🔍 Search by Component</span>
+            </a>
+            
+            <a class="SideNav-item" href="{{ '/cross-references/' | relative_url }}">
+                <span>🔗 Cross-References</span>
+            </a>
+            
+            <a class="SideNav-item" href="{{ '/examples/' | relative_url }}">
+                <span>💡 Examples Gallery</span>
+            </a>
         </div>
-        
-        <a class="SideNav-item" href="{{ '/search-components/' | relative_url }}">
-            <span>🔍 Search by Component</span>
-        </a>
-        
-        <a class="SideNav-item" href="{{ '/cross-references/' | relative_url }}">
-            <span>🔗 Cross-References</span>
-        </a>
-        
-        <a class="SideNav-item" href="{{ '/examples/' | relative_url }}">
-            <span>💡 Examples Gallery</span>
-        </a>
     </div>
 </nav>
-
-<!-- Simple search functionality -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('docs-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const navItems = document.querySelectorAll('.SideNav-item');
-            
-            navItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (searchTerm === '' || text.includes(searchTerm)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        });
-    }
-});
-</script>

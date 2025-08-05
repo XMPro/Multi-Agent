@@ -1,0 +1,143 @@
+# Naming Convention - Message Broker Topic
+
+## Summary
+
+This document outlines the naming convention for the message broker topics used in the XMPro AI Agents system. The convention is based on Unified Namespace (UNS) principles, adapted for our specific Multi-Agent System (MAGS) needs. It provides a clear, hierarchical structure that facilitates efficient communication and easy topic filtering while maintaining alignment with industry standards.
+
+## Structure
+
+The topic structure follows this UNS-aligned pattern:
+
+`XMAGS/{team_id}/{prefix}/{message_type}/{agent_id}`
+
+Where:
+- `XMAGS` is a constant prefix for all topics related to this Multi-Agent System.
+- `{team_id}` follows the structure: `[Site]-[Area]-[Function]-TEAM-[Version]` (see [Naming Convention - Id](./Id.md) for details)
+- `{prefix}` is one of: DATA, CMD, EVT (aligned with common UNS prefixes)
+- `{message_type}` specifies the type of message (e.g., observation, action, startup)
+- `{agent_id}` (optional) follows the structure: `[Area]-[Function]-AGENT-[Instance]` (see [Naming Convention - Id](./Id.md) for details)
+
+## Topic Types and Examples
+
+### 1. Conversation
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/CMD/chat/cancel/{agent_id}/{conversation_id}`     | Incoming | Cancel a conversation thread |
+| `XMAGS/{team_id}/CMD/chat/new/{agent_id}`                          | Incoming | Initiate a new conversation thread |
+| `XMAGS/{team_id}/DATA/chat/{agent_id}/{conversation_id}`           | Incoming | Receive agent-specific conversations |
+| `XMAGS/{team_id}/EVT/chat/progress/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation progress |
+| `XMAGS/{team_id}/EVT/chat/response/{agent_id}/{conversation_id}`   | Outgoing | Publish agent-specific conversation result |
+
+### 2. Observation and Reflection
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/DATA/observation`                  | Incoming | Receive team-wide observations |
+| `XMAGS/{team_id}/DATA/observation/{agent_id}`       | Incoming | Receive agent-specific observations |
+| `XMAGS/{team_id}/EVT/observation/result/{agent_id}` | Outgoing | Publish results of processed agent-specific observations |
+| `XMAGS/{team_id}/EVT/reflection/result/{agent_id}`  | Outgoing | Publish results of internally triggered agent-specific reflections |
+
+### 3. Planning
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/CMD/plan/action/{agent_id}`  | Outgoing | Publish the plan actions in PDDL |
+| `XMAGS/{team_id}/CMD/plan/task/{agent_id}`    | Outgoing | Publish the plan tasks in PDDL |
+| `XMAGS/{team_id}/EVT/plan/new/{agent_id}`     | Outgoing | Publish the new plan |
+| `XMAGS/{team_id}/EVT/plan/update/{agent_id}`  | Outgoing | Publish the updated plan |
+
+### 4. Agent-to-Agent Communication
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/DATA/communication/{agent_id}`  | Bidirectional | Agent-specific messages |
+
+### 5. Status, Feedback & Errors
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/CMD/sbom/verify/{agent_id}`           | Incoming | Request verification of an agent's SBOM |
+| `XMAGS/{team_id}/EVT/error/{agent_id}`                 | Outgoing | Publish any errors the agent encounters |
+| `XMAGS/{team_id}/EVT/sbom/verification/{agent_id}`     | Outgoing | Respond to SBOM verification requests |
+| `XMAGS/{team_id}/EVT/shutdown/{agent_id}`              | Outgoing | Publish agent-specific shutdown event |
+| `XMAGS/{team_id}/EVT/startup/{agent_id}`               | Outgoing | Publish agent-specific startup event |
+| `XMAGS/{team_id}/EVT/status/{agent_id}`                | Outgoing | Publish agent-specific status event |
+
+### 6. Registry
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/REGISTRY/agent/{agent_id}` | Outgoing | Long-lived registration of an agent with retain flag |
+| `XMAGS/REGISTRY/team/{team_id}` | Outgoing | Long-lived registration of a team with retain flag |
+
+### 7. Consensus Communication
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `XMAGS/{team_id}/CMD/consensus/cancel/{process_id}` | Incoming | Instruction to cancel the consensus process |
+| `XMAGS/{team_id}/CMD/consensus/humanintervention/{initiator_agent_id}` | Outgoing | Consensus human intervention |
+| `XMAGS/{team_id}/DATA/consensus/conflict/{affected_agent_id}` | Bidirectional | Consensus conflict reports |
+| `XMAGS/{team_id}/DATA/consensus/draftplan/{initiator_agent_id}` | Bidirectional | Consensus draft plan submissions |
+| `XMAGS/{team_id}/DATA/consensus/result` | Bidirectional | Consensus results |
+| `XMAGS/{team_id}/EVT/consensus/invitation` | Bidirectional | Consensus invitations |
+| `XMAGS/{team_id}/EVT/consensus/progress/{process_id}` | Outgoing | Consensus progress updates |
+
+## Prefix Meanings
+
+- `DATA`: Used for raw data or processed information from devices, sensors, or systems
+- `CMD`: Used for commands or control signals sent to devices or systems
+- `EVT`: Used for events, alerts, or notifications generated by systems
+
+## Querying Examples
+
+1. All messages for a specific team:
+   ```
+   XMAGS/DALLAS-PROD-OPS-TEAM-001/#
+   ```
+
+2. All startup events across all teams:
+   ```
+   XMAGS/+/EVT/startup/#
+   ```
+
+3. All observations for a specific agent:
+   ```
+   XMAGS/DALLAS-PROD-OPS-TEAM-001/DATA/observation/WTR-QUAL-AGENT-001
+   ```
+
+## Notes
+
+- All agents in a team subscribe to both their specific topics and the team-wide topics.
+- The structure allows for efficient use of wildcards for flexible subscriptions.
+- This naming convention aligns with Unified Namespace (UNS) principles while being tailored for the XMPro MAGS application.
+
+## UNS Alignment
+
+This naming convention is built on UNS principles, adapted for our MAGS application:
+
+1. Hierarchical Structure: The topic structure reflects the organizational hierarchy, a key aspect of UNS.
+2. Standardized Prefixes: The use of DATA, CMD, and EVT aligns with common UNS prefix conventions.
+3. Scalability: The structure can easily accommodate growth and changes, a core UNS principle.
+4. Consistency: The naming convention is applied consistently across all topics, promoting clear understanding and interoperability.
+5. Context Preservation: Each topic carries full context (team, prefix, message type, agent), ensuring messages can be fully understood even in isolation.
+6. Efficient Querying: The structure allows for effective use of wildcards, supporting flexible data access as encouraged in UNS.
+
+While tailored to our specific MAGS needs, this convention maintains the core principles of UNS, ensuring our system can easily integrate with other UNS-compliant systems and providing a familiar structure for those acquainted with UNS concepts.
+
+For more information on the naming conventions for team_id and agent_id, please refer to the [Naming Convention - Id](./Id.md) document.
+
+## Rationale
+
+This topic structure, based on UNS principles, was designed with the following considerations:
+
+1. UNS Compatibility: Aligns with industry standards while meeting our specific needs.
+2. Hierarchy: Reflects the organizational structure from team to agent.
+3. Prefix-first approach: Allows easy querying of all messages of a certain type across teams and agents.
+4. Consistency: Maintains a consistent structure across all topic types.
+5. Scalability: Can accommodate additional teams, agents, or message types without structural changes.
+6. Efficiency: Optimized for wildcard subscriptions and message filtering.
+
+By following this UNS-based convention, we ensure clear, consistent, and efficient communication within our Multi-Agent System while maintaining alignment with broader industry practices.
+
+For more information on Unified Namespace (UNS) concepts, you can refer to this [introduction to UNS](https://www.rtautomation.com/rtas-blog/unified-namespace/).

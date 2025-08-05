@@ -4,15 +4,13 @@ title: "XMPro MAGS Documentation"
 description: "Multi-Agent Generative Systems - Architecture and Implementation Guide"
 ---
 
-# XMPro MAGS Documentation
-
 Welcome to the comprehensive documentation for **XMPro MAGS** (Multi-Agent Generative Systems). This documentation follows the actual MAGS system architecture, organizing content by functional layers and categories for better conceptual understanding and navigation.
 
-## 🏗️ **System Architecture Overview**
+## **System Architecture Overview**
 
 XMPro MAGS is built on a layered architecture that provides scalable, intelligent automation capabilities through coordinated multi-agent systems.
 
-```mermaid
+<div class="mermaid">
 graph TD
     A[Foundation Layer: Getting Started] --> B[LLM Logic: Utility Layer]
     B --> C[Business Process Logic: Intelligence Layer]
@@ -33,15 +31,15 @@ graph TD
     style E fill:#fce4ec
     style F fill:#f1f8e9
     style G fill:#e0f2f1
-```
+</div>
 
-## 🚀 **Primary Navigation (Architecture-Based)**
+## **Primary Navigation (Architecture-Based)**
 
 <div class="d-flex flex-wrap">
   <div class="col-6 pr-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🏗️ Foundation Layer</h3>
+        <h3 class="Box-title">Foundation Layer</h3>
       </div>
       <div class="Box-body">
         <p><strong>Getting Started</strong> - System overview and rapid deployment</p>
@@ -59,7 +57,7 @@ graph TD
   <div class="col-6 pl-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🧠 LLM Logic Layer</h3>
+        <h3 class="Box-title">LLM Logic Layer</h3>
       </div>
       <div class="Box-body">
         <p><strong>The Utility Layer</strong> - Language model capabilities</p>
@@ -75,13 +73,13 @@ graph TD
   </div>
 </div>
 
-## 📊 **Business Process Logic - The Intelligence Layer**
+## **Business Process Logic - The Intelligence Layer**
 
 <div class="d-flex flex-wrap">
   <div class="col-6 pr-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🎯 Cognitive Intelligence</h3>
+        <h3 class="Box-title">Cognitive Intelligence</h3>
       </div>
       <div class="Box-body">
         <p><strong>Memory and reasoning systems</strong></p>
@@ -99,7 +97,7 @@ graph TD
   <div class="col-6 pl-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🤝 Decision Orchestration</h3>
+        <h3 class="Box-title">Decision Orchestration</h3>
       </div>
       <div class="Box-body">
         <p><strong>Coordination and consensus</strong></p>
@@ -118,7 +116,7 @@ graph TD
   <div class="col-6 pr-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">📊 Performance Optimization</h3>
+        <h3 class="Box-title">Performance Optimization</h3>
       </div>
       <div class="Box-body">
         <p><strong>Measurement and optimization</strong></p>
@@ -135,7 +133,7 @@ graph TD
   <div class="col-6 pl-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🔧 Integration & Execution</h3>
+        <h3 class="Box-title">Integration & Execution</h3>
       </div>
       <div class="Box-body">
         <p><strong>Tools and data processing</strong></p>
@@ -150,13 +148,13 @@ graph TD
   </div>
 </div>
 
-## 🛠️ **Supporting Documentation Sections**
+## **Supporting Documentation Sections**
 
 <div class="d-flex flex-wrap">
   <div class="col-4 pr-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">⚙️ Implementation</h3>
+        <h3 class="Box-title">Implementation</h3>
       </div>
       <div class="Box-body">
         <p>Development and deployment guides</p>
@@ -174,7 +172,7 @@ graph TD
   <div class="col-4 px-1 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🛠️ Operations</h3>
+        <h3 class="Box-title">Operations</h3>
       </div>
       <div class="Box-body">
         <p>Administration and maintenance</p>
@@ -192,7 +190,7 @@ graph TD
   <div class="col-4 pl-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🏢 Business Integration</h3>
+        <h3 class="Box-title">Business Integration</h3>
       </div>
       <div class="Box-body">
         <p>Use cases and integration patterns</p>
@@ -208,7 +206,7 @@ graph TD
   </div>
 </div>
 
-## 📋 **Templates & Configuration**
+## **Templates & Configuration**
 
 ### **Quick Access to Resources**
 
@@ -216,7 +214,7 @@ graph TD
   <div class="col-4 pr-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">🤖 Agent Profiles</h3>
+        <h3 class="Box-title">Agent Profiles</h3>
       </div>
       <div class="Box-body">
         <p>Pre-configured agent templates for common use cases</p>
@@ -230,7 +228,7 @@ graph TD
   <div class="col-4 px-1 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">👥 Team Manifests</h3>
+        <h3 class="Box-title">Team Manifests</h3>
       </div>
       <div class="Box-body">
         <p>Team coordination templates for multi-agent workflows</p>
@@ -244,7 +242,7 @@ graph TD
   <div class="col-4 pl-2 mb-3">
     <div class="Box">
       <div class="Box-header">
-        <h3 class="Box-title">📋 Standards</h3>
+        <h3 class="Box-title">Standards</h3>
       </div>
       <div class="Box-body">
         <p>Naming conventions and messaging standards</p>
@@ -256,7 +254,7 @@ graph TD
   </div>
 </div>
 
-## 🎯 **Content Organization Benefits**
+## **Content Organization Benefits**
 
 This architecture-based structure provides different benefits for different stakeholders:
 
@@ -284,7 +282,7 @@ This architecture-based structure provides different benefits for different stak
 - **Integration Opportunities** - Connection possibilities with existing systems
 - **Performance Visibility** - Measurable outcomes and success metrics
 
-## 🔍 **Secondary Navigation**
+## **Secondary Navigation**
 
 - **[Search by Component]({{ '/search-components/' | relative_url }})** - Architecture-based search
 - **[Cross-References]({{ '/cross-references/' | relative_url }})** - Component interactions
@@ -292,12 +290,12 @@ This architecture-based structure provides different benefits for different stak
 - **[Troubleshooting Index]({{ '/troubleshooting-index/' | relative_url }})** - Problem-focused navigation
 - **[Examples Gallery]({{ '/examples/' | relative_url }})** - Implementation samples
 
-## 🤝 **Contributing & Support**
+## **Contributing & Support**
 
-- **📖 Documentation**: You're reading it!
-- **🐛 Issues**: [GitHub Issues](https://github.com/your-username/multi-agent/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/your-username/multi-agent/discussions)
-- **📧 Support**: [Contact Support](mailto:support@xmpro.com)
+- **Documentation**: You're reading it!
+- **Issues**: [GitHub Issues](https://github.com/your-username/multi-agent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-username/multi-agent/discussions)
+- **Support**: [Contact Support](mailto:support@xmpro.com)
 
 ---
 

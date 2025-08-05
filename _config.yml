@@ -4,6 +4,13 @@ description: "Multi-Agent Generative Systems - Architecture and Implementation G
 baseurl: "" # Leave empty for root domain
 url: "https://your-username.github.io/multi-agent"
 
+# Theme
+theme: minima
+
+# Site settings
+logo: /assets/images/logo/logo.png
+favicon: /assets/images/favicon/favicon.png
+
 # Markdown settings
 markdown: kramdown
 highlighter: rouge
@@ -71,7 +78,7 @@ collections:
 navigation:
   - title: "Getting Started"
     url: /foundation/
-    icon: "🏗️"
+    icon: ""
     description: "Foundation layer - System overview and quick start"
     items:
       - title: "What is XMPro MAGS?"
@@ -85,7 +92,7 @@ navigation:
         
   - title: "LLM Utility Layer"
     url: /llm-logic/
-    icon: "🧠"
+    icon: ""
     description: "Language model capabilities and processing"
     items:
       - title: "Text Generation & Processing"
@@ -101,7 +108,7 @@ navigation:
         
   - title: "Cognitive Intelligence"
     url: /cognitive-intelligence/
-    icon: "🎯"
+    icon: ""
     description: "Memory and reasoning systems"
     items:
       - title: "Memory Significance Calculation"
@@ -119,7 +126,7 @@ navigation:
         
   - title: "Decision Orchestration"
     url: /decision-orchestration/ 
-    icon: "🤝"
+    icon: ""
     description: "Coordination and consensus management"
     items:
       - title: "Consensus Management System"
@@ -131,7 +138,7 @@ navigation:
         
   - title: "Performance Optimization"
     url: /performance-optimization/
-    icon: "📊"
+    icon: ""
     description: "Measurement and optimization systems"
     items:
       - title: "Objective Function Framework"
@@ -143,7 +150,7 @@ navigation:
         
   - title: "Integration & Execution"
     url: /integration-execution/
-    icon: "🔧"
+    icon: ""
     description: "Tools and data processing"
     items:
       - title: "Tool Orchestration & Execution"
@@ -155,7 +162,7 @@ navigation:
         
   - title: "Implementation"
     url: /implementation/
-    icon: "⚙️"
+    icon: ""
     description: "Development and deployment"
     items:
       - title: "Development Environment Setup"
@@ -171,7 +178,7 @@ navigation:
         
   - title: "Operations"
     url: /operations/
-    icon: "🛠️"
+    icon: ""
     description: "Administration and maintenance"
     items:
       - title: "System Administration"
@@ -203,22 +210,22 @@ quick_access:
   - title: "Agent Profiles"
     url: "https://github.com/your-username/multi-agent/tree/main/agent_profiles"
     description: "Ready-to-use agent configurations"
-    icon: "🤖"
+    icon: ""
     
   - title: "Team Manifests"  
     url: "https://github.com/your-username/multi-agent/tree/main/team_manifests"
     description: "Team coordination templates" 
-    icon: "👥"
+    icon: ""
     
   - title: "Source Code"
     url: "https://github.com/your-username/multi-agent/tree/main/src"
     description: "Implementation examples"
-    icon: "💻"
+    icon: ""
     
   - title: "Standards & Conventions"
     url: /naming-conventions/ld/
     description: "Naming and message broker standards"
-    icon: "📋"
+    icon: ""
 
 # Architecture layers for content organization
 architecture_layers:

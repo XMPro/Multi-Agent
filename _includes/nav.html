@@ -13,7 +13,7 @@
     <!-- Architecture-Based Navigation -->
     {% for nav_item in site.navigation %}
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-{{ forloop.index }}">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-{{ forloop.index }}">
             <span class="nav-icon">{{ nav_item.icon }}</span>
             <span class="nav-title">{{ nav_item.title }}</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -41,7 +41,7 @@
 
     <!-- Quick Access Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="quick-access-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="quick-access-section">
             <span class="nav-icon">🚀</span>
             <span class="nav-title">Quick Access</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -60,7 +60,7 @@
 
     <!-- Current Documentation Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="current-docs-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="current-docs-section">
             <span class="nav-icon">📚</span>
             <span class="nav-title">Current Documentation</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -150,7 +150,7 @@
 
     <!-- Search Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="search-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="search-section">
             <span class="nav-icon">🔍</span>
             <span class="nav-title">Find Content</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">

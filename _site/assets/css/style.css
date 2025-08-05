@@ -84,7 +84,7 @@
     <!-- Architecture-Based Navigation -->
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-1">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-1">
             <span class="nav-icon"></span>
             <span class="nav-title">Getting Started</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -125,7 +125,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-2">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-2">
             <span class="nav-icon"></span>
             <span class="nav-title">LLM Utility Layer</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -171,7 +171,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-3">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-3">
             <span class="nav-icon"></span>
             <span class="nav-title">Cognitive Intelligence</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -222,7 +222,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-4">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-4">
             <span class="nav-icon"></span>
             <span class="nav-title">Decision Orchestration</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -258,7 +258,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-5">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-5">
             <span class="nav-icon"></span>
             <span class="nav-title">Performance Optimization</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -294,7 +294,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-6">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-6">
             <span class="nav-icon"></span>
             <span class="nav-title">Integration & Execution</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -330,7 +330,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-7">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-7">
             <span class="nav-icon"></span>
             <span class="nav-title">Implementation</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -376,7 +376,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-8">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-8">
             <span class="nav-icon"></span>
             <span class="nav-title">Operations</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -424,7 +424,7 @@
 
     <!-- Quick Access Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="quick-access-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="quick-access-section">
             <span class="nav-icon">🚀</span>
             <span class="nav-title">Quick Access</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -455,7 +455,7 @@
 
     <!-- Current Documentation Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="current-docs-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="current-docs-section">
             <span class="nav-icon">📚</span>
             <span class="nav-title">Current Documentation</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -545,7 +545,7 @@
 
     <!-- Search Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="search-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="search-section">
             <span class="nav-icon">🔍</span>
             <span class="nav-title">Find Content</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">

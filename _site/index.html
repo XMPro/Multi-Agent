@@ -84,7 +84,7 @@
     <!-- Architecture-Based Navigation -->
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-1">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-1">
             <span class="nav-icon"></span>
             <span class="nav-title">Getting Started</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -125,7 +125,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-2">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-2">
             <span class="nav-icon"></span>
             <span class="nav-title">LLM Utility Layer</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -171,7 +171,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-3">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-3">
             <span class="nav-icon"></span>
             <span class="nav-title">Cognitive Intelligence</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -222,7 +222,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-4">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-4">
             <span class="nav-icon"></span>
             <span class="nav-title">Decision Orchestration</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -258,7 +258,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-5">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-5">
             <span class="nav-icon"></span>
             <span class="nav-title">Performance Optimization</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -294,7 +294,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-6">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-6">
             <span class="nav-icon"></span>
             <span class="nav-title">Integration & Execution</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -330,7 +330,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-7">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-7">
             <span class="nav-icon"></span>
             <span class="nav-title">Implementation</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -376,7 +376,7 @@
     </div>
     
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="section-8">
+        <div class="nav-section-header collapsible-header collapsed" data-target="section-8">
             <span class="nav-icon"></span>
             <span class="nav-title">Operations</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -424,7 +424,7 @@
 
     <!-- Quick Access Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="quick-access-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="quick-access-section">
             <span class="nav-icon">🚀</span>
             <span class="nav-title">Quick Access</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -455,7 +455,7 @@
 
     <!-- Current Documentation Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="current-docs-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="current-docs-section">
             <span class="nav-icon">📚</span>
             <span class="nav-title">Current Documentation</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -545,7 +545,7 @@
 
     <!-- Search Section -->
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header" data-target="search-section">
+        <div class="nav-section-header collapsible-header collapsed" data-target="search-section">
             <span class="nav-icon">🔍</span>
             <span class="nav-title">Find Content</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -618,280 +618,436 @@ graph TD
     style G fill:#e0f2f1
 </div>
 
-<h2 id="primary-navigation-architecture-based"><strong>Primary Navigation (Architecture-Based)</strong></h2>
+<div class="collapsible-primary-header collapsed" onclick="togglePrimarySection(this)">
+  <h2>Primary Navigation (Architecture-Based)</h2>
+  <span class="collapse-toggle">▶</span>
+</div>
 
-<div class="d-flex flex-wrap">
-  <div class="col-6 pr-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Foundation Layer</h3>
-      </div>
-      <div class="Box-body">
-        <p><strong>Getting Started</strong> - System overview and rapid deployment</p>
-        <ul class="ml-3">
-          <li><a href="/foundation/overview">What is XMPro MAGS?</a></li>
-          <li><a href="/foundation/quick-start">Quick Start Guide</a></li>
-          <li><a href="/installation/">Installation &amp; Setup</a></li>
-          <li><a href="/architecture/agent_architecture">Architecture Overview</a></li>
-        </ul>
-        <a href="/foundation/" class="btn btn-sm btn-primary">Get Started</a>
-      </div>
-    </div>
+<div class="collapsible-content collapsed">
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Foundation Layer</h2>
+  <p><strong>Getting Started</strong> - System overview and rapid deployment</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>What is XMPro MAGS?</h4>
+    <p>Comprehensive overview of the Multi-Agent Generative Systems architecture and capabilities</p>
+    <a href="/foundation/overview" class="tile-link">Learn More</a>
   </div>
   
-  <div class="col-6 pl-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">LLM Logic Layer</h3>
-      </div>
-      <div class="Box-body">
-        <p><strong>The Utility Layer</strong> - Language model capabilities</p>
-        <ul class="ml-3">
-          <li><a href="/llm-logic/text-generation">Text Generation &amp; Processing</a></li>
-          <li><a href="/llm-logic/language-understanding">Language Understanding</a></li>
-          <li><a href="/llm-logic/reasoning-support">Reasoning Support</a></li>
-          <li><a href="/llm-logic/communication">Communication &amp; Interaction</a></li>
-        </ul>
-        <a href="/llm-logic/" class="btn btn-sm btn-primary">Explore LLM Logic</a>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Quick Start Guide</h4>
+    <p>Get up and running with MAGS in minutes with our step-by-step quick start guide</p>
+    <a href="/foundation/quick-start" class="tile-link">Get Started</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Installation &amp; Setup</h4>
+    <p>Complete installation instructions and environment configuration for MAGS deployment</p>
+    <a href="/installation/" class="tile-link">Install Now</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Architecture Overview</h4>
+    <p>Deep dive into the system architecture, components, and design principles</p>
+    <a href="/architecture/agent_architecture" class="tile-link">Explore Architecture</a>
   </div>
 </div>
 
-<h2 id="business-process-logic---the-intelligence-layer"><strong>Business Process Logic - The Intelligence Layer</strong></h2>
+</div>
 
-<div class="d-flex flex-wrap">
-  <div class="col-6 pr-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Cognitive Intelligence</h3>
-      </div>
-      <div class="Box-body">
-        <p><strong>Memory and reasoning systems</strong></p>
-        <ul class="ml-3">
-          <li><a href="/cognitive-intelligence/memory-significance">Memory Significance Calculation</a></li>
-          <li><a href="/technical-details/memory_cycle">Memory Management &amp; Retrieval</a></li>
-          <li><a href="/cognitive-intelligence/synthetic-memory">Synthetic Memory Generation</a></li>
-          <li><a href="/cognitive-intelligence/confidence-scoring">Confidence Scoring System</a></li>
-        </ul>
-        <a href="/cognitive-intelligence/" class="btn btn-sm btn-primary">View Cognitive Systems</a>
-      </div>
-    </div>
+<div class="major-section">
+
+<div class="section-header">
+  <h2>LLM Logic Layer</h2>
+  <p><strong>The Utility Layer</strong> - Language model capabilities and processing</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Text Generation &amp; Processing</h4>
+    <p>Advanced text generation capabilities and natural language processing features</p>
+    <a href="/llm-logic/text-generation" class="tile-link">Explore Text Gen</a>
   </div>
   
-  <div class="col-6 pl-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Decision Orchestration</h3>
-      </div>
-      <div class="Box-body">
-        <p><strong>Coordination and consensus</strong></p>
-        <ul class="ml-3">
-          <li><a href="/decision-orchestration/consensus">Consensus Management System</a></li>
-          <li><a href="/concepts/agent-messaging">Communication Decision Framework</a></li>
-          <li><a href="/technical-details/agent_status_monitoring">Agent Lifecycle &amp; Governance</a></li>
-        </ul>
-        <a href="/decision-orchestration/" class="btn btn-sm btn-primary">View Orchestration</a>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Language Understanding</h4>
+    <p>Semantic analysis, intent recognition, and contextual language comprehension</p>
+    <a href="/llm-logic/language-understanding" class="tile-link">Learn Understanding</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Reasoning Support</h4>
+    <p>Logical reasoning, inference engines, and decision-making support systems</p>
+    <a href="/llm-logic/reasoning-support" class="tile-link">View Reasoning</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Communication &amp; Interaction</h4>
+    <p>Agent communication protocols, interaction patterns, and messaging systems</p>
+    <a href="/llm-logic/communication" class="tile-link">See Communication</a>
   </div>
 </div>
 
-<div class="d-flex flex-wrap">
-  <div class="col-6 pr-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Performance Optimization</h3>
-      </div>
-      <div class="Box-body">
-        <p><strong>Measurement and optimization</strong></p>
-        <ul class="ml-3">
-          <li><a href="/performance-optimization/objective-functions">Objective Function Framework</a></li>
-          <li><a href="/performance-optimization/plan-optimization">Plan Optimization Algorithms</a></li>
-          <li><a href="/technical-details/open_telemetry_tracing_guide">Performance Monitoring</a></li>
-        </ul>
-        <a href="/performance-optimization/" class="btn btn-sm btn-primary">View Optimization</a>
-      </div>
-    </div>
+</div>
+
+</div>
+
+<div class="collapsible-primary-header collapsed" onclick="togglePrimarySection(this)">
+  <h2>Business Process Logic - The Intelligence Layer</h2>
+  <span class="collapse-toggle">▶</span>
+</div>
+
+<div class="collapsible-content collapsed">
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Cognitive Intelligence</h2>
+  <p><strong>Memory and reasoning systems</strong> - Advanced cognitive capabilities for intelligent decision making</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Memory Significance Calculation</h4>
+    <p>Advanced algorithms for determining the importance and relevance of stored memories</p>
+    <a href="/cognitive-intelligence/memory-significance" class="tile-link">View Memory Scoring</a>
   </div>
   
-  <div class="col-6 pl-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Integration &amp; Execution</h3>
-      </div>
-      <div class="Box-body">
-        <p><strong>Tools and data processing</strong></p>
-        <ul class="ml-3">
-          <li><a href="/integration-execution/tool-orchestration">Tool Orchestration &amp; Execution</a></li>
-          <li><a href="/integration-execution/data-streams">Data Stream Integration</a></li>
-          <li><a href="/technical-details/vector_database">Telemetry &amp; Observability</a></li>
-        </ul>
-        <a href="/integration-execution/" class="btn btn-sm btn-primary">View Integration</a>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Memory Management &amp; Retrieval</h4>
+    <p>Sophisticated memory storage, indexing, and retrieval systems for agent knowledge</p>
+    <a href="/technical-details/memory_cycle" class="tile-link">Explore Memory Cycle</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Synthetic Memory Generation</h4>
+    <p>AI-powered creation of synthetic memories to enhance agent knowledge and capabilities</p>
+    <a href="/cognitive-intelligence/synthetic-memory" class="tile-link">Learn Synthesis</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Confidence Scoring System</h4>
+    <p>Quantitative assessment of decision confidence and uncertainty management</p>
+    <a href="/cognitive-intelligence/confidence-scoring" class="tile-link">View Confidence</a>
   </div>
 </div>
 
-<h2 id="supporting-documentation-sections"><strong>Supporting Documentation Sections</strong></h2>
+</div>
 
-<div class="d-flex flex-wrap">
-  <div class="col-4 pr-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Implementation</h3>
-      </div>
-      <div class="Box-body">
-        <p>Development and deployment guides</p>
-        <ul class="ml-3">
-          <li><a href="/installation/">Development Environment</a></li>
-          <li><a href="/implementation/api-docs">API Documentation</a></li>
-          <li><a href="/technical-details/vector_database">Database Schema</a></li>
-          <li><a href="/implementation/security">Security Implementation</a></li>
-        </ul>
-        <a href="/implementation/" class="btn btn-sm">Implementation Guides</a>
-      </div>
-    </div>
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Decision Orchestration</h2>
+  <p><strong>Coordination and consensus</strong> - Multi-agent coordination and decision-making frameworks</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Consensus Management System</h4>
+    <p>Distributed consensus algorithms for coordinated multi-agent decision making</p>
+    <a href="/decision-orchestration/consensus" class="tile-link">View Consensus</a>
   </div>
   
-  <div class="col-4 px-1 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Operations</h3>
-      </div>
-      <div class="Box-body">
-        <p>Administration and maintenance</p>
-        <ul class="ml-3">
-          <li><a href="/operations/admin">System Administration</a></li>
-          <li><a href="/operations/troubleshooting">Troubleshooting Guides</a></li>
-          <li><a href="/operations/performance-tuning">Performance Tuning</a></li>
-          <li><a href="/operations/monitoring">Monitoring Setup</a></li>
-        </ul>
-        <a href="/operations/" class="btn btn-sm">Operations Guides</a>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Communication Decision Framework</h4>
+    <p>Intelligent communication protocols and message routing for agent interactions</p>
+    <a href="/concepts/agent-messaging" class="tile-link">See Messaging</a>
   </div>
   
-  <div class="col-4 pl-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Business Integration</h3>
-      </div>
-      <div class="Box-body">
-        <p>Use cases and integration patterns</p>
-        <ul class="ml-3">
-          <li><a href="/business-integration/use-cases">Use Cases &amp; Examples</a></li>
-          <li><a href="/business-integration/integration-patterns">Integration Patterns</a></li>
-          <li><a href="/business-integration/user-guides">Business User Guides</a></li>
-          <li><a href="/business-integration/training">Training Materials</a></li>
-        </ul>
-        <a href="/business-integration/" class="btn btn-sm">Business Guides</a>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Agent Lifecycle &amp; Governance</h4>
+    <p>Complete agent lifecycle management, monitoring, and governance frameworks</p>
+    <a href="/technical-details/agent_status_monitoring" class="tile-link">Monitor Agents</a>
   </div>
 </div>
 
-<h2 id="templates--configuration"><strong>Templates &amp; Configuration</strong></h2>
+</div>
 
-<h3 id="quick-access-to-resources"><strong>Quick Access to Resources</strong></h3>
+<div class="major-section">
 
-<div class="d-flex flex-wrap">
-  <div class="col-4 pr-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Agent Profiles</h3>
-      </div>
-      <div class="Box-body">
-        <p>Pre-configured agent templates for common use cases</p>
-        <div class="mt-2">
-          <a href="https://github.com/xmpro/multi-agent/tree/main/agent_profiles" class="btn btn-sm btn-outline">Browse Templates</a>
-        </div>
-      </div>
-    </div>
+<div class="section-header">
+  <h2>Performance Optimization</h2>
+  <p><strong>Measurement and optimization</strong> - Advanced performance tuning and optimization systems</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Objective Function Framework</h4>
+    <p>Mathematical frameworks for defining and optimizing multi-objective performance goals</p>
+    <a href="/performance-optimization/objective-functions" class="tile-link">Define Objectives</a>
   </div>
   
-  <div class="col-4 px-1 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Team Manifests</h3>
-      </div>
-      <div class="Box-body">
-        <p>Team coordination templates for multi-agent workflows</p>
-        <div class="mt-2">
-          <a href="https://github.com/xmpro/multi-agent/tree/main/team_manifests" class="btn btn-sm btn-outline">Browse Manifests</a>
-        </div>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Plan Optimization Algorithms</h4>
+    <p>Advanced algorithms for optimizing agent plans, workflows, and execution strategies</p>
+    <a href="/performance-optimization/plan-optimization" class="tile-link">Optimize Plans</a>
   </div>
   
-  <div class="col-4 pl-2 mb-3">
-    <div class="Box">
-      <div class="Box-header">
-        <h3 class="Box-title">Standards</h3>
-      </div>
-      <div class="Box-body">
-        <p>Naming conventions and messaging standards</p>
-        <div class="mt-2">
-          <a href="/naming-conventions/ld" class="btn btn-sm btn-outline">View Standards</a>
-        </div>
-      </div>
-    </div>
+  <div class="tile-item">
+    <h4>Performance Monitoring</h4>
+    <p>Real-time performance tracking, metrics collection, and system health monitoring</p>
+    <a href="/technical-details/open_telemetry_tracing_guide" class="tile-link">Monitor Performance</a>
   </div>
 </div>
 
-<h2 id="content-organization-benefits"><strong>Content Organization Benefits</strong></h2>
+</div>
 
-<p>This architecture-based structure provides different benefits for different stakeholders:</p>
+<div class="major-section">
 
-<h3 id="for-architects--technical-leaders"><strong>For Architects &amp; Technical Leaders</strong></h3>
-<ul>
-  <li><strong>System Understanding</strong> - Clear architectural view of all components</li>
-  <li><strong>Component Relationships</strong> - How pieces fit together across layers</li>
-  <li><strong>Design Decisions</strong> - Rationale for architectural choices</li>
-  <li><strong>Scalability Planning</strong> - Growth considerations per layer</li>
-</ul>
+<div class="section-header">
+  <h2>Integration &amp; Execution</h2>
+  <p><strong>Tools and data processing</strong> - External system integration and execution capabilities</p>
+</div>
 
-<h3 id="for-developers"><strong>For Developers</strong></h3>
-<ul>
-  <li><strong>Implementation Guidance</strong> - Component-specific development approaches</li>
-  <li><strong>API Integration</strong> - Service interface documentation and examples</li>
-  <li><strong>Extension Points</strong> - Customization opportunities within each layer</li>
-  <li><strong>Testing Strategies</strong> - Component-specific testing approaches</li>
-</ul>
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Tool Orchestration &amp; Execution</h4>
+    <p>Sophisticated tool management, orchestration, and execution frameworks</p>
+    <a href="/integration-execution/tool-orchestration" class="tile-link">Orchestrate Tools</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Data Stream Integration</h4>
+    <p>Real-time data stream processing, integration, and transformation capabilities</p>
+    <a href="/integration-execution/data-streams" class="tile-link">Process Streams</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Telemetry &amp; Observability</h4>
+    <p>Comprehensive system observability, telemetry collection, and monitoring solutions</p>
+    <a href="/technical-details/vector_database" class="tile-link">View Telemetry</a>
+  </div>
+</div>
 
-<h3 id="for-system-administrators"><strong>For System Administrators</strong></h3>
-<ul>
-  <li><strong>Operational Context</strong> - Understanding system behavior per component</li>
-  <li><strong>Configuration Guidance</strong> - Component-specific setup and tuning</li>
-  <li><strong>Monitoring Focus</strong> - What to watch and measure per layer</li>
-  <li><strong>Troubleshooting Context</strong> - Layer-specific issue resolution</li>
-</ul>
+</div>
 
-<h3 id="for-business-stakeholders"><strong>For Business Stakeholders</strong></h3>
-<ul>
-  <li><strong>Capability Understanding</strong> - What each layer provides to the business</li>
-  <li><strong>Value Realization</strong> - Business benefits and ROI per component</li>
-  <li><strong>Integration Opportunities</strong> - Connection possibilities with existing systems</li>
-  <li><strong>Performance Visibility</strong> - Measurable outcomes and success metrics</li>
-</ul>
+</div>
 
-<h2 id="secondary-navigation"><strong>Secondary Navigation</strong></h2>
+<div class="collapsible-primary-header collapsed" onclick="togglePrimarySection(this)">
+  <h2>Supporting Documentation Sections</h2>
+  <span class="collapse-toggle">▶</span>
+</div>
 
-<ul>
-  <li><strong><a href="/search-components/">Search by Component</a></strong> - Architecture-based search</li>
-  <li><strong><a href="/cross-references/">Cross-References</a></strong> - Component interactions</li>
-  <li><strong><a href="/api-reference/">API Quick Reference</a></strong> - Developer shortcuts</li>
-  <li><strong><a href="/troubleshooting-index/">Troubleshooting Index</a></strong> - Problem-focused navigation</li>
-  <li><strong><a href="/examples/">Examples Gallery</a></strong> - Implementation samples</li>
-</ul>
+<div class="collapsible-content collapsed">
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Implementation</h2>
+  <p><strong>Development and deployment guides</strong> - Technical implementation resources and documentation</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Development Environment</h4>
+    <p>Complete setup guide for development environments and tooling requirements</p>
+    <a href="/installation/" class="tile-link">Setup Environment</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>API Documentation</h4>
+    <p>Comprehensive API reference, endpoints, and integration examples</p>
+    <a href="/implementation/api-docs" class="tile-link">View APIs</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Database Schema</h4>
+    <p>Database design, schema definitions, and data model documentation</p>
+    <a href="/technical-details/vector_database" class="tile-link">Explore Schema</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Security Implementation</h4>
+    <p>Security best practices, authentication, and authorization frameworks</p>
+    <a href="/implementation/security" class="tile-link">Secure System</a>
+  </div>
+</div>
+
+</div>
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Operations</h2>
+  <p><strong>Administration and maintenance</strong> - System operations, monitoring, and maintenance guides</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>System Administration</h4>
+    <p>Administrative tasks, user management, and system configuration</p>
+    <a href="/operations/admin" class="tile-link">Admin Guide</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Troubleshooting Guides</h4>
+    <p>Common issues, diagnostic procedures, and resolution strategies</p>
+    <a href="/operations/troubleshooting" class="tile-link">Troubleshoot</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Performance Tuning</h4>
+    <p>System optimization, performance tuning, and capacity planning</p>
+    <a href="/operations/performance-tuning" class="tile-link">Optimize System</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Monitoring Setup</h4>
+    <p>Monitoring configuration, alerting, and observability setup</p>
+    <a href="/operations/monitoring" class="tile-link">Setup Monitoring</a>
+  </div>
+</div>
+
+</div>
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Business Integration</h2>
+  <p><strong>Use cases and integration patterns</strong> - Business-focused guides and integration strategies</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Use Cases &amp; Examples</h4>
+    <p>Real-world use cases, implementation examples, and success stories</p>
+    <a href="/business-integration/use-cases" class="tile-link">View Use Cases</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Integration Patterns</h4>
+    <p>Common integration patterns, architectural approaches, and best practices</p>
+    <a href="/business-integration/integration-patterns" class="tile-link">Learn Patterns</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Business User Guides</h4>
+    <p>End-user documentation, workflows, and business process guides</p>
+    <a href="/business-integration/user-guides" class="tile-link">User Guides</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Training Materials</h4>
+    <p>Training resources, tutorials, and educational content for teams</p>
+    <a href="/business-integration/training" class="tile-link">Access Training</a>
+  </div>
+</div>
+
+</div>
+
+</div>
+
+<div class="collapsible-primary-header collapsed" onclick="togglePrimarySection(this)">
+  <h2>Templates &amp; Configuration</h2>
+  <span class="collapse-toggle">▶</span>
+</div>
+
+<div class="collapsible-content collapsed">
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Templates &amp; Configuration</h2>
+  <p><strong>Quick Access to Resources</strong> - Pre-built templates, configurations, and standards</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>Agent Profiles</h4>
+    <p>Pre-configured agent templates for common use cases and industry-specific scenarios</p>
+    <a href="https://github.com/xmpro/multi-agent/tree/main/agent_profiles" class="tile-link">Browse Templates</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Team Manifests</h4>
+    <p>Team coordination templates for multi-agent workflows and collaborative processes</p>
+    <a href="https://github.com/xmpro/multi-agent/tree/main/team_manifests" class="tile-link">Browse Manifests</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>Standards</h4>
+    <p>Naming conventions, messaging standards, and best practice guidelines</p>
+    <a href="/naming-conventions/ld" class="tile-link">View Standards</a>
+  </div>
+</div>
+
+</div>
+
+</div>
+
+<div class="collapsible-primary-header collapsed" onclick="togglePrimarySection(this)">
+  <h2>Content Organization Benefits</h2>
+  <span class="collapse-toggle">▶</span>
+</div>
+
+<div class="collapsible-content collapsed">
+
+<div class="major-section">
+
+<div class="section-header">
+  <h2>Stakeholder Benefits</h2>
+  <p><strong>Architecture-based structure</strong> - Tailored benefits for different roles and responsibilities</p>
+</div>
+
+<div class="tile-grid">
+  <div class="tile-item">
+    <h4>For Architects &amp; Technical Leaders</h4>
+    <p>Clear architectural view of all components, component relationships, design decisions, and scalability planning considerations</p>
+    <a href="/docs/concepts/" class="tile-link">View Architecture</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>For Developers</h4>
+    <p>Implementation guidance, API integration examples, extension points, and component-specific testing strategies</p>
+    <a href="/implementation/" class="tile-link">Developer Guides</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>For System Administrators</h4>
+    <p>Operational context, configuration guidance, monitoring focus areas, and layer-specific troubleshooting approaches</p>
+    <a href="/operations/" class="tile-link">Admin Resources</a>
+  </div>
+  
+  <div class="tile-item">
+    <h4>For Business Stakeholders</h4>
+    <p>Capability understanding, value realization, integration opportunities, and measurable performance outcomes</p>
+    <a href="/business-integration/" class="tile-link">Business Value</a>
+  </div>
+</div>
+
+</div>
+
+</div>
+
+<script>
+function togglePrimarySection(header) {
+    const content = header.nextElementSibling;
+    const toggle = header.querySelector('.collapse-toggle');
+    
+    if (header.classList.contains('collapsed')) {
+        // Expand
+        header.classList.remove('collapsed');
+        content.classList.remove('collapsed');
+        toggle.textContent = '▼';
+    } else {
+        // Collapse
+        header.classList.add('collapsed');
+        content.classList.add('collapsed');
+        toggle.textContent = '▶';
+    }
+}
+</script>
 
 <h2 id="contributing--support"><strong>Contributing &amp; Support</strong></h2>
 
 <ul>
-  <li><strong>Documentation</strong>: You’re reading it!</li>
   <li><strong>Issues</strong>: <a href="https://github.com/your-username/multi-agent/issues">GitHub Issues</a></li>
   <li><strong>Discussions</strong>: <a href="https://github.com/your-username/multi-agent/discussions">GitHub Discussions</a></li>
-  <li><strong>Support</strong>: <a href="mailto:support@xmpro.com">Contact Support</a></li>
 </ul>
 
 <hr />

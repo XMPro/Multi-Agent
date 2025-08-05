@@ -1,4 +1,591 @@
-/* assets/css/custom.css - Minima theme customizations with collapsible navigation */
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>XMPro MAGS Documentation | Multi-Agent Generative Systems - Architecture and Implementation Guide</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="XMPro MAGS Documentation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Multi-Agent Generative Systems - Architecture and Implementation Guide" />
+<meta property="og:description" content="Multi-Agent Generative Systems - Architecture and Implementation Guide" />
+<link rel="canonical" href="http://0.0.0.0:4000/assets/css/custom.css" />
+<meta property="og:url" content="http://0.0.0.0:4000/assets/css/custom.css" />
+<meta property="og:site_name" content="XMPro MAGS Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="XMPro MAGS Documentation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Multi-Agent Generative Systems - Architecture and Implementation Guide","headline":"XMPro MAGS Documentation","publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"http://0.0.0.0:4000/assets/images/logo/logo.png"}},"url":"http://0.0.0.0:4000/assets/css/custom.css"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="http://0.0.0.0:4000/feed.xml" title="XMPro MAGS Documentation" /><!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/images/favicon/favicon.png">
+  <link rel="shortcut icon" type="image/png" href="/assets/images/favicon/favicon.png">
+  
+  <!-- Custom CSS for collapsible navigation -->
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body><header class="site-header" role="banner">
+  <div class="header-wrapper">
+    <div class="site-header-content">
+      <!-- Logo and Site Title -->
+      <div class="site-title-container"><img src="/assets/images/logo/logo.png" alt="XMPro MAGS Documentation" class="site-logo"><a class="site-title" rel="author" href="/">XMPro MAGS Documentation</a>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- GitHub Link -->
+        <a href="https://github.com/XMPro/Multi-Agent" class="github-link" target="_blank" rel="noopener">
+          <span class="github-text">View on GitHub</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Description -->
+    <div class="site-description">
+      Multi-Agent Generative Systems - Architecture and Implementation Guide
+    </div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="nav-wrapper"><a href="/foundation/" class="nav-item ">
+          <span class="nav-title">Getting Started</span>
+        </a><a href="/llm-logic/" class="nav-item ">
+          <span class="nav-title">LLM Utility Layer</span>
+        </a><a href="/cognitive-intelligence/" class="nav-item ">
+          <span class="nav-title">Cognitive Intelligence</span>
+        </a><a href="/decision-orchestration/" class="nav-item ">
+          <span class="nav-title">Decision Orchestration</span>
+        </a><a href="/performance-optimization/" class="nav-item ">
+          <span class="nav-title">Performance Optimization</span>
+        </a><a href="/integration-execution/" class="nav-item ">
+          <span class="nav-title">Integration & Execution</span>
+        </a></div>
+  </nav>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="docs-layout">
+          <!-- Sidebar with collapsible navigation -->
+          <aside class="sidebar">
+            <!-- _includes/nav.html -->
+<nav class="SideNav" id="sidebar-nav">
+    <!-- Sidebar Toggle Button -->
+    <div class="nav-toggle-container">
+        <button class="nav-toggle-btn" id="nav-toggle" aria-label="Toggle navigation sections">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M1.75 2a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75zM1.75 7a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75zM1.75 12a.75.75 0 000 1.5h12.5a.75.75 0 000-1.5H1.75z"/>
+            </svg>
+            <span class="nav-toggle-text">Collapse All</span>
+        </button>
+    </div>
+
+    <!-- Architecture-Based Navigation -->
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-1">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Getting Started</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-1">
+            <a class="SideNav-item " 
+               href="/foundation/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/foundation/overview/">
+                    <span>What is XMPro MAGS?</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/foundation/quick-start/">
+                    <span>Quick Start Guide</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/installation/">
+                    <span>Installation & Setup</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/architecture/agent_architecture/">
+                    <span>Architecture Overview</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-2">
+            <span class="nav-icon"></span>
+            <span class="nav-title">LLM Utility Layer</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-2">
+            <a class="SideNav-item " 
+               href="/llm-logic/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/llm-logic/text-generation/">
+                    <span>Text Generation & Processing</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/llm-logic/language-understanding/">
+                    <span>Language Understanding & Parsing</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/llm-logic/reasoning-support/">
+                    <span>Reasoning Support</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/llm-logic/communication/">
+                    <span>Communication & Interaction</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/llm-logic/knowledge-processing/">
+                    <span>Knowledge Processing</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-3">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Cognitive Intelligence</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-3">
+            <a class="SideNav-item " 
+               href="/cognitive-intelligence/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/cognitive-intelligence/memory-significance/">
+                    <span>Memory Significance Calculation</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/technical-details/memory_cycle/">
+                    <span>Memory Management & Retrieval</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/cognitive-intelligence/synthetic-memory/">
+                    <span>Synthetic Memory Generation</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/cognitive-intelligence/confidence-scoring/">
+                    <span>Confidence Scoring System</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/cognitive-intelligence/content-processing/">
+                    <span>Content Processing Framework</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/cognitive-intelligence/plan-adaptation/">
+                    <span>Plan Adaptation Detection</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-4">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Decision Orchestration</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-4">
+            <a class="SideNav-item " 
+               href="/decision-orchestration/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/decision-orchestration/consensus/">
+                    <span>Consensus Management System</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/concepts/agent-messaging/">
+                    <span>Communication Decision Framework</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/technical-details/agent_status_monitoring/">
+                    <span>Agent Lifecycle & Governance</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-5">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Performance Optimization</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-5">
+            <a class="SideNav-item " 
+               href="/performance-optimization/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/performance-optimization/objective-functions/">
+                    <span>Objective Function Framework</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/performance-optimization/plan-optimization/">
+                    <span>Plan Optimization Algorithms</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/technical-details/open_telemetry_tracing_guide/">
+                    <span>Performance Monitoring System</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-6">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Integration & Execution</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-6">
+            <a class="SideNav-item " 
+               href="/integration-execution/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/integration-execution/tool-orchestration/">
+                    <span>Tool Orchestration & Execution</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/integration-execution/data-streams/">
+                    <span>Data Stream Integration</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/technical-details/open_telemetry_tracing_guide/">
+                    <span>Telemetry & Observability</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-7">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Implementation</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-7">
+            <a class="SideNav-item " 
+               href="/implementation/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/installation/">
+                    <span>Development Environment Setup</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/implementation/api-docs/">
+                    <span>API Documentation</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/technical-details/vector_database/">
+                    <span>Database Schema</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/implementation/security/">
+                    <span>Security Implementation</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/implementation/deployment/">
+                    <span>Deployment Guides</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="section-8">
+            <span class="nav-icon"></span>
+            <span class="nav-title">Operations</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="section-8">
+            <a class="SideNav-item " 
+               href="/operations/">
+                <span>📋 Overview</span>
+            </a>
+            
+            
+                
+                <a class="SideNav-item " 
+                   href="/operations/admin/">
+                    <span>System Administration</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/operations/troubleshooting/">
+                    <span>Troubleshooting Guides</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/operations/performance-tuning/">
+                    <span>Performance Tuning</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/operations/backup-recovery/">
+                    <span>Backup & Recovery</span>
+                </a>
+                
+                <a class="SideNav-item " 
+                   href="/operations/monitoring/">
+                    <span>Monitoring Setup</span>
+                </a>
+                
+            
+        </div>
+    </div>
+    
+
+    <!-- Quick Access Section -->
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="quick-access-section">
+            <span class="nav-icon">🚀</span>
+            <span class="nav-title">Quick Access</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="quick-access-section">
+            
+            <a class="SideNav-item" href="https://github.com/your-username/multi-agent/tree/main/agent_profiles" target="_blank">
+                <span> Agent Profiles</span>
+            </a>
+            
+            <a class="SideNav-item" href="https://github.com/your-username/multi-agent/tree/main/team_manifests" target="_blank">
+                <span> Team Manifests</span>
+            </a>
+            
+            <a class="SideNav-item" href="https://github.com/your-username/multi-agent/tree/main/src" target="_blank">
+                <span> Source Code</span>
+            </a>
+            
+            <a class="SideNav-item" href="/naming-conventions/ld/" target="_blank">
+                <span> Standards & Conventions</span>
+            </a>
+            
+        </div>
+    </div>
+
+    <!-- Current Documentation Section -->
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="current-docs-section">
+            <span class="nav-icon">📚</span>
+            <span class="nav-title">Current Documentation</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="current-docs-section">
+            <a class="SideNav-item " 
+               href="/architecture/">
+                <span>🏗️ Architecture</span>
+            </a>
+            
+            <a class="SideNav-item collapsible-item " 
+               href="/concepts/"
+               data-submenu="concepts-submenu">
+                <span>🧠 Core Concepts</span>
+                <svg class="submenu-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                    <path d="M3 2L7 5L3 8V2Z"/>
+                </svg>
+            </a>
+            
+            <!-- Concepts submenu -->
+            <div class="submenu " id="concepts-submenu">
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/concepts/whymags">
+                    <span>Why MAGS?</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/concepts/agent_types">
+                    <span>Agent Types</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/concepts/agent_training">
+                    <span>Agent Training</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/concepts/agent-messaging">
+                    <span>Agent Messaging</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/concepts/howmagusememory">
+                    <span>Memory Usage</span>
+                </a>
+            </div>
+            
+            <a class="SideNav-item " 
+               href="/installation/">
+                <span>⚙️ Installation</span>
+            </a>
+            
+            <a class="SideNav-item collapsible-item " 
+               href="/technical-details/"
+               data-submenu="technical-submenu">
+                <span>🔧 Technical Details</span>
+                <svg class="submenu-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                    <path d="M3 2L7 5L3 8V2Z"/>
+                </svg>
+            </a>
+            
+            <!-- Technical Details submenu -->
+            <div class="submenu " id="technical-submenu">
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/technical-details/memory_cycle">
+                    <span>Memory Cycle</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/technical-details/agent_status_monitoring">
+                    <span>Status Monitoring</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/technical-details/vector_database">
+                    <span>Vector Database</span>
+                </a>
+                <a class="SideNav-item SideNav-subItem " 
+                   href="/technical-details/open_telemetry_tracing_guide">
+                    <span>Telemetry & Tracing</span>
+                </a>
+            </div>
+            
+            <a class="SideNav-item " 
+               href="/naming-conventions/">
+                <span>📋 Standards</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="nav-section collapsible-section">
+        <div class="nav-section-header collapsible-header" data-target="search-section">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-title">Find Content</span>
+            <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+            </svg>
+        </div>
+        
+        <div class="nav-section-content" id="search-section">
+            <div class="p-2">
+                <input type="search" class="form-control input-sm" placeholder="Search docs..." id="docs-search">
+            </div>
+            
+            <a class="SideNav-item" href="/search-components/">
+                <span>🔍 Search by Component</span>
+            </a>
+            
+            <a class="SideNav-item" href="/cross-references/">
+                <span>🔗 Cross-References</span>
+            </a>
+            
+            <a class="SideNav-item" href="/examples/">
+                <span>💡 Examples Gallery</span>
+            </a>
+        </div>
+    </div>
+</nav>
+
+          </aside>
+
+          <!-- Main content area -->
+          <div class="content-area">
+            <!-- Breadcrumb -->
+            
+
+            <!-- Page content -->
+            <article class="post">
+              
+
+              <div class="post-content">
+                /* assets/css/custom.css - Minima theme customizations with collapsible navigation */
 
 /* Custom color scheme for MAGS architecture layers */
 .layer-foundation { background-color: #e1f5fe; }
@@ -1200,3 +1787,238 @@ body {
         --shadow-secondary: rgba(0, 0, 0, 0.3);
     }
 }
+
+              </div>
+            </article>
+
+            <!-- Related Links -->
+            
+          </div>
+        </div>
+      </div>
+    </main><footer class="site-footer">
+  <div class="footer-wrapper">
+    <div class="footer-content">
+      <!-- License -->
+      <div class="footer-left">
+        <a href="https://choosealicense.com/licenses/mit/" target="_blank" rel="noopener">
+          <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License" />
+        </a>
+        <span class="footer-support">For assistance or requests, please contact <a href="mailto:support@xmpro.com">support@xmpro.com</a></span>
+      </div>
+
+      <!-- Social Links -->
+      <div class="footer-center">
+        <a href="https://www.linkedin.com/company/xmpro-inc" target="_blank" rel="noopener" title="LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+          </svg>
+        </a>
+        <a href="https://github.com/XMPro" target="_blank" rel="noopener" title="GitHub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+        </a>
+        <a href="https://twitter.com/xmpro" target="_blank" rel="noopener" title="Twitter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+          </svg>
+        </a>
+        <a href="https://www.facebook.com/xmpro/" target="_blank" rel="noopener" title="Facebook">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+        </a>
+        <a href="https://www.youtube.com/XMPRO" target="_blank" rel="noopener" title="YouTube">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </a>
+        <a href="https://www.youtube.com/@XMProLearning" target="_blank" rel="noopener" title="YouTube - Learning">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Copyright -->
+      <div class="footer-right">
+        <span>&copy; 2025 XMPro</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- Enhanced Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <script>
+        // Initialize Mermaid with proper configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({ 
+                    startOnLoad: true,
+                    theme: 'default',
+                    securityLevel: 'loose',
+                    flowchart: {
+                        useMaxWidth: true,
+                        htmlLabels: true
+                    }
+                });
+            }
+        });
+
+        // Collapsible Navigation Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initCollapsibleNav();
+            initSearchFunctionality();
+            initMobileNav();
+        });
+
+        function initCollapsibleNav() {
+            const navToggle = document.getElementById('nav-toggle');
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+            const collapsibleItems = document.querySelectorAll('.collapsible-item');
+
+            // Global toggle functionality
+            if (navToggle) {
+                let allCollapsed = false;
+                navToggle.addEventListener('click', function() {
+                    const sections = document.querySelectorAll('.nav-section-content');
+                    const headers = document.querySelectorAll('.collapsible-header');
+                    const toggleText = document.querySelector('.nav-toggle-text');
+                    
+                    allCollapsed = !allCollapsed;
+                    
+                    sections.forEach(section => {
+                        if (allCollapsed) {
+                            section.classList.add('collapsed');
+                        } else {
+                            section.classList.remove('collapsed');
+                        }
+                    });
+                    
+                    headers.forEach(header => {
+                        if (allCollapsed) {
+                            header.classList.add('collapsed');
+                        } else {
+                            header.classList.remove('collapsed');
+                        }
+                    });
+                    
+                    toggleText.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
+                });
+            }
+
+            // Individual section toggle
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const targetContent = document.getElementById(targetId);
+                    
+                    if (targetContent) {
+                        const isCollapsed = targetContent.classList.contains('collapsed');
+                        
+                        if (isCollapsed) {
+                            targetContent.classList.remove('collapsed');
+                            this.classList.remove('collapsed');
+                        } else {
+                            targetContent.classList.add('collapsed');
+                            this.classList.add('collapsed');
+                        }
+                    }
+                });
+            });
+
+            // Submenu toggle functionality
+            collapsibleItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const submenuId = this.getAttribute('data-submenu');
+                    if (submenuId) {
+                        e.preventDefault();
+                        const submenu = document.getElementById(submenuId);
+                        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                        
+                        if (submenu) {
+                            if (isExpanded) {
+                                submenu.classList.remove('expanded');
+                                this.setAttribute('aria-expanded', 'false');
+                            } else {
+                                submenu.classList.add('expanded');
+                                this.setAttribute('aria-expanded', 'true');
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function initSearchFunctionality() {
+            const searchInput = document.getElementById('docs-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const navItems = document.querySelectorAll('.SideNav-item');
+                    const sections = document.querySelectorAll('.nav-section');
+                    
+                    if (searchTerm === '') {
+                        navItems.forEach(item => item.style.display = 'flex');
+                        sections.forEach(section => section.style.display = 'block');
+                    } else {
+                        navItems.forEach(item => {
+                            const text = item.textContent.toLowerCase();
+                            if (text.includes(searchTerm)) {
+                                item.style.display = 'flex';
+                                const parentSection = item.closest('.nav-section');
+                                if (parentSection) {
+                                    parentSection.style.display = 'block';
+                                }
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        });
+                        
+                        sections.forEach(section => {
+                            const visibleItems = section.querySelectorAll('.SideNav-item[style*="flex"]');
+                            if (visibleItems.length === 0) {
+                                section.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        function initMobileNav() {
+            const mobileToggle = document.getElementById('mobile-nav-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (mobileToggle && sidebar) {
+                mobileToggle.addEventListener('click', function() {
+                    const isHidden = sidebar.style.display === 'none';
+                    sidebar.style.display = isHidden ? 'block' : 'none';
+                    this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                });
+            }
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.querySelector('.sidebar');
+                
+                // Handle mobile sidebar
+                if (window.innerWidth <= 768 && sidebar && sidebar.style.display !== 'none') {
+                    sidebar.style.display = 'none';
+                    const mobileToggle = document.getElementById('mobile-nav-toggle');
+                    if (mobileToggle) {
+                        mobileToggle.setAttribute('aria-expanded', 'false');
+                        mobileToggle.focus();
+                    }
+                }
+            }
+        });
+    </script>
+
+  </body>
+
+</html>

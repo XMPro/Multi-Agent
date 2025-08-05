@@ -1,8 +1,8 @@
 # _config.yml
 title: "XMPro MAGS Documentation"
 description: "Multi-Agent Generative Systems - Architecture and Implementation Guide"
-baseurl: "" # Leave empty for root domain
-url: "https://your-username.github.io/multi-agent"
+baseurl: "/Multi-Agent" # GitHub Pages repository name
+url: "https://xmpro.github.io"
 
 # Theme
 theme: minima

@@ -1,0 +1,58 @@
+# Jekyll generated files
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+.jekyll-cache
+jekyll-cache/
+*.gem
+.bundle
+.jekyll-now
+
+# Ruby environment
+.bundle/
+vendor/
+.ruby-version
+.ruby-gemset
+Gemfile.lock
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE/Editor folders
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.vs/
+*.sublime-workspace
+*.sublime-project
+
+# Temporary files
+*.bak
+*.tmp
+*.temp
+.tmp/
+tmp/
+
+# System files
+.DS_Store
+Thumbs.db
+*.log
+.directory
+desktop.ini
+ehthumbs.db
+Icon?
+
+# Build artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity

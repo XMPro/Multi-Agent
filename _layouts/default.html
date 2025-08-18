@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+<html lang="en">
 
-  {%- include head.html -%}
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if page.title %}{{ page.title | escape }} | {% endif %}{{ site.title | default: "Documentation" }}</title>
+    {%- include head.html -%}
+  </head>
 
-  <body>
+  <body {% if page.url == '/' or page.url contains 'getting-started' %}data-section="getting-started"{% endif %}>
 
     {%- include header.html -%}
 
@@ -79,8 +84,12 @@
 
     <!-- Enhanced Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="{{ '/assets/js/main.js' | relative_url }}"></script>
     
     <script>
+        // This function has been moved to main.js for better organization
+        // and to avoid duplicate functionality
+        
         // Initialize Mermaid with proper configuration
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof mermaid !== 'undefined') {
@@ -110,12 +119,37 @@
 
             // Global toggle functionality
             if (navToggle) {
-                let allCollapsed = false;
+                let allCollapsed = false; // Start with all expanded
+                
+                // Make sure sections are properly initialized
+                const sections = document.querySelectorAll('.nav-section-content');
+                const headers = document.querySelectorAll('.collapsible-header');
+                
+                // Initialize sections as collapsed by default
+                sections.forEach(section => {
+                    section.classList.add('collapsed');
+                    section.style.maxHeight = '0';
+                    section.style.opacity = '0';
+                });
+                
+                headers.forEach(header => {
+                    header.classList.add('collapsed');
+                });
+                
+                // But expand the first section (Getting Started) if we're on that page
+                if (document.body.getAttribute('data-section') === 'getting-started') {
+                    const firstSection = sections[0];
+                    const firstHeader = headers[0];
+                    if (firstSection && firstHeader) {
+                        firstSection.classList.remove('collapsed');
+                        firstSection.style.maxHeight = firstSection.scrollHeight + 'px';
+                        firstSection.style.opacity = '1';
+                        firstHeader.classList.remove('collapsed');
+                    }
+                }
+                
+                // Toggle button functionality
                 navToggle.addEventListener('click', function() {
-                    const sections = document.querySelectorAll('.nav-section-content');
-                    const headers = document.querySelectorAll('.collapsible-header');
-                    const toggleText = document.querySelector('.nav-toggle-text');
-                    
                     allCollapsed = !allCollapsed;
                     
                     sections.forEach(section => {
@@ -133,8 +167,6 @@
                             header.classList.remove('collapsed');
                         }
                     });
-                    
-                    toggleText.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
                 });
             }
 
@@ -148,14 +180,60 @@
                         const isCollapsed = targetContent.classList.contains('collapsed');
                         
                         if (isCollapsed) {
+                            // Expand this section
                             targetContent.classList.remove('collapsed');
+                            targetContent.style.maxHeight = targetContent.scrollHeight + 'px';
+                            targetContent.style.opacity = '1';
                             this.classList.remove('collapsed');
                         } else {
+                            // Collapse this section
                             targetContent.classList.add('collapsed');
+                            targetContent.style.maxHeight = '0';
+                            targetContent.style.opacity = '0';
                             this.classList.add('collapsed');
                         }
                     }
                 });
+            });
+            
+            // Check if there's a stored state for navigation sections
+            const storedNavState = localStorage.getItem('magsNavState');
+            if (storedNavState) {
+                try {
+                    const navState = JSON.parse(storedNavState);
+                    // Apply stored state
+                    Object.keys(navState).forEach(sectionId => {
+                        const section = document.getElementById(sectionId);
+                        const header = document.querySelector(`[data-target="${sectionId}"]`);
+                        if (section && header) {
+                            if (navState[sectionId]) {
+                                // Expand
+                                section.classList.remove('collapsed');
+                                header.classList.remove('collapsed');
+                            } else {
+                                // Collapse
+                                section.classList.add('collapsed');
+                                header.classList.add('collapsed');
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error restoring navigation state:', e);
+                }
+            }
+            
+            // Store navigation state when changed
+            function storeNavState() {
+                const navState = {};
+                document.querySelectorAll('.nav-section-content').forEach(section => {
+                    navState[section.id] = !section.classList.contains('collapsed');
+                });
+                localStorage.setItem('magsNavState', JSON.stringify(navState));
+            }
+            
+            // Add event listeners to store state
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', storeNavState);
             });
 
             // Submenu toggle functionality
@@ -186,7 +264,7 @@
             if (searchInput) {
                 searchInput.addEventListener('input', function(e) {
                     const searchTerm = e.target.value.toLowerCase();
-                    const navItems = document.querySelectorAll('.SideNav-item');
+                    const navItems = document.querySelectorAll('.sidenav-item');
                     const sections = document.querySelectorAll('.nav-section');
                     
                     if (searchTerm === '') {
@@ -207,7 +285,7 @@
                         });
                         
                         sections.forEach(section => {
-                            const visibleItems = section.querySelectorAll('.SideNav-item[style*="flex"]');
+                            const visibleItems = section.querySelectorAll('.sidenav-item[style*="flex"]');
                             if (visibleItems.length === 0) {
                                 section.style.display = 'none';
                             }

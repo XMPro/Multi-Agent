@@ -77,16 +77,16 @@ collections:
 # Primary Navigation (Architecture-Based)
 navigation:
   - title: "Getting Started"
-    url: /foundation/
+    url: /
     icon: ""
     description: "Foundation layer - System overview and quick start"
     items:
-      - title: "What is XMPro MAGS?"
-        url: /foundation/overview/
-      - title: "Quick Start Guide"
-        url: /foundation/quick-start/
-      - title: "Installation & Setup"
-        url: /installation/
+      - title: "Overview"
+        url: /getting-started/overview/
+      - title: "Installation"
+        url: /getting-started/installation/
+      - title: "First Steps"
+        url: /getting-started/first-steps/
       - title: "Architecture Overview"
         url: /architecture/agent_architecture/
         

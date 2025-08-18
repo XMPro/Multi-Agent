@@ -27,7 +27,10 @@
   <!-- Top Navigation Bar -->
   <nav class="top-nav">
     <div class="nav-wrapper">
-      {%- for nav_item in site.navigation limit:6 -%}
+      <a href="{{ '/' | relative_url }}" class="nav-item {% if page.url == '/' %}active{% endif %}">
+        <span class="nav-title">Getting Started</span>
+      </a>
+      {%- for nav_item in site.navigation offset:1 -%}
         <a href="{{ nav_item.url | relative_url }}" class="nav-item {% if page.url contains nav_item.url %}active{% endif %}">
           <span class="nav-title">{{ nav_item.title }}</span>
         </a>

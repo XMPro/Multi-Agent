@@ -5,8 +5,6 @@ description: "Overview of Multi-Agent Generative Systems"
 category: "getting-started"
 ---
 
-# Overview
-
 Multi-Agent Generative Systems (MAGS) is a comprehensive framework for building, deploying, and managing intelligent multi-agent systems. This overview will help you understand the core concepts and architecture of MAGS.
 
 ## What is MAGS?
@@ -52,9 +50,106 @@ Implementing MAGS in your organization provides numerous benefits:
 
 ## Next Steps
 
-To get started with MAGS:
+<div class="next-steps">
+  <a href="{{ '/getting-started/installation' | relative_url }}" class="next-step-card">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <h4>Install MAGS</h4>
+      <p>Set up the MAGS framework in your environment</p>
+    </div>
+    <div class="step-arrow">→</div>
+  </a>
+  
+  <a href="{{ '/getting-started/configuration' | relative_url }}" class="next-step-card">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <h4>Configure</h4>
+      <p>Configure your environment for optimal performance</p>
+    </div>
+    <div class="step-arrow">→</div>
+  </a>
+  
+  <a href="{{ '/getting-started/first-steps' | relative_url }}" class="next-step-card">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <h4>Create Agents</h4>
+      <p>Build your first agent and learn the basics</p>
+    </div>
+    <div class="step-arrow">→</div>
+  </a>
+  
+  <a href="{{ '/getting-started/advanced-usage' | relative_url }}" class="next-step-card">
+    <div class="step-number">4</div>
+    <div class="step-content">
+      <h4>Advanced Features</h4>
+      <p>Explore advanced capabilities and optimizations</p>
+    </div>
+    <div class="step-arrow">→</div>
+  </a>
+</div>
 
-1. [Install MAGS]({{ '/getting-started/installation' | relative_url }})
-2. [Configure your environment]({{ '/getting-started/configuration' | relative_url }})
-3. [Create your first agent]({{ '/getting-started/first-steps' | relative_url }})
-4. [Explore advanced features]({{ '/getting-started/advanced-usage' | relative_url }})
+<style>
+.next-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.next-step-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.next-step-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  text-decoration: none;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #3498db;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.step-content p {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.step-arrow {
+  font-size: 1.5rem;
+  color: #bdc3c7;
+}
+
+@media (max-width: 768px) {
+  .next-steps {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

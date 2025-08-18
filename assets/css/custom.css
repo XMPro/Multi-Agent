@@ -69,7 +69,7 @@
 }
 
 .header-wrapper {
-    padding: 1.5rem 16px 0.5rem 16px;
+    padding: 0.5rem 1rem 0.5rem 1rem;
     max-width: none;
     height: 100%;
     display: flex;
@@ -290,7 +290,7 @@
     padding: 12px 20px;
     color: rgba(36, 41, 47, 0.95);
     text-decoration: none;
-    border-bottom: 3px solid transparent;
+    border-bottom: 1px solid transparent;
     transition: all 0.2s ease;
     white-space: nowrap;
     font-size: 14px;
@@ -405,6 +405,11 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     background: rgba(36, 41, 47, 0.1);
 }
 
+.collapsible-header.active {
+    background: linear-gradient(90deg, rgba(3, 102, 214, 0.2) 0%, transparent 100%);
+    border-left: 1px solid var(--color-primary);
+}
+
 .nav-icon {
     margin-right: 8px;
     font-size: 16px;
@@ -453,7 +458,6 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     padding: 8px 16px;
     color: var(--color-text-primary);
     text-decoration: none;
-    border-left: 3px solid transparent;
     transition: all 0.2s ease;
 }
 
@@ -480,7 +484,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 3px;
+    width: 1px;
     background: var(--color-primary);
 }
 
@@ -504,7 +508,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     overflow: hidden;
     transition: max-height 0.3s ease;
     background: var(--color-background-primary);
-    border-left: 2px solid rgba(36, 41, 47, 0.2);
+    border-left: 1px solid rgba(36, 41, 47, 0.2);
     margin-left: 16px;
 }
 
@@ -512,9 +516,9 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     max-height: 500px;
 }
 
-.sidebar-subitem,
-.sidenav-subitem {
-    padding-left: 24px;
+/* All items in the nav-section-content should have consistent styling */
+.nav-section-content .sidenav-item {
+    padding-left: 16px;
     font-size: 14px;
     color: var(--color-text-secondary);
 }
@@ -530,6 +534,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     color: var(--color-primary);
     background-color: var(--color-submenu-selected-bg);
     font-weight: 500;
+    border-left: 1px solid var(--color-primary);
 }
 
 /* Major Section Containers */
@@ -550,7 +555,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     cursor: pointer;
     padding: 0.5rem 0;
     margin-bottom: 1rem;
-    border-bottom: 2px solid var(--color-border-secondary);
+    border-bottom: 1px solid var(--color-border-secondary);
     transition: all 0.2s ease;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -642,7 +647,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 1px;
     background: var(--color-secondary);
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -704,7 +709,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
 .section-header {
     margin: 0 0 1rem 0;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--color-border-secondary);
+    border-bottom: 1px solid var(--color-border-secondary);
 }
 
 .section-header h2 {
@@ -764,7 +769,7 @@ body[data-section="getting-started"] .nav-wrapper a:first-child {
 /* JSON code block enhancements */
 .language-json {
     background: var(--color-background-secondary);
-    border-left: 4px solid var(--color-primary);
+    border-left: 1px solid var(--color-primary);
     border-radius: 6px;
 }
 

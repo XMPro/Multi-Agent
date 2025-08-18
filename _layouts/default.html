@@ -53,28 +53,7 @@
               </div>
             </article>
 
-            <!-- Related Links -->
-            {% if page.category %}
-            <div class="related-links">
-              <h3>Related Documentation</h3>
-              <div class="related-grid">
-                {% for nav_item in site.navigation %}
-                    {% if nav_item.url contains page.category %}
-                        {% for sub_item in nav_item.items limit:3 %}
-                            {% unless sub_item.url == page.url %}
-                            <div class="related-item">
-                                <a href="{{ sub_item.url | relative_url }}" class="related-link">
-                                    <strong>{{ sub_item.title }}</strong>
-                                </a>
-                            </div>
-                            {% endunless %}
-                        {% endfor %}
-                        {% break %}
-                    {% endif %}
-                {% endfor %}
-              </div>
-            </div>
-            {% endif %}
+            <!-- Related Links section removed as it's redundant with the navbar -->
           </div>
         </div>
       </div>
@@ -125,28 +104,24 @@
                 const sections = document.querySelectorAll('.nav-section-content');
                 const headers = document.querySelectorAll('.collapsible-header');
                 
-                // Initialize sections as collapsed by default
-                sections.forEach(section => {
-                    section.classList.add('collapsed');
-                    section.style.maxHeight = '0';
-                    section.style.opacity = '0';
-                });
-                
-                headers.forEach(header => {
-                    header.classList.add('collapsed');
-                });
-                
-                // But expand the first section (Getting Started) if we're on that page
-                if (document.body.getAttribute('data-section') === 'getting-started') {
-                    const firstSection = sections[0];
-                    const firstHeader = headers[0];
-                    if (firstSection && firstHeader) {
-                        firstSection.classList.remove('collapsed');
-                        firstSection.style.maxHeight = firstSection.scrollHeight + 'px';
-                        firstSection.style.opacity = '1';
-                        firstHeader.classList.remove('collapsed');
+                // Initialize sections based on active state
+                sections.forEach((section, index) => {
+                    const header = headers[index];
+                    if (header && header.classList.contains('active')) {
+                        // This section should be expanded
+                        section.classList.remove('collapsed');
+                        section.style.maxHeight = section.scrollHeight + 'px';
+                        section.style.opacity = '1';
+                    } else {
+                        // This section should be collapsed
+                        section.classList.add('collapsed');
+                        section.style.maxHeight = '0';
+                        section.style.opacity = '0';
+                        if (header) {
+                            header.classList.add('collapsed');
+                        }
                     }
-                }
+                });
                 
                 // Toggle button functionality
                 navToggle.addEventListener('click', function() {

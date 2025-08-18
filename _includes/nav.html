@@ -3,8 +3,15 @@
 
     <!-- Architecture-Based Navigation -->
     {% for nav_item in site.navigation %}
+    {% assign section_active = false %}
+    {% if forloop.first and page.url == '/' or page.url contains 'getting-started' %}
+        {% assign section_active = true %}
+    {% elsif page.category == nav_item.title | downcase or page.url contains nav_item.url %}
+        {% assign section_active = true %}
+    {% endif %}
+    
     <div class="nav-section collapsible-section">
-        <div class="nav-section-header collapsible-header collapsed" data-target="section-{{ forloop.index }}">
+        <div class="nav-section-header collapsible-header {% if section_active %}active{% else %}collapsed{% endif %}" data-target="section-{{ forloop.index }}">
             <span class="nav-icon">{{ nav_item.icon }}</span>
             <span class="nav-title">{{ nav_item.title }}</span>
             <svg class="collapse-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -12,33 +19,34 @@
             </svg>
         </div>
         
-        <div class="nav-section-content" id="section-{{ forloop.index }}">
+        <div class="nav-section-content {% unless section_active %}collapsed{% endunless %}" id="section-{{ forloop.index }}">
             {% if forloop.first %}
-            <a class="sidenav-item {% if page.url == '/' %}selected{% endif %}" 
+            <a class="sidenav-item {% if page.url == '/' or page.url contains '/index' %}selected{% endif %}" 
                href="{{ '/' | relative_url }}">
                 <span>Home</span>
             </a>
-            <a class="sidenav-item {% if page.url == '/getting-started/overview/' %}selected{% endif %}" 
+            <a class="sidenav-item {% if page.url contains '/getting-started/overview' %}selected{% endif %}" 
                href="{{ '/getting-started/overview/' | relative_url }}">
                 <span>Overview</span>
             </a>
-            <a class="sidenav-item {% if page.url == '/getting-started/installation/' %}selected{% endif %}" 
+            <a class="sidenav-item {% if page.url contains '/getting-started/installation' %}selected{% endif %}" 
                href="{{ '/getting-started/installation/' | relative_url }}">
                 <span>Installation</span>
             </a>
-            <a class="sidenav-item {% if page.url == '/getting-started/first-steps/' %}selected{% endif %}" 
+            <a class="sidenav-item {% if page.url contains '/getting-started/first-steps' %}selected{% endif %}" 
                href="{{ '/getting-started/first-steps/' | relative_url }}">
                 <span>First Steps</span>
             </a>
             {% else %}
-            <a class="sidenav-item {% if page.url == nav_item.url %}selected{% endif %}" 
+            {% assign nav_title_lower = nav_item.title | downcase %}
+            <a class="sidenav-item {% if page.url == nav_item.url or page.url contains nav_item.url or page.category == nav_title_lower %}selected{% endif %}" 
                href="{{ nav_item.url | relative_url }}">
                 <span>Overview</span>
             </a>
             
             {% if nav_item.items %}
                 {% for sub_item in nav_item.items %}
-                <a class="sidenav-item {% if page.url == sub_item.url %}selected{% endif %}" 
+                <a class="sidenav-item {% if page.url contains sub_item.url %}selected{% endif %}" 
                    href="{{ sub_item.url | relative_url }}">
                     <span>{{ sub_item.title }}</span>
                 </a>

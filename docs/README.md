@@ -47,7 +47,7 @@ We recommend starting with the Glossary to familiarize yourself with the termino
 Our project uses specific naming conventions for different components. Detailed documentation can be found in the `/naming-conventions` folder:
 
 - [`Id.md`](naming-conventions/Id.md): Explains the naming convention for team IDs, agent profile IDs, and agent instance IDs
-- [`Message-Broker-Topic.md`](naming-conventions/Message-Broker-Topic.md): Outlines the naming convention for message broker topics used in the system
+- [`message-broker-topic.md`](naming-conventions/message-broker-topic.md): Outlines the naming convention for message broker topics used in the system
 
 ## Technical Details
 

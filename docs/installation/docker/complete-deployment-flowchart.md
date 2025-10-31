@@ -206,7 +206,7 @@ flowchart TD
     Z --> BB[wait for initialization<br/>5 seconds]
     BB --> CC[check container status]
     CC --> DD{mqtt running?}
-    DD -->|yes| EE[mqtt ready<br/>port 1883 (unencrypted)<br/>port 8883 (ssl)<br/>port 9002 (websocket)]
+    DD -->|yes| EE[mqtt ready<br/>port 1883 unencrypted<br/>port 8883 ssl<br/>port 9002 websocket]
     DD -->|no| FF[check logs for issues]
     
     style A fill:#e1f5fe
@@ -229,7 +229,7 @@ flowchart TD
     G -->|no| I[exit installation]
     H --> F
     
-    F --> J[create directories:<br/>- milvus-data (etcd, milvus, minio)<br/>- certs (milvus, etcd, minio)<br/>- config, backups]
+    F --> J[create directories:<br/>- milvus-data with etcd, milvus, minio<br/>- certs with milvus, etcd, minio<br/>- config, backups]
     
     J --> K{enable ssl?}
     K -->|yes| L{certificate type?}

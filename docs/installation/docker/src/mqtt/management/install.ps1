@@ -263,14 +263,14 @@ if ($EnableSSL) {
             # Generate server private key
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out server.key 2048
             
-            # Generate server certificate signing request
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=localhost"
+            # Generate server certificate signing request with SAN
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:127.0.0.1,DNS:mqtt,IP:127.0.0.1,IP:::1"
             
-            # Generate server certificate
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365
+            # Generate server certificate with SAN
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -copy_extensions copy
             
             # Clean up CSR file
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl sh -c "rm -f server.csr ca.srl"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine rm -f server.csr ca.srl
             
             # Verify certificates were created
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {
@@ -289,12 +289,29 @@ if ($EnableSSL) {
             $ConfigContent += "`n`n# SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
             Set-Content -Path "config\mosquitto.conf" -Value $ConfigContent
             
-            # Update .env file
-            $EnvContent = Get-Content ".env" -Raw
-            $EnvContent = $EnvContent -replace "ENABLE_SSL=false", "ENABLE_SSL=true"
-            Set-Content -Path ".env" -Value $EnvContent
+            # Create or update .env file for SSL
+            if (Test-Path ".env") {
+                $EnvContent = Get-Content ".env" -Raw
+                $EnvContent = $EnvContent -replace "ENABLE_SSL=false", "ENABLE_SSL=true"
+                Set-Content -Path ".env" -Value $EnvContent
+            } else {
+                # Create .env file with SSL enabled
+                $EnvContent = @"
+# MQTT Configuration
+MQTT_PORT=1883
+MQTT_SSL_PORT=8883
+MQTT_WS_PORT=9002
+
+# SSL Configuration
+ENABLE_SSL=true
+
+# Timezone
+TZ=UTC
+"@
+                $EnvContent | Out-File -FilePath ".env" -Encoding ASCII
+            }
             
-            Write-Host "SSL configuration enabled in mosquitto.conf" -ForegroundColor Green
+            Write-Host "SSL configuration enabled in mosquitto.conf and .env" -ForegroundColor Green
         } catch {
             Write-Host "PowerShell SSL certificate generation failed: $($_.Exception.Message)" -ForegroundColor Red
             Write-Host "SSL will be disabled for this installation" -ForegroundColor Yellow

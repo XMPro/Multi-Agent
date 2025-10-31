@@ -109,10 +109,25 @@ try {
         Write-Host "Neo4j will start without additional scripts" -ForegroundColor Gray
     }
     
-    # Skip copying the installer script (excluded from ZIP)
+    # Copy the CA certificate installation script
     Write-Host ""
-    Write-Host "Skipping installer script..." -ForegroundColor White
-    Write-Host "============================" -ForegroundColor Gray
+    Write-Host "Adding CA certificate installer..." -ForegroundColor White
+    Write-Host "==================================" -ForegroundColor Gray
+    
+    $CACertInstallerSource = Join-Path $CurrentDir "install-ca-certificates.ps1"
+    $CACertInstallerDest = Join-Path $TempDir "install-ca-certificates.ps1"
+    
+    if (Test-Path $CACertInstallerSource) {
+        Copy-Item -Path $CACertInstallerSource -Destination $CACertInstallerDest -Force
+        Write-Host "Added install-ca-certificates.ps1" -ForegroundColor Green
+    } else {
+        Write-Host "Warning: CA certificate installer not found: $CACertInstallerSource" -ForegroundColor Yellow
+    }
+    
+    # Skip copying the main installer script (excluded from ZIP)
+    Write-Host ""
+    Write-Host "Skipping main installer script..." -ForegroundColor White
+    Write-Host "=================================" -ForegroundColor Gray
     Write-Host "docker-stack-installer.ps1 excluded from ZIP package" -ForegroundColor Gray
     
     # Create README file for the deployment

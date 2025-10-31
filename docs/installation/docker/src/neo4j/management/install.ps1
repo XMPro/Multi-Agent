@@ -158,11 +158,17 @@ if (-not $Password) {
 
 # Update .env file with configuration
 Write-Host "Creating configuration files..." -ForegroundColor White
+# Determine NEO4J_URI based on SSL configuration
+$Neo4jUri = if ($EnableSSL -or $UseCAProvided) { "bolt+s://neo4j:7687" } else { "bolt://neo4j:7687" }
+
 $EnvContent = @"
 # Neo4j Authentication
 # Change these to secure values!
 NEO4J_USER=$Username
 NEO4J_PASSWORD=$Password
+
+# Connection Configuration
+NEO4J_URI=$Neo4jUri
 
 # SSL Configuration
 ENABLE_SSL=$($EnableSSL.ToString().ToLower())
@@ -210,17 +216,17 @@ if ($EnableSSL) {
             # Generate CA certificate
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -x509 -days 365 -key ca.key -out ca.crt -subj "/C=US/ST=State/L=City/O=Neo4j-Database/CN=Neo4j-CA"
             
-            # Generate Bolt protocol certificates
+            # Generate Bolt protocol certificates with SAN
             Write-Host "Generating Bolt protocol certificates..." -ForegroundColor Gray
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out bolt_private.key 4096
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key bolt_private.key -out bolt.csr -subj "/C=US/ST=State/L=City/O=Neo4j-Database/CN=$Domain"
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in bolt.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out bolt_public.crt -days 365
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key bolt_private.key -out bolt.csr -subj "/C=US/ST=State/L=City/O=Neo4j-Database/CN=$Domain" -addext "subjectAltName=DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:neo4j,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in bolt.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out bolt_public.crt -days 365 -copy_extensions copy
             
-            # Generate HTTPS certificates
+            # Generate HTTPS certificates with SAN
             Write-Host "Generating HTTPS certificates..." -ForegroundColor Gray
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out https_private.key 4096
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key https_private.key -out https.csr -subj "/C=US/ST=State/L=City/O=Neo4j-Database/CN=$Domain"
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in https.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out https_public.crt -days 365
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key https_private.key -out https.csr -subj "/C=US/ST=State/L=City/O=Neo4j-Database/CN=$Domain" -addext "subjectAltName=DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:neo4j,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in https.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out https_public.crt -days 365 -copy_extensions copy
             
             # Move certificates to proper directories
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "
@@ -230,7 +236,7 @@ if ($EnableSSL) {
                 mv https_private.key https/private.key &&
                 mv https_public.crt https/public.crt &&
                 cp ca.crt https/trusted/ca.crt &&
-                rm -f *.csr ca.srl
+                rm -f *.csr ca.srl cert_extensions.conf
             "
             
             # Verify certificates were created
@@ -277,6 +283,11 @@ if ($EnableSSL) {
         $ComposeContent = $ComposeContent -replace '(\s+- \.\/neo4j-data\/import:\/var\/lib\/neo4j\/import)', "`$1`n      - ./certs:/var/lib/neo4j/certificates"
     }
     
+    # Add SSL certificate volumes to watcher for SSL connections
+    if ($ComposeContent -notmatch "neo4j-watcher.*certs") {
+        $ComposeContent = $ComposeContent -replace '(neo4j-watcher:.*?volumes:\s+- \.\/updates:\/updates\s+- \.\/watcher\.py:\/watcher\.py)', "`$1`n      - ./certs:/certs"
+    }
+    
     # Add SSL environment variables
     $SSLEnvVars = @"
 
@@ -305,8 +316,12 @@ if ($EnableSSL) {
         $ComposeContent = $ComposeContent -replace '(\s+# Disable telemetry\s+- NEO4J_dbms_usage__report_enabled=false)', "`$1$SSLEnvVars"
     }
     
+    # Update watcher to use SSL Bolt connection
+    $ComposeContent = $ComposeContent -replace 'NEO4J_URI=bolt://neo4j:7687', 'NEO4J_URI=bolt+s://neo4j:7687'
+    
     Set-Content -Path "docker-compose.yml" -Value $ComposeContent
     Write-Host "Docker Compose configuration updated for SSL" -ForegroundColor Green
+    Write-Host "Neo4j watcher updated to use SSL Bolt connection" -ForegroundColor Green
 }
 
 # Create initial Cypher scripts directory structure

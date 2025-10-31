@@ -56,11 +56,11 @@ services:
 
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || wget --no-verbose --tries=1 --spider localhost:7473 || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 90s
+      retries: 5
+      start_period: 120s
     deploy:
       resources:
         limits:
@@ -83,7 +83,7 @@ services:
       - ./updates:/updates
       - ./watcher.py:/watcher.py
     environment:
-      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_URI=${NEO4J_URI:-bolt://neo4j:7687}
       - NEO4J_USER=${NEO4J_USER:-neo4j}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-your_secure_password}
     command: python -u /watcher.py

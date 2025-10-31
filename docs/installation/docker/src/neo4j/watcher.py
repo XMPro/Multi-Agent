@@ -40,7 +40,14 @@ from neo4j import GraphDatabase
 def check_neo4j_connection():
     """Check if Neo4j is reachable"""
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        # Handle SSL connections with self-signed certificates
+        if NEO4J_URI.startswith("bolt+s://"):
+            # For self-signed certificates, use +ssc scheme or configure trust
+            ssl_uri = NEO4J_URI.replace("bolt+s://", "bolt+ssc://")
+            driver = GraphDatabase.driver(ssl_uri, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        else:
+            driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        
         with driver.session() as session:
             session.run("RETURN 1")
         driver.close()
@@ -62,8 +69,13 @@ def run_cypher_file(file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
             cypher_script = f.read()
         
-        # Connect and run
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        # Connect and run with SSL handling
+        if NEO4J_URI.startswith("bolt+s://"):
+            # For self-signed certificates, use +ssc scheme
+            ssl_uri = NEO4J_URI.replace("bolt+s://", "bolt+ssc://")
+            driver = GraphDatabase.driver(ssl_uri, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        else:
+            driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         
         with driver.session() as session:
             # Split by semicolon and run each statement
@@ -139,10 +151,19 @@ def watch_folder():
 if __name__ == "__main__":
     # Wait for Neo4j to be ready
     print("Waiting for Neo4j to be ready...")
+    print(f"Using connection URI: {NEO4J_URI}")
     max_retries = 30
     for i in range(max_retries):
         try:
-            driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+            # Handle SSL connections with self-signed certificates
+            if NEO4J_URI.startswith("bolt+s://"):
+                # For self-signed certificates, use +ssc scheme
+                ssl_uri = NEO4J_URI.replace("bolt+s://", "bolt+ssc://")
+                driver = GraphDatabase.driver(ssl_uri, auth=(NEO4J_USER, NEO4J_PASSWORD))
+                print(f"Using SSL connection with self-signed certificate support: {ssl_uri}")
+            else:
+                driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+            
             with driver.session() as session:
                 session.run("RETURN 1")
             driver.close()
@@ -151,7 +172,7 @@ if __name__ == "__main__":
             break
         except Exception as e:
             if i < max_retries - 1:
-                print(f"  Waiting... ({i+1}/{max_retries})")
+                print(f"  Waiting... ({i+1}/{max_retries}) - {str(e)[:100]}")
                 time.sleep(2)
             else:
                 print(f"Could not connect to Neo4j after {max_retries} attempts: {e}")

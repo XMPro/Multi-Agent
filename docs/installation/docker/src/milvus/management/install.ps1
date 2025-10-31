@@ -216,23 +216,23 @@ if ($EnableSSL) {
             # Generate CA certificate
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -x509 -days 365 -key ca.key -out ca.crt -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=Milvus-CA"
             
-            # Generate Milvus server certificates
+            # Generate Milvus server certificates with SAN
             Write-Host "Generating Milvus server certificates..." -ForegroundColor Gray
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out milvus_server.key 4096
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key milvus_server.key -out milvus_server.csr -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=$Domain"
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in milvus_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out milvus_server.crt -days 365
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key milvus_server.key -out milvus_server.csr -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=$Domain" -addext "subjectAltName=DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:milvus,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in milvus_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out milvus_server.crt -days 365 -copy_extensions copy
             
-            # Generate etcd certificates
+            # Generate etcd certificates with SAN
             Write-Host "Generating etcd certificates..." -ForegroundColor Gray
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out etcd_server.key 4096
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key etcd_server.key -out etcd_server.csr -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=etcd-$Domain"
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in etcd_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out etcd_server.crt -days 365
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key etcd_server.key -out etcd_server.csr -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=etcd" -addext "subjectAltName=DNS:etcd,DNS:localhost,DNS:127.0.0.1,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in etcd_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out etcd_server.crt -days 365 -copy_extensions copy
             
-            # Generate MinIO certificates
+            # Generate MinIO certificates with SAN
             Write-Host "Generating MinIO certificates..." -ForegroundColor Gray
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out minio_server.key 4096
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key minio_server.key -out minio_server.csr -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=minio-$Domain"
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in minio_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out minio_server.crt -days 365
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key minio_server.key -out minio_server.csr -subj "/C=US/ST=State/L=City/O=Milvus-VectorDB/CN=minio" -addext "subjectAltName=DNS:minio,DNS:localhost,DNS:127.0.0.1,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in minio_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out minio_server.crt -days 365 -copy_extensions copy
             
             # Move certificates to proper directories
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "

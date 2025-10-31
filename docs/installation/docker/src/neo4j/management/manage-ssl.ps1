@@ -238,6 +238,7 @@ function Enable-SSL {
     if (Test-Path ".env") {
         $EnvContent = Get-Content ".env" -Raw
         $EnvContent = $EnvContent -replace "ENABLE_SSL=false", "ENABLE_SSL=true"
+        $EnvContent = $EnvContent -replace "NEO4J_URI=bolt://neo4j:7687", "NEO4J_URI=bolt+s://neo4j:7687"
         Set-Content -Path ".env" -Value $EnvContent
         Write-Host "SSL enabled in .env file" -ForegroundColor Green
     }
@@ -284,8 +285,12 @@ function Enable-SSL {
             $ComposeContent = $ComposeContent -replace '(\s+# Disable telemetry\s+- NEO4J_dbms_usage__report_enabled=false)', "`$1$SSLEnvVars"
         }
         
+        # Update watcher to use SSL Bolt connection
+        $ComposeContent = $ComposeContent -replace 'NEO4J_URI=bolt://neo4j:7687', 'NEO4J_URI=bolt+s://neo4j:7687'
+        
         Set-Content -Path "docker-compose.yml" -Value $ComposeContent
         Write-Host "SSL enabled in docker-compose.yml" -ForegroundColor Green
+        Write-Host "Neo4j watcher updated to use SSL Bolt connection" -ForegroundColor Green
     }
 }
 
@@ -297,6 +302,7 @@ function Disable-SSL {
     if (Test-Path ".env") {
         $EnvContent = Get-Content ".env" -Raw
         $EnvContent = $EnvContent -replace "ENABLE_SSL=true", "ENABLE_SSL=false"
+        $EnvContent = $EnvContent -replace "NEO4J_URI=bolt\+s://neo4j:7687", "NEO4J_URI=bolt://neo4j:7687"
         Set-Content -Path ".env" -Value $EnvContent
         Write-Host "SSL disabled in .env file" -ForegroundColor Green
     }
@@ -312,10 +318,14 @@ function Disable-SSL {
         $ComposeContent = $ComposeContent -replace '\s+- \.\/certs:\/var\/lib\/neo4j\/certificates\n', ""
         
         # Remove SSL environment variables
-        $ComposeContent = $ComposeContent -replace '(?s)\s+# SSL Configuration.*?- NEO4J_dbms_ssl_policy_https_public__certificate=public\.crt', ""
+        $ComposeContent = $ComposeContent -replace '(?s)\s+# SSL Configuration.*?- NEO4J_dbms_ssl_policy_https_client__auth=NONE', ""
+        
+        # Revert watcher to use non-SSL Bolt connection
+        $ComposeContent = $ComposeContent -replace 'NEO4J_URI=bolt\+s://neo4j:7687', 'NEO4J_URI=bolt://neo4j:7687'
         
         Set-Content -Path "docker-compose.yml" -Value $ComposeContent
         Write-Host "SSL disabled in docker-compose.yml" -ForegroundColor Green
+        Write-Host "Neo4j watcher reverted to non-SSL Bolt connection" -ForegroundColor Green
     }
 }
 

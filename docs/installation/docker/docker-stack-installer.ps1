@@ -401,6 +401,58 @@ Write-Host "Install on client machines:" -ForegroundColor White
 Write-Host "  Import-Certificate -FilePath 'ca.crt' -CertStoreLocation Cert:\\LocalMachine\\Root" -ForegroundColor Gray
 Write-Host ""
 Write-Host "For CA-provided certificates, no client distribution is needed." -ForegroundColor Green
+
+# Check if any services have self-signed SSL certificates and offer to install them
+Write-Host ""
+Write-Host "Self-Signed Certificate Auto-Installation:" -ForegroundColor Cyan
+Write-Host "=========================================" -ForegroundColor Gray
+
+$HasSelfSignedCerts = $false
+$SelfSignedServices = @()
+
+# Check for self-signed certificates
+$CertPaths = @(
+    @{Service="Neo4j"; Path="neo4j\certs\bolt\trusted\ca.crt"},
+    @{Service="Milvus"; Path="milvus\certs\milvus\trusted\ca.crt"},
+    @{Service="MQTT"; Path="mqtt\certs\ca.crt"}
+)
+
+foreach ($CertPath in $CertPaths) {
+    if (Test-Path $CertPath.Path) {
+        $HasSelfSignedCerts = $true
+        $SelfSignedServices += $CertPath.Service
+    }
+}
+
+if ($HasSelfSignedCerts) {
+    Write-Host "Found self-signed CA certificates for: $($SelfSignedServices -join ', ')" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Would you like to automatically install these CA certificates to your" -ForegroundColor White
+    Write-Host "Windows certificate store? This will eliminate SSL warnings in browsers" -ForegroundColor White
+    Write-Host "and allow applications to connect without certificate validation errors." -ForegroundColor White
+    Write-Host ""
+    
+    $InstallCertsChoice = Read-Host "Install CA certificates to Windows certificate store? (y/n)"
+    if ($InstallCertsChoice -eq "Y" -or $InstallCertsChoice -eq "y") {
+        Write-Host ""
+        Write-Host "Installing CA certificates..." -ForegroundColor Green
+        try {
+            & ".\install-ca-certificates.ps1" -InstallPath $InstallPath
+            Write-Host ""
+            Write-Host "CA certificates installed successfully!" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed to install CA certificates: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "You can install them manually later using: .\install-ca-certificates.ps1" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host ""
+        Write-Host "CA certificates not installed." -ForegroundColor Yellow
+        Write-Host "To install them later, run: .\install-ca-certificates.ps1" -ForegroundColor Gray
+    }
+} else {
+    Write-Host "No self-signed certificates found - CA installation not needed." -ForegroundColor Gray
+}
+
 Write-Host ""
 Write-Host "Installation completed!" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Cyan

@@ -1,5 +1,78 @@
 # Milvus Vector Database Setup
 
+## SSL/TLS Security
+
+Milvus supports SSL/TLS encryption for secure connections to the vector database and all internal services.
+
+### **SSL Configuration Options**
+
+**Option 1: Self-Signed Certificates (Development/Testing)**
+```powershell
+# Generate self-signed certificates for all services
+.\management\manage-ssl.ps1 generate -Domain "your-domain.com"
+
+# Enable SSL
+.\management\manage-ssl.ps1 enable
+```
+
+**Option 2: CA-Provided Certificates (Production)**
+```powershell
+# Install CA-provided certificates
+.\management\manage-ssl.ps1 install-ca -ServerCertPath "C:\certs\server.crt" -ServerKeyPath "C:\certs\server.key" -CACertPath "C:\certs\ca.crt"
+
+# Enable SSL
+.\management\manage-ssl.ps1 enable
+```
+
+### **SSL Ports and Access**
+- **Milvus gRPC API**: localhost:19530 (TLS encrypted when SSL enabled)
+- **Milvus HTTP API**: localhost:9091 (HTTPS when SSL enabled)
+- **MinIO Console**: https://localhost:9001 (HTTPS when SSL enabled)
+- **etcd**: Internal SSL communication between services
+
+### **Client Certificate Distribution**
+For self-signed certificates, client machines need the CA certificate:
+
+**CA Certificate Location**: `certs/milvus/trusted/ca.crt`
+
+**Install on Client Machines:**
+```powershell
+# Install CA certificate to Windows trusted root store
+Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
+```
+
+**Milvus Client Configuration:**
+```python
+# Python pymilvus with SSL
+from pymilvus import connections
+connections.connect(
+    alias="default",
+    host="your-server",
+    port="19530",
+    secure=True,
+    server_pem_path="path/to/ca.crt"
+)
+```
+
+### **SSL Management Commands**
+```powershell
+# Check SSL status
+.\management\manage-ssl.ps1 status
+
+# Generate new certificates
+.\management\manage-ssl.ps1 generate -Domain "milvus.company.com" -ValidDays 730
+
+# Renew existing certificates
+.\management\manage-ssl.ps1 renew
+
+# Disable SSL
+.\management\manage-ssl.ps1 disable
+```
+
+---
+
+# Milvus Vector Database Setup
+
 ## Overview
 This Docker Compose setup runs a complete Milvus vector database stack on a single Windows machine. Milvus is used for storing and searching vector embeddings (for AI/ML applications like RAG, semantic search, recommendation systems, image similarity, etc.).
 

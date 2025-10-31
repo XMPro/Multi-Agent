@@ -1,278 +1,230 @@
-# Docker Stack - Neo4j, Milvus, and MQTT
+# Docker Stack Installation
 
-A complete Docker stack with Neo4j graph database, Milvus vector database, and MQTT broker, designed for production use with comprehensive management tools.
+This directory contains scripts for creating and deploying a complete Docker stack with Neo4j, Milvus, and MQTT services.
 
-## 🚀 One-Click Installation
+## Workflow Overview
 
-### Prerequisites
-- Windows 10/11 with PowerShell 5.0+
-- Docker Desktop installed and running
-- OpenSSL (optional, for SSL certificate generation)
-
-### Quick Start
-
-1. **Download the ZIP file** containing the Docker stack
-2. **Run the installer script:**
-   ```powershell
-   .\docker-stack-installer.ps1
-   ```
-3. **Follow the prompts:**
-   - Select the ZIP file location
-   - Choose installation directory
-   - Configure environment variables for each service
-   - Wait for services to start
-
-The installer will:
-- ✅ Check prerequisites (Docker, OpenSSL, PowerShell)
-- ✅ Extract the ZIP file to your chosen location
-- ✅ Configure environment variables for all services
-- ✅ Initialize MQTT authentication with secure passwords
-- ✅ Start all Docker services
-- ✅ Verify service status
-
-## 📁 Directory Structure
-
-```
-docker-stack/
-├── docker-stack-installer.ps1    # One-click installer
-├── README.md                      # This file
-├── neo4j/
-│   ├── docker-compose.yml
-│   ├── .env
-│   ├── neo4j_readme.md
-│   └── management/
-│       ├── backup.ps1
-│       └── restore.ps1
-├── milvus/
-│   ├── docker-compose.yml
-│   ├── .env
-│   ├── milvus_readme.md
-│   └── management/
-│       ├── backup.ps1
-│       └── restore.ps1
-└── mqtt/
-    ├── docker-compose.yml
-    ├── .env
-    ├── mqtt_readme.md
-    ├── config/
-    │   ├── mosquitto.conf
-    │   ├── passwords.txt
-    │   └── acl.txt
-    └── management/
-        ├── install.ps1
-        ├── backup.ps1
-        ├── restore.ps1
-        ├── manage-users.ps1
-        └── manage-ssl.ps1
-```
-
-## 🌐 Service Access
-
-After installation, services will be available at:
-
-### Neo4j
-- **Browser UI:** http://localhost:7474
-- **Bolt Protocol:** bolt://localhost:7687
-- **Default Auth:** neo4j/password123 (configurable during install)
-
-### Milvus
-- **API Endpoint:** localhost:19530
-- **Web UI:** http://localhost:9091
-- **MinIO Console:** http://localhost:9001
-
-### MQTT
-- **Broker:** localhost:1883
-- **WebSocket:** ws://localhost:9001
-- **SSL/TLS:** localhost:8883 (if enabled)
-- **Default User:** xmpro (with generated secure password)
-
-## 🔧 Management
-
-### Backup Services
-Each service has backup scripts in their `management` folder:
+### 1. Prepare Deployment Package
+Run the prepare script to create a deployment ZIP file:
 
 ```powershell
-# Neo4j backup
-cd neo4j
-.\management\backup.ps1
-
-# Milvus backup
-cd milvus
-.\management\backup.ps1
-
-# MQTT backup
-cd mqtt
-.\management\backup.ps1
+.\prepare-stack.ps1
 ```
 
-### Restore Services
+**What it does:**
+- Copies all service directories from `src/` folder
+- Copies Cypher scripts from `docs/installation/` to `neo4j/updates/`
+- Creates a comprehensive README for deployment
+- Generates a timestamped ZIP file in `dist/` folder
+
+**Options:**
 ```powershell
-# Neo4j restore
-cd neo4j
-.\management\restore.ps1 -BackupPath "neo4j-data\backups\20241024_140000"
+# Custom output path and name
+.\prepare-stack.ps1 -OutputPath "C:\MyDeployments" -ZipName "my-stack.zip"
 
-# Milvus restore
-cd milvus
-.\management\restore.ps1 -BackupPath "milvus-data\backups\20241024_140000"
-
-# MQTT restore
-cd mqtt
-.\management\restore.ps1 -BackupPath "data\backups\20241024_140000"
+# Force overwrite existing ZIP
+.\prepare-stack.ps1 -Force
 ```
 
-### MQTT User Management
+### 2. Deploy on Target Machine
+Copy the ZIP file and installer script to your target machine:
+
+1. Copy the generated ZIP file (e.g., `docker-stack-20241031-123456.zip`)
+2. Copy `docker-stack-installer.ps1` separately
+3. Run the installer:
+
 ```powershell
-cd mqtt
-
-# Add user
-.\management\manage-users.ps1 add -Username "newuser"
-
-# Remove user
-.\management\manage-users.ps1 remove -Username "olduser"
-
-# List users
-.\management\manage-users.ps1 list
-
-# Change password
-.\management\manage-users.ps1 change-password -Username "user"
-```
-
-### MQTT SSL Management
-```powershell
-cd mqtt
-
-# Generate SSL certificates
-.\management\manage-ssl.ps1 generate
-
-# Enable SSL
-.\management\manage-ssl.ps1 enable
-
-# Check SSL status
-.\management\manage-ssl.ps1 status
-```
-
-## 🔄 Service Control
-
-### Start Services
-```powershell
-# Start all services
-docker-compose -f neo4j/docker-compose.yml -f milvus/docker-compose.yml -f mqtt/docker-compose.yml up -d
-
-# Or start individually
-cd neo4j && docker-compose up -d
-cd milvus && docker-compose up -d
-cd mqtt && docker-compose up -d
-```
-
-### Stop Services
-```powershell
-# Stop all services
-docker-compose -f neo4j/docker-compose.yml -f milvus/docker-compose.yml -f mqtt/docker-compose.yml down
-
-# Or stop individually
-cd neo4j && docker-compose down
-cd milvus && docker-compose down
-cd mqtt && docker-compose down
-```
-
-### Check Status
-```powershell
-# Check all services
-docker-compose -f neo4j/docker-compose.yml ps
-docker-compose -f milvus/docker-compose.yml ps
-docker-compose -f mqtt/docker-compose.yml ps
-```
-
-## 📊 Monitoring
-
-### View Logs
-```powershell
-# Neo4j logs
-cd neo4j && docker-compose logs -f
-
-# Milvus logs
-cd milvus && docker-compose logs -f
-
-# MQTT logs
-cd mqtt && docker-compose logs -f
-```
-
-### Health Checks
-All services include health checks in their Docker configurations. Check container health with:
-```powershell
-docker ps
-```
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-1. **Services won't start:**
-   - Ensure Docker Desktop is running
-   - Check port conflicts (7474, 7687, 19530, 9091, 1883, 8883, 9001)
-   - Review logs: `docker-compose logs [service-name]`
-
-2. **MQTT authentication fails:**
-   - Check password file: `mqtt\config\passwords.txt`
-   - Regenerate passwords: `.\management\manage-users.ps1 change-password`
-
-3. **Neo4j browser won't load:**
-   - Wait for initialization (can take 30-60 seconds)
-   - Check if port 7474 is available
-   - Verify credentials in `.env` file
-
-4. **Milvus connection issues:**
-   - Ensure all dependencies (etcd, minio) are running
-   - Check network connectivity between containers
-   - Verify MinIO credentials in `.env` file
-
-### Reset Everything
-```powershell
-# Stop all services
-docker-compose -f neo4j/docker-compose.yml down -v
-docker-compose -f milvus/docker-compose.yml down -v
-docker-compose -f mqtt/docker-compose.yml down -v
-
-# Remove all data (WARNING: This deletes all data!)
-Remove-Item -Recurse -Force neo4j\neo4j-data, milvus\milvus-data, mqtt\data
-
-# Restart installation
 .\docker-stack-installer.ps1
 ```
 
-## 📝 Configuration
+**What it does:**
+- Extracts the ZIP file to your chosen directory
+- Runs individual install scripts for each service:
+  - `neo4j/management/install.ps1` - Sets up Neo4j with SSL support
+  - `milvus/management/install.ps1` - Sets up Milvus with SSL support  
+  - `mqtt/management/install.ps1` - Sets up MQTT with SSL support
+- Starts all services automatically
+- Provides connection details and management commands
 
-### Environment Variables
-Each service has its own `.env` file with configurable parameters:
+## Services Included
 
-- **neo4j\.env** - Database authentication, plugins, memory settings
-- **milvus\.env** - Storage configuration, etcd/minio settings
-- **mqtt\.env** - Port configuration, SSL settings, authentication
+### Neo4j Graph Database
+- **Ports**: 7474 (HTTP), 7473 (HTTPS), 7687 (Bolt/TLS)
+- **Features**: SSL/TLS support, automatic Cypher script execution, backup/restore
+- **Management**: `neo4j/management/` folder
 
-### Persistent Data
-All services store data in local directories:
-- **Neo4j:** `neo4j\neo4j-data\`
-- **Milvus:** `milvus\milvus-data\`
-- **MQTT:** `mqtt\data\`
+### Milvus Vector Database  
+- **Ports**: 19530 (gRPC), 9091 (HTTP), 9001 (MinIO Console)
+- **Features**: SSL/TLS support, vector similarity search, backup/restore
+- **Management**: `milvus/management/` folder
 
-## 🔐 Security
+### MQTT Message Broker
+- **Ports**: 1883 (MQTT), 8883 (MQTT SSL), 9002 (WebSocket)
+- **Features**: SSL/TLS support, user management, backup/restore
+- **Management**: `mqtt/management/` folder
 
-- All services require authentication
-- MQTT supports SSL/TLS encryption
-- Passwords are securely hashed
-- Access control lists (ACL) for MQTT topics
-- Regular backup capabilities
-- Network isolation through Docker networks
+## SSL/TLS Support
 
-## 📚 Documentation
+All services support SSL/TLS encryption:
 
-Detailed documentation for each service:
-- **Neo4j:** `neo4j\neo4j_readme.md`
-- **Milvus:** `milvus\milvus_readme.md`
-- **MQTT:** `mqtt\mqtt_readme.md`
+- **Self-signed certificates**: Generated automatically during installation
+- **CA-provided certificates**: Install using `manage-ssl.ps1 install-ca` commands
+- **Certificate management**: Renewal, status checking, enable/disable
 
----
+### Self-Signed SSL Certificate Distribution
 
-**Version:** 1.0  
-**Last Updated:** October 2024  
-**Compatibility:** Windows 10/11, Docker Desktop, PowerShell 5.0+
+When using self-signed SSL certificates, client machines need the Certificate Authority (CA) certificate to trust the connections.
+
+#### **CA Certificate Locations (on server)**
+After enabling SSL, CA certificates are located at:
+- **Neo4j**: `neo4j/certs/bolt/trusted/ca.crt` or `neo4j/certs/https/trusted/ca.crt`
+- **Milvus**: `milvus/certs/milvus/trusted/ca.crt`
+- **MQTT**: `mqtt/certs/ca.crt`
+
+#### **Client Machine Installation**
+
+**Windows Certificate Store (Recommended)**
+```powershell
+# Install CA certificate to Windows trusted root store
+Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
+
+# Or use Certificate Manager GUI
+certlm.msc  # Navigate to Trusted Root Certification Authorities > Import
+```
+
+#### **Browser Access (Neo4j HTTPS)**
+For Neo4j browser access via HTTPS:
+1. Navigate to `https://your-server:7473`
+2. Browser shows security warning for self-signed certificate
+3. **Option A**: Click "Advanced" → "Proceed to site" (accept risk)
+4. **Option B**: Install `ca.crt` in browser's certificate store for permanent trust
+
+#### **Production Recommendations**
+- **Use proper domain names** instead of localhost when generating certificates
+- **Consider CA-provided certificates** for production environments
+- **Automate CA distribution** via Group Policy or configuration management tools
+- **Certificate rotation**: Set up automated renewal processes
+
+#### **Security Notes**
+- **Distribute only CA certificates** (`ca.crt` files) - never private keys
+- **Self-signed certificates provide encryption** but not identity verification
+- **Clients must explicitly trust** your CA certificate
+- **For production**: Consider using certificates from trusted Certificate Authorities
+
+## Management Scripts
+
+Each service includes comprehensive management scripts:
+
+### Installation & Configuration
+- `install.ps1` - Interactive installation with SSL options
+- `manage-ssl.ps1` - SSL certificate management
+
+### Operations  
+- `backup.ps1` - Create service backups
+- `restore.ps1` - Restore from backups
+- `manage-users.ps1` - User management (MQTT only)
+
+## Directory Structure
+
+```
+docs/installation/docker/
+├── prepare-stack.ps1           # Creates deployment ZIP
+├── docker-stack-installer.ps1  # Deploys and configures services
+├── README.md                   # This file
+├── dist/                       # Generated ZIP files
+└── src/                        # Service source files
+    ├── neo4j/
+    │   ├── docker-compose.yml
+    │   ├── .env
+    │   └── management/
+    │       ├── install.ps1
+    │       ├── manage-ssl.ps1
+    │       ├── backup.ps1
+    │       └── restore.ps1
+    ├── milvus/
+    │   ├── docker-compose.yml
+    │   ├── .env
+    │   └── management/
+    │       ├── install.ps1
+    │       ├── manage-ssl.ps1
+    │       ├── backup.ps1
+    │       └── restore.ps1
+    └── mqtt/
+        ├── docker-compose.yml
+        ├── .env
+        └── management/
+            ├── install.ps1
+            ├── manage-ssl.ps1
+            ├── manage-users.ps1
+            ├── backup.ps1
+            └── restore.ps1
+```
+
+## Requirements
+
+- **Docker Desktop** - Must be installed and running
+- **PowerShell 5.0+** - For running installation scripts  
+- **Windows 10/11** - Tested on Windows environments
+
+## Quick Start Example
+
+1. **Prepare deployment package:**
+   ```powershell
+   cd docs/installation/docker
+   .\prepare-stack.ps1
+   ```
+
+2. **Copy ZIP to target machine** (e.g., `docker-stack-20241031-123456.zip`)
+
+3. **Deploy on target machine:**
+   ```powershell
+   # Extract ZIP and run installer
+   .\docker-stack-installer.ps1
+   ```
+
+4. **Access services:**
+   - Neo4j: http://localhost:7474
+   - Milvus: localhost:19530  
+   - MQTT: localhost:1883
+
+## Cypher Scripts Integration
+
+The prepare script automatically copies all `.cypher` files from `docs/installation/` into the Neo4j updates folder. These scripts will be executed automatically by the Neo4j watcher service after deployment.
+
+**Cypher Script Execution:**
+- Scripts are placed in `neo4j/updates/` folder
+- Neo4j watcher monitors this folder for new `.cypher` files
+- Scripts are executed automatically and moved to `processed/` folder
+- Monitor execution with: `docker-compose logs neo4j-watcher`
+
+## Troubleshooting
+
+### Common Issues
+- **Docker not running**: Ensure Docker Desktop is started
+- **Port conflicts**: Check if ports are already in use
+- **Permission errors**: Run PowerShell as Administrator if needed
+- **SSL certificate issues**: Use `manage-ssl.ps1 status` to check certificates
+
+### Logs and Monitoring
+```powershell
+# View service logs
+docker-compose logs -f neo4j
+docker-compose logs -f milvus  
+docker-compose logs -f mosquitto
+
+# Check service status
+docker-compose ps
+```
+
+### Management Commands
+```powershell
+# SSL management
+.\management\manage-ssl.ps1 status
+.\management\manage-ssl.ps1 generate -Domain "your-domain.com"
+
+# User management (MQTT)
+.\management\manage-users.ps1 list
+.\management\manage-users.ps1 add -Username "newuser"
+
+# Backup services
+.\management\backup.ps1

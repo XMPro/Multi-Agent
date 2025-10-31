@@ -364,11 +364,80 @@ Set a strong password, then restart:
 ```cmd
 docker-compose restart
 ```
+
+### SSL/TLS Encryption
+
+Neo4j supports SSL/TLS encryption for both the browser UI and Bolt protocol connections.
+
+#### **SSL Configuration Options**
+
+**Option 1: Self-Signed Certificates (Development/Testing)**
+```powershell
+# Generate self-signed certificates
+.\management\manage-ssl.ps1 generate -Domain "your-domain.com"
+
+# Enable SSL
+.\management\manage-ssl.ps1 enable
+```
+
+**Option 2: CA-Provided Certificates (Production)**
+```powershell
+# Install CA-provided certificates
+.\management\manage-ssl.ps1 install-ca -ServerCertPath "C:\certs\server.crt" -ServerKeyPath "C:\certs\server.key" -CACertPath "C:\certs\ca.crt"
+
+# Enable SSL
+.\management\manage-ssl.ps1 enable
+```
+
+#### **SSL Ports and Access**
+- **HTTPS Browser UI**: https://localhost:7473 (when SSL enabled)
+- **Bolt+TLS Protocol**: bolt+s://localhost:7687 (when SSL enabled)
+- **HTTP Browser UI**: http://localhost:7474 (disabled when SSL enabled)
+- **Bolt Protocol**: bolt://localhost:7687 (disabled when SSL enabled)
+
+#### **Client Certificate Distribution**
+For self-signed certificates, client machines need the CA certificate:
+
+**CA Certificate Location**: `certs/bolt/trusted/ca.crt` or `certs/https/trusted/ca.crt`
+
+**Install on Client Machines:**
+```powershell
+# Install CA certificate to Windows trusted root store
+Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
+```
+
+**Neo4j Client Configuration:**
+```python
+# Python neo4j driver with SSL
+from neo4j import GraphDatabase
+driver = GraphDatabase.driver(
+    "bolt+s://your-server:7687",
+    auth=("neo4j", "password"),
+    trusted_certificates=["path/to/ca.crt"]
+)
+```
+
+#### **SSL Management Commands**
+```powershell
+# Check SSL status
+.\management\manage-ssl.ps1 status
+
+# Generate new certificates
+.\management\manage-ssl.ps1 generate -Domain "neo4j.company.com" -ValidDays 730
+
+# Renew existing certificates
+.\management\manage-ssl.ps1 renew
+
+# Disable SSL
+.\management\manage-ssl.ps1 disable
+```
+
 ### Don't Expose to Internet
 
 - Keep ports bound to localhost only (already configured)
 - Use VPN or SSH tunnel for remote access
-- Never open 7474/7687 to public internet
+- Never open 7474/7687 to public internet without SSL
+- Use SSL/TLS encryption for any network access
 ### Regular Backups
 
 - Schedule automated backups (see backup section)

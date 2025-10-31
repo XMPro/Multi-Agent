@@ -208,6 +208,58 @@ When adding a new user, you'll be prompted to choose ACL permissions:
 
 ## 🔒 SSL/TLS Security
 
+MQTT supports SSL/TLS encryption for secure message transmission and client authentication.
+
+### **SSL Configuration Options**
+
+**Option 1: Self-Signed Certificates (Development/Testing)**
+```powershell
+# Generate self-signed certificates
+.\management\manage-ssl.ps1 generate -Domain "your-domain.com"
+
+# Enable SSL
+.\management\manage-ssl.ps1 enable
+```
+
+**Option 2: CA-Provided Certificates (Production)**
+```powershell
+# Install CA-provided certificates
+.\management\manage-ssl.ps1 install-ca -ServerCertPath "C:\certs\server.crt" -ServerKeyPath "C:\certs\server.key" -CACertPath "C:\certs\ca.crt"
+
+# Enable SSL
+.\management\manage-ssl.ps1 enable
+```
+
+### **SSL Ports and Access**
+- **MQTT SSL**: localhost:8883 (encrypted MQTT connections)
+- **MQTT Standard**: localhost:1883 (disabled when SSL enabled)
+- **WebSocket**: ws://localhost:9002 (can be configured for WSS)
+
+### **Client Certificate Distribution**
+For self-signed certificates, client machines need the CA certificate:
+
+**CA Certificate Location**: `certs/ca.crt`
+
+**Install on Client Machines:**
+```powershell
+# Install CA certificate to Windows trusted root store
+Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
+```
+
+**MQTT Client Configuration:**
+```python
+# Python paho-mqtt with SSL
+import paho.mqtt.client as mqtt
+import ssl
+
+client = mqtt.Client()
+client.username_pw_set("username", "password")
+context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+context.load_verify_locations("path/to/ca.crt")
+client.tls_set_context(context)
+client.connect("your-server", 8883, 60)
+```
+
 ### SSL Management Commands:
 
 **Generate SSL certificates:**

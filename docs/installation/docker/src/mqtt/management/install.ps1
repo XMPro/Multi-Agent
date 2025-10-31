@@ -5,8 +5,20 @@ param(
     [switch]$Force = $false
 )
 
-# Change to parent directory (mqtt folder)
-Set-Location ..
+# Ensure we're in the mqtt directory (not management subdirectory)
+$CurrentLocation = Get-Location
+if ($CurrentLocation.Path.EndsWith("management")) {
+    # If we're in the management directory, go up one level to mqtt directory
+    Set-Location ..
+    Write-Host "Changed from management directory to mqtt directory" -ForegroundColor Gray
+} elseif (Test-Path "management") {
+    # If we're already in mqtt directory (has management subdirectory), stay here
+    Write-Host "Already in mqtt directory" -ForegroundColor Gray
+} else {
+    # We might be in the wrong location
+    Write-Host "Warning: Current directory may not be correct for MQTT installation" -ForegroundColor Yellow
+    Write-Host "Expected to be in mqtt directory or mqtt/management directory" -ForegroundColor Yellow
+}
 
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host "MQTT Mosquitto Installation Script" -ForegroundColor Cyan
@@ -77,8 +89,27 @@ $SSLChoice = Read-Host "Enable SSL/TLS encryption? (y/n)"
 if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
     $EnableSSL = $true
     Write-Host "SSL will be enabled" -ForegroundColor Green
+    
+    # Ask for certificate type
+    Write-Host ""
+    Write-Host "Certificate Options:" -ForegroundColor White
+    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+    Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
+    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+    
+    if ($CertChoice -eq "2") {
+        Write-Host "CA-provided certificates selected" -ForegroundColor Green
+        Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
+        Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
+        $EnableSSL = $false  # Don't generate self-signed certs, wait for CA certs
+        $UseCAProvided = $true
+    } else {
+        Write-Host "Self-signed certificates selected" -ForegroundColor Green
+        $UseCAProvided = $false
+    }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
+    $UseCAProvided = $false
 }
 
 # Generate or prompt for password if not provided
@@ -336,10 +367,10 @@ if ($StartChoice -eq "" -or $StartChoice -eq "Y" -or $StartChoice -eq "y") {
         $MqttStatus = $Status | Where-Object { $_.Service -eq "mosquitto" }
         
         if ($MqttStatus -and $MqttStatus.State -eq "running") {
-            Write-Host "✓ MQTT broker is running successfully!" -ForegroundColor Green
-            Write-Host "✓ Ready to accept connections" -ForegroundColor Green
+            Write-Host "[OK] MQTT broker is running successfully!" -ForegroundColor Green
+            Write-Host "[OK] Ready to accept connections" -ForegroundColor Green
         } else {
-            Write-Host "⚠ Broker may still be starting up" -ForegroundColor Yellow
+            Write-Host "[WARN] Broker may still be starting up" -ForegroundColor Yellow
             Write-Host "Check logs with: docker-compose logs mosquitto" -ForegroundColor Gray
         }
     } else {
@@ -358,6 +389,10 @@ if ($StartChoice -eq "" -or $StartChoice -eq "Y" -or $StartChoice -eq "y") {
 Write-Host ""
 Write-Host "Management Commands:" -ForegroundColor Cyan
 Write-Host "===================" -ForegroundColor Gray
+if ($UseCAProvided) {
+    Write-Host "- Install CA certificates: .\management\manage-ssl.ps1 install-ca -ServerCertPath 'path\to\server.crt' -ServerKeyPath 'path\to\server.key'" -ForegroundColor Cyan
+    Write-Host "- Enable SSL after installing: .\management\manage-ssl.ps1 enable" -ForegroundColor Cyan
+}
 Write-Host "- User management: .\management\manage-users.ps1 list" -ForegroundColor White
 Write-Host "- SSL management: .\management\manage-ssl.ps1 status" -ForegroundColor White
 Write-Host "- Create backup: .\management\backup.ps1" -ForegroundColor White
@@ -369,3 +404,12 @@ Write-Host "  - .env (environment variables)" -ForegroundColor White
 Write-Host "  - config/mosquitto.conf (broker settings)" -ForegroundColor White
 Write-Host "  - config/passwords.txt (user authentication)" -ForegroundColor White
 Write-Host "  - config/acl.txt (access control)" -ForegroundColor White
+
+# Return to appropriate directory based on how script was called
+if ($Force) {
+    # If called with -Force (from stack installer), stay in service directory
+    Write-Host "Staying in mqtt directory for stack installer" -ForegroundColor Gray
+} else {
+    # If called manually, return to management directory
+    Set-Location management
+}

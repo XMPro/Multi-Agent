@@ -25,35 +25,6 @@ function Test-Command {
     }
 }
 
-# Function to update .env file
-function Update-EnvFile {
-    param([string]$FilePath, [hashtable]$Config)
-    
-    if (Test-Path $FilePath) {
-        $Content = Get-Content $FilePath
-        $UpdatedContent = @()
-        
-        foreach ($line in $Content) {
-            $updated = $false
-            foreach ($key in $Config.Keys) {
-                if ($line -match "^$key=") {
-                    $UpdatedContent += "$key=$($Config[$key])"
-                    $updated = $true
-                    break
-                }
-            }
-            if (-not $updated) {
-                $UpdatedContent += $line
-            }
-        }
-        
-        Set-Content -Path $FilePath -Value $UpdatedContent
-        Write-Host "Updated $FilePath" -ForegroundColor Green
-    } else {
-        Write-Host "File not found: $FilePath" -ForegroundColor Red
-    }
-}
-
 # Get zip file path if not provided
 if (-not $ZipPath) {
     # First, look for ZIP files in the current directory
@@ -199,31 +170,35 @@ Write-Host ""
 Write-Host "Configuring Services..." -ForegroundColor White
 Write-Host "======================" -ForegroundColor Gray
 
-# Configure Neo4j
+# Configure Neo4j using the install script
 Write-Host ""
 Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
 Write-Host "===================" -ForegroundColor Gray
-$Neo4jPassword = Read-Host "Enter Neo4j password (default: password123)"
-if (-not $Neo4jPassword) { $Neo4jPassword = "password123" }
+Write-Host "Running Neo4j installation script..." -ForegroundColor White
 
-$Neo4jConfig = @{
-    "NEO4J_USER" = "neo4j"
-    "NEO4J_PASSWORD" = $Neo4jPassword
+Set-Location "neo4j"
+try {
+    .\management\install.ps1 -Force
+    Write-Host "Neo4j configured successfully" -ForegroundColor Green
+} catch {
+    Write-Host "Neo4j installation had issues, but continuing..." -ForegroundColor Yellow
 }
-Update-EnvFile -FilePath "neo4j\.env" -Config $Neo4jConfig
+Set-Location ..
 
-# Configure Milvus
+# Configure Milvus using the install script
 Write-Host ""
 Write-Host "Milvus Configuration:" -ForegroundColor Cyan
 Write-Host "====================" -ForegroundColor Gray
-$MilvusRootPassword = Read-Host "Enter Milvus root password (default: YourSecurePassword123!)"
-if (-not $MilvusRootPassword) { $MilvusRootPassword = "YourSecurePassword123!" }
+Write-Host "Running Milvus installation script..." -ForegroundColor White
 
-$MilvusConfig = @{
-    "MILVUS_AUTH_ENABLED" = "true"
-    "MILVUS_ROOT_PASSWORD" = $MilvusRootPassword
+Set-Location "milvus"
+try {
+    .\management\install.ps1 -Force
+    Write-Host "Milvus configured successfully" -ForegroundColor Green
+} catch {
+    Write-Host "Milvus installation had issues, but continuing..." -ForegroundColor Yellow
 }
-Update-EnvFile -FilePath "milvus\.env" -Config $MilvusConfig
+Set-Location ..
 
 # Configure MQTT using the install script
 Write-Host ""
@@ -339,15 +314,14 @@ Write-Host "===========================" -ForegroundColor Gray
 if ($FinalStatus["neo4j"] -eq "running") {
     Write-Host "Neo4j Browser: http://localhost:7474" -ForegroundColor Green
     Write-Host "Neo4j Bolt: bolt://localhost:7687" -ForegroundColor Green
-    Write-Host "  Username: neo4j" -ForegroundColor White
-    Write-Host "  Password: $Neo4jPassword" -ForegroundColor Yellow
+    Write-Host "  (Check Neo4j install output above for username/password)" -ForegroundColor Gray
 }
 
 if ($FinalStatus["milvus"] -eq "running") {
     Write-Host "Milvus API: localhost:19530" -ForegroundColor Green
-    Write-Host "Milvus Web UI: http://localhost:9091" -ForegroundColor Green
-    Write-Host "Attu UI: http://localhost:8001" -ForegroundColor Green
-    Write-Host "  Root Password: $MilvusRootPassword" -ForegroundColor Yellow
+    Write-Host "Milvus HTTP API: localhost:9091" -ForegroundColor Green
+    Write-Host "MinIO Console: http://localhost:9001" -ForegroundColor Green
+    Write-Host "  (Check Milvus install output above for username/password)" -ForegroundColor Gray
 }
 
 if ($FinalStatus["mqtt"] -eq "running") {
@@ -361,11 +335,30 @@ Write-Host "Management Scripts:" -ForegroundColor Cyan
 Write-Host "==================" -ForegroundColor Gray
 Write-Host "Backup and management scripts are located in each service's 'management' folder:" -ForegroundColor White
 Write-Host "  - neo4j\\management\\backup.ps1" -ForegroundColor Gray
+Write-Host "  - neo4j\\management\\restore.ps1" -ForegroundColor Gray
+Write-Host "  - neo4j\\management\\manage-ssl.ps1" -ForegroundColor Gray
 Write-Host "  - milvus\\management\\backup.ps1" -ForegroundColor Gray
+Write-Host "  - milvus\\management\\restore.ps1" -ForegroundColor Gray
+Write-Host "  - milvus\\management\\manage-ssl.ps1" -ForegroundColor Gray
 Write-Host "  - mqtt\\management\\backup.ps1" -ForegroundColor Gray
+Write-Host "  - mqtt\\management\\restore.ps1" -ForegroundColor Gray
 Write-Host "  - mqtt\\management\\manage-users.ps1" -ForegroundColor Gray
 Write-Host "  - mqtt\\management\\manage-ssl.ps1" -ForegroundColor Gray
 
+Write-Host ""
+Write-Host "SSL Certificate Distribution:" -ForegroundColor Cyan
+Write-Host "============================" -ForegroundColor Gray
+Write-Host "If you enabled SSL with self-signed certificates, client machines need CA certificates:" -ForegroundColor White
+Write-Host ""
+Write-Host "CA Certificate Locations:" -ForegroundColor White
+Write-Host "  - Neo4j: neo4j\\certs\\bolt\\trusted\\ca.crt" -ForegroundColor Gray
+Write-Host "  - Milvus: milvus\\certs\\milvus\\trusted\\ca.crt" -ForegroundColor Gray
+Write-Host "  - MQTT: mqtt\\certs\\ca.crt" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Install on client machines:" -ForegroundColor White
+Write-Host "  Import-Certificate -FilePath 'ca.crt' -CertStoreLocation Cert:\\LocalMachine\\Root" -ForegroundColor Gray
+Write-Host ""
+Write-Host "For CA-provided certificates, no client distribution is needed." -ForegroundColor Green
 Write-Host ""
 Write-Host "Installation completed!" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Cyan

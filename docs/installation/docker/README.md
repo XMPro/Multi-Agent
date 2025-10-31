@@ -27,6 +27,8 @@ Run the prepare script to create a deployment ZIP file:
 ```
 
 ### 2. Deploy on Target Machine
+
+#### **Online Deployment (Internet Required):**
 Copy the ZIP file and installer script to your target machine:
 
 1. Copy the generated ZIP file (e.g., `docker-stack-20241031-123456.zip`)
@@ -37,7 +39,29 @@ Copy the ZIP file and installer script to your target machine:
 .\docker-stack-installer.ps1
 ```
 
-**What it does:**
+#### **Offline Deployment (Zero Internet Access):**
+For machines with no internet access, create an offline package:
+
+**Development Machine (with Internet):**
+```powershell
+# Create offline deployment package
+.\prepare-stack.ps1 -Offline
+```
+
+**Target Machine (Zero Internet Access):**
+```powershell
+# Step 1: Install Docker Desktop (if needed)
+.\Docker-Desktop-Installer.exe
+
+# Step 2: Load pre-downloaded Docker images
+docker load -i docker-stack-YYYYMMDD-HHMMSS-docker-images.tar
+
+# Step 3: Deploy services
+.\docker-stack-installer.ps1
+# All images are pre-loaded, no internet required
+```
+
+**What the installer does:**
 - Extracts the ZIP file to your chosen directory
 - Runs individual install scripts for each service:
   - `neo4j/management/install.ps1` - Sets up Neo4j with SSL support

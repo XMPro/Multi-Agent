@@ -244,11 +244,27 @@ if ($EnableSSL) {
                 (Test-Path "certs\https\private.key") -and (Test-Path "certs\https\public.crt")) {
                 Write-Host "SSL certificates generated successfully" -ForegroundColor Green
                 
-                # Clean up the alpine/openssl image
-                Write-Host "Cleaning up temporary Docker image..." -ForegroundColor Gray
-                docker rmi alpine/openssl -f 2>$null | Out-Null
-                docker rmi alpine -f 2>$null | Out-Null
-                Write-Host "Temporary Docker images removed" -ForegroundColor Green
+                # Clean up temporary Docker images (only if not from offline package)
+                Write-Host "Cleaning up temporary Docker images..." -ForegroundColor Gray
+                
+                # Check if images were loaded from offline package by looking for specific tag pattern
+                $AlpineOpenSSLInfo = docker images alpine/openssl:latest --format "{{.Repository}}:{{.Tag}} {{.CreatedSince}}" 2>$null
+                $AlpineInfo = docker images alpine:latest --format "{{.Repository}}:{{.Tag}} {{.CreatedSince}}" 2>$null
+                
+                # Only remove if images are very recent (likely just pulled) or if they don't have the offline package characteristics
+                if ($AlpineOpenSSLInfo -and $AlpineOpenSSLInfo -notmatch "months|weeks") {
+                    docker rmi alpine/openssl:latest -f 2>$null | Out-Null
+                    Write-Host "Removed alpine/openssl temporary image" -ForegroundColor Gray
+                } else {
+                    Write-Host "Preserving alpine/openssl image (likely from offline package)" -ForegroundColor Green
+                }
+                
+                if ($AlpineInfo -and $AlpineInfo -notmatch "months|weeks") {
+                    docker rmi alpine:latest -f 2>$null | Out-Null
+                    Write-Host "Removed alpine temporary image" -ForegroundColor Gray
+                } else {
+                    Write-Host "Preserving alpine image (likely from offline package)" -ForegroundColor Green
+                }
             } else {
                 throw "Certificate files not created properly"
             }

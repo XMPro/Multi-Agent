@@ -137,8 +137,50 @@ Write-Host "=====================" -ForegroundColor Gray
 
 try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $InstallPath)
-    Write-Host "ZIP file extracted successfully" -ForegroundColor Green
+    
+    # Check if extraction directory has conflicting files
+    $ZipArchive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    $ConflictingFiles = @()
+    
+    foreach ($Entry in $ZipArchive.Entries) {
+        $TargetPath = Join-Path $InstallPath $Entry.FullName
+        if ((Test-Path $TargetPath) -and -not $Entry.FullName.EndsWith("/")) {
+            $ConflictingFiles += $Entry.FullName
+        }
+    }
+    $ZipArchive.Dispose()
+    
+    if ($ConflictingFiles.Count -gt 0) {
+        Write-Host "Found $($ConflictingFiles.Count) conflicting file(s):" -ForegroundColor Yellow
+        foreach ($File in $ConflictingFiles | Select-Object -First 5) {
+            Write-Host "  - $File" -ForegroundColor Gray
+        }
+        if ($ConflictingFiles.Count -gt 5) {
+            Write-Host "  ... and $($ConflictingFiles.Count - 5) more" -ForegroundColor Gray
+        }
+        
+        $OverwriteChoice = Read-Host "Overwrite existing files? (y/n)"
+        if ($OverwriteChoice -ne "Y" -and $OverwriteChoice -ne "y") {
+            Write-Host "Extraction cancelled by user" -ForegroundColor Yellow
+            exit 1
+        }
+        
+        # Extract with overwrite by extracting to temp directory first
+        $TempExtractDir = Join-Path $env:TEMP "docker-stack-extract-$(Get-Random)"
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $TempExtractDir)
+        
+        # Copy files with overwrite
+        Write-Host "Extracting with overwrite..." -ForegroundColor Yellow
+        Copy-Item -Path "$TempExtractDir\*" -Destination $InstallPath -Recurse -Force
+        
+        # Clean up temp directory
+        Remove-Item -Path $TempExtractDir -Recurse -Force
+        Write-Host "ZIP file extracted successfully (with overwrite)" -ForegroundColor Green
+    } else {
+        # No conflicts, extract normally
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $InstallPath)
+        Write-Host "ZIP file extracted successfully" -ForegroundColor Green
+    }
 } catch {
     Write-Host "Failed to extract ZIP file: $($_.Exception.Message)" -ForegroundColor Red
     exit 1

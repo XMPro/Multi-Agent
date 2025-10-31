@@ -282,23 +282,23 @@ if ($EnableSSL) {
 
       # SSL Configuration
       - NEO4J_server_https_enabled=true
-      - NEO4J_server_https_port=7473
       - NEO4J_server_http_enabled=false
       
       # Bolt TLS Configuration
       - NEO4J_server_bolt_tls__level=REQUIRED
-      - NEO4J_server_bolt_encryption=true
       
       # SSL Policies
       - NEO4J_dbms_ssl_policy_bolt_enabled=true
-      - NEO4J_dbms_ssl_policy_bolt_base__directory=/var/lib/neo4j/certificates/bolt
+      - NEO4J_dbms_ssl_policy_bolt_base__directory=certificates/bolt
       - NEO4J_dbms_ssl_policy_bolt_private__key=private.key
       - NEO4J_dbms_ssl_policy_bolt_public__certificate=public.crt
+      - NEO4J_dbms_ssl_policy_bolt_client__auth=NONE
       
       - NEO4J_dbms_ssl_policy_https_enabled=true
-      - NEO4J_dbms_ssl_policy_https_base__directory=/var/lib/neo4j/certificates/https
+      - NEO4J_dbms_ssl_policy_https_base__directory=certificates/https
       - NEO4J_dbms_ssl_policy_https_private__key=private.key
       - NEO4J_dbms_ssl_policy_https_public__certificate=public.crt
+      - NEO4J_dbms_ssl_policy_https_client__auth=NONE
 "@
     
     if ($ComposeContent -notmatch "NEO4J_server_https_enabled") {

@@ -16,15 +16,24 @@ CREATE (tl)-[:CONTAINS]->(duckduckgo)
 // Create metrics for all tools
 WITH tl
 MATCH (t:Tool)
-CREATE (t)-[:HAS_METRICS]->(m:Metrics {
-    type: 'Aggregate',
+CREATE (t)-[:HAS_METRICS]->(m:Entry {
+    type: 'Metric',
+    context: 'Tool',
+    category: 'Aggregate',
+    entry_id: randomUUID(),
     created_date: datetime(),
     last_modified_date: datetime(),
-    total_calls: 0,
-    total_response_time: 0,
+    average_response_time: 0,
+    input_assistant_tokens: 0,
+    input_other_tokens: 0,
+    input_overhead_tokens: 0,
+    input_system_tokens: 0,
+    input_token_usage: 0,
+    input_user_tokens: 0,
     total_token_usage: 0,
-    successful_calls: 0,
     failed_calls: 0,
+    successful_calls: 0,
+    total_calls: 0,
     total_data_processed: 0,
-    average_response_time: 0
+    total_response_time: 0
 })

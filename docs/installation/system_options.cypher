@@ -1,4 +1,4 @@
-MATCH (n:SystemOptions)
+OPTIONAL MATCH (n:SystemOptions)
 REMOVE n.agent_communication
 REMOVE n.consensus_config
 REMOVE n.memory_retrieval
@@ -9,22 +9,20 @@ REMOVE n.surprise_scoring
 
 MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
+  so.author = 'XMPro',
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
   so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
-  so.prompt_access_levels = '[
-  {"value": "admin", "description": "For system administrators with full access to all prompts"},
+  so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
-  {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
-]',
+  {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}]',
   so.allowed_planning = ['Plan & Solve'],
   so.allowed_consensus = ['SimpleMajority'],
   so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
-  so.prompt_types = '[
-  {"value": "system", "description": "For core system functionality"},
+  so.prompt_types = '[{"value": "system", "description": "For core system functionality"},
   {"value": "user", "description": "For prompts created or customized by users"},
   {"value": "template", "description": "For base prompts that can be customized or extended for specific use cases"},
   {"value": "analysis", "description": "For prompts designed to analyze or interpret data or text"},
@@ -33,8 +31,7 @@ ON CREATE SET
   {"value": "extraction", "description": "For prompts designed to extract specific information from text"},
   {"value": "dialogue", "description": "For prompts used in conversational or interactive contexts"},
   {"value": "task-specific", "description": "For prompts designed for particular tasks within the application"},
-  {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}
-]',
+  {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}]',
   so.rag_schema = '{
     "schemas": {
       "rag_general_knowledge": {
@@ -168,17 +165,14 @@ ON MATCH SET
   so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
   so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
-  so.prompt_access_levels = '[
-  {"value": "admin", "description": "For system administrators with full access to all prompts"},
+  so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
-  {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}
-]',
+  {"value": "system", "description": "For core system prompts essential for the MAGs memory cycle implementation"}]',
   so.allowed_planning = ['Plan & Solve'],
   so.allowed_consensus = ['SimpleMajority'],
   so.content_processor_type  = ['Failure Mode', 'Technical Report', 'Maintenance Procedure', 'Equipment Specification', 'Incident Report', 'Manual', 'Generic'],
-  so.prompt_types = '[
-  {"value": "system", "description": "For core system functionality"},
+  so.prompt_types = '[{"value": "system", "description": "For core system functionality"},
   {"value": "user", "description": "For prompts created or customized by users"},
   {"value": "template", "description": "For base prompts that can be customized or extended for specific use cases"},
   {"value": "analysis", "description": "For prompts designed to analyze or interpret data or text"},
@@ -187,8 +181,7 @@ ON MATCH SET
   {"value": "extraction", "description": "For prompts designed to extract specific information from text"},
   {"value": "dialogue", "description": "For prompts used in conversational or interactive contexts"},
   {"value": "task-specific", "description": "For prompts designed for particular tasks within the application"},
-  {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}
-]',
+  {"value": "utility", "description": "For helper prompts that support other processes but aren\'t main functionalities"}]',
   so.rag_schema = '{
     "schemas": {
       "rag_general_knowledge": {

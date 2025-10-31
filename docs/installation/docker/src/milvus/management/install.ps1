@@ -284,8 +284,12 @@ if ($EnableSSL) {
             $EnableSSL = $false
             
             # Update .env file to disable SSL
-            $EnvContent = $EnvContent -replace "ENABLE_SSL=true", "ENABLE_SSL=false"
-            Set-Content -Path ".env" -Value $EnvContent
+            if (Test-Path ".env") {
+                $ExistingEnvContent = Get-Content ".env" -Raw
+                $ExistingEnvContent = $ExistingEnvContent -replace "ENABLE_SSL=true", "ENABLE_SSL=false"
+                Set-Content -Path ".env" -Value $ExistingEnvContent
+                Write-Host "Updated .env file to disable SSL due to certificate generation failure" -ForegroundColor Yellow
+            }
         }
     } elseif (Test-Path "certs\milvus\server.key") {
         Write-Host "SSL certificates already exist" -ForegroundColor Gray
@@ -381,44 +385,31 @@ tls:
 $MilvusConfig | Out-File -FilePath "config\milvus.yaml" -Encoding UTF8
 Write-Host "Created milvus.yaml configuration file" -ForegroundColor Green
 
-# Update docker-compose.yml with SSL configuration if enabled
+# Update docker-compose.yml with SSL configuration if enabled (but don't add SSL env vars until certificates exist)
 if ($EnableSSL) {
     Write-Host "Updating Docker Compose configuration for SSL..." -ForegroundColor White
     
     # Read current docker-compose.yml
     $ComposeContent = Get-Content "docker-compose.yml" -Raw
     
-    # Add SSL certificate volumes for Milvus
-    if ($ComposeContent -notmatch "certs.*milvus") {
-        $ComposeContent = $ComposeContent -replace '(\s+volumes:\s+)', "`$1`n      - ./certs/milvus:/milvus/certs"
-    }
-    
     # Add SSL certificate volumes for etcd
-    if ($ComposeContent -notmatch "certs.*etcd" -and $ComposeContent -match "etcd:") {
-        $ComposeContent = $ComposeContent -replace '(etcd:.*?volumes:\s+)', "`$1`n      - ./certs/etcd:/etcd/certs"
+    if ($ComposeContent -notmatch "certs/etcd") {
+        $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/etcd:\/etcd)', "`$1`n      - ./certs/etcd:/etcd/certs"
     }
     
     # Add SSL certificate volumes for MinIO
-    if ($ComposeContent -notmatch "certs.*minio" -and $ComposeContent -match "minio:") {
-        $ComposeContent = $ComposeContent -replace '(minio:.*?volumes:\s+)', "`$1`n      - ./certs/minio:/minio/certs"
+    if ($ComposeContent -notmatch "certs/minio") {
+        $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/minio:\/minio_data)', "`$1`n      - ./certs/minio:/minio/certs"
     }
     
-    # Add SSL environment variables for Milvus
-    $SSLEnvVars = @"
-
-      # SSL Configuration
-      - MILVUS_TLS_MODE=2
-      - MILVUS_TLS_CERT_PATH=/milvus/certs/server.crt
-      - MILVUS_TLS_KEY_PATH=/milvus/certs/server.key
-      - MILVUS_TLS_CA_PATH=/milvus/certs/trusted/ca.crt
-"@
-    
-    if ($ComposeContent -notmatch "MILVUS_TLS_MODE") {
-        $ComposeContent = $ComposeContent -replace '(\s+environment:\s+)', "`$1$SSLEnvVars`n"
+    # Add SSL certificate volumes for Milvus standalone
+    if ($ComposeContent -notmatch "certs/milvus") {
+        $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/milvus:\/var\/lib\/milvus)', "`$1`n      - ./certs/milvus:/milvus/certs"
     }
     
+    # Save docker-compose.yml with volumes (but not SSL env vars yet)
     Set-Content -Path "docker-compose.yml" -Value $ComposeContent
-    Write-Host "Docker Compose configuration updated for SSL" -ForegroundColor Green
+    Write-Host "Docker Compose volumes updated for SSL" -ForegroundColor Green
 }
 
 # Create initial backup directory structure

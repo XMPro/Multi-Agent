@@ -236,9 +236,16 @@ Write-Host "Running Milvus installation script..." -ForegroundColor White
 Set-Location "milvus"
 try {
     .\management\install.ps1 -Force
-    Write-Host "Milvus configured successfully" -ForegroundColor Green
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Milvus configured successfully" -ForegroundColor Green
+    } else {
+        Write-Host "Milvus installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+    }
 } catch {
-    Write-Host "Milvus installation had issues, but continuing..." -ForegroundColor Yellow
+    Write-Host "Milvus installation failed with error:" -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+    Write-Host "Continuing with other services..." -ForegroundColor Yellow
 }
 Set-Location ..
 

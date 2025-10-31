@@ -295,33 +295,36 @@ tls:
     if (Test-Path "docker-compose.yml") {
         $ComposeContent = Get-Content "docker-compose.yml" -Raw
         
-        # Add SSL certificate volumes for Milvus
-        if ($ComposeContent -notmatch "certs.*milvus") {
-            $ComposeContent = $ComposeContent -replace '(\s+volumes:\s+)', "`$1`n      - ./certs/milvus:/milvus/certs"
-        }
-        
         # Add SSL certificate volumes for etcd
-        if ($ComposeContent -notmatch "certs.*etcd" -and $ComposeContent -match "etcd:") {
-            $ComposeContent = $ComposeContent -replace '(etcd:.*?volumes:\s+)', "`$1`n      - ./certs/etcd:/etcd/certs"
+        if ($ComposeContent -notmatch "certs/etcd") {
+            $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/etcd:\/etcd)', "`$1`n      - ./certs/etcd:/etcd/certs"
         }
         
         # Add SSL certificate volumes for MinIO
-        if ($ComposeContent -notmatch "certs.*minio" -and $ComposeContent -match "minio:") {
-            $ComposeContent = $ComposeContent -replace '(minio:.*?volumes:\s+)', "`$1`n      - ./certs/minio:/minio/certs"
+        if ($ComposeContent -notmatch "certs/minio") {
+            $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/minio:\/minio_data)', "`$1`n      - ./certs/minio:/minio/certs"
         }
         
-        # Add SSL environment variables for Milvus
+        # Add SSL certificate volumes for Milvus standalone
+        if ($ComposeContent -notmatch "certs/milvus") {
+            $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/milvus:\/var\/lib\/milvus)', "`$1`n      - ./certs/milvus:/milvus/certs"
+        }
+        
+        # Add SSL environment variables for Milvus standalone
         $SSLEnvVars = @"
-
       # SSL Configuration
       - MILVUS_TLS_MODE=2
       - MILVUS_TLS_CERT_PATH=/milvus/certs/server.crt
       - MILVUS_TLS_KEY_PATH=/milvus/certs/server.key
-      - MILVUS_TLS_CA_PATH=/milvus/certs/trusted/ca.crt
-"@
+      - MILVUS_TLS_CA_PATH=/milvus/certs/trusted/ca.crt"@
         
         if ($ComposeContent -notmatch "MILVUS_TLS_MODE") {
-            $ComposeContent = $ComposeContent -replace '(\s+environment:\s+)', "`$1$SSLEnvVars`n"
+            $ComposeContent = $ComposeContent -replace '(\s+COMMON_SECURITY_DEFAULTROOTPASSWORD: \$\{MILVUS_ROOT_PASSWORD:-Milvus\})', "`$1`n$SSLEnvVars"
+        }
+        
+        # Update MinIO to use HTTPS
+        if ($ComposeContent -match "minio:") {
+            $ComposeContent = $ComposeContent -replace '(MINIO_ROOT_PASSWORD: \$\{MINIO_ROOT_PASSWORD:-minioadmin\})', "`$1`n      MINIO_SERVER_URL: https://minio:9000"
         }
         
         Set-Content -Path "docker-compose.yml" -Value $ComposeContent

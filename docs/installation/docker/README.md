@@ -83,7 +83,19 @@ After enabling SSL, CA certificates are located at:
 
 #### **Client Machine Installation**
 
-**Windows Certificate Store (Recommended)**
+**Automatic Installation (Recommended)**
+```powershell
+# Install all service CA certificates automatically
+.\install-ca-certificates.ps1
+
+# Remove all service CA certificates
+.\install-ca-certificates.ps1 -Remove
+
+# Show help and usage options
+.\install-ca-certificates.ps1 -Help
+```
+
+**Manual Installation**
 ```powershell
 # Install CA certificate to Windows trusted root store
 Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
@@ -130,6 +142,7 @@ Each service includes comprehensive management scripts:
 docs/installation/docker/
 ├── prepare-stack.ps1           # Creates deployment ZIP
 ├── docker-stack-installer.ps1  # Deploys and configures services
+├── install-ca-certificates.ps1 # Install/remove CA certificates to Windows store
 ├── README.md                   # This file
 ├── dist/                       # Generated ZIP files
 └── src/                        # Service source files

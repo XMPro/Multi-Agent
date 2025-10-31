@@ -1,0 +1,40 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT:-1883}:1883"         # MQTT
+      - "${MQTT_SSL_PORT:-8883}:8883"     # MQTT SSL/TLS
+      - "${MQTT_WS_PORT:-9002}:9001"      # WebSockets
+    volumes:
+      # Configuration
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./config/passwords.txt:/mosquitto/config/passwords.txt
+      - ./config/acl.txt:/mosquitto/config/acl.txt
+      # SSL Certificates (if using SSL)
+      - ./certs:/mosquitto/certs
+      # Data persistence
+      - ./data:/mosquitto/data
+      # Logs
+      - ./logs:/mosquitto/log
+    environment:
+      - TZ=${TZ:-UTC}
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/broker/uptime' -C 1 -W 3 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - mqtt-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  mqtt-network:
+    driver: bridge
+    name: mqtt-network

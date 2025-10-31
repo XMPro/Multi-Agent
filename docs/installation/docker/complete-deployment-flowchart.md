@@ -1,8 +1,8 @@
-# Complete docker stack deployment process
+# Complete Docker Stack Deployment Process
 
-this comprehensive flowchart shows the entire deployment process for the docker stack, including both online and offline deployment paths, and details what each service installation does.
+This comprehensive flowchart shows the entire deployment process for the Docker stack, including both online and offline deployment paths, and details what each service installation does.
 
-## Main deployment decision flow
+## Main Deployment Decision Flow
 
 ```mermaid
 flowchart TD
@@ -55,7 +55,7 @@ flowchart TD
     style J fill:#ffcdd2
 ```
 
-## Offline package creation details
+## Offline Package Creation Details
 
 ```mermaid
 flowchart TD
@@ -108,7 +108,7 @@ flowchart TD
     style Y fill:#c8e6c9
 ```
 
-## neo4j installation process
+## Neo4j Installation Process
 
 ```mermaid
 flowchart TD
@@ -161,7 +161,7 @@ flowchart TD
     style I fill:#ffcdd2
 ```
 
-## mqtt installation process
+## MQTT Installation Process
 
 ```mermaid
 flowchart TD
@@ -215,7 +215,7 @@ flowchart TD
     style I fill:#ffcdd2
 ```
 
-## milvus installation process
+## Milvus Installation Process
 
 ```mermaid
 flowchart TD
@@ -269,7 +269,7 @@ flowchart TD
     style I fill:#ffcdd2
 ```
 
-## Service architecture overview
+## Service Architecture Overview
 
 ```mermaid
 flowchart LR
@@ -325,19 +325,19 @@ flowchart LR
     style H fill:#e1f5fe
 ```
 
-## Deployment summary
+## Deployment Summary
 
-the complete deployment process provides:
+The complete deployment process provides:
 
-- **flexible deployment**: online or offline installation paths
-- **service modularity**: install only needed services (neo4j, mqtt, milvus)
-- **ssl/tls support**: optional encryption for all services
-- **offline capability**: pre-download images for air-gapped environments
-- **image preservation**: smart cleanup that preserves offline-loaded images
-- **comprehensive management**: backup, restore, ssl management scripts
-- **industrial ready**: designed for multi-agent industrial ai systems
+- **Flexible deployment**: Online or offline installation paths
+- **Service modularity**: Install only needed services (Neo4j, MQTT, Milvus)
+- **SSL/TLS support**: Optional encryption for all services
+- **Offline capability**: Pre-download images for air-gapped environments
+- **Image preservation**: Smart cleanup that preserves offline-loaded images
+- **Comprehensive management**: Backup, restore, SSL management scripts
+- **Industrial ready**: Designed for multi-agent industrial AI systems
 
-each service provides specific capabilities for the multi-agent system:
-- **neo4j**: stores agent knowledge, relationships, and enforces data constraints
-- **mqtt**: enables secure agent-to-agent communication with pub/sub messaging
-- **milvus**: provides semantic search and vector similarity for ai embeddings
+Each service provides specific capabilities for the multi-agent system:
+- **Neo4j**: Stores agent knowledge, relationships, and enforces data constraints
+- **MQTT**: Enables secure agent-to-agent communication with pub/sub messaging
+- **Milvus**: Provides semantic search and vector similarity for AI embeddings

@@ -407,9 +407,42 @@ if ($EnableSSL) {
         $ComposeContent = $ComposeContent -replace '(\s+- \.\/milvus-data\/milvus:\/var\/lib\/milvus)', "`$1`n      - ./certs/milvus:/milvus/certs"
     }
     
-    # Save docker-compose.yml with volumes (but not SSL env vars yet)
+    # Configure MinIO for SSL
+    if ($ComposeContent -notmatch "MINIO_SERVER_CERT_FILE") {
+        $MinIOSSLEnvVars = @"
+      # MinIO SSL Configuration
+      MINIO_SERVER_CERT_FILE: /minio/certs/server.crt
+      MINIO_SERVER_KEY_FILE: /minio/certs/server.key"@
+        
+        $ComposeContent = $ComposeContent -replace '(\s+MINIO_ROOT_PASSWORD: \$\{MINIO_ROOT_PASSWORD:-minioadmin\})', "`$1`n$MinIOSSLEnvVars"
+    }
+    
+    # Update MinIO command to use HTTPS
+    if ($ComposeContent -match "command: minio server /minio_data") {
+        $ComposeContent = $ComposeContent -replace 'command: minio server /minio_data', 'command: minio server /minio_data --certs-dir /minio/certs'
+    }
+    
+    # Update MinIO health check to use HTTPS
+    if ($ComposeContent -match 'http://localhost:9000/minio/health/live') {
+        $ComposeContent = $ComposeContent -replace 'http://localhost:9000/minio/health/live', 'https://localhost:9000/minio/health/live'
+    }
+    
+    # Add SSL environment variables for Milvus standalone
+    if ($ComposeContent -notmatch "MILVUS_TLS_MODE") {
+        $MilvusSSLEnvVars = @"
+      # Milvus SSL Configuration
+      MILVUS_TLS_MODE: 2
+      MILVUS_TLS_CERT_PATH: /milvus/certs/server.crt
+      MILVUS_TLS_KEY_PATH: /milvus/certs/server.key
+      MILVUS_TLS_CA_PATH: /milvus/certs/trusted/ca.crt"@
+        
+        $ComposeContent = $ComposeContent -replace '(\s+COMMON_SECURITY_DEFAULTROOTPASSWORD: \$\{MILVUS_ROOT_PASSWORD:-Milvus\})', "`$1`n$MilvusSSLEnvVars"
+    }
+    
+    # Save docker-compose.yml with SSL configuration
     Set-Content -Path "docker-compose.yml" -Value $ComposeContent
-    Write-Host "Docker Compose volumes updated for SSL" -ForegroundColor Green
+    Write-Host "Docker Compose configuration updated for SSL" -ForegroundColor Green
+    Write-Host "MinIO configured for HTTPS with SSL certificates" -ForegroundColor Green
 }
 
 # Create initial backup directory structure

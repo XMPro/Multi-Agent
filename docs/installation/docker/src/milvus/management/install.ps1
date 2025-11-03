@@ -99,11 +99,16 @@ foreach ($Dir in $Directories) {
     }
 }
 
-# Ask about SSL setup
-Write-Host "SSL Configuration:" -ForegroundColor White
-$SSLChoice = Read-Host "Enable SSL/TLS encryption for Milvus? (y/n)"
-if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
-    $EnableSSL = $true
+# Ask about SSL setup (unless already specified via parameter)
+if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+    Write-Host "SSL Configuration:" -ForegroundColor White
+    $SSLChoice = Read-Host "Enable SSL/TLS encryption for Milvus? (y/n)"
+    if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+        $EnableSSL = $true
+    }
+}
+
+if ($EnableSSL) {
     Write-Host "SSL will be enabled for Milvus API and internal communications" -ForegroundColor Green
     
     # Ask for certificate type
@@ -235,18 +240,7 @@ if ($EnableSSL) {
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in minio_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out minio_server.crt -days 365 -copy_extensions copy
             
             # Move certificates to proper directories
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "
-                mv milvus_server.key milvus/server.key &&
-                mv milvus_server.crt milvus/server.crt &&
-                cp ca.crt milvus/trusted/ca.crt &&
-                mv etcd_server.key etcd/server.key &&
-                mv etcd_server.crt etcd/server.crt &&
-                cp ca.crt etcd/trusted/ca.crt &&
-                mv minio_server.key minio/server.key &&
-                mv minio_server.crt minio/server.crt &&
-                cp ca.crt minio/trusted/ca.crt &&
-                rm -f *.csr ca.srl
-            "
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "mv milvus_server.key milvus/server.key && mv milvus_server.crt milvus/server.crt && cp ca.crt milvus/trusted/ca.crt && mv etcd_server.key etcd/server.key && mv etcd_server.crt etcd/server.crt && cp ca.crt etcd/trusted/ca.crt && mv minio_server.key minio/server.key && mv minio_server.crt minio/server.crt && cp ca.crt minio/trusted/ca.crt && rm -f *.csr ca.srl"
             
             # Verify certificates were created
             if ((Test-Path "certs\milvus\server.key") -and (Test-Path "certs\milvus\server.crt") -and 
@@ -293,6 +287,31 @@ if ($EnableSSL) {
         }
     } elseif (Test-Path "certs\milvus\server.key") {
         Write-Host "SSL certificates already exist" -ForegroundColor Gray
+    }
+    
+    # Now add SSL environment variables to docker-compose.yml after certificates are created
+    if ($EnableSSL) {
+        Write-Host "Adding SSL environment variables to docker-compose.yml..." -ForegroundColor White
+        
+        # Read current docker-compose.yml
+        $ComposeContent = Get-Content "docker-compose.yml" -Raw
+        
+        # Add SSL environment variables for Milvus standalone
+        if ($ComposeContent -notmatch "MILVUS_TLS_MODE") {
+            $MilvusSSLEnvVars = @"
+      # Milvus SSL Configuration
+      MILVUS_TLS_MODE: 2
+      MILVUS_TLS_CERT_PATH: /milvus/certs/server.crt
+      MILVUS_TLS_KEY_PATH: /milvus/certs/server.key
+      MILVUS_TLS_CA_PATH: /milvus/certs/trusted/ca.crt
+"@
+            
+            $ComposeContent = $ComposeContent -replace '(\s+COMMON_SECURITY_DEFAULTROOTPASSWORD: \$\{MILVUS_ROOT_PASSWORD:-Milvus\})', "`$1`n$MilvusSSLEnvVars"
+        }
+        
+        # Save docker-compose.yml with SSL environment variables
+        Set-Content -Path "docker-compose.yml" -Value $ComposeContent
+        Write-Host "SSL environment variables added to docker-compose.yml" -ForegroundColor Green
     }
 }
 
@@ -385,7 +404,7 @@ tls:
 $MilvusConfig | Out-File -FilePath "config\milvus.yaml" -Encoding UTF8
 Write-Host "Created milvus.yaml configuration file" -ForegroundColor Green
 
-# Update docker-compose.yml with SSL configuration if enabled (but don't add SSL env vars until certificates exist)
+# Update docker-compose.yml with SSL configuration if enabled
 if ($EnableSSL) {
     Write-Host "Updating Docker Compose configuration for SSL..." -ForegroundColor White
     
@@ -412,7 +431,8 @@ if ($EnableSSL) {
         $MinIOSSLEnvVars = @"
       # MinIO SSL Configuration
       MINIO_SERVER_CERT_FILE: /minio/certs/server.crt
-      MINIO_SERVER_KEY_FILE: /minio/certs/server.key"@
+      MINIO_SERVER_KEY_FILE: /minio/certs/server.key
+"@
         
         $ComposeContent = $ComposeContent -replace '(\s+MINIO_ROOT_PASSWORD: \$\{MINIO_ROOT_PASSWORD:-minioadmin\})', "`$1`n$MinIOSSLEnvVars"
     }
@@ -434,7 +454,8 @@ if ($EnableSSL) {
       MILVUS_TLS_MODE: 2
       MILVUS_TLS_CERT_PATH: /milvus/certs/server.crt
       MILVUS_TLS_KEY_PATH: /milvus/certs/server.key
-      MILVUS_TLS_CA_PATH: /milvus/certs/trusted/ca.crt"@
+      MILVUS_TLS_CA_PATH: /milvus/certs/trusted/ca.crt
+"@
         
         $ComposeContent = $ComposeContent -replace '(\s+COMMON_SECURITY_DEFAULTROOTPASSWORD: \$\{MILVUS_ROOT_PASSWORD:-Milvus\})', "`$1`n$MilvusSSLEnvVars"
     }

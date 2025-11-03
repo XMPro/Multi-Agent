@@ -20,9 +20,9 @@ $CurrentDir = Get-Location
 Write-Host "Current directory: $CurrentDir" -ForegroundColor White
 
 # Validate we're in the correct directory
-if (-not (Test-Path "src") -or -not (Test-Path "docker-stack-installer.ps1")) {
+if (-not (Test-Path "src") -or -not (Test-Path "management")) {
     Write-Host "Error: This script must be run from the docs/installation/docker directory!" -ForegroundColor Red
-    Write-Host "Expected to find 'src' folder and 'docker-stack-installer.ps1' file." -ForegroundColor Yellow
+    Write-Host "Expected to find 'src' folder and 'management' folder." -ForegroundColor Yellow
     exit 1
 }
 
@@ -115,7 +115,7 @@ try {
     Write-Host "Adding CA certificate installer..." -ForegroundColor White
     Write-Host "==================================" -ForegroundColor Gray
     
-    $CACertInstallerSource = Join-Path $CurrentDir "install-ca-certificates.ps1"
+    $CACertInstallerSource = Join-Path $CurrentDir "management\install-ca-certificates.ps1"
     $CACertInstallerDest = Join-Path $TempDir "install-ca-certificates.ps1"
     
     if (Test-Path $CACertInstallerSource) {
@@ -697,7 +697,7 @@ if ($Offline) {
     Write-Host ""
     Write-Host "Next Steps:" -ForegroundColor Cyan
     Write-Host "1. Copy the ZIP file to your target machine" -ForegroundColor White
-    Write-Host "2. Copy docker-stack-installer.ps1 to your target machine" -ForegroundColor White
+    Write-Host "2. Copy management\docker-stack-installer.ps1 to your target machine" -ForegroundColor White
     Write-Host "3. Extract the ZIP file to your desired location" -ForegroundColor White
     Write-Host "4. Run: .\docker-stack-installer.ps1" -ForegroundColor White
     Write-Host "5. Follow the interactive installation prompts" -ForegroundColor White

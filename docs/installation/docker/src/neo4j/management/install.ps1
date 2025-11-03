@@ -100,10 +100,16 @@ foreach ($Dir in $Directories) {
     }
 }
 
-# Ask about SSL setup
-Write-Host "SSL Configuration:" -ForegroundColor White
-$SSLChoice = Read-Host "Enable SSL/TLS encryption for Neo4j? (y/n)"
-if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+# Ask about SSL setup (unless already specified via parameter)
+if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+    Write-Host "SSL Configuration:" -ForegroundColor White
+    $SSLChoice = Read-Host "Enable SSL/TLS encryption for Neo4j? (y/n)"
+    if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+        $EnableSSL = $true
+    }
+}
+
+if ($EnableSSL) {
     $EnableSSL = $true
     Write-Host "SSL will be enabled for both Browser UI (HTTPS) and Bolt protocol (TLS)" -ForegroundColor Green
     

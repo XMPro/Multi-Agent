@@ -208,10 +208,8 @@ Write-Host "Created .env file with configuration" -ForegroundColor Green
 
 # Set proper permissions for data directories
 Write-Host "Setting directory permissions..." -ForegroundColor White
-Write-Host "Configuring permissions for xmpro user (UID:GID 1000:1000)..." -ForegroundColor Gray
 icacls "milvus-data" /grant "Everyone:(OI)(CI)F" /T | Out-Null
-Write-Host "Directory permissions configured for xmpro user" -ForegroundColor Green
-Write-Host "Note: Containers will run as UID:GID 1000:1000 (xmpro user)" -ForegroundColor Cyan
+Write-Host "Directory permissions configured" -ForegroundColor Green
 
 # SSL Certificate setup
 if ($EnableSSL) {

@@ -616,6 +616,237 @@ if ($HasSelfSignedCerts) {
     Write-Host "No self-signed certificates found - CA installation not needed." -ForegroundColor Gray
 }
 
+# Generate credentials file
+Write-Host ""
+Write-Host "Generating Credentials File..." -ForegroundColor White
+Write-Host "==============================" -ForegroundColor Gray
+
+$CredentialsContent = @"
+# =================================================================
+# Docker Stack Credentials and Access Information
+# Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+# =================================================================
+
+IMPORTANT: Keep this file secure and do not commit to version control!
+
+"@
+
+# Collect Neo4j credentials
+if ($ConfiguredServices["neo4j"]) {
+    $CredentialsContent += @"
+
+# =================================================================
+# Neo4j Graph Database
+# =================================================================
+
+"@
+    
+    if (Test-Path "neo4j\.env") {
+        $Neo4jEnv = Get-Content "neo4j\.env" -Raw
+        if ($Neo4jEnv -match 'NEO4J_AUTH=([^/]+)/(.+)') {
+            $Neo4jUser = $Matches[1]
+            $Neo4jPass = $Matches[2]
+            $CredentialsContent += @"
+Username: $Neo4jUser
+Password: $Neo4jPass
+
+"@
+        }
+    }
+    
+    $CredentialsContent += @"
+Access URLs:
+  - Browser UI: http://localhost:7474
+  - Bolt Protocol: bolt://localhost:7687
+"@
+    
+    if ($EnableSSL -and (Test-Path "neo4j\certs\bolt\trusted\ca.crt")) {
+        $CredentialsContent += @"
+
+  - HTTPS Browser: https://localhost:7473
+  - Bolt+S Protocol: bolt+s://localhost:7687
+
+SSL Certificate:
+  - CA Certificate: neo4j\certs\bolt\trusted\ca.crt
+"@
+    }
+}
+
+# Collect Milvus credentials
+if ($ConfiguredServices["milvus"]) {
+    $CredentialsContent += @"
+
+
+# =================================================================
+# Milvus Vector Database
+# =================================================================
+
+"@
+    
+    if (Test-Path "milvus\.env") {
+        $MilvusEnv = Get-Content "milvus\.env" -Raw
+        if ($MilvusEnv -match 'MILVUS_USERNAME=(.+)') {
+            $MilvusUser = $Matches[1].Trim()
+            $CredentialsContent += "Username: $MilvusUser`n"
+        }
+        if ($MilvusEnv -match 'MILVUS_ROOT_PASSWORD=(.+)') {
+            $MilvusPass = $Matches[1].Trim()
+            $CredentialsContent += "Password: $MilvusPass`n"
+        }
+        
+        $CredentialsContent += "`n"
+        
+        # Get MinIO credentials
+        if ($MilvusEnv -match 'MINIO_ROOT_USER=(.+)') {
+            $MinIOUser = $Matches[1].Trim()
+        }
+        if ($MilvusEnv -match 'MINIO_ROOT_PASSWORD=(.+)') {
+            $MinIOPass = $Matches[1].Trim()
+        }
+    }
+    
+    $CredentialsContent += @"
+Access URLs:
+  - gRPC API: localhost:19530
+  - HTTP API: localhost:9091
+"@
+    
+    if ($EnableSSL) {
+        $CredentialsContent += @"
+
+  - Attu Web UI (HTTPS): https://localhost:8001
+  - Attu Web UI (HTTP redirect): http://localhost:8002
+
+SSL Certificate:
+  - CA Certificate: milvus\tls\ca.pem
+  - Client Certificate: milvus\tls\client.pem
+  - Client Key: milvus\tls\client.key
+"@
+    } else {
+        $CredentialsContent += @"
+
+  - Attu Web UI: http://localhost:8002
+"@
+    }
+    
+    if ($MinIOUser -and $MinIOPass) {
+        $CredentialsContent += @"
+
+
+MinIO Object Storage:
+  - Console: http://localhost:9001
+  - API: http://localhost:9000
+  - Access Key: $MinIOUser
+  - Secret Key: $MinIOPass
+"@
+    }
+}
+
+# Collect MQTT credentials
+if ($ConfiguredServices["mqtt"]) {
+    $CredentialsContent += @"
+
+
+# =================================================================
+# MQTT Message Broker
+# =================================================================
+
+"@
+    
+    if (Test-Path "mqtt\config\password.txt") {
+        $MqttCreds = Get-Content "mqtt\config\password.txt"
+        foreach ($Line in $MqttCreds) {
+            if ($Line -match '^([^:]+):') {
+                $MqttUser = $Matches[1]
+                # Password is hashed, so we can't retrieve it
+                $CredentialsContent += "Username: $MqttUser`n"
+                $CredentialsContent += "Password: (check MQTT install output above)`n`n"
+                break
+            }
+        }
+    }
+    
+    $CredentialsContent += @"
+Access URLs:
+  - MQTT Broker: localhost:1883
+  - WebSocket: ws://localhost:9002
+"@
+    
+    if ($EnableSSL) {
+        $CredentialsContent += @"
+
+  - MQTT Broker (SSL): localhost:8883
+  - WebSocket (SSL): wss://localhost:9003
+
+SSL Certificate:
+  - CA Certificate: mqtt\certs\ca.crt
+  - Client Certificate: mqtt\certs\client.crt
+  - Client Key: mqtt\certs\client.key
+"@
+    }
+}
+
+# Add management information
+$CredentialsContent += @"
+
+
+# =================================================================
+# Management Commands
+# =================================================================
+
+Stop All Services:
+  .\stop-all-services.ps1
+
+Stop All Services and Remove Data:
+  .\stop-all-services.ps1 -RemoveVolumes
+
+Service-Specific Management:
+  - Neo4j Backup: .\neo4j\management\backup.ps1
+  - Neo4j Restore: .\neo4j\management\restore.ps1
+  - Neo4j SSL: .\neo4j\management\manage-ssl.ps1
+  
+  - Milvus Backup: .\milvus\management\backup.ps1
+  - Milvus Restore: .\milvus\management\restore.ps1
+  - Milvus SSL: .\milvus\management\manage-ssl.ps1
+  
+  - MQTT Backup: .\mqtt\management\backup.ps1
+  - MQTT Restore: .\mqtt\management\restore.ps1
+  - MQTT Users: .\mqtt\management\manage-users.ps1
+  - MQTT SSL: .\mqtt\management\manage-ssl.ps1
+
+# =================================================================
+# Security Notes
+# =================================================================
+
+1. Keep this file secure - it contains sensitive credentials
+2. Do not commit this file to version control
+3. Change default passwords in production environments
+4. For SSL/TLS connections, distribute CA certificates to client machines
+5. Regularly backup your data using the provided backup scripts
+
+# =================================================================
+# Support
+# =================================================================
+
+For issues or questions:
+- Check service logs: docker-compose logs -f (in service directory)
+- Review service README files in each service directory
+- Verify Docker Desktop is running and healthy
+
+"@
+
+# Save credentials file
+$CredentialsFilePath = Join-Path $InstallPath "CREDENTIALS.txt"
+$CredentialsContent | Out-File -FilePath $CredentialsFilePath -Encoding UTF8
+Write-Host "Credentials file created: CREDENTIALS.txt" -ForegroundColor Green
+Write-Host "Location: $CredentialsFilePath" -ForegroundColor White
+
 Write-Host ""
 Write-Host "Installation completed!" -ForegroundColor Green
+Write-Host "==================================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "IMPORTANT: All credentials and access URLs have been saved to:" -ForegroundColor Yellow
+Write-Host "  $CredentialsFilePath" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Keep this file secure and do not commit it to version control!" -ForegroundColor Yellow
 Write-Host "==================================================================" -ForegroundColor Cyan

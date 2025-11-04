@@ -93,14 +93,24 @@ try {
         Write-Host "  No Cypher scripts found" -ForegroundColor Yellow
     }
     
-    # Copy the CA certificate installation script
-    $CACertInstallerSource = Join-Path $CurrentDir "management\install-ca-certificates.ps1"
-    $CACertInstallerDest = Join-Path $TempDir "install-ca-certificates.ps1"
+    # Copy management scripts to root of deployment
+    Write-Host "Copying management scripts..." -ForegroundColor White
     
-    if (Test-Path $CACertInstallerSource) {
-        Copy-Item -Path $CACertInstallerSource -Destination $CACertInstallerDest -Force
-    } else {
-        Write-Host "Warning: CA certificate installer not found" -ForegroundColor Yellow
+    $ManagementScripts = @(
+        "install-ca-certificates.ps1",
+        "stop-all-services.ps1"
+    )
+    
+    foreach ($Script in $ManagementScripts) {
+        $ScriptSource = Join-Path $CurrentDir "management\$Script"
+        $ScriptDest = Join-Path $TempDir $Script
+        
+        if (Test-Path $ScriptSource) {
+            Copy-Item -Path $ScriptSource -Destination $ScriptDest -Force
+            Write-Host "  Added $Script" -ForegroundColor Green
+        } else {
+            Write-Host "  Warning: $Script not found" -ForegroundColor Yellow
+        }
     }
     
     # Create README file for the deployment

@@ -643,15 +643,30 @@ if ($ConfiguredServices["neo4j"]) {
     
     if (Test-Path "neo4j\.env") {
         $Neo4jEnv = Get-Content "neo4j\.env" -Raw
-        if ($Neo4jEnv -match 'NEO4J_AUTH=([^/]+)/(.+)') {
-            $Neo4jUser = $Matches[1]
-            $Neo4jPass = $Matches[2]
-            $CredentialsContent += @"
+        
+        # Extract username
+        if ($Neo4jEnv -match 'NEO4J_USER=(.+)') {
+            $Neo4jUser = $Matches[1].Trim()
+        } elseif ($Neo4jEnv -match 'NEO4J_AUTH=([^/]+)/') {
+            $Neo4jUser = $Matches[1].Trim()
+        } else {
+            $Neo4jUser = "neo4j"
+        }
+        
+        # Extract password
+        if ($Neo4jEnv -match 'NEO4J_PASSWORD=(.+)') {
+            $Neo4jPass = $Matches[1].Trim()
+        } elseif ($Neo4jEnv -match 'NEO4J_AUTH=[^/]+/(.+)') {
+            $Neo4jPass = $Matches[1].Trim()
+        } else {
+            $Neo4jPass = "(check Neo4j .env file)"
+        }
+        
+        $CredentialsContent += @"
 Username: $Neo4jUser
 Password: $Neo4jPass
 
 "@
-        }
     }
     
     $CredentialsContent += @"
@@ -771,18 +786,27 @@ if ($ConfiguredServices["mqtt"]) {
 
 "@
     
-    if (Test-Path "mqtt\config\password.txt") {
-        $MqttCreds = Get-Content "mqtt\config\password.txt"
-        foreach ($Line in $MqttCreds) {
-            if ($Line -match '^([^:]+):') {
-                $MqttUser = $Matches[1]
-                # Password is hashed, so we can't retrieve it
-                $CredentialsContent += "Username: $MqttUser`n"
-                $CredentialsContent += "Password: (check MQTT install output above)`n`n"
-                break
-            }
+    $MqttUser = "xmpro"
+    $MqttPass = "(check MQTT install output above)"
+    
+    # Try to get username from password file
+    if (Test-Path "mqtt\config\passwords.txt") {
+        $MqttCreds = Get-Content "mqtt\config\passwords.txt" -First 1
+        if ($MqttCreds -match '^([^:]+):') {
+            $MqttUser = $Matches[1]
         }
     }
+    
+    # Try to get password from .env if it exists
+    if (Test-Path "mqtt\.env") {
+        $MqttEnv = Get-Content "mqtt\.env" -Raw
+        if ($MqttEnv -match 'MQTT_PASSWORD=(.+)') {
+            $MqttPass = $Matches[1].Trim()
+        }
+    }
+    
+    $CredentialsContent += "Username: $MqttUser`n"
+    $CredentialsContent += "Password: $MqttPass`n`n"
     
     $CredentialsContent += @"
 Access URLs:

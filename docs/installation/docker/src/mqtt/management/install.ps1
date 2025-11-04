@@ -141,8 +141,29 @@ if (-not $Password) {
     } while ($true)
 }
 
-# Create mosquitto.conf file if it doesn't exist
+# Create .env file with password
 Write-Host "Creating configuration files..." -ForegroundColor White
+$EnvContent = @"
+# MQTT Configuration
+MQTT_PORT=1883
+MQTT_SSL_PORT=8883
+MQTT_WS_PORT=9002
+
+# MQTT Authentication
+MQTT_USERNAME=$Username
+MQTT_PASSWORD=$Password
+
+# SSL Configuration
+ENABLE_SSL=$($EnableSSL.ToString().ToLower())
+
+# Timezone
+TZ=UTC
+"@
+
+$EnvContent | Out-File -FilePath ".env" -Encoding ASCII
+Write-Host "Created .env file with configuration" -ForegroundColor Green
+
+# Create mosquitto.conf file if it doesn't exist
 if (-not (Test-Path "config\mosquitto.conf") -or $Force) {
     $MosquittoConf = @"
 # General Configuration

@@ -660,7 +660,16 @@ Access URLs:
   - Bolt Protocol: bolt://localhost:7687
 "@
     
-    if ($EnableSSL -and (Test-Path "neo4j\certs\bolt\trusted\ca.crt")) {
+    # Check if SSL is actually enabled in Neo4j
+    $Neo4jSSLEnabled = $false
+    if (Test-Path "neo4j\.env") {
+        $Neo4jEnvContent = Get-Content "neo4j\.env" -Raw
+        if ($Neo4jEnvContent -match 'ENABLE_SSL=true') {
+            $Neo4jSSLEnabled = $true
+        }
+    }
+    
+    if ($Neo4jSSLEnabled -and (Test-Path "neo4j\certs\bolt\trusted\ca.crt")) {
         $CredentialsContent += @"
 
   - HTTPS Browser: https://localhost:7473
@@ -711,7 +720,16 @@ Access URLs:
   - HTTP API: localhost:9091
 "@
     
-    if ($EnableSSL) {
+    # Check if SSL is actually enabled in Milvus
+    $MilvusSSLEnabled = $false
+    if (Test-Path "milvus\.env") {
+        $MilvusEnvContent = Get-Content "milvus\.env" -Raw
+        if ($MilvusEnvContent -match 'ENABLE_SSL=true') {
+            $MilvusSSLEnabled = $true
+        }
+    }
+    
+    if ($MilvusSSLEnabled) {
         $CredentialsContent += @"
 
   - Attu Web UI (HTTPS): https://localhost:8001
@@ -772,7 +790,16 @@ Access URLs:
   - WebSocket: ws://localhost:9002
 "@
     
-    if ($EnableSSL) {
+    # Check if SSL is actually enabled in MQTT
+    $MqttSSLEnabled = $false
+    if (Test-Path "mqtt\.env") {
+        $MqttEnvContent = Get-Content "mqtt\.env" -Raw
+        if ($MqttEnvContent -match 'ENABLE_SSL=true') {
+            $MqttSSLEnabled = $true
+        }
+    }
+    
+    if ($MqttSSLEnabled) {
         $CredentialsContent += @"
 
   - MQTT Broker (SSL): localhost:8883

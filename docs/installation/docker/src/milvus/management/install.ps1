@@ -91,22 +91,117 @@ foreach ($Dir in $Directories) {
 
 # Ask about GPU support
 Write-Host "GPU Configuration:" -ForegroundColor White
-$GPUChoice = Read-Host "Enable GPU support for Milvus? (requires NVIDIA GPU and Docker runtime) (y/n)"
-$EnableGPU = $false
-if ($GPUChoice -eq "Y" -or $GPUChoice -eq "y") {
-    $EnableGPU = $true
-    Write-Host "GPU support will be enabled" -ForegroundColor Green
+
+# Detect GPU vendor
+Write-Host "Detecting GPU hardware..." -ForegroundColor White
+$GPUVendor = "None"
+$GPUName = "No GPU detected"
+
+try {
+    # Try to get GPU info from Windows
+    $GPU = Get-WmiObject Win32_VideoController | Where-Object { $_.Name -notmatch "Microsoft|Remote|Virtual" } | Select-Object -First 1
     
-    Write-Host "GPU Device Selection:" -ForegroundColor White
-    Write-Host "Enter GPU device IDs (comma-separated, e.g., '0' or '0,1')" -ForegroundColor Gray
-    Write-Host "Leave empty to use GPU 0" -ForegroundColor Gray
-    $GPUDevices = Read-Host "GPU device IDs"
-    if (-not $GPUDevices) {
-        $GPUDevices = "0"
+    if ($GPU) {
+        $GPUName = $GPU.Name
+        if ($GPU.Name -match "NVIDIA|GeForce|Quadro|Tesla") {
+            $GPUVendor = "NVIDIA"
+            Write-Host "Detected: $GPUName" -ForegroundColor Green
+        } elseif ($GPU.Name -match "AMD|Radeon|FirePro") {
+            $GPUVendor = "AMD"
+            Write-Host "Detected: $GPUName" -ForegroundColor Yellow
+        } elseif ($GPU.Name -match "Intel") {
+            $GPUVendor = "Intel"
+            Write-Host "Detected: $GPUName" -ForegroundColor Yellow
+        } else {
+            Write-Host "Detected: $GPUName (Unknown vendor)" -ForegroundColor Gray
+        }
+    } else {
+        Write-Host "No dedicated GPU detected" -ForegroundColor Gray
     }
-    Write-Host "Will use GPU device(s): $GPUDevices" -ForegroundColor White
+} catch {
+    Write-Host "Could not detect GPU: $($_.Exception.Message)" -ForegroundColor Gray
+}
+
+Write-Host ""
+Write-Host "Milvus GPU Support Requirements:" -ForegroundColor Cyan
+Write-Host "  - NVIDIA GPU with CUDA support (REQUIRED)" -ForegroundColor White
+Write-Host "  - Latest NVIDIA drivers installed" -ForegroundColor Gray
+Write-Host "  - Docker Desktop with WSL2 backend" -ForegroundColor Gray
+Write-Host "  - NVIDIA Container Toolkit in WSL2" -ForegroundColor Gray
+Write-Host ""
+
+# Check if GPU vendor is compatible
+if ($GPUVendor -eq "AMD") {
+    Write-Host "WARNING: AMD GPU detected!" -ForegroundColor Red
+    Write-Host "Milvus GPU support ONLY works with NVIDIA GPUs (CUDA)." -ForegroundColor Red
+    Write-Host "AMD GPUs use ROCm which is not supported by Milvus." -ForegroundColor Yellow
+    Write-Host "You must use CPU mode." -ForegroundColor Yellow
+    Write-Host ""
+} elseif ($GPUVendor -eq "Intel") {
+    Write-Host "WARNING: Intel GPU detected!" -ForegroundColor Red
+    Write-Host "Milvus GPU support ONLY works with NVIDIA GPUs (CUDA)." -ForegroundColor Red
+    Write-Host "You must use CPU mode." -ForegroundColor Yellow
+    Write-Host ""
+} elseif ($GPUVendor -eq "NVIDIA") {
+    Write-Host "NVIDIA GPU detected - GPU support is possible!" -ForegroundColor Green
+    Write-Host ""
+}
+
+# Test if NVIDIA GPU is available in Docker
+Write-Host "Testing NVIDIA GPU availability in Docker..." -ForegroundColor White
+$GPUAvailable = $false
+if ($GPUVendor -eq "NVIDIA") {
+    try {
+        $TestResult = docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $GPUAvailable = $true
+            Write-Host "NVIDIA GPU is available in Docker!" -ForegroundColor Green
+        } else {
+            Write-Host "NVIDIA GPU not available in Docker" -ForegroundColor Yellow
+            Write-Host "Error: $TestResult" -ForegroundColor Gray
+        }
+    } catch {
+        Write-Host "NVIDIA GPU not available in Docker: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 } else {
-    Write-Host "GPU support will be disabled (CPU only)" -ForegroundColor Yellow
+    Write-Host "Skipping Docker GPU test (no NVIDIA GPU detected)" -ForegroundColor Gray
+}
+
+# Only offer GPU option if NVIDIA GPU is available
+$EnableGPU = $false
+if ($GPUVendor -eq "NVIDIA" -and $GPUAvailable) {
+    Write-Host ""
+    $GPUChoice = Read-Host "Enable GPU support for Milvus? (y/n)"
+    if ($GPUChoice -eq "Y" -or $GPUChoice -eq "y") {
+        $EnableGPU = $true
+        Write-Host "GPU support will be enabled" -ForegroundColor Green
+        
+        Write-Host "GPU Device Selection:" -ForegroundColor White
+        Write-Host "Enter GPU device IDs (comma-separated, e.g., '0' or '0,1')" -ForegroundColor Gray
+        Write-Host "Leave empty to use GPU 0" -ForegroundColor Gray
+        $GPUDevices = Read-Host "GPU device IDs"
+        if (-not $GPUDevices) {
+            $GPUDevices = "0"
+        }
+        Write-Host "Will use GPU device(s): $GPUDevices" -ForegroundColor White
+    } else {
+        Write-Host "GPU support will be disabled (CPU only)" -ForegroundColor Yellow
+    }
+} else {
+    # Don't offer GPU option - just inform user
+    if ($GPUVendor -eq "AMD" -or $GPUVendor -eq "Intel") {
+        Write-Host ""
+        Write-Host "GPU support not available (Milvus requires NVIDIA GPU)" -ForegroundColor Gray
+        Write-Host "Continuing with CPU mode..." -ForegroundColor White
+    } elseif ($GPUVendor -eq "NVIDIA") {
+        Write-Host ""
+        Write-Host "NVIDIA GPU detected but not available in Docker" -ForegroundColor Yellow
+        Write-Host "Install NVIDIA Container Toolkit to enable GPU support" -ForegroundColor Gray
+        Write-Host "Continuing with CPU mode..." -ForegroundColor White
+    } else {
+        Write-Host ""
+        Write-Host "No GPU detected - using CPU mode" -ForegroundColor Gray
+    }
 }
 
 # Ask about SSL setup (unless already specified via parameter)

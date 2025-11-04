@@ -100,10 +100,16 @@ foreach ($Dir in $Directories) {
     }
 }
 
-# Ask about SSL setup
-Write-Host "SSL Configuration:" -ForegroundColor White
-$SSLChoice = Read-Host "Enable SSL/TLS encryption for Neo4j? (y/n)"
-if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+# Ask about SSL setup (unless already specified via parameter)
+if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+    Write-Host "SSL Configuration:" -ForegroundColor White
+    $SSLChoice = Read-Host "Enable SSL/TLS encryption for Neo4j? (y/n)"
+    if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+        $EnableSSL = $true
+    }
+}
+
+if ($EnableSSL) {
     $EnableSSL = $true
     Write-Host "SSL will be enabled for both Browser UI (HTTPS) and Bolt protocol (TLS)" -ForegroundColor Green
     
@@ -244,27 +250,10 @@ if ($EnableSSL) {
                 (Test-Path "certs\https\private.key") -and (Test-Path "certs\https\public.crt")) {
                 Write-Host "SSL certificates generated successfully" -ForegroundColor Green
                 
-                # Clean up temporary Docker images (only if not from offline package)
-                Write-Host "Cleaning up temporary Docker images..." -ForegroundColor Gray
-                
-                # Check if images were loaded from offline package by looking for specific tag pattern
-                $AlpineOpenSSLInfo = docker images alpine/openssl:latest --format "{{.Repository}}:{{.Tag}} {{.CreatedSince}}" 2>$null
-                $AlpineInfo = docker images alpine:latest --format "{{.Repository}}:{{.Tag}} {{.CreatedSince}}" 2>$null
-                
-                # Only remove if images are very recent (likely just pulled) or if they don't have the offline package characteristics
-                if ($AlpineOpenSSLInfo -and $AlpineOpenSSLInfo -notmatch "months|weeks") {
-                    docker rmi alpine/openssl:latest -f 2>$null | Out-Null
-                    Write-Host "Removed alpine/openssl temporary image" -ForegroundColor Gray
-                } else {
-                    Write-Host "Preserving alpine/openssl image (likely from offline package)" -ForegroundColor Green
-                }
-                
-                if ($AlpineInfo -and $AlpineInfo -notmatch "months|weeks") {
-                    docker rmi alpine:latest -f 2>$null | Out-Null
-                    Write-Host "Removed alpine temporary image" -ForegroundColor Gray
-                } else {
-                    Write-Host "Preserving alpine image (likely from offline package)" -ForegroundColor Green
-                }
+                # Note: alpine/openssl image is preserved for potential future SSL operations
+                # It's included in offline packages and is small (~8MB), so keeping it doesn't hurt
+                Write-Host "SSL certificate generation complete" -ForegroundColor Green
+                Write-Host "Note: alpine/openssl image preserved for future SSL operations" -ForegroundColor Gray
             } else {
                 throw "Certificate files not created properly"
             }

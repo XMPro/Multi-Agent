@@ -32,12 +32,30 @@ Run the prepare script to create a deployment ZIP file:
 Copy the ZIP file and installer script to your target machine:
 
 1. Copy the generated ZIP file (e.g., `docker-stack-20241031-123456.zip`)
-2. Copy `docker-stack-installer.ps1` separately
+2. Copy `management/docker-stack-installer.ps1` separately
 3. Run the installer:
 
 ```powershell
 .\docker-stack-installer.ps1
 ```
+
+**Automation Parameters (Optional):**
+```powershell
+# Fully automated SSL installation
+.\docker-stack-installer.ps1 -EnableSSL -Domain "mycompany.local" -Neo4jPassword "MyNeo4jPass123!" -MilvusPassword "MyMilvusPass456!" -MqttPassword "MyMqttPass789!" -InstallCertificates
+
+# Automated non-SSL installation
+.\docker-stack-installer.ps1 -Neo4jPassword "MyNeo4jPass123!" -MilvusPassword "MyMilvusPass456!" -MqttPassword "MyMqttPass789!"
+```
+
+**Available Parameters:**
+- `-EnableSSL` - Enable SSL for all services
+- `-Domain` - SSL certificate domain (default: localhost)
+- `-Neo4jPassword` - Neo4j password (bypasses prompt)
+- `-MilvusPassword` - Milvus password (bypasses prompt)
+- `-MqttPassword` - MQTT password (bypasses prompt)
+- `-InstallCertificates` - Auto-install CA certificates to Windows store
+- `-SkipChecks` - Skip prerequisite checks
 
 #### **Offline Deployment (Zero Internet Access):**
 For machines with no internet access, create an offline package:
@@ -209,15 +227,16 @@ docs/installation/docker/
    ```powershell
    cd docs/installation/docker
    .\prepare-stack.ps1
-   ```
-
-2. **Copy ZIP to target machine** (e.g., `docker-stack-20241031-123456.zip`)
-
-3. **Deploy on target machine:**
-   ```powershell
-   # Extract ZIP and run installer
-   .\docker-stack-installer.ps1
-   ```
+```
+docs/installation/docker/
+├── prepare-stack.ps1           # Creates deployment ZIP
+├── README.md                   # This file
+├── dist/                       # Generated ZIP files
+├── management/                 # Management scripts
+│   ├── docker-stack-installer.ps1  # Deploys and configures services
+│   └── install-ca-certificates.ps1 # Install/remove CA certificates to Windows store
+└── src/                        # Service source files
+```
 
 4. **Access services:**
    - Neo4j: http://localhost:7474

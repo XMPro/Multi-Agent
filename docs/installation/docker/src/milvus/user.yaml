@@ -1,0 +1,25 @@
+# Milvus User Configuration File
+# This file is mounted as user.yaml to override default settings
+# Milvus reads: milvus.yaml (base) -> user.yaml (overrides)
+
+# TLS/SSL Configuration
+# Set tlsMode to enable SSL:
+# 0 = Disabled (no encryption)
+# 1 = One-way TLS (server certificate only)
+# 2 = Two-way TLS (mutual TLS with client certificates)
+tls:
+  serverPemPath: /milvus/tls/server.pem
+  serverKeyPath: /milvus/tls/server.key
+  caPemPath: /milvus/tls/ca.pem
+
+common:
+  security:
+    # TLS mode: 0=disabled, 1=one-way, 2=two-way
+    tlsMode: 0
+
+# Proxy HTTP API configuration
+# HTTP server on separate port to avoid conflict with gRPC on 19530
+proxy:
+  http:
+    enabled: true
+    port: 8080

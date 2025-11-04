@@ -6,7 +6,14 @@
 param(
     [string]$ZipPath = "",
     [string]$InstallPath = "",
-    [switch]$SkipChecks = $false
+    [switch]$SkipChecks = $false,
+    [switch]$EnableSSL = $false,
+    [string]$Domain = "localhost",
+    [string]$Neo4jPassword = "",
+    [string]$MilvusPassword = "",
+    [string]$MqttPassword = "",
+    [switch]$AutoStart = $false,
+    [switch]$InstallCertificates = $false
 )
 
 Write-Host "==================================================================" -ForegroundColor Cyan
@@ -212,20 +219,69 @@ Write-Host ""
 Write-Host "Configuring Services..." -ForegroundColor White
 Write-Host "======================" -ForegroundColor Gray
 
+# Track which services configured successfully
+$ConfiguredServices = @{}
+
 # Configure Neo4j using the install script
 Write-Host ""
 Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
 Write-Host "===================" -ForegroundColor Gray
 Write-Host "Running Neo4j installation script..." -ForegroundColor White
 
+# Build parameters for service install scripts
+$Neo4jParams = @{
+    Force = $true
+}
+$MilvusParams = @{
+    Force = $true
+}
+$MqttParams = @{
+    Force = $true
+}
+
+if ($EnableSSL) {
+    $Neo4jParams.EnableSSL = $true
+    $MilvusParams.EnableSSL = $true
+    $MqttParams.EnableSSL = $true
+    
+    if ($Domain -ne "localhost") {
+        $Neo4jParams.Domain = $Domain
+        $MilvusParams.Domain = $Domain
+    }
+}
+
+if ($Neo4jPassword) {
+    $Neo4jParams.Password = $Neo4jPassword
+}
+
+if ($MilvusPassword) {
+    $MilvusParams.Password = $MilvusPassword
+}
+
+if ($MqttPassword) {
+    $MqttParams.Password = $MqttPassword
+}
+
 Set-Location "neo4j"
 try {
-    .\management\install.ps1 -Force
+    if ($Neo4jPassword) {
+        Write-Host "Using provided Neo4j password" -ForegroundColor Gray
+    }
+    if ($EnableSSL) {
+        Write-Host "SSL enabled for Neo4j" -ForegroundColor Gray
+    }
+    
+    & ".\management\install.ps1" @Neo4jParams
     Write-Host "Neo4j configured successfully" -ForegroundColor Green
+    $ConfiguredServices["neo4j"] = $true
 } catch {
-    Write-Host "Neo4j installation had issues, but continuing..." -ForegroundColor Yellow
+    Write-Host "Neo4j installation failed with error:" -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+    Write-Host "Neo4j will be skipped during startup..." -ForegroundColor Yellow
+    $ConfiguredServices["neo4j"] = $false
 }
-Set-Location ..
+Set-Location $InstallPath
 
 # Configure Milvus using the install script
 Write-Host ""
@@ -235,12 +291,29 @@ Write-Host "Running Milvus installation script..." -ForegroundColor White
 
 Set-Location "milvus"
 try {
-    .\management\install.ps1 -Force
-    Write-Host "Milvus configured successfully" -ForegroundColor Green
+    if ($MilvusPassword) {
+        Write-Host "Using provided Milvus password" -ForegroundColor Gray
+    }
+    if ($EnableSSL) {
+        Write-Host "SSL enabled for Milvus" -ForegroundColor Gray
+    }
+    
+    & ".\management\install.ps1" @MilvusParams
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Milvus configured successfully" -ForegroundColor Green
+        $ConfiguredServices["milvus"] = $true
+    } else {
+        Write-Host "Milvus installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+        $ConfiguredServices["milvus"] = $true  # Still try to start if it completed
+    }
 } catch {
-    Write-Host "Milvus installation had issues, but continuing..." -ForegroundColor Yellow
+    Write-Host "Milvus installation failed with error:" -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+    Write-Host "Milvus will be skipped during startup..." -ForegroundColor Yellow
+    $ConfiguredServices["milvus"] = $false
 }
-Set-Location ..
+Set-Location $InstallPath
 
 # Configure MQTT using the install script
 Write-Host ""
@@ -250,66 +323,143 @@ Write-Host "Running MQTT installation script..." -ForegroundColor White
 
 Set-Location "mqtt"
 try {
-    .\management\install.ps1 -Force
-    Write-Host "MQTT configured successfully" -ForegroundColor Green
-} catch {
-    Write-Host "MQTT installation had issues, but continuing..." -ForegroundColor Yellow
-}
-Set-Location ..
-
-# Check and start Neo4j if not running
-Write-Host ""
-Write-Host "Checking Neo4j Status..." -ForegroundColor White
-Write-Host "========================" -ForegroundColor Gray
-
-Set-Location "neo4j"
-try {
-    $Neo4jStatus = docker-compose ps --format json | ConvertFrom-Json
-    $Neo4jRunning = $Neo4jStatus | Where-Object { $_.Service -eq "neo4j" -and $_.State -eq "running" }
-
-    if ($Neo4jRunning) {
-        Write-Host "Neo4j is already running" -ForegroundColor Green
+    if ($MqttPassword) {
+        Write-Host "Using provided MQTT password" -ForegroundColor Gray
+    }
+    if ($EnableSSL) {
+        Write-Host "SSL enabled for MQTT" -ForegroundColor Gray
+    }
+    
+    & ".\management\install.ps1" @MqttParams
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "MQTT configured successfully" -ForegroundColor Green
+        $ConfiguredServices["mqtt"] = $true
     } else {
+        Write-Host "MQTT installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+        $ConfiguredServices["mqtt"] = $true  # Still try to start if it completed
+    }
+} catch {
+    Write-Host "MQTT installation failed with error:" -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+    Write-Host "MQTT will be skipped during startup..." -ForegroundColor Yellow
+    $ConfiguredServices["mqtt"] = $false
+}
+Set-Location $InstallPath
+
+# Start only successfully configured services
+Write-Host ""
+Write-Host "Starting Configured Services..." -ForegroundColor White
+Write-Host "===============================" -ForegroundColor Gray
+
+$SuccessfullyConfigured = $ConfiguredServices.Keys | Where-Object { $ConfiguredServices[$_] -eq $true }
+$FailedConfiguration = $ConfiguredServices.Keys | Where-Object { $ConfiguredServices[$_] -eq $false }
+
+if ($FailedConfiguration.Count -gt 0) {
+    Write-Host "Skipping services that failed configuration: $($FailedConfiguration -join ', ')" -ForegroundColor Yellow
+}
+
+if ($SuccessfullyConfigured.Count -eq 0) {
+    Write-Host "No services configured successfully - skipping startup phase" -ForegroundColor Red
+} else {
+    Write-Host "Starting services: $($SuccessfullyConfigured -join ', ')" -ForegroundColor Green
+}
+
+# Check and start Neo4j if configured successfully
+if ($ConfiguredServices["neo4j"]) {
+    Write-Host ""
+    Write-Host "Starting Neo4j..." -ForegroundColor White
+    Write-Host "=================" -ForegroundColor Gray
+
+    Set-Location "neo4j"
+    try {
+        $Neo4jStatus = docker-compose ps --format json | ConvertFrom-Json
+        $Neo4jRunning = $Neo4jStatus | Where-Object { $_.Service -eq "neo4j" -and $_.State -eq "running" }
+
+        if ($Neo4jRunning) {
+            Write-Host "Neo4j is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting Neo4j services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Neo4j started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start Neo4j" -ForegroundColor Red
+            }
+        }
+    } catch {
         Write-Host "Starting Neo4j..." -ForegroundColor Yellow
         docker-compose up -d
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Neo4j started successfully" -ForegroundColor Green
-        } else {
-            Write-Host "Failed to start Neo4j" -ForegroundColor Red
-        }
     }
-} catch {
-    Write-Host "Starting Neo4j..." -ForegroundColor Yellow
-    docker-compose up -d
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping Neo4j startup (configuration failed)" -ForegroundColor Yellow
 }
-Set-Location ..
 
-# Check and start Milvus if not running
-Write-Host ""
-Write-Host "Checking Milvus Status..." -ForegroundColor White
-Write-Host "=========================" -ForegroundColor Gray
+# Check and start Milvus if configured successfully
+if ($ConfiguredServices["milvus"]) {
+    Write-Host ""
+    Write-Host "Starting Milvus..." -ForegroundColor White
+    Write-Host "=================" -ForegroundColor Gray
 
-Set-Location "milvus"
-try {
-    $MilvusStatus = docker-compose ps --format json | ConvertFrom-Json
-    $MilvusRunning = $MilvusStatus | Where-Object { $_.Service -eq "standalone" -and $_.State -eq "running" }
+    Set-Location "milvus"
+    try {
+        $MilvusStatus = docker-compose ps --format json | ConvertFrom-Json
+        $MilvusRunning = $MilvusStatus | Where-Object { $_.Service -eq "standalone" -and $_.State -eq "running" }
 
-    if ($MilvusRunning) {
-        Write-Host "Milvus is already running" -ForegroundColor Green
-    } else {
+        if ($MilvusRunning) {
+            Write-Host "Milvus is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting Milvus services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Milvus started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start Milvus" -ForegroundColor Red
+            }
+        }
+    } catch {
         Write-Host "Starting Milvus..." -ForegroundColor Yellow
         docker-compose up -d
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Milvus started successfully" -ForegroundColor Green
-        } else {
-            Write-Host "Failed to start Milvus" -ForegroundColor Red
-        }
     }
-} catch {
-    Write-Host "Starting Milvus..." -ForegroundColor Yellow
-    docker-compose up -d
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping Milvus startup (configuration failed)" -ForegroundColor Yellow
 }
-Set-Location ..
+
+# Check and start MQTT if configured successfully
+if ($ConfiguredServices["mqtt"]) {
+    Write-Host ""
+    Write-Host "Starting MQTT..." -ForegroundColor White
+    Write-Host "===============" -ForegroundColor Gray
+
+    Set-Location "mqtt"
+    try {
+        $MqttStatus = docker-compose ps --format json | ConvertFrom-Json
+        $MqttRunning = $MqttStatus | Where-Object { $_.Service -eq "mosquitto" -and $_.State -eq "running" }
+
+        if ($MqttRunning) {
+            Write-Host "MQTT is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting MQTT services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "MQTT started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start MQTT" -ForegroundColor Red
+            }
+        }
+    } catch {
+        Write-Host "Starting MQTT..." -ForegroundColor Yellow
+        docker-compose up -d
+    }
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping MQTT startup (configuration failed)" -ForegroundColor Yellow
+}
 
 # Wait for services to initialize
 Write-Host ""
@@ -426,16 +576,9 @@ foreach ($CertPath in $CertPaths) {
 
 if ($HasSelfSignedCerts) {
     Write-Host "Found self-signed CA certificates for: $($SelfSignedServices -join ', ')" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Would you like to automatically install these CA certificates to your" -ForegroundColor White
-    Write-Host "Windows certificate store? This will eliminate SSL warnings in browsers" -ForegroundColor White
-    Write-Host "and allow applications to connect without certificate validation errors." -ForegroundColor White
-    Write-Host ""
     
-    $InstallCertsChoice = Read-Host "Install CA certificates to Windows certificate store? (y/n)"
-    if ($InstallCertsChoice -eq "Y" -or $InstallCertsChoice -eq "y") {
-        Write-Host ""
-        Write-Host "Installing CA certificates..." -ForegroundColor Green
+    if ($InstallCertificates) {
+        Write-Host "Auto-installing CA certificates (InstallCertificates parameter specified)..." -ForegroundColor Green
         try {
             & ".\install-ca-certificates.ps1" -InstallPath $InstallPath
             Write-Host ""
@@ -446,8 +589,28 @@ if ($HasSelfSignedCerts) {
         }
     } else {
         Write-Host ""
-        Write-Host "CA certificates not installed." -ForegroundColor Yellow
-        Write-Host "To install them later, run: .\install-ca-certificates.ps1" -ForegroundColor Gray
+        Write-Host "Would you like to automatically install these CA certificates to your" -ForegroundColor White
+        Write-Host "Windows certificate store? This will eliminate SSL warnings in browsers" -ForegroundColor White
+        Write-Host "and allow applications to connect without certificate validation errors." -ForegroundColor White
+        Write-Host ""
+        
+        $InstallCertsChoice = Read-Host "Install CA certificates to Windows certificate store? (y/n)"
+        if ($InstallCertsChoice -eq "Y" -or $InstallCertsChoice -eq "y") {
+            Write-Host ""
+            Write-Host "Installing CA certificates..." -ForegroundColor Green
+            try {
+                & ".\install-ca-certificates.ps1" -InstallPath $InstallPath
+                Write-Host ""
+                Write-Host "CA certificates installed successfully!" -ForegroundColor Green
+            } catch {
+                Write-Host "Failed to install CA certificates: $($_.Exception.Message)" -ForegroundColor Red
+                Write-Host "You can install them manually later using: .\install-ca-certificates.ps1" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host ""
+            Write-Host "CA certificates not installed." -ForegroundColor Yellow
+            Write-Host "To install them later, run: .\install-ca-certificates.ps1" -ForegroundColor Gray
+        }
     }
 } else {
     Write-Host "No self-signed certificates found - CA installation not needed." -ForegroundColor Gray

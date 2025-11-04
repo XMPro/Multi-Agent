@@ -83,11 +83,16 @@ foreach ($Dir in $Directories) {
     }
 }
 
-# Ask about SSL setup
-Write-Host "SSL Configuration:" -ForegroundColor White
-$SSLChoice = Read-Host "Enable SSL/TLS encryption? (y/n)"
-if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
-    $EnableSSL = $true
+# Ask about SSL setup (unless already specified via parameter)
+if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+    Write-Host "SSL Configuration:" -ForegroundColor White
+    $SSLChoice = Read-Host "Enable SSL/TLS encryption? (y/n)"
+    if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+        $EnableSSL = $true
+    }
+}
+
+if ($EnableSSL) {
     Write-Host "SSL will be enabled" -ForegroundColor Green
     
     # Ask for certificate type
@@ -115,20 +120,25 @@ if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
 # Generate or prompt for password if not provided
 if (-not $Password) {
     Write-Host "Password Setup:" -ForegroundColor White
-    $Choice = Read-Host "Generate secure password automatically? (y/n)"
-    
-    if ($Choice -eq "" -or $Choice -eq "Y" -or $Choice -eq "y") {
-        Write-Host "Generating secure password..." -ForegroundColor White
-        $Password = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 16 | ForEach-Object {[char]$_})
-        Write-Host "Generated password for user '$Username': $Password" -ForegroundColor Green
-    } else {
-        $Password = Read-Host "Enter password for user '$Username'" -AsSecureString
-        $Password = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
-        if (-not $Password) {
-            Write-Host "Password cannot be empty!" -ForegroundColor Red
-            exit 1
+    do {
+        $Choice = Read-Host "Generate secure password automatically? (y/n)"
+        if ($Choice -eq "" -or $Choice -eq "Y" -or $Choice -eq "y") {
+            Write-Host "Generating secure password..." -ForegroundColor White
+            $Password = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 16 | ForEach-Object {[char]$_})
+            Write-Host "Generated password for user '$Username': $Password" -ForegroundColor Green
+            break
+        } elseif ($Choice -eq "N" -or $Choice -eq "n") {
+            $Password = Read-Host "Enter password for user '$Username'" -AsSecureString
+            $Password = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
+            if (-not $Password) {
+                Write-Host "Password cannot be empty!" -ForegroundColor Red
+                exit 1
+            }
+            break
+        } else {
+            Write-Host "Please enter 'y' for yes or 'n' for no." -ForegroundColor Yellow
         }
-    }
+    } while ($true)
 }
 
 # Create mosquitto.conf file if it doesn't exist
@@ -276,19 +286,10 @@ if ($EnableSSL) {
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {
                 Write-Host "SSL certificates generated successfully using Docker OpenSSL" -ForegroundColor Green
                 
-                # Clean up temporary Docker images (only if not from offline package)
-                Write-Host "Cleaning up temporary Docker images..." -ForegroundColor Gray
-                
-                # Check if images were loaded from offline package by looking for specific tag pattern
-                $AlpineOpenSSLInfo = docker images alpine/openssl:latest --format "{{.Repository}}:{{.Tag}} {{.CreatedSince}}" 2>$null
-                
-                # Only remove if images are very recent (likely just pulled) or if they don't have the offline package characteristics
-                if ($AlpineOpenSSLInfo -and $AlpineOpenSSLInfo -notmatch "months|weeks") {
-                    docker rmi alpine/openssl:latest -f 2>$null | Out-Null
-                    Write-Host "Removed alpine/openssl temporary image" -ForegroundColor Gray
-                } else {
-                    Write-Host "Preserving alpine/openssl image (likely from offline package)" -ForegroundColor Green
-                }
+                # Note: alpine/openssl image is preserved for potential future SSL operations
+                # It's included in offline packages and is small (~8MB), so keeping it doesn't hurt
+                Write-Host "SSL certificate generation complete" -ForegroundColor Green
+                Write-Host "Note: alpine/openssl image preserved for future SSL operations" -ForegroundColor Gray
             } else {
                 throw "Certificate files not created"
             }

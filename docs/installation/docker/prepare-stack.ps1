@@ -266,6 +266,11 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Primary = "zilliz/attu:v2.6"
                 Fallbacks = @("zilliz/attu:v2.5")
                 Description = "Attu"
+            },
+            @{
+                Primary = "nginx:alpine"
+                Fallbacks = @("nginx:stable-alpine")
+                Description = "Nginx"
             }
         )
         

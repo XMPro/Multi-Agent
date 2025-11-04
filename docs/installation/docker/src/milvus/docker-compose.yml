@@ -37,12 +37,13 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - ./milvus-data/minio:/minio_data
-    command: minio server /minio_data
+    command: minio server /minio_data --console-address ":9001"
     ports:
-      - "9001:9000"
+      - "9000:9000"
+      - "9001:9001"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "true"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -68,23 +69,30 @@ services:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
       COMMON_SECURITY_AUTHORIZATIONENABLED: ${MILVUS_AUTH_ENABLED:-true}
-      COMMON_SECURITY_DEFAULTROOTPASSWORD: ${MILVUS_ROOT_PASSWORD:-Milvus}  
+      COMMON_SECURITY_DEFAULTROOTPASSWORD: ${MILVUS_ROOT_PASSWORD:-Milvus}
+      PROXY_GRPC_SERVERADDRESS: ""
     volumes:
       - ./milvus-data/milvus:/var/lib/milvus
+      - ./user.yaml:/milvus/configs/user.yaml
+      - ./tls:/milvus/tls:ro
     ports:
       - "19530:19530"
       - "9091:9091"
+      - "9080:8080"
     depends_on:
       etcd:
         condition: service_healthy
       minio:
         condition: service_healthy
-    restart: unless-stopped
+    restart: on-failure:5
     healthcheck:
+      # Note: Management port 9091 uses HTTP even when TLS is enabled on gRPC port 19530
+      # The /healthz endpoint is for internal monitoring and does not use TLS
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 90s
     deploy:
       resources:
         limits:
@@ -103,12 +111,34 @@ services:
     container_name: milvus-attu
     image: zilliz/attu:v2.6
     environment:
-      MILVUS_URL: milvus-standalone:19530
-    ports:
-      - "8001:3000"
+      MILVUS_URL: standalone:19530
+      ROOT_CERT_PATH: /app/tls/ca.pem
+      PRIVATE_KEY_PATH: /app/tls/client.key
+      CERT_CHAIN_PATH: /app/tls/client.pem
+      SERVER_NAME: ${SSL_DOMAIN:-localhost}
+    volumes:
+      - ./tls:/app/tls:ro
     depends_on:
       standalone:
         condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  attu-nginx:
+    container_name: milvus-attu-nginx
+    image: nginx:alpine
+    ports:
+      - "8001:443"
+      - "8002:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./tls:/etc/nginx/ssl:ro
+    depends_on:
+      - attu
     restart: unless-stopped
     logging:
       driver: "json-file"

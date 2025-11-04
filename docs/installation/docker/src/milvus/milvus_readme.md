@@ -1,39 +1,81 @@
 # Milvus Vector Database Setup
 
+## Quick Start
+
+Run the installation script which will guide you through configuration options:
+
+```powershell
+cd docs/installation/docker/src/milvus
+powershell -ExecutionPolicy Bypass -File .\management\install.ps1
+```
+
+The installer will ask you about:
+1. **GPU Support** - Enable if you have NVIDIA GPU
+2. **SSL/TLS** - Enable for encrypted connections
+3. **Passwords** - Auto-generate or provide your own
+
+---
+
+## Installation Options
+
+### Standard Installation (CPU, No SSL)
+```powershell
+.\management\install.ps1
+# Answer 'n' to GPU and SSL prompts
+```
+
+### GPU-Enabled Installation
+```powershell
+.\management\install.ps1
+# Answer 'y' to GPU prompt
+# Specify GPU device IDs (e.g., "0" or "0,1")
+```
+
+### SSL-Enabled Installation
+```powershell
+.\management\install.ps1
+# Answer 'y' to SSL prompt
+# Choose self-signed or CA-provided certificates
+```
+
+### Full Installation (GPU + SSL)
+```powershell
+.\management\install.ps1
+# Answer 'y' to both GPU and SSL prompts
+```
+
+---
+
+## What Gets Configured
+
+The installation script automatically:
+- ✅ Generates secure random MinIO credentials (no more default password warnings)
+- ✅ Configures GPU support if requested (modifies docker-compose.yml and milvus.yaml)
+- ✅ Sets up SSL/TLS if requested (generates certificates, updates configuration)
+- ✅ Creates all necessary directories and configuration files
+- ✅ Validates Docker Compose configuration before starting
+
+---
+
 ## SSL/TLS Security
 
-Milvus supports SSL/TLS encryption for secure connections to the vector database and all internal services.
+### Automatic SSL Configuration
 
-### **SSL Configuration Options**
+When you enable SSL during installation, the script:
+1. Generates self-signed certificates for all services (Milvus, etcd, MinIO)
+2. Configures milvus.yaml with TLS mode
+3. Updates docker-compose.yml with certificate mounts
+4. Sets up Attu to connect via SSL
 
-**Option 1: Self-Signed Certificates (Development/Testing)**
-```powershell
-# Generate self-signed certificates for all services
-.\management\manage-ssl.ps1 generate -Domain "your-domain.com"
-
-# Enable SSL
-.\management\manage-ssl.ps1 enable
-```
-
-**Option 2: CA-Provided Certificates (Production)**
-```powershell
-# Install CA-provided certificates
-.\management\manage-ssl.ps1 install-ca -ServerCertPath "C:\certs\server.crt" -ServerKeyPath "C:\certs\server.key" -CACertPath "C:\certs\ca.crt"
-
-# Enable SSL
-.\management\manage-ssl.ps1 enable
-```
-
-### **SSL Ports and Access**
+### SSL Ports and Access
 - **Milvus gRPC API**: localhost:19530 (TLS encrypted when SSL enabled)
-- **Milvus HTTP API**: localhost:9091 (HTTPS when SSL enabled)
+- **Milvus HTTP API**: localhost:8080 (HTTPS when SSL enabled)
 - **MinIO Console**: https://localhost:9001 (HTTPS when SSL enabled)
-- **etcd**: Internal SSL communication between services
+- **Attu Web UI**: http://localhost:8001 (connects to Milvus via SSL)
 
-### **Client Certificate Distribution**
-For self-signed certificates, client machines need the CA certificate:
+### Client Certificate Distribution
 
-**CA Certificate Location**: `certs/milvus/trusted/ca.crt`
+**CA Certificate Location**: `certs/ca.crt`
 
 **Install on Client Machines:**
 ```powershell
@@ -44,29 +86,51 @@ Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
 **Milvus Client Configuration:**
 ```python
 # Python pymilvus with SSL
-from pymilvus import connections
-connections.connect(
-    alias="default",
-    host="your-server",
-    port="19530",
+from pymilvus import MilvusClient
+
+client = MilvusClient(
+    uri="https://localhost:19530",
     secure=True,
-    server_pem_path="path/to/ca.crt"
+    server_pem_path="path/to/ca.crt",
+    server_name="localhost"
 )
 ```
 
-### **SSL Management Commands**
+---
+
+## GPU Support
+
+### Prerequisites
+- NVIDIA GPU with CUDA support
+- NVIDIA Docker runtime installed
+- Docker Compose v1.28.0 or later
+
+### What Gets Configured
+
+When you enable GPU during installation:
+1. Docker image changes to `milvusdb/milvus:v2.6.3-gpu`
+2. GPU devices are configured in docker-compose.yml
+3. GPU memory pool settings added to milvus.yaml
+4. NVIDIA Docker runtime configured
+
+### GPU Memory Configuration
+
+Default settings in `milvus.yaml`:
+```yaml
+gpu:
+  initMemSize: 1024  # Initial GPU memory pool (MB)
+  maxMemSize: 2048   # Maximum GPU memory pool (MB)
+```
+
+To adjust after installation, edit `milvus.yaml` and restart:
 ```powershell
-# Check SSL status
-.\management\manage-ssl.ps1 status
+docker-compose restart milvus-standalone
+```
 
-# Generate new certificates
-.\management\manage-ssl.ps1 generate -Domain "milvus.company.com" -ValidDays 730
-
-# Renew existing certificates
-.\management\manage-ssl.ps1 renew
-
-# Disable SSL
-.\management\manage-ssl.ps1 disable
+### Verify GPU Usage
+```powershell
+# Check GPU is detected
+docker exec milvus-standalone nvidia-smi
 ```
 
 ---

@@ -286,19 +286,10 @@ if ($EnableSSL) {
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {
                 Write-Host "SSL certificates generated successfully using Docker OpenSSL" -ForegroundColor Green
                 
-                # Clean up temporary Docker images (only if not from offline package)
-                Write-Host "Cleaning up temporary Docker images..." -ForegroundColor Gray
-                
-                # Check if images were loaded from offline package by looking for specific tag pattern
-                $AlpineOpenSSLInfo = docker images alpine/openssl:latest --format "{{.Repository}}:{{.Tag}} {{.CreatedSince}}" 2>$null
-                
-                # Only remove if images are very recent (likely just pulled) or if they don't have the offline package characteristics
-                if ($AlpineOpenSSLInfo -and $AlpineOpenSSLInfo -notmatch "months|weeks") {
-                    docker rmi alpine/openssl:latest -f 2>$null | Out-Null
-                    Write-Host "Removed alpine/openssl temporary image" -ForegroundColor Gray
-                } else {
-                    Write-Host "Preserving alpine/openssl image (likely from offline package)" -ForegroundColor Green
-                }
+                # Note: alpine/openssl image is preserved for potential future SSL operations
+                # It's included in offline packages and is small (~8MB), so keeping it doesn't hurt
+                Write-Host "SSL certificate generation complete" -ForegroundColor Green
+                Write-Host "Note: alpine/openssl image preserved for future SSL operations" -ForegroundColor Gray
             } else {
                 throw "Certificate files not created"
             }

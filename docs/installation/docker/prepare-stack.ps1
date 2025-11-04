@@ -10,19 +10,15 @@ param(
     [switch]$Offline = $false
 )
 
-Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host "Docker Stack Prepare Script" -ForegroundColor Cyan
-Write-Host "Creates deployment ZIP with Cypher scripts" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 
 # Get current directory (should be docs/installation/docker)
 $CurrentDir = Get-Location
-Write-Host "Current directory: $CurrentDir" -ForegroundColor White
 
 # Validate we're in the correct directory
 if (-not (Test-Path "src") -or -not (Test-Path "management")) {
     Write-Host "Error: This script must be run from the docs/installation/docker directory!" -ForegroundColor Red
-    Write-Host "Expected to find 'src' folder and 'management' folder." -ForegroundColor Yellow
     exit 1
 }
 
@@ -34,7 +30,6 @@ if (-not $OutputPath) {
 # Create output directory if it doesn't exist
 if (-not (Test-Path $OutputPath)) {
     New-Item -ItemType Directory -Force -Path $OutputPath | Out-Null
-    Write-Host "Created output directory: $OutputPath" -ForegroundColor Green
 }
 
 # Set default zip name if not provided
@@ -57,19 +52,15 @@ if ((Test-Path $ZipPath) -and -not $Force) {
     exit 1
 }
 
-Write-Host "Preparing Docker stack deployment..." -ForegroundColor White
-Write-Host "Output ZIP: $ZipPath" -ForegroundColor White
+Write-Host "Output: $ZipPath" -ForegroundColor White
 
 # Create temporary working directory
 $TempDir = Join-Path $env:TEMP "docker-stack-prep-$(Get-Random)"
 New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
-Write-Host "Working directory: $TempDir" -ForegroundColor Gray
 
 try {
     # Copy source directories
-    Write-Host ""
-    Write-Host "Copying service directories..." -ForegroundColor White
-    Write-Host "==============================" -ForegroundColor Gray
+    Write-Host "Copying services..." -ForegroundColor White
     
     $Services = @("neo4j", "milvus", "mqtt")
     foreach ($Service in $Services) {
@@ -78,16 +69,13 @@ try {
         
         if (Test-Path $SourcePath) {
             Copy-Item -Path $SourcePath -Destination $DestPath -Recurse -Force
-            Write-Host "Copied $Service service files" -ForegroundColor Green
         } else {
-            Write-Host "Warning: $Service source directory not found: $SourcePath" -ForegroundColor Yellow
+            Write-Host "Warning: $Service not found" -ForegroundColor Yellow
         }
     }
     
     # Copy Cypher scripts to Neo4j updates folder
-    Write-Host ""
     Write-Host "Processing Cypher scripts..." -ForegroundColor White
-    Write-Host "============================" -ForegroundColor Gray
     
     $CypherSourceDir = Join-Path $CurrentDir ".."
     $Neo4jUpdatesDir = Join-Path $TempDir "neo4j\updates"
@@ -96,46 +84,26 @@ try {
     $CypherFiles = Get-ChildItem -Path $CypherSourceDir -Filter "*.cypher" -File
     
     if ($CypherFiles.Count -gt 0) {
-        Write-Host "Found $($CypherFiles.Count) Cypher script(s):" -ForegroundColor White
-        
         foreach ($CypherFile in $CypherFiles) {
             $DestFile = Join-Path $Neo4jUpdatesDir $CypherFile.Name
             Copy-Item -Path $CypherFile.FullName -Destination $DestFile -Force
-            Write-Host "  - $($CypherFile.Name)" -ForegroundColor Green
         }
-        
-        Write-Host "Cypher scripts copied to neo4j/updates/ directory" -ForegroundColor Green
+        Write-Host "  Added $($CypherFiles.Count) Cypher script(s)" -ForegroundColor Green
     } else {
-        Write-Host "No Cypher scripts found in: $CypherSourceDir" -ForegroundColor Yellow
-        Write-Host "Neo4j will start without additional scripts" -ForegroundColor Gray
+        Write-Host "  No Cypher scripts found" -ForegroundColor Yellow
     }
     
     # Copy the CA certificate installation script
-    Write-Host ""
-    Write-Host "Adding CA certificate installer..." -ForegroundColor White
-    Write-Host "==================================" -ForegroundColor Gray
-    
     $CACertInstallerSource = Join-Path $CurrentDir "management\install-ca-certificates.ps1"
     $CACertInstallerDest = Join-Path $TempDir "install-ca-certificates.ps1"
     
     if (Test-Path $CACertInstallerSource) {
         Copy-Item -Path $CACertInstallerSource -Destination $CACertInstallerDest -Force
-        Write-Host "Added install-ca-certificates.ps1" -ForegroundColor Green
     } else {
-        Write-Host "Warning: CA certificate installer not found: $CACertInstallerSource" -ForegroundColor Yellow
+        Write-Host "Warning: CA certificate installer not found" -ForegroundColor Yellow
     }
     
-    # Skip copying the main installer script (excluded from ZIP)
-    Write-Host ""
-    Write-Host "Skipping main installer script..." -ForegroundColor White
-    Write-Host "=================================" -ForegroundColor Gray
-    Write-Host "docker-stack-installer.ps1 excluded from ZIP package" -ForegroundColor Gray
-    
     # Create README file for the deployment
-    Write-Host ""
-    Write-Host "Creating deployment README..." -ForegroundColor White
-    Write-Host "============================" -ForegroundColor Gray
-    
     $ReadmeContent = @"
 # Docker Stack Deployment
 
@@ -210,155 +178,98 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
     
     $ReadmePath = Join-Path $TempDir "README.md"
     $ReadmeContent | Out-File -FilePath $ReadmePath -Encoding UTF8
-    Write-Host "Created README.md with deployment instructions" -ForegroundColor Green
     
     # Create the ZIP file
-    Write-Host ""
-    Write-Host "Creating ZIP file..." -ForegroundColor White
-    Write-Host "===================" -ForegroundColor Gray
+    Write-Host "Creating ZIP..." -ForegroundColor White
     
     # Remove existing zip if Force is specified
     if ((Test-Path $ZipPath) -and $Force) {
         Remove-Item -Path $ZipPath -Force
-        Write-Host "Removed existing ZIP file" -ForegroundColor Yellow
     }
     
     # Create ZIP using .NET compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::CreateFromDirectory($TempDir, $ZipPath)
     
-    Write-Host "ZIP file created successfully!" -ForegroundColor Green
-    Write-Host "Location: $ZipPath" -ForegroundColor White
-    
     # Get ZIP file size
     $ZipInfo = Get-Item $ZipPath
     $ZipSizeMB = [math]::Round($ZipInfo.Length / 1MB, 2)
-    Write-Host "Size: $ZipSizeMB MB" -ForegroundColor Gray
-    
-    # Show contents summary
-    Write-Host ""
-    Write-Host "ZIP Contents Summary:" -ForegroundColor White
-    Write-Host "====================" -ForegroundColor Gray
-    
-    $ZipContents = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
-    $ServiceCounts = @{}
-    $TotalFiles = 0
-    
-    foreach ($Entry in $ZipContents.Entries) {
-        $TotalFiles++
-        $PathParts = $Entry.FullName -split '/'
-        if ($PathParts.Length -gt 0) {
-            $ServiceName = $PathParts[0]
-            if ($ServiceCounts.ContainsKey($ServiceName)) {
-                $ServiceCounts[$ServiceName]++
-            } else {
-                $ServiceCounts[$ServiceName] = 1
-            }
-        }
-    }
-    $ZipContents.Dispose()
-    
-    Write-Host "Total files: $TotalFiles" -ForegroundColor White
-    foreach ($Service in $ServiceCounts.Keys | Sort-Object) {
-        Write-Host "  $Service/: $($ServiceCounts[$Service]) files" -ForegroundColor Gray
-    }
+    Write-Host "  Created: $ZipSizeMB MB" -ForegroundColor Green
     
     # Handle offline deployment if requested
     if ($Offline) {
         Write-Host ""
-        Write-Host "==================================================================" -ForegroundColor Cyan
         Write-Host "Offline Deployment Preparation" -ForegroundColor Cyan
         Write-Host "==================================================================" -ForegroundColor Cyan
         
         # Check for Docker
-        Write-Host ""
-        Write-Host "Checking for Docker..." -ForegroundColor White
+        Write-Host "Checking Docker..." -ForegroundColor White
         $DockerAvailable = $false
         try {
             $dockerVersion = docker version 2>&1
             if ($LASTEXITCODE -eq 0) {
                 $DockerAvailable = $true
-                Write-Host "  Docker is available and running" -ForegroundColor Green
+                Write-Host "  Docker available" -ForegroundColor Green
             }
         } catch {
-            Write-Host "  Docker is not available" -ForegroundColor Red
+            Write-Host "  Docker not available" -ForegroundColor Red
         }
         
         if (-not $DockerAvailable) {
             Write-Host ""
-            Write-Host "==================================================================" -ForegroundColor Red
-            Write-Host "ERROR: Docker is required for offline package creation!" -ForegroundColor Red
-            Write-Host "==================================================================" -ForegroundColor Red
-            Write-Host ""
-            Write-Host "To create an offline package with Docker images, you need:" -ForegroundColor Yellow
-            Write-Host ""
-            Write-Host "Docker Desktop or Docker CLI" -ForegroundColor White
-            Write-Host "  Install from: https://www.docker.com/products/docker-desktop" -ForegroundColor Gray
-            Write-Host ""
-            Write-Host "After installing Docker:" -ForegroundColor Yellow
-            Write-Host "  1. Start Docker and wait for it to be ready" -ForegroundColor White
-            Write-Host "  2. Run this script again with -Offline flag" -ForegroundColor White
-            Write-Host ""
-            Write-Host "Alternative: Create the offline package on a different machine" -ForegroundColor Gray
-            Write-Host "that has Docker installed, then transfer the files." -ForegroundColor Gray
-            Write-Host ""
+            Write-Host "ERROR: Docker required for offline package creation" -ForegroundColor Red
+            Write-Host "Install from: https://www.docker.com/products/docker-desktop" -ForegroundColor Yellow
             exit 1
         }
         
-        # Define required Docker images with fallback versions
+        # Define required Docker images with exact versions from docker-compose files
+        # NOTE: alpine/openssl IS included for offline/airgapped installations even though
+        # it's only used temporarily for SSL cert generation - without it, SSL setup would
+        # require internet access to pull the image
         $DockerImages = @(
             @{
                 Primary = "neo4j:2025.08-community"
-                Fallbacks = @("neo4j:5.25-community", "neo4j:5.24-community", "neo4j:latest")
-                Description = "Neo4j Graph Database"
+                Fallbacks = @("neo4j:5.25-community", "neo4j:5.24-community")
+                Description = "Neo4j"
             },
             @{
                 Primary = "python:3.11-slim"
-                Fallbacks = @("python:3.11", "python:3.10-slim", "python:3.10")
-                Description = "Python Runtime"
+                Fallbacks = @("python:3.11", "python:3.10-slim")
+                Description = "Python"
             },
             @{
                 Primary = "alpine/openssl:latest"
-                Fallbacks = @("alpine:latest")
-                Description = "OpenSSL Tools"
-            },
-            @{
-                Primary = "alpine:latest"
-                Fallbacks = @("alpine:3.19", "alpine:3.18")
-                Description = "Alpine Linux Base"
+                Fallbacks = @()
+                Description = "OpenSSL (for SSL cert generation)"
             },
             @{
                 Primary = "eclipse-mosquitto:2.0.22"
-                Fallbacks = @("eclipse-mosquitto:2.0", "eclipse-mosquitto:latest")
-                Description = "MQTT Broker"
+                Fallbacks = @("eclipse-mosquitto:2.0.21", "eclipse-mosquitto:2.0")
+                Description = "MQTT"
             },
             @{
                 Primary = "milvusdb/milvus:v2.6.3"
-                Fallbacks = @("milvusdb/milvus:v2.6.2", "milvusdb/milvus:v2.6.1", "milvusdb/milvus:v2.6.0", "milvusdb/milvus:latest")
-                Description = "Milvus Vector Database"
+                Fallbacks = @("milvusdb/milvus:v2.6.2", "milvusdb/milvus:v2.6.1")
+                Description = "Milvus"
             },
             @{
                 Primary = "minio/minio:latest"
-                Fallbacks = @("minio/minio:RELEASE.2024-10-29T09-49-05Z", "minio/minio:RELEASE.2024-10-13T13-34-11Z")
-                Description = "MinIO Object Storage"
+                Fallbacks = @("minio/minio:RELEASE.2024-10-13T13-34-11Z")
+                Description = "MinIO"
             },
             @{
                 Primary = "quay.io/coreos/etcd:v3.6.5"
-                Fallbacks = @("quay.io/coreos/etcd:v3.6.4", "quay.io/coreos/etcd:v3.6.3", "quay.io/coreos/etcd:latest")
-                Description = "etcd Key-Value Store"
+                Fallbacks = @("quay.io/coreos/etcd:v3.6.4", "quay.io/coreos/etcd:v3.6.3")
+                Description = "etcd"
             },
             @{
                 Primary = "zilliz/attu:v2.6"
-                Fallbacks = @("zilliz/attu:v2.5", "zilliz/attu:latest")
-                Description = "Attu Milvus Management UI"
+                Fallbacks = @("zilliz/attu:v2.5")
+                Description = "Attu"
             }
         )
         
-        Write-Host ""
         Write-Host "Downloading Docker images..." -ForegroundColor White
-        Write-Host "============================" -ForegroundColor Gray
-        Write-Host "This may take several minutes depending on your internet connection" -ForegroundColor Gray
-        Write-Host ""
         
         $SuccessfulDownloads = @()
         $FailedDownloads = @()
@@ -374,8 +285,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 $Success = $false
                 $SuccessfulImage = $null
                 
-                Write-Host "Pulling: $($ImageConfig.Description)" -ForegroundColor White
-                Write-Host "  Primary: $($ImageConfig.Primary)" -ForegroundColor Gray
+                Write-Host "  $($ImageConfig.Description): $($ImageConfig.Primary)" -ForegroundColor White
                 
                 foreach ($ImageVersion in $AllImageVersions) {
                     if ($Success) { break }
@@ -385,18 +295,8 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                     
                     while ($RetryCount -lt $MaxRetries -and -not $Success) {
                         try {
-                            if ($ImageVersion -eq $ImageConfig.Primary) {
-                                if ($RetryCount -eq 0) {
-                                    Write-Host "  Trying: $ImageVersion" -ForegroundColor White
-                                } else {
-                                    Write-Host "  Retry $RetryCount/$($MaxRetries-1): $ImageVersion" -ForegroundColor Yellow
-                                }
-                            } else {
-                                if ($RetryCount -eq 0) {
-                                    Write-Host "  Fallback: $ImageVersion" -ForegroundColor Cyan
-                                } else {
-                                    Write-Host "  Retry $RetryCount/$($MaxRetries-1): $ImageVersion" -ForegroundColor Yellow
-                                }
+                            if ($RetryCount -gt 0 -or $ImageVersion -ne $ImageConfig.Primary) {
+                                Write-Host "    Retry: $ImageVersion" -ForegroundColor Yellow
                             }
                             
                             # Clear any previous error state
@@ -408,14 +308,11 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                                 -Wait -PassThru -NoNewWindow -RedirectStandardError $env:TEMP\docker-error.txt
                             
                             if ($PullProcess.ExitCode -eq 0) {
-                                Write-Host "  SUCCESS" -ForegroundColor Green
                                 $SuccessfulDownloads += $ImageVersion
                                 $SuccessfulImage = $ImageVersion
                                 $Success = $true
-                                
-                                # If we used a fallback, note it
                                 if ($ImageVersion -ne $ImageConfig.Primary) {
-                                    Write-Host "  NOTE: Using fallback version instead of $($ImageConfig.Primary)" -ForegroundColor Yellow
+                                    Write-Host "    Using fallback: $ImageVersion" -ForegroundColor Cyan
                                 }
                             } else {
                                 $ErrorOutput = ""
@@ -428,12 +325,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                         } catch {
                             $RetryCount++
                             if ($RetryCount -lt $MaxRetries) {
-                                Write-Host "  FAILED: $($_.Exception.Message -split "`n" | Select-Object -First 1)" -ForegroundColor Red
-                                Write-Host "  Waiting 3 seconds before retry..." -ForegroundColor Gray
                                 Start-Sleep -Seconds 3
-                            } else {
-                                Write-Host "  FAILED: $($_.Exception.Message -split "`n" | Select-Object -First 1)" -ForegroundColor Red
-                                # Don't add to failed list yet - we might have more fallbacks
                             }
                         }
                     }
@@ -441,17 +333,14 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 
                 # If no version worked, add the primary image to failed list
                 if (-not $Success) {
-                    Write-Host "  ALL VERSIONS FAILED for $($ImageConfig.Description)" -ForegroundColor Red
+                    Write-Host "    FAILED" -ForegroundColor Red
                     $FailedDownloads += $ImageConfig.Primary
                 }
-                
-                Write-Host "" # Empty line for readability
             }
             
-            # Save images to tar files using Docker
+            # Save images to tar archive using Docker
             if ($SuccessfulDownloads.Count -gt 0) {
-                Write-Host ""
-                Write-Host "Saving images to tar archive..." -ForegroundColor White
+                Write-Host "Saving to tar archive..." -ForegroundColor White
                 
                 $ImagesArchiveName = $ZipName -replace "\.zip$", "-docker-images.tar"
                 $ImagesArchivePath = Join-Path $OutputPath $ImagesArchiveName
@@ -470,8 +359,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 if ($SaveProcess.ExitCode -eq 0 -and (Test-Path $ImagesArchivePath)) {
                     $ArchiveInfo = Get-Item $ImagesArchivePath
                     $ArchiveSizeGB = [math]::Round($ArchiveInfo.Length / 1GB, 2)
-                    Write-Host "  Archive created: $ImagesArchivePath" -ForegroundColor Green
-                    Write-Host "  Size: $ArchiveSizeGB GB" -ForegroundColor White
+                    Write-Host "  Created: $ArchiveSizeGB GB" -ForegroundColor Green
                 } else {
                     throw "Docker save failed"
                 }
@@ -487,21 +375,11 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         # Handle failures
         if ($FailedDownloads.Count -gt 0) {
             Write-Host ""
-            Write-Host "==================================================================" -ForegroundColor Yellow
-            Write-Host "WARNING: Some images failed to download" -ForegroundColor Yellow
-            Write-Host "==================================================================" -ForegroundColor Yellow
-            Write-Host "Failed images:" -ForegroundColor Red
-            foreach ($FailedImage in $FailedDownloads) {
-                Write-Host "  - $FailedImage" -ForegroundColor Red
-            }
-            Write-Host ""
-            Write-Host "These images will need to be downloaded during installation." -ForegroundColor Yellow
+            Write-Host "WARNING: $($FailedDownloads.Count) image(s) failed - will download during install" -ForegroundColor Yellow
         }
         
         # Download Docker Desktop installer
-        Write-Host ""
-        Write-Host "Downloading Docker Desktop installer..." -ForegroundColor White
-        Write-Host "=======================================" -ForegroundColor Gray
+        Write-Host "Downloading Docker Desktop..." -ForegroundColor White
         
         $DockerDesktopUrl = "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
         $DockerInstallerPath = Join-Path $OutputPath "Docker-Desktop-Installer.exe"
@@ -509,37 +387,23 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         if (Test-Path $DockerInstallerPath) {
             $InstallerInfo = Get-Item $DockerInstallerPath
             $InstallerSizeMB = [math]::Round($InstallerInfo.Length / 1MB, 2)
-            Write-Host "Docker Desktop installer already exists ($InstallerSizeMB MB)" -ForegroundColor Green
-            Write-Host "Skipping download" -ForegroundColor Gray
+            Write-Host "  Already exists: $InstallerSizeMB MB" -ForegroundColor Green
         } else {
             try {
-                Write-Host "Downloading from: $DockerDesktopUrl" -ForegroundColor Gray
-                Write-Host "This may take several minutes (500+ MB)..." -ForegroundColor Gray
-                
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $DockerDesktopUrl -OutFile $DockerInstallerPath -UseBasicParsing
                 $ProgressPreference = 'Continue'
                 
                 $InstallerInfo = Get-Item $DockerInstallerPath
                 $InstallerSizeMB = [math]::Round($InstallerInfo.Length / 1MB, 2)
-                Write-Host ""
-                Write-Host "Docker Desktop installer downloaded successfully!" -ForegroundColor Green
-                Write-Host "  Location: $DockerInstallerPath" -ForegroundColor White
-                Write-Host "  Size: $InstallerSizeMB MB" -ForegroundColor White
+                Write-Host "  Downloaded: $InstallerSizeMB MB" -ForegroundColor Green
             } catch {
-                Write-Host ""
-                Write-Host "WARNING: Failed to download Docker Desktop installer" -ForegroundColor Yellow
-                Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
-                Write-Host ""
-                Write-Host "You can download it manually from:" -ForegroundColor Yellow
-                Write-Host "  https://www.docker.com/products/docker-desktop" -ForegroundColor White
+                Write-Host "  Failed - download manually from docker.com" -ForegroundColor Yellow
             }
         }
         
         # Create offline installation instructions
-        Write-Host ""
-        Write-Host "Creating offline installation instructions..." -ForegroundColor White
-        Write-Host "===========================================" -ForegroundColor Gray
+        Write-Host "Creating offline instructions..." -ForegroundColor White
         
         $ImagesArchivePath = Join-Path $OutputPath ($ZipName -replace "\.zip$", "-docker-images.tar")
         $HasImagesArchive = Test-Path $ImagesArchivePath
@@ -637,16 +501,12 @@ Missing Images: $($FailedDownloads.Count)
         
         $OfflineInstructionsPath = Join-Path $OutputPath "OFFLINE-INSTALLATION-INSTRUCTIONS.md"
         $OfflineInstructions | Out-File -FilePath $OfflineInstructionsPath -Encoding UTF8
-        Write-Host "Created offline installation instructions" -ForegroundColor Green
-        Write-Host "Location: $OfflineInstructionsPath" -ForegroundColor White
     }
     
 } finally {
     # Clean up temporary directory
     if (Test-Path $TempDir) {
         Remove-Item -Path $TempDir -Recurse -Force
-        Write-Host ""
-        Write-Host "Cleaned up temporary files" -ForegroundColor Gray
     }
 }
 

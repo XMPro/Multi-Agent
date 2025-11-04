@@ -15,7 +15,7 @@ PROCESSED_DIR = Path("/updates/processed")
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
-CHECK_INTERVAL = 5  # seconds
+CHECK_INTERVAL = 10  # seconds
 
 # Ensure processed directory exists
 PROCESSED_DIR.mkdir(exist_ok=True)
@@ -56,6 +56,65 @@ def check_neo4j_connection():
         print(f"[{datetime.now()}] Neo4j connection check failed: {e}")
         return False
 
+def smart_split_cypher(cypher_script):
+    """
+    Split Cypher script by semicolons, but respect string boundaries.
+    Handles both single and double quoted strings, and removes comments.
+    """
+    statements = []
+    current_statement = []
+    in_single_quote = False
+    in_double_quote = False
+    in_line_comment = False
+    i = 0
+    
+    while i < len(cypher_script):
+        char = cypher_script[i]
+        next_char = cypher_script[i + 1] if i + 1 < len(cypher_script) else None
+        
+        # Handle line comments (//)
+        if not in_single_quote and not in_double_quote:
+            if char == '/' and next_char == '/':
+                in_line_comment = True
+                i += 2
+                continue
+            elif in_line_comment:
+                if char == '\n':
+                    in_line_comment = False
+                    current_statement.append(char)  # Keep the newline
+                i += 1
+                continue
+        
+        # Skip escaped characters
+        if i > 0 and cypher_script[i-1] == '\\':
+            current_statement.append(char)
+            i += 1
+            continue
+        
+        # Toggle quote states
+        if char == "'" and not in_double_quote:
+            in_single_quote = not in_single_quote
+        elif char == '"' and not in_single_quote:
+            in_double_quote = not in_double_quote
+        
+        # Check for statement end (semicolon outside of quotes)
+        if char == ';' and not in_single_quote and not in_double_quote:
+            statement = ''.join(current_statement).strip()
+            if statement:
+                statements.append(statement)
+            current_statement = []
+        else:
+            current_statement.append(char)
+        
+        i += 1
+    
+    # Add final statement if exists
+    statement = ''.join(current_statement).strip()
+    if statement:
+        statements.append(statement)
+    
+    return statements
+
 def run_cypher_file(file_path):
     """Execute a cypher file against Neo4j"""
     print(f"[{datetime.now()}] Processing: {file_path.name}")
@@ -78,13 +137,32 @@ def run_cypher_file(file_path):
             driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         
         with driver.session() as session:
-            # Split by semicolon and run each statement
-            statements = [s.strip() for s in cypher_script.split(';') if s.strip()]
+            # Use smart split that respects string boundaries
+            statements = smart_split_cypher(cypher_script)
+            
+            print(f"  Found {len(statements)} statement(s) to execute")
             
             for i, statement in enumerate(statements, 1):
                 if statement:
                     print(f"  Executing statement {i}/{len(statements)}...")
-                    session.run(statement)
+                    try:
+                        session.run(statement)
+                    except Exception as stmt_error:
+                        error_msg = str(stmt_error)
+                        print(f"    ✗ Statement {i} failed: {error_msg}")
+                        # Print first 200 chars of failed statement for debugging
+                        print(f"    Statement preview: {statement[:200]}...")
+                        
+                        # Try to provide helpful error location info
+                        if "line" in error_msg.lower():
+                            import re
+                            line_match = re.search(r'line (\d+)', error_msg)
+                            if line_match:
+                                line_num = int(line_match.group(1))
+                                stmt_lines = statement.split('\n')
+                                if 0 < line_num <= len(stmt_lines):
+                                    print(f"    Error at line {line_num}: {stmt_lines[line_num-1][:100]}")
+                        raise
         
         driver.close()
         
@@ -118,14 +196,15 @@ def watch_folder():
     heartbeat_counter = 0
     
     print(f"[{datetime.now()}] Watcher loop started. Watching for .cypher files...")
+    sys.stdout.flush()
     print()
     
     while True:
         try:
-            # Heartbeat every 60 iterations (5 minutes at 5 second intervals)
+            # Heartbeat every 6 iterations (1 minute at 10 second intervals)
             heartbeat_counter += 1
-            if heartbeat_counter >= 60:
-                print(f"[{datetime.now()}] Watcher alive - heartbeat")
+            if heartbeat_counter >= 6:
+                print(f"[{datetime.now()}] Watcher alive - heartbeat (checking every {CHECK_INTERVAL}s)")
                 sys.stdout.flush()
                 heartbeat_counter = 0
             

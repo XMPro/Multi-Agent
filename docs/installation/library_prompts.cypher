@@ -9,7 +9,7 @@ WITH lib, [
     prompt_id: "XMAGS-CONVERSATION-PROMPT-001",
     name: "Conversation",
     internal_name: "conversation_prompt",
-    prompt: """Current timestamp: {current_timestamp}
+    prompt: "Current timestamp: {current_timestamp}
 Current user input: {user_query}
 
 Context information:
@@ -43,7 +43,7 @@ Response Requirements:
    - Maintain chronological organization of information
    - Preserve all asset identifiers when referencing historical data
 11. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information:
-   - Always use the syntax 'SUGGEST_TOOL: ToolName: "user's original question"'
+   - Always use the syntax 'SUGGEST_TOOL: ToolName: \"user's original question\"'
    - Do not modify queries yourself
    - Pass the user's question directly to the tool
    - Suggest tools specifically for missing asset information
@@ -66,7 +66,7 @@ Your response can include tool suggestions ONLY IF relevant to answering the que
 
 <Conversation history>
 {history}
-</Conversation history>""",
+</Conversation history>",
     reserved_fields: ["current_timestamp", "history", "knowledge_context", "available_tools", "user_query"],
     category: "conversation",
     tags: ["conversation"],
@@ -76,7 +76,7 @@ Your response can include tool suggestions ONLY IF relevant to answering the que
     prompt_id: "XMAGS-CONVOSUMMARY-PROMPT-001",
     name: "Conversation Summary",
     internal_name: "conversation_summary_prompt",
-    prompt: """Extract and compress the following conversation into essential points for future context:
+    prompt: "Extract and compress the following conversation into essential points for future context:
 
 User: {user_query}
 Assistant: {agent_response}
@@ -97,15 +97,15 @@ User: How should I handle equipment calibration scheduling for our new productio
 Assistant: [Long detailed response about calibration procedures, scheduling software, compliance requirements, etc.]
 
 Extract:
-• Recommended monthly calibration schedule for critical equipment, quarterly for secondary
-• Use CalibrationPro software - integrates with existing ERP system 
-• Must document per ISO 9001 requirements - keep records minimum 3 years
-• Schedule during planned maintenance windows to minimize downtime
-• Critical equipment: pressure sensors, flow meters, temperature controllers
-• Backup calibration vendor: TechCal Services (contact: 555-0123)
-• Warning: Never skip pressure sensor calibration - safety compliance issue
+â€¢ Recommended monthly calibration schedule for critical equipment, quarterly for secondary
+â€¢ Use CalibrationPro software - integrates with existing ERP system 
+â€¢ Must document per ISO 9001 requirements - keep records minimum 3 years
+â€¢ Schedule during planned maintenance windows to minimize downtime
+â€¢ Critical equipment: pressure sensors, flow meters, temperature controllers
+â€¢ Backup calibration vendor: TechCal Services (contact: 555-0123)
+â€¢ Warning: Never skip pressure sensor calibration - safety compliance issue
 
-[Return ONLY the compact extract]""",
+[Return ONLY the compact extract]",
     reserved_fields: ["user_query", "agent_response"],
     category: "conversation",
     tags: ["conversation"],
@@ -115,7 +115,7 @@ Extract:
     prompt_id: "XMAGS-CONVOOBSERVE-PROMPT-001",
     name: "Conversation Observation",
     internal_name: "conversation_observation_prompt",
-    prompt: """Analyze the following response and recent agent memories to determine if a NEW observation should be created. Consider both chronological and semantically similar memories.
+    prompt: "Analyze the following response and recent agent memories to determine if a NEW observation should be created. Consider both chronological and semantically similar memories.
 
 1. Significance: Does the response contain important or novel information?
 2. Relevance: Is the information directly related to the agent's tasks or goals?
@@ -138,7 +138,7 @@ Current response to analyze:
 Based on these criteria, should a new observation be created? Respond with 'Yes' or 'No'.
 
 Reasoning:
-[Provide brief explanation considering both chronological and semantic context]""",
+[Provide brief explanation considering both chronological and semantic context]",
     reserved_fields: ["time_ordered_memories", "response", "similar_memories"],
     category: "conversation",
     tags: ["conversation", "observation"],
@@ -148,7 +148,7 @@ Reasoning:
     prompt_id: "XMAGS-CONREPLY-PROMPT-001",
     name: "Conversation Reply",
     internal_name: "conversation_reply_prompt",
-    prompt: """# Input Context
+    prompt: "# Input Context
 ## User Query
 {user_query}
 
@@ -185,13 +185,13 @@ Before creating a chart, ask:
   - Would this data be better understood as a table?
 
 **When to Chart**
-- ✅ **Create charts**: When actual numerical data is provided in the knowledge context or tool results
+- âœ… **Create charts**: When actual numerical data is provided in the knowledge context or tool results
 
 **When NOT to Chart**
-- ❌ Unrelated measurements with different units (use table + bar chart if comparison needed)
-- ❌ Single data points
-- ❌ Data that's clearer in tabular format
-- ❌ Mixed units without meaningful relationships
+- âŒ Unrelated measurements with different units (use table + bar chart if comparison needed)
+- âŒ Single data points
+- âŒ Data that's clearer in tabular format
+- âŒ Mixed units without meaningful relationships
 
 ### Chart Data Transformation
 When numerical data is present:
@@ -208,16 +208,16 @@ For comparing different categories, measurements, or unrelated values
 
  ```chart
  {
-   "type": "BarChart",
-   "data": [
-	 {"name": "Category A", "value": 150},
-	 {"name": "Category B", "value": 230}
+   \"type\": \"BarChart\",
+   \"data\": [
+	 {\"name\": \"Category A\", \"value\": 150},
+	 {\"name\": \"Category B\", \"value\": 230}
    ],
-   "config": {
-	 "xAxis": "name",
-	 "yAxis": "value",
-	 "title": "Comparison Chart Title",
-	 "yAxisUnit": "units"
+   \"config\": {
+	 \"xAxis\": \"name\",
+	 \"yAxis\": \"value\",
+	 \"title\": \"Comparison Chart Title\",
+	 \"yAxisUnit\": \"units\"
    }
  }
  ```
@@ -227,16 +227,16 @@ ONLY for time series data or sequential relationships
 
  ```chart
  {
-   "type": "LineChart",
-   "data": [
-	 {"name": "Jan", "value": 100},
-	 {"name": "Feb", "value": 120},
-	 {"name": "Mar", "value": 110}
+   \"type\": \"LineChart\",
+   \"data\": [
+	 {\"name\": \"Jan\", \"value\": 100},
+	 {\"name\": \"Feb\", \"value\": 120},
+	 {\"name\": \"Mar\", \"value\": 110}
    ],
-   "config": {
-	 "xAxis": "name",
-	 "yAxis": "value",
-	 "title": "Time Series Chart Title"
+   \"config\": {
+	 \"xAxis\": \"name\",
+	 \"yAxis\": \"value\",
+	 \"title\": \"Time Series Chart Title\"
    }
  }
  ```
@@ -246,13 +246,13 @@ For parts of a whole (percentages/proportions)
 
  ```chart
  {
-   "type": "PieChart",
-   "data": [
-	 {"name": "Section A", "value": 30},
-	 {"name": "Section B", "value": 70}
+   \"type\": \"PieChart\",
+   \"data\": [
+	 {\"name\": \"Section A\", \"value\": 30},
+	 {\"name\": \"Section B\", \"value\": 70}
    ],
-   "config": {
-	 "title": "Distribution Chart Title"
+   \"config\": {
+	 \"title\": \"Distribution Chart Title\"
    }
  }
  ```
@@ -262,15 +262,15 @@ For showing correlations between two variables
 
  ```chart
  {
-   "type": "ScatterChart",
-   "data": [
-	 {"x": 10, "y": 20},
-	 {"x": 15, "y": 25}
+   \"type\": \"ScatterChart\",
+   \"data\": [
+	 {\"x\": 10, \"y\": 20},
+	 {\"x\": 15, \"y\": 25}
    ],
-   "config": {
-	 "xAxis": "x",
-	 "yAxis": "y",
-	 "title": "Correlation Chart Title"
+   \"config\": {
+	 \"xAxis\": \"x\",
+	 \"yAxis\": \"y\",
+	 \"title\": \"Correlation Chart Title\"
    }
  }
  ```
@@ -324,19 +324,19 @@ For general topics (processes, parts, procedures, asset groups), respond natural
 - Include timestamps when citing historical information
 
 ## What NOT to do
-- ❌ Create hypothetical examples or sample data
-- ❌ Generate placeholder visualizations
-- ❌ Assume or infer information not provided
-- ❌ Create fake citations or references
-- ❌ Use phrases like "Here's an example of what it might look like"
-- ❌ Ask for confirmation to use tools
-- ❌ Provide speculative results from tool usage
+- âŒ Create hypothetical examples or sample data
+- âŒ Generate placeholder visualizations
+- âŒ Assume or infer information not provided
+- âŒ Create fake citations or references
+- âŒ Use phrases like \"Here\'s an example of what it might look like\"
+- âŒ Ask for confirmation to use tools
+- âŒ Provide speculative results from tool usage
 
 ## Professional Tone
 - Maintain helpful, knowledgeable assistant persona
 - Be direct and clear about capabilities and limitations
 - Offer constructive guidance on next steps
-- Stay focused on the user's actual needs""",
+- Stay focused on the user\'s actual needs",
     reserved_fields: ["tool_usage", "knowledge_context", "agent_response", "user_query"],
     category: "conversation",
     tags: ["conversation"],
@@ -346,7 +346,7 @@ For general topics (processes, parts, procedures, asset groups), respond natural
     prompt_id: "XMAGS-PLANDECISION-PROMPT-001",
     name: "Plan Decision",
     internal_name: "plan_decision_prompt",
-    prompt: """Based on the following information, decide if the current plan should be adjusted or if the current plan is sufficient:
+    prompt: "Based on the following information, decide if the current plan should be adjusted or if the current plan is sufficient:
 
 ## Current plan: 
 {current_plan}
@@ -434,7 +434,7 @@ Provide your decision as 'Yes' for a plan adjustment is needed or 'No' if the cu
 1. Specific measures and their threshold status (not just target alignment)
 2. How well current plan tasks address the identified issues
 3. Impact of adaptation factors on plan relevance
-4. Whether available actions support plan continuation or require changes]""",
+4. Whether available actions support plan continuation or require changes]",
     reserved_fields: ["current_plan", "current_state", "adaptation_factors", "new_goal_from_reflections", "current_plan_valid", "initial_assessment", "objective_function", "available_actions"],
     category: "plan",
     tags: ["plan", "reflection"],
@@ -444,7 +444,7 @@ Provide your decision as 'Yes' for a plan adjustment is needed or 'No' if the cu
     prompt_id: "XMAGS-PLANREFLECT-PROMPT-001",
     name: "Planning Reflection",
     internal_name: "planning_reflection_analysis_prompt",
-    prompt: """Analyze the following recent reflections and determine if a new goal is needed. Consider the current plan, goals, objective functions, measures, and available actions when making your decision.
+    prompt: "Analyze the following recent reflections and determine if a new goal is needed. Consider the current plan, goals, objective functions, measures, and available actions when making your decision.
 
 
 ## Recent reflections
@@ -512,7 +512,7 @@ Provide a brief explanation for your decision, focusing on:
 2. How the current values of measures compare to their target values and thresholds
 3. Which specific actions could be taken to improve underperforming measures
 4. How your proposed goal (if any) would address these gaps using available actions
-5. Why the current plan is or isn't sufficient to address these gaps""",
+5. Why the current plan is or isn't sufficient to address these gaps",
     reserved_fields: ["recent_reflections", "current_goals", "current_plan", "objective_function", "available_actions"],
     category: "plan",
     tags: ["plan", "reflection"],
@@ -522,7 +522,7 @@ Provide a brief explanation for your decision, focusing on:
     prompt_id: "XMAGS-PLANPROBLEMUNDERSTAND-PROMPT-001",
     name: "Planning Understanding Problem",
     internal_name: "plan_understand_problem_prompt",
-    prompt: """Analyze the following goal and provide a concise summary of the key elements, objectives, and constraints, considering the capabilities of the team:
+    prompt: "Analyze the following goal and provide a concise summary of the key elements, objectives, and constraints, considering the capabilities of the team:
 
 ## Goal
 {goal}
@@ -542,7 +542,7 @@ Your response should include:
 5. How different team members' capabilities might be leveraged to achieve the goal
 6. How the goal relates to the objective functions and their measures
 
-Provide your analysis in a clear, structured format.""",
+Provide your analysis in a clear, structured format.",
     reserved_fields: ["goal", "team_capabilities", "objective_function"],
     category: "plan",
     tags: ["plan"],
@@ -552,7 +552,7 @@ Provide your analysis in a clear, structured format.""",
     prompt_id: "XMAGS-PLANPDDL-PROMPT-001",
     name: "Planning Generate PDDL",
     internal_name: "plan_generate_pddl_prompt",
-    prompt: """Based on the goal and problem understanding below, create a PDDL (Planning Domain Definition Language) plan that can be executed to achieve the goal.
+    prompt: "Based on the goal and problem understanding below, create a PDDL (Planning Domain Definition Language) plan that can be executed to achieve the goal.
 
 ## Goal
 {goal}
@@ -642,11 +642,11 @@ IMPORTANT:
 
 IMPORTANT FORMAT REQUIREMENTS:
 1. Start each major section with a specific header format:
-   - Use exactly ";; Domain Definition" for the domain section
-   - Use exactly ";; Problem Definition" for the problem section
-   - Use exactly ";; Plan" for the plan section
-   - Use exactly "### Plan Validation:" for the validation section
-   - Use exactly "### Efficiency Analysis:" for the efficiency analysis section
+   - Use exactly \";; Domain Definition\" for the domain section
+   - Use exactly \";; Problem Definition\" for the problem section
+   - Use exactly \";; Plan\" for the plan section
+   - Use exactly \"### Plan Validation:\" for the validation section
+   - Use exactly \"### Efficiency Analysis:\" for the efficiency analysis section
 
 2. For the PDDL code:
    - Enclose all PDDL code blocks within triple backticks with the pddl language specifier: ```pddl
@@ -655,12 +655,12 @@ IMPORTANT FORMAT REQUIREMENTS:
 
 3. For the Plan section:
    - Format each action as a comment line starting with semicolon (;)
-   - Include agent assignment in the format: "; Assigned to: [Agent Name]"
-   - Ensure numeric effects are specified for each action (e.g., "reduces load-forecast-error by 0.05")
+   - Include agent assignment in the format: \"; Assigned to: [Agent Name]\"
+   - Ensure numeric effects are specified for each action (e.g., \"reduces load-forecast-error by 0.05\")
    - Include measure impacts for each action in the format:
-     "; Measure Impacts:"
-     ";   - measure1: increases from 82.5 to 83.0"
-     ";   - measure2: decreases from 94.0 to 92.5"
+     \"; Measure Impacts:\"
+     \";   - measure1: increases from 82.5 to 83.0\"
+     \";   - measure2: decreases from 94.0 to 92.5\"
 
 4. For Validation and Efficiency sections:
    - Use bullet points for clarity
@@ -764,7 +764,7 @@ IMPORTANT FORMAT REQUIREMENTS:
   - Projected impact on measure3: from A.AA to B.BB
 
 ### Efficiency Analysis:
-- Critical path: Action 1 → Action 3 → Action 5
+- Critical path: Action 1 â†’ Action 3 â†’ Action 5
 - Parallel opportunities: Actions 2 and 4 can be executed simultaneously
 - Bottleneck identified: Limited availability of Agent X for both Action 1 and Action 3
 - Optimization recommendation: Prioritize Action 1 to immediately improve metric1 by X.XX
@@ -777,7 +777,7 @@ IMPORTANT FORMAT REQUIREMENTS:
   - Component2 (weight: W.WW): from X.XX to Y.YY
 - Overall improvement: Z.ZZ (P.PP%)
 
-Ensure that all PDDL elements are syntactically correct and logically consistent with the given goal, problem understanding, and team capabilities. Your PDDL should show a clear path to achieving the specific numeric targets in the goal.""",
+Ensure that all PDDL elements are syntactically correct and logically consistent with the given goal, problem understanding, and team capabilities. Your PDDL should show a clear path to achieving the specific numeric targets in the goal.",
     reserved_fields: ["goal", "understanding", "team_capabilities", "available_actions", "objective_function"],
     category: "plan",
     tags: ["plan"],
@@ -787,7 +787,7 @@ Ensure that all PDDL elements are syntactically correct and logically consistent
     prompt_id: "XMAGS-PLANADJ-PROMPT-001",
     name: "Plan Adjustment",
     internal_name: "plan_adjustment_prompt",
-    prompt: """Given the current plan and a new planning decision, adjust the PDDL plan to incorporate the new goal while maintaining relevant parts of the current plan:
+    prompt: "Given the current plan and a new planning decision, adjust the PDDL plan to incorporate the new goal while maintaining relevant parts of the current plan:
 
 Current Plan:
 Goal: {current_goal}
@@ -867,12 +867,12 @@ IMPORTANT:
 
 IMPORTANT FORMAT REQUIREMENTS:
 1. Start each major section with a specific header format:
-   - Use exactly ";; Domain Definition" for the domain section
-   - Use exactly ";; Problem Definition" for the problem section
-   - Use exactly ";; Plan" for the plan section
-   - Use exactly "### Plan Validation:" for the validation section
-   - Use exactly "### Efficiency Analysis:" for the efficiency analysis section
-   - Use exactly "### Objective Function Impact:" for the impact section
+   - Use exactly \";; Domain Definition\" for the domain section
+   - Use exactly \";; Problem Definition\" for the problem section
+   - Use exactly \";; Plan\" for the plan section
+   - Use exactly \"### Plan Validation:\" for the validation section
+   - Use exactly \"### Efficiency Analysis:\" for the efficiency analysis section
+   - Use exactly \"### Objective Function Impact:\" for the impact section
 
 2. For the PDDL code:
    - Enclose all PDDL code blocks within triple backticks with the pddl language specifier: ```pddl
@@ -881,12 +881,12 @@ IMPORTANT FORMAT REQUIREMENTS:
 
 3. For the Plan section:
    - Format each action as a comment line starting with semicolon (;)
-   - Include agent assignment in the format: "; Assigned to: [Agent Name]"
-   - Ensure numeric effects are specified for each action (e.g., "reduces load-forecast-error by 0.05")
+   - Include agent assignment in the format: \"; Assigned to: [Agent Name]\"
+   - Ensure numeric effects are specified for each action (e.g., \"reduces load-forecast-error by 0.05\")
    - Include measure impacts for each action in the format:
-     "; Measure Impacts:"
-     ";   - measure1: increases from 82.5 to 83.0"
-     ";   - measure2: decreases from 94.0 to 92.5"
+     \"; Measure Impacts:\"
+     \";   - measure1: increases from 82.5 to 83.0\"
+     \";   - measure2: decreases from 94.0 to 92.5\"
    - Mark each action as New, Modified, or Unchanged
 
 4. For Validation and Efficiency sections:
@@ -984,7 +984,7 @@ Your complete response should follow this exact structure:
   - [Explain why these elements were preserved]
 
 ### Efficiency Analysis:
-- Critical path: Action 1 → Action 3 → Action 5
+- Critical path: Action 1 â†’ Action 3 â†’ Action 5
 - Parallel opportunities: Actions 2 and 4 can be executed simultaneously
 - Bottleneck identified: Limited availability of Agent X for both Action 1 and Action 3
 - Optimization recommendation: Prioritize Action 1 to immediately improve metric1 by X.XX
@@ -997,7 +997,7 @@ Your complete response should follow this exact structure:
   - Component2 (weight: W.WW): from X.XX to Y.YY
 - Overall improvement: Z.ZZ (P.PP%)
 
-Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision.""",
+Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision.",
     reserved_fields: ["current_goal", "current_pddl_plan", "new_goal", "decision_reasoning", "objective_function", "team_capabilities", "available_actions"],
     category: "plan",
     tags: ["plan"],
@@ -1007,7 +1007,7 @@ Ensure that all PDDL elements are syntactically correct and logically consistent
 prompt_id: "XMAGS-TASKBREAKDOWN-PROMPT-001",
     name: "Task Breakdown",
     internal_name: "task_breakdown_prompt",
-    prompt: """Break down the following plan into specific, actionable tasks to achieve the goal, considering the capabilities of the team members:
+    prompt: "Break down the following plan into specific, actionable tasks to achieve the goal, considering the capabilities of the team members:
 
 ## Goal
 {goal}
@@ -1030,11 +1030,11 @@ For each task, specify:
 4. The specific actions required to complete the task
 5. The impact of the task on objective function measures
 
-IMPORTANT: For each task, you MUST include specific actions from the agent's "Available Actions" list that would be used to accomplish the PDDL action. Each PDDL action must be translated into one or more concrete actions from the agent's available actions.
+IMPORTANT: For each task, you MUST include specific actions from the agent's \"Available Actions\" list that would be used to accomplish the PDDL action. Each PDDL action must be translated into one or more concrete actions from the agent's available actions.
 
 For example:
-- If a PDDL action is "calibrate-forecasting-model", you must specify which of the agent's available actions (such as "update_digital_twin" or "create_work_order") would be used to accomplish this.
-- If a PDDL action is "schedule-maintenance", you must include the "schedule_maintenance" action and any other relevant actions from the agent's available actions list.
+- If a PDDL action is \"calibrate-forecasting-model\", you must specify which of the agent's available actions (such as \"update_digital_twin\" or \"create_work_order\") would be used to accomplish this.
+- If a PDDL action is \"schedule-maintenance\", you must include the \"schedule_maintenance\" action and any other relevant actions from the agent's available actions list.
 
 DO NOT leave the Actions section empty or with [- None]. Every task must have at least one specific action listed from the agent's Available Actions.
 
@@ -1079,7 +1079,7 @@ Actions:
 Action Justification: The update_digital_twin action is selected to update the model's parameters and algorithms in the digital environment, which is essential for improving forecast accuracy. The create_work_order action initiates the formal process of model calibration, ensuring the necessary resources are allocated and the calibration is properly documented in the system.
 Measure Impacts:
 - load_forecast_error: decrease (from 0.42 to 0.37)
-- operational_efficiency_ratio: increase (from 82.5 to 84.0)""",
+- operational_efficiency_ratio: increase (from 82.5 to 84.0)",
     reserved_fields: ["planning_decision_goal", "planning_decision_reasoning", "planning_decision_context", "planning_decision_response", "components_list"],
     category: "plan",
     tags: ["task", "agent"],
@@ -1089,7 +1089,7 @@ Measure Impacts:
 prompt_id: "XMAGS-CONSENSUSIMP-PROMPT-001",
     name: "Component Impact Analysis",
     internal_name: "components_batch_impact_analysis_prompt",
-    prompt: """Analyze the following planning decision to determine which components and measures of an objective function it would impact.
+    prompt: "Analyze the following planning decision to determine which components and measures of an objective function it would impact.
 
 ## Goal
 {planning_decision_goal}
@@ -1159,7 +1159,7 @@ Example 3 - No Impact Case:
 MEASURE: maintenance_cost_ratio
 IMPACT_DETECTED: No
 CONFIDENCE: 0.65
-REASONING: The planning decision focuses on operational efficiency and does not mention or imply changes to maintenance procedures, schedules, or resources. While improved efficiency might indirectly affect maintenance in the long term, there is no clear pathway for this decision to impact maintenance costs in the scope described.""",
+REASONING: The planning decision focuses on operational efficiency and does not mention or imply changes to maintenance procedures, schedules, or resources. While improved efficiency might indirectly affect maintenance in the long term, there is no clear pathway for this decision to impact maintenance costs in the scope described.",
     reserved_fields: ["planning_decision_goal", "planning_decision_reasoning", "planning_decision_context", "planning_decision_response", "components_list"],
     category: "plan",
     tags: ["objective", "team"],
@@ -1169,7 +1169,7 @@ REASONING: The planning decision focuses on operational efficiency and does not 
     prompt_id: "XMAGS-TOOLRESULT-PROMPT-001",
     name: "Tool Results",
     internal_name: "tool_results_prompt",
-    prompt: """Based on the following information:
+    prompt: "Based on the following information:
 
 {original_prompt}
 
@@ -1180,7 +1180,7 @@ Previous response:
 Please provide an updated response.  
 If you are provided information from the tools make sure to include that in your response.  
 Summarize the tools and output the results of the tools in markdown that the user can understand as part of your response, if you are provided telemetry style data output it as a markdown table.
-<instructions>""",
+<instructions>",
     reserved_fields: ["original_prompt", "previous_response"],
     category: "memory_cycle",
     tags: ["observation", "reflection"],
@@ -1190,7 +1190,7 @@ Summarize the tools and output the results of the tools in markdown that the use
     prompt_id: "XMAGS-DSTOOL-PROMPT-001",
     name: "Data Stream Tool",
     internal_name: "data_stream_message_prompt",
-    prompt: """Generate message payloads that STRICTLY conform to ONLY the structure defined between the <structure> tags.
+    prompt: "Generate message payloads that STRICTLY conform to ONLY the structure defined between the <structure> tags.
 Input: {input}
 
 <structure>
@@ -1211,7 +1211,7 @@ Expected output format:
     {
         // fields matching expected structure
     }
-]""",
+]",
     reserved_fields: ["input", "structure"],
     category: "tool",
     tags: ["tool", "data stream"],
@@ -1221,7 +1221,7 @@ Expected output format:
     prompt_id: "XMAGS-COMMDECISION-PROMPT-001",
     name: "Communication Decision",
     internal_name: "communication_decision_prompt",
-    prompt: """Analyze the following reflection and determine if this information should be communicated to other agents:
+    prompt: "Analyze the following reflection and determine if this information should be communicated to other agents:
 
 ## Reflection: 
 {content}
@@ -1246,7 +1246,7 @@ SHARE_DECISION: [Yes/No]
 COMMUNICATION_TYPE: [Direct/Team]
 TARGET_AGENTS: [List specific agent IDs or 'All' if relevant to everyone]
 AGENT_RESPONSES: [AgentID1:Yes, AgentID2:No, ...] - Specify which agents should respond
-JUSTIFICATION: [Brief explanation of your decision including how confidence level influenced the decision]""",
+JUSTIFICATION: [Brief explanation of your decision including how confidence level influenced the decision]",
     reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence"],
     category: "memory_cycle",
     tags: ["reflection", "communication", "team"],
@@ -1256,7 +1256,7 @@ JUSTIFICATION: [Brief explanation of your decision including how confidence leve
     prompt_id: "XMAGS-COMMRESPONSE-PROMPT-001",
     name: "Agent Message Response",
     internal_name: "agent_message_response_prompt",
-    prompt: """Analyze the following message from another agent and generate an appropriate response:
+    prompt: "Analyze the following message from another agent and generate an appropriate response:
 
 ## Message from Agent {sender_id}: 
 {content}
@@ -1278,7 +1278,7 @@ JUSTIFICATION: [Brief explanation of your decision including how confidence leve
 ## Response Format
 RESPONSE_CONTENT: [Your detailed response to the agent]
 REASONING: [Brief explanation of why this response is appropriate]
-RELEVANCE_TO_TEAM_GOALS: [How this response aligns with or advances team objectives]""",
+RELEVANCE_TO_TEAM_GOALS: [How this response aligns with or advances team objectives]",
     reserved_fields: ["sender_id", "content", "agent_id", "role", "team_context"],
     category: "memory_cycle",
     tags: ["communication", "team"],

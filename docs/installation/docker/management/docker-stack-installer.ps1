@@ -643,15 +643,30 @@ if ($ConfiguredServices["neo4j"]) {
     
     if (Test-Path "neo4j\.env") {
         $Neo4jEnv = Get-Content "neo4j\.env" -Raw
-        if ($Neo4jEnv -match 'NEO4J_AUTH=([^/]+)/(.+)') {
-            $Neo4jUser = $Matches[1]
-            $Neo4jPass = $Matches[2]
-            $CredentialsContent += @"
+        
+        # Extract username
+        if ($Neo4jEnv -match 'NEO4J_USER=(.+)') {
+            $Neo4jUser = $Matches[1].Trim()
+        } elseif ($Neo4jEnv -match 'NEO4J_AUTH=([^/]+)/') {
+            $Neo4jUser = $Matches[1].Trim()
+        } else {
+            $Neo4jUser = "neo4j"
+        }
+        
+        # Extract password
+        if ($Neo4jEnv -match 'NEO4J_PASSWORD=(.+)') {
+            $Neo4jPass = $Matches[1].Trim()
+        } elseif ($Neo4jEnv -match 'NEO4J_AUTH=[^/]+/(.+)') {
+            $Neo4jPass = $Matches[1].Trim()
+        } else {
+            $Neo4jPass = "(check Neo4j .env file)"
+        }
+        
+        $CredentialsContent += @"
 Username: $Neo4jUser
 Password: $Neo4jPass
 
 "@
-        }
     }
     
     $CredentialsContent += @"
@@ -660,7 +675,16 @@ Access URLs:
   - Bolt Protocol: bolt://localhost:7687
 "@
     
-    if ($EnableSSL -and (Test-Path "neo4j\certs\bolt\trusted\ca.crt")) {
+    # Check if SSL is actually enabled in Neo4j
+    $Neo4jSSLEnabled = $false
+    if (Test-Path "neo4j\.env") {
+        $Neo4jEnvContent = Get-Content "neo4j\.env" -Raw
+        if ($Neo4jEnvContent -match 'ENABLE_SSL=true') {
+            $Neo4jSSLEnabled = $true
+        }
+    }
+    
+    if ($Neo4jSSLEnabled -and (Test-Path "neo4j\certs\bolt\trusted\ca.crt")) {
         $CredentialsContent += @"
 
   - HTTPS Browser: https://localhost:7473
@@ -711,7 +735,16 @@ Access URLs:
   - HTTP API: localhost:9091
 "@
     
-    if ($EnableSSL) {
+    # Check if SSL is actually enabled in Milvus
+    $MilvusSSLEnabled = $false
+    if (Test-Path "milvus\.env") {
+        $MilvusEnvContent = Get-Content "milvus\.env" -Raw
+        if ($MilvusEnvContent -match 'ENABLE_SSL=true') {
+            $MilvusSSLEnabled = $true
+        }
+    }
+    
+    if ($MilvusSSLEnabled) {
         $CredentialsContent += @"
 
   - Attu Web UI (HTTPS): https://localhost:8001
@@ -753,18 +786,27 @@ if ($ConfiguredServices["mqtt"]) {
 
 "@
     
-    if (Test-Path "mqtt\config\password.txt") {
-        $MqttCreds = Get-Content "mqtt\config\password.txt"
-        foreach ($Line in $MqttCreds) {
-            if ($Line -match '^([^:]+):') {
-                $MqttUser = $Matches[1]
-                # Password is hashed, so we can't retrieve it
-                $CredentialsContent += "Username: $MqttUser`n"
-                $CredentialsContent += "Password: (check MQTT install output above)`n`n"
-                break
-            }
+    $MqttUser = "xmpro"
+    $MqttPass = "(check MQTT install output above)"
+    
+    # Try to get username from password file
+    if (Test-Path "mqtt\config\passwords.txt") {
+        $MqttCreds = Get-Content "mqtt\config\passwords.txt" -First 1
+        if ($MqttCreds -match '^([^:]+):') {
+            $MqttUser = $Matches[1]
         }
     }
+    
+    # Try to get password from .env if it exists
+    if (Test-Path "mqtt\.env") {
+        $MqttEnv = Get-Content "mqtt\.env" -Raw
+        if ($MqttEnv -match 'MQTT_PASSWORD=(.+)') {
+            $MqttPass = $Matches[1].Trim()
+        }
+    }
+    
+    $CredentialsContent += "Username: $MqttUser`n"
+    $CredentialsContent += "Password: $MqttPass`n`n"
     
     $CredentialsContent += @"
 Access URLs:
@@ -772,7 +814,16 @@ Access URLs:
   - WebSocket: ws://localhost:9002
 "@
     
-    if ($EnableSSL) {
+    # Check if SSL is actually enabled in MQTT
+    $MqttSSLEnabled = $false
+    if (Test-Path "mqtt\.env") {
+        $MqttEnvContent = Get-Content "mqtt\.env" -Raw
+        if ($MqttEnvContent -match 'ENABLE_SSL=true') {
+            $MqttSSLEnabled = $true
+        }
+    }
+    
+    if ($MqttSSLEnabled) {
         $CredentialsContent += @"
 
   - MQTT Broker (SSL): localhost:8883

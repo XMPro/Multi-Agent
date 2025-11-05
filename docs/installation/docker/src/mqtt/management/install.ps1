@@ -111,6 +111,16 @@ if ($EnableSSL) {
     } else {
         Write-Host "Self-signed certificates selected" -ForegroundColor Green
         $UseCAProvided = $false
+        
+        # Ask for domain name for certificate
+        Write-Host ""
+        $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
+        if ($DomainChoice) {
+            $Domain = $DomainChoice
+        } else {
+            $Domain = "localhost"
+        }
+        Write-Host "Using domain: $Domain" -ForegroundColor Cyan
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
@@ -295,13 +305,13 @@ if ($EnableSSL) {
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out server.key 2048
             
             # Generate server certificate signing request with SAN
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:127.0.0.1,DNS:mqtt,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=$Domain" -addext "subjectAltName=DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:mqtt,IP:127.0.0.1,IP:::1"
             
             # Generate server certificate with SAN
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -copy_extensions copy
             
             # Clean up CSR file
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine rm -f server.csr ca.srl
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl sh -c "rm -f server.csr ca.srl"
             
             # Verify certificates were created
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {

@@ -93,6 +93,63 @@ try {
         Write-Host "  No Cypher scripts found" -ForegroundColor Yellow
     }
     
+    # Download Python packages for Neo4j watcher (for airgapped installations)
+    Write-Host "Downloading Python packages for Neo4j watcher..." -ForegroundColor White
+    $Neo4jPackagesDir = Join-Path $TempDir "neo4j\neo4j-packages"
+    New-Item -ItemType Directory -Force -Path $Neo4jPackagesDir | Out-Null
+    
+    try {
+        # Check if pip is available
+        $PipAvailable = $false
+        try {
+            pip --version | Out-Null
+            $PipAvailable = $true
+        } catch {
+            Write-Host "  pip not found, skipping Python package download" -ForegroundColor Yellow
+        }
+        
+        if ($PipAvailable) {
+            # Download neo4j Python driver and its dependencies
+            $DownloadResult = pip download neo4j -d $Neo4jPackagesDir 2>&1
+            
+            if ($LASTEXITCODE -eq 0) {
+                $PackageCount = (Get-ChildItem -Path $Neo4jPackagesDir -Filter "*.whl").Count
+                Write-Host "  Downloaded $PackageCount Python package(s) for offline installation" -ForegroundColor Green
+                
+                # Create README for the packages
+                $PackagesReadme = @"
+# Neo4j Python Packages
+
+This directory contains Python packages required for the Neo4j watcher service.
+These packages enable the watcher to work in airgapped/offline environments.
+
+## Contents
+- neo4j Python driver
+- All dependencies required by the neo4j driver
+
+## Usage
+These packages are automatically used by the watcher when it starts.
+The watcher will install from these local packages instead of downloading from PyPI.
+
+## Updating Packages
+To update the packages, run on a machine with internet access:
+``````powershell
+pip download neo4j -d neo4j-packages --upgrade
+``````
+
+Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+"@
+                $PackagesReadme | Out-File -FilePath (Join-Path $Neo4jPackagesDir "README.md") -Encoding UTF8
+            } else {
+                Write-Host "  Failed to download Python packages" -ForegroundColor Yellow
+                Write-Host "  Watcher will attempt online installation if deployed with internet access" -ForegroundColor Gray
+            }
+        }
+    } catch {
+        Write-Host "  Error downloading Python packages: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "  Watcher will attempt online installation if deployed with internet access" -ForegroundColor Gray
+    }
+    
     # Copy management scripts to root of deployment
     Write-Host "Copying management scripts..." -ForegroundColor White
     

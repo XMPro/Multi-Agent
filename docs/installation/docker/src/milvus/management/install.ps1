@@ -241,27 +241,45 @@ if ($EnableSSL) {
         }
         Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
         
-        # Detect machine IP address
+        # Detect machine IP addresses
         Write-Host ""
-        Write-Host "Detecting machine IP address..." -ForegroundColor White
+        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+        $MachineIP = ""
         try {
-            $MachineIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and $_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual' } | Select-Object -First 1).IPAddress
-            if ($MachineIP) {
-                Write-Host "Detected IP: $MachineIP" -ForegroundColor Green
-                $IncludeIPChoice = Read-Host "Include this IP address in certificate for remote connections? (y/n, default: n)"
-                if ($IncludeIPChoice -ne "Y" -and $IncludeIPChoice -ne "y") {
-                    $MachineIP = ""
-                    Write-Host "IP address not included (localhost/domain only)" -ForegroundColor Gray
+            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
+            
+            if ($AllIPs.Count -gt 0) {
+                Write-Host "Detected IP addresses:" -ForegroundColor Green
+                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
+                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
+                }
+                
+                $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
+                
+                if ($IPChoice) {
+                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                    $MachineIPs = @()
+                    foreach ($index in $SelectedIndices) {
+                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                            $MachineIPs += $AllIPs[[int]$index].IPAddress
+                        }
+                    }
+                    
+                    if ($MachineIPs.Count -gt 0) {
+                        Write-Host "Selected IPs: $($MachineIPs -join ', ')" -ForegroundColor Cyan
+                        $MachineIP = $MachineIPs -join ','
+                    } else {
+                        Write-Host "No valid IPs selected, skipping" -ForegroundColor Gray
+                    }
                 } else {
-                    Write-Host "Machine IP $MachineIP will be included in certificate" -ForegroundColor Cyan
+                    Write-Host "No IPs selected (localhost/domain only)" -ForegroundColor Gray
                 }
             } else {
-                $MachineIP = ""
-                Write-Host "Could not detect IP address, skipping" -ForegroundColor Gray
+                Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
             }
         } catch {
-            $MachineIP = ""
-            Write-Host "Could not detect IP address: $($_.Exception.Message)" -ForegroundColor Gray
+            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
         }
     }
 } else {
@@ -352,7 +370,12 @@ DNS.2 = localhost
 IP.1  = 127.0.0.1
 "@
             if ($MachineIP) {
-                $SANConfig += "`nIP.2  = $MachineIP"
+                $IPArray = $MachineIP -split ','
+                $IPIndex = 2
+                foreach ($IP in $IPArray) {
+                    $SANConfig += "`nIP.$IPIndex  = $($IP.Trim())"
+                    $IPIndex++
+                }
             }
             
             # Create server extension

@@ -240,6 +240,29 @@ if ($EnableSSL) {
             $Domain = $DomainChoice
         }
         Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+        
+        # Detect machine IP address
+        Write-Host ""
+        Write-Host "Detecting machine IP address..." -ForegroundColor White
+        try {
+            $MachineIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and $_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual' } | Select-Object -First 1).IPAddress
+            if ($MachineIP) {
+                Write-Host "Detected IP: $MachineIP" -ForegroundColor Green
+                $IncludeIPChoice = Read-Host "Include this IP address in certificate for remote connections? (y/n, default: n)"
+                if ($IncludeIPChoice -ne "Y" -and $IncludeIPChoice -ne "y") {
+                    $MachineIP = ""
+                    Write-Host "IP address not included (localhost/domain only)" -ForegroundColor Gray
+                } else {
+                    Write-Host "Machine IP $MachineIP will be included in certificate" -ForegroundColor Cyan
+                }
+            } else {
+                $MachineIP = ""
+                Write-Host "Could not detect IP address, skipping" -ForegroundColor Gray
+            }
+        } catch {
+            $MachineIP = ""
+            Write-Host "Could not detect IP address: $($_.Exception.Message)" -ForegroundColor Gray
+        }
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
@@ -316,8 +339,8 @@ if ($EnableSSL) {
         try {
             Write-Host "Generating certificates using OpenSSL in Docker..." -ForegroundColor Gray
             
-            # Create server extension
-            @"
+            # Build SAN list for server extension
+            $SANConfig = @"
 [v3_req]
 basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
@@ -327,7 +350,13 @@ subjectAltName = @alt_names
 DNS.1 = $Domain
 DNS.2 = localhost
 IP.1  = 127.0.0.1
-"@ | Out-File -FilePath "tls\server-ext.cnf" -Encoding ASCII
+"@
+            if ($MachineIP) {
+                $SANConfig += "`nIP.2  = $MachineIP"
+            }
+            
+            # Create server extension
+            $SANConfig | Out-File -FilePath "tls\server-ext.cnf" -Encoding ASCII
             
             # Create client extension
             @"

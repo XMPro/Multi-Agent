@@ -121,6 +121,29 @@ if ($EnableSSL) {
             $Domain = "localhost"
         }
         Write-Host "Using domain: $Domain" -ForegroundColor Cyan
+        
+        # Detect machine IP address
+        Write-Host ""
+        Write-Host "Detecting machine IP address..." -ForegroundColor White
+        try {
+            $MachineIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and $_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual' } | Select-Object -First 1).IPAddress
+            if ($MachineIP) {
+                Write-Host "Detected IP: $MachineIP" -ForegroundColor Green
+                $IncludeIPChoice = Read-Host "Include this IP address in certificate for remote connections? (y/n, default: n)"
+                if ($IncludeIPChoice -ne "Y" -and $IncludeIPChoice -ne "y") {
+                    $MachineIP = ""
+                    Write-Host "IP address not included (localhost/domain only)" -ForegroundColor Gray
+                } else {
+                    Write-Host "Machine IP $MachineIP will be included in certificate" -ForegroundColor Cyan
+                }
+            } else {
+                $MachineIP = ""
+                Write-Host "Could not detect IP address, skipping" -ForegroundColor Gray
+            }
+        } catch {
+            $MachineIP = ""
+            Write-Host "Could not detect IP address: $($_.Exception.Message)" -ForegroundColor Gray
+        }
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
@@ -304,8 +327,14 @@ if ($EnableSSL) {
             # Generate server private key
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out server.key 2048
             
+            # Build SAN list
+            $SANList = "DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:mqtt,IP:127.0.0.1,IP:::1"
+            if ($MachineIP) {
+                $SANList += ",IP:$MachineIP"
+            }
+            
             # Generate server certificate signing request with SAN
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=$Domain" -addext "subjectAltName=DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:mqtt,IP:127.0.0.1,IP:::1"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=$Domain" -addext "subjectAltName=$SANList"
             
             # Generate server certificate with SAN
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -copy_extensions copy

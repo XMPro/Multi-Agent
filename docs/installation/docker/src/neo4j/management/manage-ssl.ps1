@@ -133,13 +133,6 @@ function Generate-SSLCertificates {
         if ((Test-Path "certs\bolt\private.key") -and (Test-Path "certs\bolt\public.crt") -and 
             (Test-Path "certs\https\private.key") -and (Test-Path "certs\https\public.crt")) {
             Write-Host "SSL certificates generated successfully using Docker OpenSSL" -ForegroundColor Green
-            
-            # Clean up the alpine/openssl image
-            Write-Host "Cleaning up temporary Docker image..." -ForegroundColor Gray
-            docker rmi alpine/openssl -f 2>$null | Out-Null
-            docker rmi alpine -f 2>$null | Out-Null
-            Write-Host "Temporary Docker images removed" -ForegroundColor Green
-            
             return $true
         } else {
             Write-Host "Certificate files not created properly" -ForegroundColor Red
@@ -383,8 +376,6 @@ function Show-SSLStatus {
                 }
             }
             
-            # Clean up the alpine/openssl image
-            docker rmi alpine/openssl -f 2>$null | Out-Null
         } catch {
             Write-Host "Could not check certificate expiry" -ForegroundColor Yellow
         }

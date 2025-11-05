@@ -53,10 +53,19 @@ if ($Remove) {
 
 # Get installation path if not provided
 if (-not $InstallPath) {
-    $InstallPath = Get-Location
+    # Check if we're in the management subfolder
+    $CurrentLocation = Get-Location
+    if ($CurrentLocation.Path.EndsWith("management")) {
+        # Go up one level to the installation root
+        $InstallPath = Split-Path $CurrentLocation -Parent
+        Write-Host "Detected management subfolder, using parent directory: $InstallPath" -ForegroundColor White
+    } else {
+        $InstallPath = $CurrentLocation
+        Write-Host "Using current directory: $InstallPath" -ForegroundColor White
+    }
+} else {
+    Write-Host "Installation path: $InstallPath" -ForegroundColor White
 }
-
-Write-Host "Installation path: $InstallPath" -ForegroundColor White
 
 # Check if running as Administrator
 $IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
@@ -114,7 +123,7 @@ if ($Remove) {
     Write-Host "=============================================================" -ForegroundColor Gray
     
     $InstalledCerts = Get-ChildItem -Path $CertStore | Where-Object { 
-        $_.Subject -match "Neo4j-CA|Milvus-CA|MQTT-CA" 
+        $_.Subject -match "Neo4j-CA|MQTT-CA" -or ($_.Subject -match "O=Milvus" -and $_.Issuer -match "O=Milvus")
     }
     
     if ($InstalledCerts.Count -eq 0) {

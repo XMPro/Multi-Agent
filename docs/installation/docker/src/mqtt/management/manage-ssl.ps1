@@ -100,17 +100,11 @@ function Generate-SSLCertificates {
         docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days $ValidDays
         
         # Clean up temporary files
-        docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl sh -c "rm -f server.csr ca.srl"
+        docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "rm -f server.csr ca.srl"
         
         # Verify certificates were created
         if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {
             Write-Host "SSL certificates generated successfully using Docker OpenSSL" -ForegroundColor Green
-            
-            # Clean up the alpine/openssl image
-            Write-Host "Cleaning up temporary Docker image..." -ForegroundColor Gray
-            docker rmi alpine/openssl -f 2>$null | Out-Null
-            Write-Host "Temporary Docker image removed" -ForegroundColor Green
-            
             return $true
         } else {
             Write-Host "Certificate files not created" -ForegroundColor Red
@@ -210,9 +204,6 @@ function Show-SSLStatus {
                     }
                 }
             }
-            # Clean up the alpine/openssl image after checking expiry
-            Write-Host "Cleaning up temporary Docker image..." -ForegroundColor Gray
-            docker rmi alpine/openssl -f 2>$null | Out-Null
         } catch {
             Write-Host "Could not check certificate expiry" -ForegroundColor Yellow
         }

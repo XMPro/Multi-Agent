@@ -22,7 +22,7 @@ Drop `.cypher` files into a folder and they automatically execute - **zero manua
                   │
 ┌─────────────────▼───────────────────────────────┐
 │           Update Watcher Service                │
-│   (Monitors /updates folder every 5 seconds)    │
+│   (Monitors /updates folder every 10 seconds)   │
 │   Auto-runs new .cypher files → moves to        │
 │   /processed with timestamp                     │
 └──────────────────────────────────────────────────┘
@@ -43,12 +43,13 @@ Drop `.cypher` files into a folder and they automatically execute - **zero manua
 ### 2. Update Watcher (THE MAGIC!)
 
 - **What it does:** Watches `updates/` folder for new `.cypher` files
-- **When:** Checks every 5 seconds
+- **When:** Checks every 10 seconds
 - **Action:** Auto-executes files against Neo4j
 - **After:** Moves processed files to `updates/processed/` with timestamp
 - **Logs:** Everything logged - success or error
+- **Heartbeat:** Shows "alive" message every 1 minute in logs
 
-**This means: Drop file → Wait 5 seconds → Done!**
+**This means: Drop file → Wait 10 seconds → Done!**
 
 ---
 

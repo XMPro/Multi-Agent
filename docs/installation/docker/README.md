@@ -86,6 +86,7 @@ docker load -i docker-stack-YYYYMMDD-HHMMSS-docker-images.tar
   - `milvus/management/install.ps1` - Sets up Milvus with SSL support  
   - `mqtt/management/install.ps1` - Sets up MQTT with SSL support
 - Starts all services automatically
+- **Generates CREDENTIALS.txt** with all passwords, URLs, and access information
 - Provides connection details and management commands
 
 ## Services Included
@@ -120,7 +121,7 @@ When using self-signed SSL certificates, client machines need the Certificate Au
 #### **CA Certificate Locations (on server)**
 After enabling SSL, CA certificates are located at:
 - **Neo4j**: `neo4j/certs/bolt/trusted/ca.crt` or `neo4j/certs/https/trusted/ca.crt`
-- **Milvus**: `milvus/certs/milvus/trusted/ca.crt`
+- **Milvus**: `milvus/tls/ca.pem`
 - **MQTT**: `mqtt/certs/ca.crt`
 
 #### **Client Machine Installation**
@@ -178,15 +179,28 @@ Each service includes comprehensive management scripts:
 - `restore.ps1` - Restore from backups
 - `manage-users.ps1` - User management (MQTT only)
 
+## After Installation
+
+The installer automatically creates a **CREDENTIALS.txt** file at the root of your installation directory containing:
+- All usernames and passwords for each service
+- Access URLs (HTTP, HTTPS, WebSocket, Bolt, etc.)
+- SSL certificate locations (if SSL enabled)
+- MinIO access keys and secrets
+- Management commands reference
+
+**IMPORTANT: Keep this file secure and do not commit it to version control!**
+
 ## Directory Structure
 
 ```
 docs/installation/docker/
 ├── prepare-stack.ps1           # Creates deployment ZIP
-├── docker-stack-installer.ps1  # Deploys and configures services
-├── install-ca-certificates.ps1 # Install/remove CA certificates to Windows store
 ├── README.md                   # This file
 ├── dist/                       # Generated ZIP files
+├── management/                 # Management scripts
+│   ├── docker-stack-installer.ps1  # Deploys and configures services
+│   ├── install-ca-certificates.ps1 # Install/remove CA certificates
+│   └── stop-all-services.ps1       # Stop all services at once
 └── src/                        # Service source files
     ├── neo4j/
     │   ├── docker-compose.yml
@@ -274,6 +288,12 @@ docker-compose ps
 
 ### Management Commands
 ```powershell
+# Stop all services at once
+.\stop-all-services.ps1
+
+# Stop all services and remove data volumes
+.\stop-all-services.ps1 -RemoveVolumes
+
 # SSL management
 .\management\manage-ssl.ps1 status
 .\management\manage-ssl.ps1 generate -Domain "your-domain.com"

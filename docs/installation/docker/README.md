@@ -29,11 +29,15 @@ Run the prepare script to create a deployment ZIP file:
 ### 2. Deploy on Target Machine
 
 #### **Online Deployment (Internet Required):**
-Copy the ZIP file and installer script to your target machine:
+Copy the deployment files to your target machine:
 
-1. Copy the generated ZIP file (e.g., `docker-stack-20241031-123456.zip`)
-2. Copy `management/docker-stack-installer.ps1` separately
-3. Run the installer:
+1. Copy the contents of the `dist/` folder to your target machine:
+   - `docker-stack-installer.ps1` (main installer)
+   - `docker-stack-YYYYMMDD-HHMMSS.zip` (service configurations)
+
+2. Place both files in your desired installation directory
+
+3. Run the installer (extracts to current directory):
 
 ```powershell
 .\docker-stack-installer.ps1

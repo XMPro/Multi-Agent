@@ -30,9 +30,18 @@ print("Drop .cypher files to auto-execute them!")
 print("=" * 60)
 print()
 
-# Install neo4j driver
+# Install neo4j driver from local packages (for airgapped installations)
 print("Installing neo4j driver...")
-subprocess.run(["pip", "install", "-q", "neo4j"], check=True)
+# Try local packages first (for offline/airgapped installations)
+result = subprocess.run(
+    ["pip", "install", "-q", "--no-index", "--find-links=/neo4j-packages", "neo4j"],
+    capture_output=True,
+    text=True
+)
+if result.returncode != 0:
+    # Fallback to online installation if local packages not available
+    print("Local packages not found, downloading from PyPI...")
+    subprocess.run(["pip", "install", "-q", "neo4j"], check=True)
 print()
 
 from neo4j import GraphDatabase

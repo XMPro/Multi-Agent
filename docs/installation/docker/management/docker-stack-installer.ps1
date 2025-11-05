@@ -80,22 +80,13 @@ if (-not (Test-Path $ZipPath)) {
 
 Write-Host "Selected ZIP file: $ZipPath" -ForegroundColor White
 
-# Get installation path if not provided
+# Set installation path to current directory if not provided
 if (-not $InstallPath) {
-    Add-Type -AssemblyName System.Windows.Forms
-    $FolderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
-    $FolderBrowser.Description = "Select installation directory"
-    $FolderBrowser.ShowNewFolderButton = $true
-    
-    if ($FolderBrowser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        $InstallPath = $FolderBrowser.SelectedPath
-    } else {
-        Write-Host "No installation path selected. Exiting." -ForegroundColor Red
-        exit 1
-    }
+    $InstallPath = Get-Location
+    Write-Host "Installation path: $InstallPath (current directory)" -ForegroundColor White
+} else {
+    Write-Host "Installation path: $InstallPath" -ForegroundColor White
 }
-
-Write-Host "Installation path: $InstallPath" -ForegroundColor White
 
 # Prerequisites check
 if (-not $SkipChecks) {
@@ -195,6 +186,25 @@ try {
 
 # Change to installation directory
 Set-Location $InstallPath
+
+# Move the ZIP file to an archive folder
+Write-Host ""
+Write-Host "Archiving ZIP file..." -ForegroundColor White
+$ArchiveDir = Join-Path $InstallPath "archive"
+if (-not (Test-Path $ArchiveDir)) {
+    New-Item -ItemType Directory -Force -Path $ArchiveDir | Out-Null
+}
+
+$ZipFileName = Split-Path $ZipPath -Leaf
+$ArchiveZipPath = Join-Path $ArchiveDir $ZipFileName
+
+try {
+    Move-Item -Path $ZipPath -Destination $ArchiveZipPath -Force
+    Write-Host "ZIP file moved to: archive\$ZipFileName" -ForegroundColor Green
+} catch {
+    Write-Host "Could not move ZIP file to archive: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "ZIP file remains at: $ZipPath" -ForegroundColor Gray
+}
 
 # Verify extracted structure
 $ExpectedFolders = @("neo4j", "milvus", "mqtt")
@@ -580,12 +590,12 @@ if ($HasSelfSignedCerts) {
     if ($InstallCertificates) {
         Write-Host "Auto-installing CA certificates (InstallCertificates parameter specified)..." -ForegroundColor Green
         try {
-            & ".\install-ca-certificates.ps1" -InstallPath $InstallPath
+            & ".\management\install-ca-certificates.ps1" -InstallPath $InstallPath
             Write-Host ""
             Write-Host "CA certificates installed successfully!" -ForegroundColor Green
         } catch {
             Write-Host "Failed to install CA certificates: $($_.Exception.Message)" -ForegroundColor Red
-            Write-Host "You can install them manually later using: .\install-ca-certificates.ps1" -ForegroundColor Yellow
+            Write-Host "You can install them manually later using: .\management\install-ca-certificates.ps1" -ForegroundColor Yellow
         }
     } else {
         Write-Host ""
@@ -599,17 +609,17 @@ if ($HasSelfSignedCerts) {
             Write-Host ""
             Write-Host "Installing CA certificates..." -ForegroundColor Green
             try {
-                & ".\install-ca-certificates.ps1" -InstallPath $InstallPath
+                & ".\management\install-ca-certificates.ps1" -InstallPath $InstallPath
                 Write-Host ""
                 Write-Host "CA certificates installed successfully!" -ForegroundColor Green
             } catch {
                 Write-Host "Failed to install CA certificates: $($_.Exception.Message)" -ForegroundColor Red
-                Write-Host "You can install them manually later using: .\install-ca-certificates.ps1" -ForegroundColor Yellow
+                Write-Host "You can install them manually later using: .\management\install-ca-certificates.ps1" -ForegroundColor Yellow
             }
         } else {
             Write-Host ""
             Write-Host "CA certificates not installed." -ForegroundColor Yellow
-            Write-Host "To install them later, run: .\install-ca-certificates.ps1" -ForegroundColor Gray
+            Write-Host "To install them later, run: .\management\install-ca-certificates.ps1" -ForegroundColor Gray
         }
     }
 } else {

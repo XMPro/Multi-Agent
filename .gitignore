@@ -1,1 +1,4 @@
 docs/installation/docker/dist/
+# Neo4j Python packages for offline installation
+neo4j-packages/
+!neo4j-packages/README.md

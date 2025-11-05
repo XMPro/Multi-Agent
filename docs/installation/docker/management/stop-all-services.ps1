@@ -14,8 +14,16 @@ Write-Host "==================================================================" 
 
 # Get installation path if not provided
 if (-not $InstallPath) {
-    $InstallPath = Get-Location
-    Write-Host "Using current directory: $InstallPath" -ForegroundColor White
+    # Check if we're in the management subfolder
+    $CurrentLocation = Get-Location
+    if ($CurrentLocation.Path.EndsWith("management")) {
+        # Go up one level to the installation root
+        $InstallPath = Split-Path $CurrentLocation -Parent
+        Write-Host "Detected management subfolder, using parent directory: $InstallPath" -ForegroundColor White
+    } else {
+        $InstallPath = $CurrentLocation
+        Write-Host "Using current directory: $InstallPath" -ForegroundColor White
+    }
 }
 
 # Verify installation path

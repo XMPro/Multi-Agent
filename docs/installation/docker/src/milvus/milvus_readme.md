@@ -24,12 +24,21 @@ The installer will ask you about:
 # Answer 'n' to GPU and SSL prompts
 ```
 
-### GPU-Enabled Installation
+### GPU-Enabled Installation (NVIDIA GPUs Only)
 ```powershell
 .\management\install.ps1
-# Answer 'y' to GPU prompt
+# Script will detect your GPU vendor (AMD/NVIDIA/Intel)
+# GPU option only shown if NVIDIA GPU is detected and available
 # Specify GPU device IDs (e.g., "0" or "0,1")
 ```
+
+**GPU Requirements:**
+- NVIDIA GPU with CUDA support (AMD and Intel GPUs are NOT supported)
+- Latest NVIDIA drivers installed
+- Docker Desktop with WSL2 backend
+- NVIDIA Container Toolkit installed in WSL2
+
+**Note:** The installer automatically detects your GPU vendor and only offers GPU support if an NVIDIA GPU is available.
 
 ### SSL-Enabled Installation
 ```powershell
@@ -75,12 +84,12 @@ When you enable SSL during installation, the script:
 
 ### Client Certificate Distribution
 
-**CA Certificate Location**: `certs/ca.crt`
+**CA Certificate Location**: `tls/ca.pem`
 
 **Install on Client Machines:**
 ```powershell
 # Install CA certificate to Windows trusted root store
-Import-Certificate -FilePath "ca.crt" -CertStoreLocation Cert:\LocalMachine\Root
+Import-Certificate -FilePath "tls\ca.pem" -CertStoreLocation Cert:\LocalMachine\Root
 ```
 
 **Milvus Client Configuration:**
@@ -91,7 +100,7 @@ from pymilvus import MilvusClient
 client = MilvusClient(
     uri="https://localhost:19530",
     secure=True,
-    server_pem_path="path/to/ca.crt",
+    server_pem_path="path/to/ca.pem",
     server_name="localhost"
 )
 ```
@@ -188,7 +197,7 @@ This Docker Compose setup runs a complete Milvus vector database stack on a sing
 **Version:** latest (stable and well-maintained)  
 **Resources:** 1 CPU, 2GB RAM limit  
 **Data location:** `./milvus-data/minio/`  
-**Credentials:** minioadmin / minioadmin (change in production!)
+**Credentials:** Auto-generated during installation (saved in .env and CREDENTIALS.txt)
 
 ---
 
@@ -356,12 +365,10 @@ Create a scheduled task to run backups automatically:
 - ❌ Cannot scale horizontally (need Milvus Cluster for that)
 
 ### Security
-- Default MinIO credentials are `minioadmin/minioadmin`
-- Create `.env` file to override:
-  ```
-  MINIO_ROOT_USER=your_secure_username
-  MINIO_ROOT_PASSWORD=your_secure_password
-  ```
+- **MinIO credentials**: Auto-generated secure random strings during installation
+- **Milvus authentication**: Username is always `root`, password is auto-generated
+- All credentials saved in `.env` file and `CREDENTIALS.txt`
+- To change passwords: Edit `.env` file and restart services
 
 ### Versions Used
 - **Milvus:** v2.6.3 (Oct 2025) - Latest stable

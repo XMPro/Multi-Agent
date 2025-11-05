@@ -609,13 +609,16 @@ You should see all the required images listed.
 
 1. Copy ``docker-stack-installer.ps1`` to the same directory as the ZIP file
 2. Open PowerShell in that directory
-3. Run the installer:
+3. Run the installer (extracts to current directory):
 
 ``````powershell
 .\docker-stack-installer.ps1
 ``````
 
-4. The installer will automatically extract ``$ZipName`` and configure all services
+4. The installer will:
+   - Extract ``$ZipName`` to the current directory
+   - Move the ZIP file to an ``archive/`` folder
+   - Configure all services
 5. Follow the interactive prompts to configure each service
 
 ---

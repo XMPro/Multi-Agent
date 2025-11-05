@@ -311,7 +311,7 @@ if ($EnableSSL) {
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -copy_extensions copy
             
             # Clean up CSR file
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl sh -c "rm -f server.csr ca.srl"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "rm -f server.csr ca.srl"
             
             # Verify certificates were created
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {

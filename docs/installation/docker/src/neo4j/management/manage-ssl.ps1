@@ -119,7 +119,7 @@ function Generate-SSLCertificates {
         docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in https.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out https_public.crt -days $ValidDays
         
         # Move certificates to proper directories
-        docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl sh -c "
+        docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "
             mv bolt_private.key bolt/private.key &&
             mv bolt_public.crt bolt/public.crt &&
             cp ca.crt bolt/trusted/ca.crt &&

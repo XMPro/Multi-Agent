@@ -359,6 +359,11 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Description = "OpenSSL (for SSL cert generation)"
             },
             @{
+                Primary = "alpine:latest"
+                Fallbacks = @()
+                Description = "Alpine (for file operations)"
+            },
+            @{
                 Primary = "eclipse-mosquitto:2.0.22"
                 Fallbacks = @("eclipse-mosquitto:2.0.21", "eclipse-mosquitto:2.0")
                 Description = "MQTT"

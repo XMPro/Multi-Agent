@@ -150,9 +150,14 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         Write-Host "  Watcher will attempt online installation if deployed with internet access" -ForegroundColor Gray
     }
     
-    # Copy management scripts to root of deployment
+    # Copy management scripts
     Write-Host "Copying management scripts..." -ForegroundColor White
     
+    # Create management folder for supporting scripts
+    $ManagementDir = Join-Path $TempDir "management"
+    New-Item -ItemType Directory -Force -Path $ManagementDir | Out-Null
+    
+    # Copy supporting management scripts to management folder
     $ManagementScripts = @(
         "install-ca-certificates.ps1",
         "stop-all-services.ps1"
@@ -160,48 +165,66 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
     
     foreach ($Script in $ManagementScripts) {
         $ScriptSource = Join-Path $CurrentDir "management\$Script"
-        $ScriptDest = Join-Path $TempDir $Script
+        $ScriptDest = Join-Path $ManagementDir $Script
         
         if (Test-Path $ScriptSource) {
             Copy-Item -Path $ScriptSource -Destination $ScriptDest -Force
-            Write-Host "  Added $Script" -ForegroundColor Green
+            Write-Host "  Added $Script to management/" -ForegroundColor Green
         } else {
             Write-Host "  Warning: $Script not found" -ForegroundColor Yellow
         }
     }
     
+    # Note: docker-stack-installer.ps1 is NOT included in ZIP - it should be copied separately
+    Write-Host "  Note: docker-stack-installer.ps1 not included in ZIP (copy separately)" -ForegroundColor Gray
+    
     # Create README file for the deployment
     $ReadmeContent = @"
 # Docker Stack Deployment
 
-This ZIP file contains a complete Docker stack deployment for:
+This package contains a complete Docker stack deployment for:
 - **Neo4j** - Graph database
 - **Milvus** - Vector database  
 - **MQTT** - Message broker
 
+## Directory Structure
+
+``````
+.
+├── README.md                          # This file
+├── docker-stack-installer.ps1         # Main installer (run this)
+├── management/                        # Supporting management scripts
+│   ├── install-ca-certificates.ps1   # CA certificate installer
+│   └── stop-all-services.ps1         # Stop all services
+├── neo4j/                            # Neo4j service
+│   ├── docker-compose.yml
+│   ├── watcher.py
+│   ├── neo4j-packages/               # Python packages for offline
+│   └── management/                   # Neo4j management scripts
+├── milvus/                           # Milvus service
+│   ├── docker-compose.yml
+│   └── management/                   # Milvus management scripts
+└── mqtt/                             # MQTT service
+    ├── docker-compose.yml
+    └── management/                   # MQTT management scripts
+``````
+
 ## Quick Start
 
-1. **Extract** this ZIP file to your desired installation directory
-2. **Copy** the ``docker-stack-installer.ps1`` script to the same directory
-3. **Run** the installer: ``.\docker-stack-installer.ps1``
-4. **Follow** the interactive prompts to configure each service
+1. **Place files** in your desired installation directory:
+   - Copy ``docker-stack-installer.ps1`` to the directory
+   - Copy the ZIP file to the same directory
 
-## What's Included
+2. **Run the installer** (extracts to current directory):
+   ``````powershell
+   .\docker-stack-installer.ps1
+   ``````
 
-### Services
-- **neo4j/** - Neo4j graph database with Cypher scripts
-- **milvus/** - Milvus vector database with configuration
-- **mqtt/** - MQTT message broker with SSL support
+3. **Follow** the interactive prompts to configure each service
 
-### Installation
-- **Installer script not included** - Copy ``docker-stack-installer.ps1`` separately
+4. **Access** your services using the credentials provided during installation
 
-### Features
-- Interactive configuration for all services
-- SSL/TLS support for secure connections
-- Automatic password generation
-- Comprehensive management scripts
-- Backup and restore capabilities
+**Note:** The installer extracts the ZIP to the current directory and moves the ZIP to an ``archive/`` folder.
 
 ## Requirements
 
@@ -226,14 +249,28 @@ This ZIP file contains a complete Docker stack deployment for:
 - WebSocket: ws://localhost:9002
 - SSL (if enabled): localhost:8883
 
-## Management
+## Management Scripts
 
-Each service includes management scripts in their respective ``management/`` folders:
-- ``install.ps1`` - Service installation and configuration
-- ``backup.ps1`` - Create service backups
-- ``restore.ps1`` - Restore from backups
-- ``manage-ssl.ps1`` - SSL certificate management (Neo4j/Milvus/MQTT)
-- ``manage-users.ps1`` - User management (MQTT)
+### Stack-Level Management
+- **docker-stack-installer.ps1** (root) - Install and configure all services
+- **management/install-ca-certificates.ps1** - Install SSL CA certificates to Windows
+- **management/stop-all-services.ps1** - Stop all services at once
+
+### Service-Level Management (in each service's management/ folder)
+- **install.ps1** - Service installation and configuration
+- **backup.ps1** - Create service backups
+- **restore.ps1** - Restore from backups
+- **manage-ssl.ps1** - SSL certificate management
+- **manage-users.ps1** - User management (MQTT only)
+
+## Features
+
+- Interactive configuration for all services
+- SSL/TLS support for secure connections
+- Automatic password generation
+- Comprehensive management scripts
+- Backup and restore capabilities
+- Airgapped/offline installation support
 
 ## Support
 
@@ -262,6 +299,18 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
     $ZipInfo = Get-Item $ZipPath
     $ZipSizeMB = [math]::Round($ZipInfo.Length / 1MB, 2)
     Write-Host "  Created: $ZipSizeMB MB" -ForegroundColor Green
+    
+    # Copy docker-stack-installer.ps1 to dist folder
+    Write-Host "Copying installer to dist folder..." -ForegroundColor White
+    $InstallerSource = Join-Path $CurrentDir "management\docker-stack-installer.ps1"
+    $InstallerDest = Join-Path $OutputPath "docker-stack-installer.ps1"
+    
+    if (Test-Path $InstallerSource) {
+        Copy-Item -Path $InstallerSource -Destination $InstallerDest -Force
+        Write-Host "  Copied docker-stack-installer.ps1 to dist/" -ForegroundColor Green
+    } else {
+        Write-Host "  Warning: docker-stack-installer.ps1 not found" -ForegroundColor Yellow
+    }
     
     # Handle offline deployment if requested
     if ($Offline) {

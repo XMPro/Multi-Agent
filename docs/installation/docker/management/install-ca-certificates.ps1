@@ -114,7 +114,7 @@ if ($Remove) {
     Write-Host "=============================================================" -ForegroundColor Gray
     
     $InstalledCerts = Get-ChildItem -Path $CertStore | Where-Object { 
-        $_.Subject -match "Neo4j-CA|Milvus-CA|MQTT-CA" 
+        $_.Subject -match "Neo4j-CA|MQTT-CA" -or ($_.Subject -match "O=Milvus" -and $_.Issuer -match "O=Milvus")
     }
     
     if ($InstalledCerts.Count -eq 0) {

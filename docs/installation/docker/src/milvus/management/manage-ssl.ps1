@@ -378,9 +378,6 @@ function Show-SSLStatus {
                     Write-Host "MinIO Certificate Expires: $ExpiryDateStr" -ForegroundColor White
                 }
             }
-            
-            # Clean up the alpine/openssl image
-            docker rmi alpine/openssl -f 2>$null | Out-Null
         } catch {
             Write-Host "Could not check certificate expiry" -ForegroundColor Yellow
         }

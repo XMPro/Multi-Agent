@@ -240,6 +240,23 @@ if ($EnableSSL) {
             $Domain = $DomainChoice
         }
         Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+        
+        # Ask if user wants to include IP address
+        Write-Host ""
+        $IncludeIPChoice = Read-Host "Include machine IP address in certificate for remote connections? (y/n, default: n)"
+        if ($IncludeIPChoice -eq "Y" -or $IncludeIPChoice -eq "y") {
+            $IPChoice = Read-Host "Enter machine IP address"
+            if ($IPChoice) {
+                $MachineIP = $IPChoice
+                Write-Host "Machine IP $MachineIP will be included in certificate" -ForegroundColor Cyan
+            } else {
+                $MachineIP = ""
+                Write-Host "No IP address provided, skipping" -ForegroundColor Gray
+            }
+        } else {
+            $MachineIP = ""
+            Write-Host "IP address not included (localhost/domain only)" -ForegroundColor Gray
+        }
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
@@ -316,8 +333,8 @@ if ($EnableSSL) {
         try {
             Write-Host "Generating certificates using OpenSSL in Docker..." -ForegroundColor Gray
             
-            # Create server extension
-            @"
+            # Build SAN list for server extension
+            $SANConfig = @"
 [v3_req]
 basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
@@ -327,7 +344,13 @@ subjectAltName = @alt_names
 DNS.1 = $Domain
 DNS.2 = localhost
 IP.1  = 127.0.0.1
-"@ | Out-File -FilePath "tls\server-ext.cnf" -Encoding ASCII
+"@
+            if ($MachineIP) {
+                $SANConfig += "`nIP.2  = $MachineIP"
+            }
+            
+            # Create server extension
+            $SANConfig | Out-File -FilePath "tls\server-ext.cnf" -Encoding ASCII
             
             # Create client extension
             @"

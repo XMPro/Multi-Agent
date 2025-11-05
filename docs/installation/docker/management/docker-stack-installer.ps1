@@ -187,14 +187,15 @@ try {
 # Change to installation directory
 Set-Location $InstallPath
 
-# Move the ZIP file to an archive folder
+# Move the ZIP file and tar file (if present) to an archive folder
 Write-Host ""
-Write-Host "Archiving ZIP file..." -ForegroundColor White
+Write-Host "Archiving deployment files..." -ForegroundColor White
 $ArchiveDir = Join-Path $InstallPath "archive"
 if (-not (Test-Path $ArchiveDir)) {
     New-Item -ItemType Directory -Force -Path $ArchiveDir | Out-Null
 }
 
+# Move ZIP file
 $ZipFileName = Split-Path $ZipPath -Leaf
 $ArchiveZipPath = Join-Path $ArchiveDir $ZipFileName
 
@@ -204,6 +205,22 @@ try {
 } catch {
     Write-Host "Could not move ZIP file to archive: $($_.Exception.Message)" -ForegroundColor Yellow
     Write-Host "ZIP file remains at: $ZipPath" -ForegroundColor Gray
+}
+
+# Move tar file if it exists (for offline deployments)
+$ZipDir = Split-Path $ZipPath -Parent
+$TarFileName = $ZipFileName -replace "\.zip$", "-docker-images.tar"
+$TarPath = Join-Path $ZipDir $TarFileName
+
+if (Test-Path $TarPath) {
+    $ArchiveTarPath = Join-Path $ArchiveDir $TarFileName
+    try {
+        Move-Item -Path $TarPath -Destination $ArchiveTarPath -Force
+        Write-Host "Docker images tar moved to: archive\$TarFileName" -ForegroundColor Green
+    } catch {
+        Write-Host "Could not move tar file to archive: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "Tar file remains at: $TarPath" -ForegroundColor Gray
+    }
 }
 
 # Verify extracted structure

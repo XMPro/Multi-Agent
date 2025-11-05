@@ -241,21 +241,27 @@ if ($EnableSSL) {
         }
         Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
         
-        # Ask if user wants to include IP address
+        # Detect machine IP address
         Write-Host ""
-        $IncludeIPChoice = Read-Host "Include machine IP address in certificate for remote connections? (y/n, default: n)"
-        if ($IncludeIPChoice -eq "Y" -or $IncludeIPChoice -eq "y") {
-            $IPChoice = Read-Host "Enter machine IP address"
-            if ($IPChoice) {
-                $MachineIP = $IPChoice
-                Write-Host "Machine IP $MachineIP will be included in certificate" -ForegroundColor Cyan
+        Write-Host "Detecting machine IP address..." -ForegroundColor White
+        try {
+            $MachineIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and $_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual' } | Select-Object -First 1).IPAddress
+            if ($MachineIP) {
+                Write-Host "Detected IP: $MachineIP" -ForegroundColor Green
+                $IncludeIPChoice = Read-Host "Include this IP address in certificate for remote connections? (y/n, default: n)"
+                if ($IncludeIPChoice -ne "Y" -and $IncludeIPChoice -ne "y") {
+                    $MachineIP = ""
+                    Write-Host "IP address not included (localhost/domain only)" -ForegroundColor Gray
+                } else {
+                    Write-Host "Machine IP $MachineIP will be included in certificate" -ForegroundColor Cyan
+                }
             } else {
                 $MachineIP = ""
-                Write-Host "No IP address provided, skipping" -ForegroundColor Gray
+                Write-Host "Could not detect IP address, skipping" -ForegroundColor Gray
             }
-        } else {
+        } catch {
             $MachineIP = ""
-            Write-Host "IP address not included (localhost/domain only)" -ForegroundColor Gray
+            Write-Host "Could not detect IP address: $($_.Exception.Message)" -ForegroundColor Gray
         }
     }
 } else {

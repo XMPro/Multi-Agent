@@ -190,6 +190,8 @@ if (-not $Password) {
             Write-Host "Please enter 'y' for yes or 'n' for no." -ForegroundColor Yellow
         }
     } while ($true)
+} else {
+    Write-Host "Using provided password for user '$Username'" -ForegroundColor Gray
 }
 
 # Create .env file with password

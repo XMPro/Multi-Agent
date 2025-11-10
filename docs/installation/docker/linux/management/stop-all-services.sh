@@ -59,6 +59,18 @@ print_color "$CYAN" "===========================================================
 print_color "$CYAN" "Stop All Docker Stack Services"
 print_color "$CYAN" "=================================================================="
 
+# Ensure we're in the installation root directory (not management subdirectory)
+if [ -d "neo4j" ] && [ -d "milvus" ] && [ -d "mqtt" ]; then
+    print_color "$GRAY" "Running from installation directory"
+elif [ -d "../neo4j" ] && [ -d "../milvus" ] && [ -d "../mqtt" ]; then
+    cd ..
+    print_color "$GRAY" "Changed to installation directory"
+else
+    print_color "$RED" "Error: Cannot find service directories!"
+    print_color "$YELLOW" "Run this script from the installation directory or management/ subdirectory"
+    exit 1
+fi
+
 # Services to stop
 SERVICES=("neo4j" "milvus" "mqtt")
 

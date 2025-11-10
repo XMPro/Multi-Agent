@@ -295,35 +295,16 @@ print_color "$GRAY" "======================"
 # Track which services configured successfully
 declare -A CONFIGURED_SERVICES
 
-# Get passwords from environment variables or prompt interactively
+# Get passwords from environment variables only (for automation)
+# Do NOT prompt - let individual service installers handle password prompting
 NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
 MILVUS_PASSWORD="${MILVUS_PASSWORD:-}"
 MQTT_PASSWORD="${MQTT_PASSWORD:-}"
 
-# If passwords not in environment and not in automation mode, prompt interactively
-if [ -z "$NEO4J_PASSWORD" ] && [ "$AUTO_START" = false ]; then
-    echo ""
-    print_color "$CYAN" "Neo4j Password Configuration:"
-    print_color "$GRAY" "Leave blank to auto-generate a secure password"
-    read -s -p "Enter Neo4j password: " NEO4J_PASSWORD
-    echo
-fi
-
-if [ -z "$MILVUS_PASSWORD" ] && [ "$AUTO_START" = false ]; then
-    echo ""
-    print_color "$CYAN" "Milvus Password Configuration:"
-    print_color "$GRAY" "Leave blank to auto-generate a secure password"
-    read -s -p "Enter Milvus password: " MILVUS_PASSWORD
-    echo
-fi
-
-if [ -z "$MQTT_PASSWORD" ] && [ "$AUTO_START" = false ]; then
-    echo ""
-    print_color "$CYAN" "MQTT Password Configuration:"
-    print_color "$GRAY" "Leave blank to auto-generate a secure password"
-    read -s -p "Enter MQTT password: " MQTT_PASSWORD
-    echo
-fi
+# Show if using environment variables
+[ -n "$NEO4J_PASSWORD" ] && print_color "$GRAY" "Using Neo4j password from environment variable"
+[ -n "$MILVUS_PASSWORD" ] && print_color "$GRAY" "Using Milvus password from environment variable"
+[ -n "$MQTT_PASSWORD" ] && print_color "$GRAY" "Using MQTT password from environment variable"
 
 # Configure Neo4j
 echo ""
@@ -539,6 +520,52 @@ print_color "$CYAN" "Management Scripts:"
 print_color "$GRAY" "=================="
 echo "Backup and management scripts are located in each service's 'management' folder"
 
+# Check if any services have self-signed SSL certificates and offer to install them
+echo ""
+print_color "$CYAN" "Self-Signed Certificate Installation:"
+print_color "$GRAY" "======================================"
+
+HAS_CERTS=false
+CERT_SERVICES=()
+
+# Check for certificates
+[ -f "neo4j/certs/bolt/trusted/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("Neo4j"); }
+[ -f "milvus/tls/ca.pem" ] && { HAS_CERTS=true; CERT_SERVICES+=("Milvus"); }
+[ -f "mqtt/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("MQTT"); }
+
+if [ "$HAS_CERTS" = true ]; then
+    print_color "$YELLOW" "Found self-signed CA certificates for: ${CERT_SERVICES[*]}"
+    echo ""
+    print_color "$GRAY" "These certificates need to be installed on client machines to avoid SSL warnings."
+    print_color "$GRAY" "You can install them now or later using: sudo ./management/install-ca-certificates.sh"
+    echo ""
+    
+    if [ "$INSTALL_CERTIFICATES" = true ]; then
+        print_color "$GREEN" "Auto-installing CA certificates (--install-certificates specified)..."
+        if sudo ./management/install-ca-certificates.sh -i "$INSTALL_PATH"; then
+            print_color "$GREEN" "CA certificates installed successfully!"
+        else
+            print_color "$YELLOW" "Failed to install CA certificates (may need sudo)"
+        fi
+    else
+        read -p "Install CA certificates to system trust store now? (requires sudo) (y/n): " cert_choice
+        if [[ "$cert_choice" =~ ^[Yy]$ ]]; then
+            print_color "$GREEN" "Installing CA certificates..."
+            if sudo ./management/install-ca-certificates.sh -i "$INSTALL_PATH"; then
+                print_color "$GREEN" "CA certificates installed successfully!"
+            else
+                print_color "$YELLOW" "Installation failed. You can install later with:"
+                print_color "$GRAY" "  sudo ./management/install-ca-certificates.sh"
+            fi
+        else
+            print_color "$GRAY" "CA certificates not installed."
+            print_color "$GRAY" "To install later: sudo ./management/install-ca-certificates.sh"
+        fi
+    fi
+else
+    print_color "$GRAY" "No self-signed certificates found - CA installation not needed."
+fi
+
 # Generate credentials file
 echo ""
 echo "Generating Credentials File..."
@@ -555,48 +582,115 @@ EOF
 
 echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')" >> CREDENTIALS.txt
 
-# Add service credentials (simplified - full version would parse .env files)
+# Add service credentials (parse .env files for actual configuration)
 if [ "${CONFIGURED_SERVICES[neo4j]:-false}" = true ]; then
-    cat >> CREDENTIALS.txt << 'EOF'
-
-# =================================================================
-# Neo4j Graph Database
-# =================================================================
-Access URLs:
-  - Browser UI: http://localhost:7474
-  - Bolt Protocol: bolt://localhost:7687
-
-Check neo4j/.env file for credentials
-EOF
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# Neo4j Graph Database" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    # Parse Neo4j credentials from .env
+    if [ -f "neo4j/.env" ]; then
+        NEO4J_USER=$(grep "^NEO4J_USER=" neo4j/.env | cut -d= -f2)
+        NEO4J_PASS=$(grep "^NEO4J_PASSWORD=" neo4j/.env | cut -d= -f2)
+        echo "Username: ${NEO4J_USER:-neo4j}" >> CREDENTIALS.txt
+        echo "Password: ${NEO4J_PASS:-check .env file}" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+    fi
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - Browser UI: http://localhost:7474" >> CREDENTIALS.txt
+    echo "  - Bolt Protocol: bolt://localhost:7687" >> CREDENTIALS.txt
+    
+    # Check if SSL is enabled
+    if grep -q "ENABLE_SSL=true" neo4j/.env 2>/dev/null && [ -f "neo4j/certs/bolt/trusted/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - HTTPS Browser: https://localhost:7473" >> CREDENTIALS.txt
+        echo "  - Bolt+S Protocol: bolt+s://localhost:7687" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: neo4j/certs/bolt/trusted/ca.crt" >> CREDENTIALS.txt
+    fi
 fi
 
 if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
-    cat >> CREDENTIALS.txt << 'EOF'
-
-# =================================================================
-# Milvus Vector Database
-# =================================================================
-Access URLs:
-  - gRPC API: localhost:19530
-  - HTTP API: localhost:9091
-  - MinIO Console: http://localhost:9001
-
-Check milvus/.env file for credentials
-EOF
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# Milvus Vector Database" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    # Parse Milvus credentials from .env
+    if [ -f "milvus/.env" ]; then
+        MILVUS_PASS=$(grep "^MILVUS_ROOT_PASSWORD=" milvus/.env | cut -d= -f2)
+        MINIO_USER=$(grep "^MINIO_ROOT_USER=" milvus/.env | cut -d= -f2)
+        MINIO_PASS=$(grep "^MINIO_ROOT_PASSWORD=" milvus/.env | cut -d= -f2)
+        
+        echo "Username: root" >> CREDENTIALS.txt
+        echo "Password: ${MILVUS_PASS:-check .env file}" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+    fi
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - gRPC API: localhost:19530" >> CREDENTIALS.txt
+    echo "  - HTTP API: localhost:9091" >> CREDENTIALS.txt
+    
+    # Check if SSL is enabled
+    if grep -q "ENABLE_SSL=true" milvus/.env 2>/dev/null; then
+        echo "  - Attu Web UI (HTTPS): https://localhost:8001" >> CREDENTIALS.txt
+        echo "  - Attu Web UI (HTTP redirect): http://localhost:8002" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: milvus/tls/ca.pem" >> CREDENTIALS.txt
+        echo "  - Client Certificate: milvus/tls/client.pem" >> CREDENTIALS.txt
+        echo "  - Client Key: milvus/tls/client.key" >> CREDENTIALS.txt
+    else
+        echo "  - Attu Web UI: http://localhost:8002" >> CREDENTIALS.txt
+    fi
+    
+    # Add MinIO credentials
+    if [ -n "$MINIO_USER" ] && [ -n "$MINIO_PASS" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "MinIO Object Storage:" >> CREDENTIALS.txt
+        echo "  - Console: http://localhost:9001" >> CREDENTIALS.txt
+        echo "  - API: http://localhost:9000" >> CREDENTIALS.txt
+        echo "  - Access Key: $MINIO_USER" >> CREDENTIALS.txt
+        echo "  - Secret Key: $MINIO_PASS" >> CREDENTIALS.txt
+    fi
 fi
 
 if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
-    cat >> CREDENTIALS.txt << 'EOF'
-
-# =================================================================
-# MQTT Message Broker
-# =================================================================
-Access URLs:
-  - MQTT Broker: localhost:1883
-  - WebSocket: ws://localhost:9002
-
-Check mqtt/.env file for credentials
-EOF
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# MQTT Message Broker" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    # Parse MQTT credentials from .env
+    if [ -f "mqtt/.env" ]; then
+        MQTT_USER=$(grep "^MQTT_USERNAME=" mqtt/.env | cut -d= -f2)
+        MQTT_PASS=$(grep "^MQTT_PASSWORD=" mqtt/.env | cut -d= -f2)
+        echo "Username: ${MQTT_USER:-xmpro}" >> CREDENTIALS.txt
+        echo "Password: ${MQTT_PASS:-check .env file}" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+    fi
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - MQTT Broker: localhost:1883" >> CREDENTIALS.txt
+    echo "  - WebSocket: ws://localhost:9002" >> CREDENTIALS.txt
+    
+    # Check if SSL is enabled
+    if grep -q "ENABLE_SSL=true" mqtt/.env 2>/dev/null; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - MQTT Broker (SSL): localhost:8883" >> CREDENTIALS.txt
+        echo "  - WebSocket (SSL): wss://localhost:9003" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: mqtt/certs/ca.crt" >> CREDENTIALS.txt
+        echo "  - Client Certificate: mqtt/certs/client.crt" >> CREDENTIALS.txt
+        echo "  - Client Key: mqtt/certs/client.key" >> CREDENTIALS.txt
+    fi
 fi
 
 print_color "$GREEN" "Credentials file created: CREDENTIALS.txt"

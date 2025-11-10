@@ -159,24 +159,100 @@ done
 
 # Ask about SSL if not specified
 if [ "$ENABLE_SSL" = false ]; then
-    echo "SSL Configuration:"
+    echo ""
+    print_color "$CYAN" "SSL Configuration:"
     read -p "Enable SSL/TLS encryption for Neo4j? (y/n): " ssl_choice
     if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
         ENABLE_SSL=true
     fi
 fi
 
+USE_CA_PROVIDED=false
+MACHINE_IP=""
+
 if [ "$ENABLE_SSL" = true ]; then
     print_color "$GREEN" "SSL will be enabled for both Browser UI (HTTPS) and Bolt protocol (TLS)"
     
-    # Ask for domain if not provided
-    if [ "$DOMAIN" = "localhost" ]; then
-        read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
-        if [ -n "$domain_input" ]; then
-            DOMAIN="$domain_input"
+    # Ask for certificate type
+    echo ""
+    print_color "$CYAN" "Certificate Options:"
+    print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+    print_color "$GRAY" "2. Use CA-provided certificates (for production)"
+    read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+    
+    if [ "$cert_choice" = "2" ]; then
+        print_color "$GREEN" "CA-provided certificates selected"
+        print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
+        print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+        ENABLE_SSL=false
+        USE_CA_PROVIDED=true
+    else
+        print_color "$GREEN" "Self-signed certificates selected"
+        
+        # Ask for domain if not provided
+        if [ "$DOMAIN" = "localhost" ]; then
+            read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
+            if [ -n "$domain_input" ]; then
+                DOMAIN="$domain_input"
+            fi
+        fi
+        print_color "$CYAN" "SSL certificates will be generated for domain: $DOMAIN"
+        
+        # Detect machine IP addresses
+        echo ""
+        print_color "$CYAN" "Detecting machine IP addresses..."
+        
+        if command -v ip &> /dev/null; then
+            # Use 'ip' command (modern Linux)
+            IPS=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+        elif command -v ifconfig &> /dev/null; then
+            # Fallback to ifconfig (older systems)
+            IPS=$(ifconfig 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+        else
+            IPS=""
+        fi
+        
+        if [ -n "$IPS" ]; then
+            print_color "$GREEN" "Detected IP addresses:"
+            i=0
+            IP_ARRAY=()
+            while IFS= read -r ip; do
+                if [ -n "$ip" ]; then
+                    echo "  [$i] $ip"
+                    IP_ARRAY+=("$ip")
+                    i=$((i+1))
+                fi
+            done <<< "$IPS"
+            
+            if [ ${#IP_ARRAY[@]} -gt 0 ]; then
+                read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+                
+                if [ -n "$ip_choice" ]; then
+                    SELECTED_IPS=()
+                    IFS=',' read -ra INDICES <<< "$ip_choice"
+                    for index in "${INDICES[@]}"; do
+                        index=$(echo "$index" | xargs)  # Trim whitespace
+                        if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#IP_ARRAY[@]}" ]; then
+                            SELECTED_IPS+=("${IP_ARRAY[$index]}")
+                        fi
+                    done
+                    
+                    if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                        MACHINE_IP=$(IFS=','; echo "${SELECTED_IPS[*]}")
+                        print_color "$CYAN" "Selected IPs: $MACHINE_IP"
+                    else
+                        print_color "$GRAY" "No valid IPs selected, skipping"
+                    fi
+                else
+                    print_color "$GRAY" "No IPs selected (localhost/domain only)"
+                fi
+            fi
+        else
+            print_color "$GRAY" "Could not detect IP addresses, skipping"
         fi
     fi
-    print_color "$CYAN" "SSL certificates will be generated for domain: $DOMAIN"
+else
+    print_color "$YELLOW" "SSL will be disabled (unencrypted connections only)"
 fi
 
 # Generate or prompt for password
@@ -254,6 +330,13 @@ if [ "$ENABLE_SSL" = true ]; then
         
         # Build SAN list
         SAN_LIST="DNS:$DOMAIN,DNS:localhost,DNS:127.0.0.1,DNS:neo4j,IP:127.0.0.1,IP:::1"
+        if [ -n "$MACHINE_IP" ]; then
+            IFS=',' read -ra IP_ARRAY <<< "$MACHINE_IP"
+            for ip in "${IP_ARRAY[@]}"; do
+                ip=$(echo "$ip" | xargs)  # Trim whitespace
+                SAN_LIST="$SAN_LIST,IP:$ip"
+            done
+        fi
         
         # Generate Bolt certificates
         print_color "$GRAY" "Generating Bolt protocol certificates..."
@@ -295,37 +378,21 @@ if [ "$ENABLE_SSL" = true ]; then
     
     # Add HTTPS port if not present
     if ! grep -q "7473:7473" docker-compose.yml; then
-        sed -i '/7474:7474/a\      - "7473:7473"   # HTTPS Browser UI' docker-compose.yml
+        sed -i '/- "7474:7474"/a\      - "7473:7473"   # HTTPS Browser UI' docker-compose.yml
     fi
     
     # Add SSL certificate volumes if not present
     if ! grep -q "certificates" docker-compose.yml; then
-        sed -i '/neo4j-data\/import/a\      - ./certs:/var/lib/neo4j/certificates' docker-compose.yml
+        sed -i '/- \.\/neo4j-data\/import/a\      - ./certs:/var/lib/neo4j/certificates' docker-compose.yml
     fi
     
-    # Add SSL environment variables
+    # Add SSL environment variables before the restart line
     if ! grep -q "NEO4J_server_https_enabled" docker-compose.yml; then
-        cat >> docker-compose.yml << 'EOF'
-
-      # SSL Configuration
-      - NEO4J_server_https_enabled=true
-      - NEO4J_server_http_enabled=false
-      - NEO4J_server_bolt_tls__level=REQUIRED
-      - NEO4J_dbms_ssl_policy_bolt_enabled=true
-      - NEO4J_dbms_ssl_policy_bolt_base__directory=certificates/bolt
-      - NEO4J_dbms_ssl_policy_bolt_private__key=private.key
-      - NEO4J_dbms_ssl_policy_bolt_public__certificate=public.crt
-      - NEO4J_dbms_ssl_policy_bolt_client__auth=NONE
-      - NEO4J_dbms_ssl_policy_https_enabled=true
-      - NEO4J_dbms_ssl_policy_https_base__directory=certificates/https
-      - NEO4J_dbms_ssl_policy_https_private__key=private.key
-      - NEO4J_dbms_ssl_policy_https_public__certificate=public.crt
-      - NEO4J_dbms_ssl_policy_https_client__auth=NONE
-EOF
+        sed -i '/NEO4J_dbms_usage__report_enabled=false/a\      \n      # SSL Configuration\n      - NEO4J_server_https_enabled=true\n      - NEO4J_server_http_enabled=false\n      - NEO4J_server_bolt_tls__level=REQUIRED\n      - NEO4J_dbms_ssl_policy_bolt_enabled=true\n      - NEO4J_dbms_ssl_policy_bolt_base__directory=certificates/bolt\n      - NEO4J_dbms_ssl_policy_bolt_private__key=private.key\n      - NEO4J_dbms_ssl_policy_bolt_public__certificate=public.crt\n      - NEO4J_dbms_ssl_policy_bolt_client__auth=NONE\n      - NEO4J_dbms_ssl_policy_https_enabled=true\n      - NEO4J_dbms_ssl_policy_https_base__directory=certificates/https\n      - NEO4J_dbms_ssl_policy_https_private__key=private.key\n      - NEO4J_dbms_ssl_policy_https_public__certificate=public.crt\n      - NEO4J_dbms_ssl_policy_https_client__auth=NONE' docker-compose.yml
     fi
     
     # Update watcher to use SSL
-    sed -i 's|NEO4J_URI=bolt://neo4j:7687|NEO4J_URI=bolt+s://neo4j:7687|' docker-compose.yml
+    sed -i 's|bolt://neo4j:7687|bolt+s://neo4j:7687|' docker-compose.yml
     
     print_color "$GREEN" "Docker Compose configuration updated for SSL"
 fi

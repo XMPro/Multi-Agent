@@ -4,7 +4,8 @@
 # Installs self-signed CA certificates to system trust store
 # =================================================================
 
-set -euo pipefail
+# Don't exit on errors - we want to process all certificates
+set +e
 
 # Color codes for output
 RED='\033[0;31m'
@@ -17,6 +18,7 @@ NC='\033[0m' # No Color
 # Default parameters
 INSTALL_PATH=""
 REMOVE=false
+FORCE=false
 
 # Function to print colored output
 print_color() {
@@ -27,18 +29,33 @@ print_color() {
 
 # Function to show usage
 show_usage() {
-    echo "Usage: $0 [OPTIONS]"
+    print_color "$CYAN" "=================================================================="
+    print_color "$CYAN" "CA Certificate Management Script"
+    print_color "$CYAN" "=================================================================="
     echo ""
-    echo "Options:"
-    echo "  -i, --install-path PATH    Installation directory (default: current directory)"
-    echo "  -r, --remove               Remove CA certificates instead of installing"
-    echo "  -h, --help                 Show this help message"
+    print_color "$CYAN" "Usage:"
+    print_color "$GRAY" "  $0 [options]"
     echo ""
-    echo "Examples:"
-    echo "  $0                         # Install CA certificates from current directory"
-    echo "  $0 --remove                # Remove previously installed CA certificates"
-    echo "  $0 -i /path/to/install     # Install from specific directory"
+    print_color "$CYAN" "Options:"
+    print_color "$GRAY" "  -i, --install-path PATH    Installation directory (default: current directory)"
+    print_color "$GRAY" "  -r, --remove               Remove CA certificates instead of installing"
+    print_color "$GRAY" "  -f, --force                Skip confirmation prompts and overwrite existing"
+    print_color "$GRAY" "  -h, --help                 Show this help message"
     echo ""
+    print_color "$CYAN" "Examples:"
+    print_color "$GRAY" "  # Install CA certificates from current directory"
+    print_color "$GRAY" "  $0"
+    echo ""
+    print_color "$GRAY" "  # Install CA certificates from specific path"
+    print_color "$GRAY" "  $0 -i /path/to/docker/stack"
+    echo ""
+    print_color "$GRAY" "  # Remove all Docker stack CA certificates"
+    print_color "$GRAY" "  $0 --remove"
+    echo ""
+    print_color "$GRAY" "  # Force reinstall existing certificates"
+    print_color "$GRAY" "  $0 --force"
+    echo ""
+    print_color "$CYAN" "=================================================================="
     exit 0
 }
 
@@ -53,6 +70,10 @@ while [[ $# -gt 0 ]]; do
             REMOVE=true
             shift
             ;;
+        -f|--force)
+            FORCE=true
+            shift
+            ;;
         -h|--help)
             show_usage
             ;;
@@ -65,14 +86,23 @@ done
 
 # Set default install path
 if [ -z "$INSTALL_PATH" ]; then
-    INSTALL_PATH="$(pwd)"
+    CURRENT_DIR=$(pwd)
+    if [[ "$CURRENT_DIR" == */management ]]; then
+        INSTALL_PATH=$(dirname "$CURRENT_DIR")
+        print_color "$GRAY" "Detected management subfolder, using parent directory: $INSTALL_PATH"
+    else
+        INSTALL_PATH="$CURRENT_DIR"
+        print_color "$GRAY" "Using current directory: $INSTALL_PATH"
+    fi
+else
+    print_color "$GRAY" "Installation path: $INSTALL_PATH"
 fi
 
 print_color "$CYAN" "=================================================================="
 if [ "$REMOVE" = true ]; then
-    print_color "$CYAN" "Remove CA Certificates"
+    print_color "$CYAN" "Remove CA Certificates from System Trust Store"
 else
-    print_color "$CYAN" "Install CA Certificates"
+    print_color "$CYAN" "Install CA Certificates to System Trust Store"
 fi
 print_color "$CYAN" "=================================================================="
 
@@ -92,87 +122,151 @@ DISTRO=$(detect_distro)
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
-    print_color "$YELLOW" "This script requires root privileges."
+    print_color "$RED" "This script requires root privileges."
     print_color "$YELLOW" "Please run with sudo: sudo $0 $*"
     exit 1
 fi
 
-# CA certificate paths
-NEO4J_CA="$INSTALL_PATH/neo4j/certs/bolt/trusted/ca.crt"
-MILVUS_CA="$INSTALL_PATH/milvus/tls/ca.pem"
-MQTT_CA="$INSTALL_PATH/mqtt/certs/ca.crt"
+print_color "$GREEN" "Running as root"
 
-# Certificate names for system store
-NEO4J_CERT_NAME="neo4j-ca"
-MILVUS_CERT_NAME="milvus-ca"
-MQTT_CERT_NAME="mqtt-ca"
+# Define service certificates
+declare -A SERVICE_CERTS=(
+    ["neo4j_bolt"]="neo4j/certs/bolt/trusted/ca.crt|Neo4j Bolt CA|neo4j-bolt-ca"
+    ["neo4j_https"]="neo4j/certs/https/trusted/ca.crt|Neo4j HTTPS CA|neo4j-https-ca"
+    ["milvus"]="milvus/tls/ca.pem|Milvus CA|milvus-ca"
+    ["mqtt"]="mqtt/certs/ca.crt|MQTT CA|mqtt-ca"
+)
+
+# Arrays to track certificates
+declare -a AVAILABLE_CERTS
+declare -A SERVICES_SUMMARY
 
 if [ "$REMOVE" = true ]; then
     # Remove certificates
     echo ""
-    print_color "$CYAN" "Removing CA Certificates..."
-    print_color "$GRAY" "============================"
+    print_color "$CYAN" "Scanning certificate store for Docker stack CA certificates..."
+    print_color "$GRAY" "============================================================="
+    
+    FOUND_CERTS=0
+    REMOVED_COUNT=0
+    ERROR_COUNT=0
     
     case "$DISTRO" in
         ubuntu|debian)
             # Ubuntu/Debian
-            REMOVED=0
+            for key in "${!SERVICE_CERTS[@]}"; do
+                IFS='|' read -r path name cert_name <<< "${SERVICE_CERTS[$key]}"
+                
+                if [ -f "/usr/local/share/ca-certificates/${cert_name}.crt" ]; then
+                    print_color "$GREEN" "Found: $name"
+                    ((FOUND_CERTS++))
+                fi
+            done
             
-            if [ -f "/usr/local/share/ca-certificates/${NEO4J_CERT_NAME}.crt" ]; then
-                rm -f "/usr/local/share/ca-certificates/${NEO4J_CERT_NAME}.crt"
-                print_color "$GREEN" "  Removed Neo4j CA certificate"
-                ((REMOVED++))
+            if [ $FOUND_CERTS -eq 0 ]; then
+                print_color "$YELLOW" "No Docker stack CA certificates found in certificate store."
+                exit 0
             fi
             
-            if [ -f "/usr/local/share/ca-certificates/${MILVUS_CERT_NAME}.crt" ]; then
-                rm -f "/usr/local/share/ca-certificates/${MILVUS_CERT_NAME}.crt"
-                print_color "$GREEN" "  Removed Milvus CA certificate"
-                ((REMOVED++))
+            print_color "$CYAN" "Found $FOUND_CERTS Docker stack CA certificate(s)"
+            
+            if [ "$FORCE" = false ]; then
+                echo ""
+                read -p "Remove all Docker stack CA certificates? (y/n): " CONFIRM
+                if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+                    print_color "$YELLOW" "Certificate removal cancelled."
+                    exit 0
+                fi
             fi
             
-            if [ -f "/usr/local/share/ca-certificates/${MQTT_CERT_NAME}.crt" ]; then
-                rm -f "/usr/local/share/ca-certificates/${MQTT_CERT_NAME}.crt"
-                print_color "$GREEN" "  Removed MQTT CA certificate"
-                ((REMOVED++))
-            fi
+            echo ""
+            print_color "$CYAN" "Removing CA certificates..."
             
-            if [ $REMOVED -gt 0 ]; then
-                print_color "$YELLOW" "  Updating CA certificates..."
+            for key in "${!SERVICE_CERTS[@]}"; do
+                IFS='|' read -r path name cert_name <<< "${SERVICE_CERTS[$key]}"
+                
+                if [ -f "/usr/local/share/ca-certificates/${cert_name}.crt" ]; then
+                    echo ""
+                    print_color "$CYAN" "Removing: $name"
+                    if rm -f "/usr/local/share/ca-certificates/${cert_name}.crt" 2>/dev/null; then
+                        print_color "$GREEN" "  Certificate removed successfully!"
+                        ((REMOVED_COUNT++))
+                    else
+                        print_color "$RED" "  Failed to remove certificate"
+                        ((ERROR_COUNT++))
+                    fi
+                fi
+            done
+            
+            if [ $REMOVED_COUNT -gt 0 ]; then
+                echo ""
+                print_color "$YELLOW" "Updating CA certificates..."
                 update-ca-certificates
-                print_color "$GREEN" "  CA certificates updated"
-            else
-                print_color "$GRAY" "  No certificates found to remove"
+                print_color "$GREEN" "CA certificates updated"
             fi
             ;;
             
         rhel|centos|fedora)
             # RHEL/CentOS/Fedora
-            REMOVED=0
+            for key in "${!SERVICE_CERTS[@]}"; do
+                IFS='|' read -r path name cert_name <<< "${SERVICE_CERTS[$key]}"
+                
+                CERT_FILE="/etc/pki/ca-trust/source/anchors/${cert_name}.crt"
+                if [ ! -f "$CERT_FILE" ]; then
+                    CERT_FILE="/etc/pki/ca-trust/source/anchors/${cert_name}.pem"
+                fi
+                
+                if [ -f "$CERT_FILE" ]; then
+                    print_color "$GREEN" "Found: $name"
+                    ((FOUND_CERTS++))
+                fi
+            done
             
-            if [ -f "/etc/pki/ca-trust/source/anchors/${NEO4J_CERT_NAME}.crt" ]; then
-                rm -f "/etc/pki/ca-trust/source/anchors/${NEO4J_CERT_NAME}.crt"
-                print_color "$GREEN" "  Removed Neo4j CA certificate"
-                ((REMOVED++))
+            if [ $FOUND_CERTS -eq 0 ]; then
+                print_color "$YELLOW" "No Docker stack CA certificates found in certificate store."
+                exit 0
             fi
             
-            if [ -f "/etc/pki/ca-trust/source/anchors/${MILVUS_CERT_NAME}.pem" ]; then
-                rm -f "/etc/pki/ca-trust/source/anchors/${MILVUS_CERT_NAME}.pem"
-                print_color "$GREEN" "  Removed Milvus CA certificate"
-                ((REMOVED++))
+            print_color "$CYAN" "Found $FOUND_CERTS Docker stack CA certificate(s)"
+            
+            if [ "$FORCE" = false ]; then
+                echo ""
+                read -p "Remove all Docker stack CA certificates? (y/n): " CONFIRM
+                if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+                    print_color "$YELLOW" "Certificate removal cancelled."
+                    exit 0
+                fi
             fi
             
-            if [ -f "/etc/pki/ca-trust/source/anchors/${MQTT_CERT_NAME}.crt" ]; then
-                rm -f "/etc/pki/ca-trust/source/anchors/${MQTT_CERT_NAME}.crt"
-                print_color "$GREEN" "  Removed MQTT CA certificate"
-                ((REMOVED++))
-            fi
+            echo ""
+            print_color "$CYAN" "Removing CA certificates..."
             
-            if [ $REMOVED -gt 0 ]; then
-                print_color "$YELLOW" "  Updating CA trust..."
+            for key in "${!SERVICE_CERTS[@]}"; do
+                IFS='|' read -r path name cert_name <<< "${SERVICE_CERTS[$key]}"
+                
+                CERT_FILE="/etc/pki/ca-trust/source/anchors/${cert_name}.crt"
+                if [ ! -f "$CERT_FILE" ]; then
+                    CERT_FILE="/etc/pki/ca-trust/source/anchors/${cert_name}.pem"
+                fi
+                
+                if [ -f "$CERT_FILE" ]; then
+                    echo ""
+                    print_color "$CYAN" "Removing: $name"
+                    if rm -f "$CERT_FILE" 2>/dev/null; then
+                        print_color "$GREEN" "  Certificate removed successfully!"
+                        ((REMOVED_COUNT++))
+                    else
+                        print_color "$RED" "  Failed to remove certificate"
+                        ((ERROR_COUNT++))
+                    fi
+                fi
+            done
+            
+            if [ $REMOVED_COUNT -gt 0 ]; then
+                echo ""
+                print_color "$YELLOW" "Updating CA trust..."
                 update-ca-trust
-                print_color "$GREEN" "  CA trust updated"
-            else
-                print_color "$GRAY" "  No certificates found to remove"
+                print_color "$GREEN" "CA trust updated"
             fi
             ;;
             
@@ -183,121 +277,231 @@ if [ "$REMOVE" = true ]; then
             ;;
     esac
     
-else
-    # Install certificates
+    # Summary
     echo ""
-    print_color "$CYAN" "Installing CA Certificates..."
-    print_color "$GRAY" "=============================="
-    
-    # Find certificates
-    FOUND_CERTS=()
-    
-    if [ -f "$NEO4J_CA" ]; then
-        FOUND_CERTS+=("neo4j")
-        print_color "$GREEN" "  Found Neo4j CA certificate"
+    print_color "$CYAN" "=================================================================="
+    print_color "$CYAN" "Removal Summary"
+    print_color "$CYAN" "=================================================================="
+    print_color "$GREEN" "Certificates removed: $REMOVED_COUNT"
+    if [ $ERROR_COUNT -gt 0 ]; then
+        print_color "$RED" "Certificates failed: $ERROR_COUNT"
     fi
     
-    if [ -f "$MILVUS_CA" ]; then
-        FOUND_CERTS+=("milvus")
-        print_color "$GREEN" "  Found Milvus CA certificate"
-    fi
-    
-    if [ -f "$MQTT_CA" ]; then
-        FOUND_CERTS+=("mqtt")
-        print_color "$GREEN" "  Found MQTT CA certificate"
-    fi
-    
-    if [ ${#FOUND_CERTS[@]} -eq 0 ]; then
-        print_color "$YELLOW" "No CA certificates found to install"
-        print_color "$GRAY" "Certificates are created when SSL is enabled during service installation"
-        exit 0
+    if [ $REMOVED_COUNT -gt 0 ]; then
+        echo ""
+        print_color "$GREEN" "CA certificates have been removed from system trust store."
+        print_color "$YELLOW" "SSL connections will now show security warnings again."
     fi
     
     echo ""
-    print_color "$CYAN" "Installing to system trust store..."
+    print_color "$GREEN" "CA certificate removal completed!"
+    print_color "$CYAN" "=================================================================="
+    exit 0
+fi
+
+# Install certificates
+echo ""
+print_color "$CYAN" "Scanning for CA certificates..."
+print_color "$GRAY" "==============================="
+
+# Find available certificates
+for key in "${!SERVICE_CERTS[@]}"; do
+    IFS='|' read -r path name cert_name <<< "${SERVICE_CERTS[$key]}"
+    FULL_PATH="$INSTALL_PATH/$path"
+    
+    if [ -f "$FULL_PATH" ]; then
+        AVAILABLE_CERTS+=("$key")
+        print_color "$GREEN" "Found: $name at $path"
+        
+        # Extract service name
+        SERVICE=$(echo "$key" | cut -d'_' -f1)
+        if [ -z "${SERVICES_SUMMARY[$SERVICE]}" ]; then
+            SERVICES_SUMMARY[$SERVICE]=1
+        else
+            SERVICES_SUMMARY[$SERVICE]=$((SERVICES_SUMMARY[$SERVICE] + 1))
+        fi
+    else
+        print_color "$GRAY" "Missing: $name at $path"
+    fi
+done
+
+if [ ${#AVAILABLE_CERTS[@]} -eq 0 ]; then
+    echo ""
+    print_color "$RED" "No CA certificates found!"
+    print_color "$YELLOW" "This script should be run after services have been installed with SSL enabled."
+    echo ""
+    print_color "$CYAN" "To generate SSL certificates:"
+    print_color "$GRAY" "  cd neo4j && ./management/manage-ssl.sh generate && ./management/manage-ssl.sh enable"
+    print_color "$GRAY" "  cd milvus && ./management/manage-ssl.sh generate && ./management/manage-ssl.sh enable"
+    print_color "$GRAY" "  cd mqtt && ./management/manage-ssl.sh generate && ./management/manage-ssl.sh enable"
+    exit 1
+fi
+
+echo ""
+print_color "$CYAN" "Services with SSL certificates:"
+for service in "${!SERVICES_SUMMARY[@]}"; do
+    print_color "$GREEN" "  $service: ${SERVICES_SUMMARY[$service]} certificate(s)"
+done
+
+echo ""
+case "$DISTRO" in
+    ubuntu|debian)
+        print_color "$CYAN" "Installing CA certificates to: /usr/local/share/ca-certificates/"
+        ;;
+    rhel|centos|fedora)
+        print_color "$CYAN" "Installing CA certificates to: /etc/pki/ca-trust/source/anchors/"
+        ;;
+    *)
+        print_color "$RED" "Unsupported distribution: $DISTRO"
+        print_color "$YELLOW" "Supported: Ubuntu, Debian, RHEL, CentOS, Fedora"
+        exit 1
+        ;;
+esac
+
+INSTALLED_COUNT=0
+SKIPPED_COUNT=0
+ERROR_COUNT=0
+
+for key in "${AVAILABLE_CERTS[@]}"; do
+    IFS='|' read -r path name cert_name <<< "${SERVICE_CERTS[$key]}"
+    FULL_PATH="$INSTALL_PATH/$path"
+    
+    echo ""
+    print_color "$CYAN" "Processing: $name"
     
     case "$DISTRO" in
         ubuntu|debian)
-            # Ubuntu/Debian
-            INSTALLED=0
+            DEST_FILE="/usr/local/share/ca-certificates/${cert_name}.crt"
             
-            if [ -f "$NEO4J_CA" ]; then
-                cp "$NEO4J_CA" "/usr/local/share/ca-certificates/${NEO4J_CERT_NAME}.crt"
-                print_color "$GREEN" "  Installed Neo4j CA certificate"
-                ((INSTALLED++))
-            fi
-            
-            if [ -f "$MILVUS_CA" ]; then
-                cp "$MILVUS_CA" "/usr/local/share/ca-certificates/${MILVUS_CERT_NAME}.crt"
-                print_color "$GREEN" "  Installed Milvus CA certificate"
-                ((INSTALLED++))
-            fi
-            
-            if [ -f "$MQTT_CA" ]; then
-                cp "$MQTT_CA" "/usr/local/share/ca-certificates/${MQTT_CERT_NAME}.crt"
-                print_color "$GREEN" "  Installed MQTT CA certificate"
-                ((INSTALLED++))
-            fi
-            
-            if [ $INSTALLED -gt 0 ]; then
-                print_color "$YELLOW" "  Updating CA certificates..."
-                update-ca-certificates
-                print_color "$GREEN" "  CA certificates updated"
+            if [ -f "$DEST_FILE" ] && [ "$FORCE" = false ]; then
+                print_color "$YELLOW" "  Certificate already installed"
+                ((SKIPPED_COUNT++))
+            else
+                if [ -f "$DEST_FILE" ] && [ "$FORCE" = true ]; then
+                    print_color "$YELLOW" "  Removing existing certificate..."
+                    rm -f "$DEST_FILE"
+                fi
+                
+                # Copy certificate (error handling already set with set +e at top)
+                cp "$FULL_PATH" "$DEST_FILE" 2>/dev/null
+                CP_RESULT=$?
+                
+                if [ $CP_RESULT -eq 0 ]; then
+                    print_color "$GREEN" "  Certificate installed successfully!"
+                    INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+                else
+                    print_color "$RED" "  Failed to install certificate: $FULL_PATH"
+                    ERROR_COUNT=$((ERROR_COUNT + 1))
+                fi
             fi
             ;;
             
         rhel|centos|fedora)
-            # RHEL/CentOS/Fedora
-            INSTALLED=0
-            
-            if [ -f "$NEO4J_CA" ]; then
-                cp "$NEO4J_CA" "/etc/pki/ca-trust/source/anchors/${NEO4J_CERT_NAME}.crt"
-                print_color "$GREEN" "  Installed Neo4j CA certificate"
-                ((INSTALLED++))
+            # Use .pem extension for Milvus, .crt for others
+            if [[ "$path" == *".pem" ]]; then
+                DEST_FILE="/etc/pki/ca-trust/source/anchors/${cert_name}.pem"
+            else
+                DEST_FILE="/etc/pki/ca-trust/source/anchors/${cert_name}.crt"
             fi
             
-            if [ -f "$MILVUS_CA" ]; then
-                cp "$MILVUS_CA" "/etc/pki/ca-trust/source/anchors/${MILVUS_CERT_NAME}.pem"
-                print_color "$GREEN" "  Installed Milvus CA certificate"
-                ((INSTALLED++))
-            fi
-            
-            if [ -f "$MQTT_CA" ]; then
-                cp "$MQTT_CA" "/etc/pki/ca-trust/source/anchors/${MQTT_CERT_NAME}.crt"
-                print_color "$GREEN" "  Installed MQTT CA certificate"
-                ((INSTALLED++))
-            fi
-            
-            if [ $INSTALLED -gt 0 ]; then
-                print_color "$YELLOW" "  Updating CA trust..."
-                update-ca-trust
-                print_color "$GREEN" "  CA trust updated"
+            if [ -f "$DEST_FILE" ] && [ "$FORCE" = false ]; then
+                print_color "$YELLOW" "  Certificate already installed"
+                ((SKIPPED_COUNT++))
+            else
+                if [ -f "$DEST_FILE" ] && [ "$FORCE" = true ]; then
+                    print_color "$YELLOW" "  Removing existing certificate..."
+                    rm -f "$DEST_FILE"
+                fi
+                
+                # Copy certificate (error handling already set with set +e at top)
+                cp "$FULL_PATH" "$DEST_FILE" 2>/dev/null
+                CP_RESULT=$?
+                
+                if [ $CP_RESULT -eq 0 ]; then
+                    print_color "$GREEN" "  Certificate installed successfully!"
+                    INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+                else
+                    print_color "$RED" "  Failed to install certificate: $FULL_PATH"
+                    ERROR_COUNT=$((ERROR_COUNT + 1))
+                fi
             fi
             ;;
-            
-        *)
-            print_color "$RED" "Unsupported distribution: $DISTRO"
-            print_color "$YELLOW" "Supported: Ubuntu, Debian, RHEL, CentOS, Fedora"
-            print_color "$YELLOW" ""
-            print_color "$YELLOW" "Manual installation:"
-            print_color "$GRAY" "  Ubuntu/Debian:"
-            print_color "$GRAY" "    sudo cp ca.crt /usr/local/share/ca-certificates/"
-            print_color "$GRAY" "    sudo update-ca-certificates"
-            print_color "$GRAY" "  RHEL/CentOS:"
-            print_color "$GRAY" "    sudo cp ca.crt /etc/pki/ca-trust/source/anchors/"
-            print_color "$GRAY" "    sudo update-ca-trust"
-            exit 1
+    esac
+done
+
+# Update certificate store
+if [ $INSTALLED_COUNT -gt 0 ] || [ $ERROR_COUNT -gt 0 ]; then
+    echo ""
+    case "$DISTRO" in
+        ubuntu|debian)
+            print_color "$YELLOW" "Updating CA certificates..."
+            update-ca-certificates 2>&1
+            UPDATE_RESULT=$?
+            if [ $UPDATE_RESULT -eq 0 ]; then
+                print_color "$GREEN" "CA certificates updated"
+            else
+                print_color "$YELLOW" "CA certificate update completed with warnings"
+            fi
+            ;;
+        rhel|centos|fedora)
+            print_color "$YELLOW" "Updating CA trust..."
+            update-ca-trust 2>&1
+            UPDATE_RESULT=$?
+            if [ $UPDATE_RESULT -eq 0 ]; then
+                print_color "$GREEN" "CA trust updated"
+            else
+                print_color "$YELLOW" "CA trust update completed with warnings"
+            fi
             ;;
     esac
 fi
 
+# Summary
 echo ""
 print_color "$CYAN" "=================================================================="
-if [ "$REMOVE" = true ]; then
-    print_color "$GREEN" "CA certificates removed successfully!"
-else
-    print_color "$GREEN" "CA certificates installed successfully!"
-    echo ""
-    print_color "$YELLOW" "Note: Applications may need to be restarted to use the new certificates"
+print_color "$CYAN" "Installation Summary"
+print_color "$CYAN" "=================================================================="
+print_color "$GREEN" "Certificates installed: $INSTALLED_COUNT"
+if [ $SKIPPED_COUNT -gt 0 ]; then
+    print_color "$YELLOW" "Certificates skipped: $SKIPPED_COUNT"
 fi
+if [ $ERROR_COUNT -gt 0 ]; then
+    print_color "$RED" "Certificates failed: $ERROR_COUNT"
+fi
+
+if [ $INSTALLED_COUNT -gt 0 ]; then
+    echo ""
+    print_color "$CYAN" "Benefits:"
+    print_color "$GREEN" "- Browser SSL warnings eliminated for HTTPS connections"
+    print_color "$GREEN" "- Applications can connect without certificate validation errors"
+    print_color "$GREEN" "- Secure connections work seamlessly across all services"
+    
+    echo ""
+    print_color "$CYAN" "Test SSL connections:"
+    if [ -n "${SERVICES_SUMMARY[neo4j]}" ]; then
+        print_color "$GRAY" "- Neo4j Browser: https://localhost:7473"
+        print_color "$GRAY" "- Neo4j Bolt+TLS: bolt+s://localhost:7687"
+    fi
+    if [ -n "${SERVICES_SUMMARY[milvus]}" ]; then
+        print_color "$GRAY" "- Milvus gRPC: localhost:19530 (TLS)"
+        print_color "$GRAY" "- MinIO Console: https://localhost:9001"
+    fi
+    if [ -n "${SERVICES_SUMMARY[mqtt]}" ]; then
+        print_color "$GRAY" "- MQTT SSL: localhost:8883"
+    fi
+fi
+
+if [ $SKIPPED_COUNT -gt 0 ]; then
+    echo ""
+    print_color "$GRAY" "To reinstall existing certificates, use: --force parameter"
+fi
+
+echo ""
+print_color "$CYAN" "Certificate Management:"
+print_color "$GRAY" "======================"
+print_color "$GRAY" "To remove installed certificates:"
+print_color "$GREEN" "  sudo $0 --remove"
+
+echo ""
+print_color "$GREEN" "CA certificate installation completed!"
 print_color "$CYAN" "=================================================================="

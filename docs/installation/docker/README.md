@@ -397,6 +397,35 @@ The installer automatically creates a **CREDENTIALS.txt** file containing:
 - Use `manage-ssl status` to check certificates
 - Verify CA certificates are installed on client machines
 
+**CA Certificate Installation Requires Elevated Privileges:**
+
+The `install-ca-certificates` script requires administrator/root privileges to install certificates to the system trust store.
+
+Windows:
+```powershell
+# Run PowerShell as Administrator, then:
+.\management\install-ca-certificates.ps1
+```
+
+Linux:
+```bash
+# Use sudo to run with root privileges:
+sudo ./management/install-ca-certificates.sh
+
+# If running from management subfolder:
+cd management
+sudo ./install-ca-certificates.sh
+```
+
+**Why elevated privileges are required:**
+- System certificate stores are protected system resources
+- Installing CA certificates affects all users and applications on the system
+- This is a security feature to prevent unauthorized certificate installation
+
+**Alternative for non-admin users:**
+- Windows: Certificates can be installed to CurrentUser store (limited to your user account)
+- Linux: Manual installation to user-specific certificate stores (application-dependent)
+
 ### Logs and Monitoring
 
 ```bash

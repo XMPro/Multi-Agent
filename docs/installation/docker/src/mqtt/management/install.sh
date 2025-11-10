@@ -17,6 +17,7 @@ NC='\033[0m'
 USERNAME="xmpro"
 PASSWORD=""
 ENABLE_SSL=false
+DOMAIN="localhost"
 FORCE=false
 
 # Function to print colored output
@@ -34,6 +35,7 @@ show_usage() {
     echo "  -u, --username USER    MQTT username (default: xmpro)"
     echo "  -p, --password PASS    MQTT password (will prompt if not provided)"
     echo "  --enable-ssl           Enable SSL/TLS encryption"
+    echo "  --domain DOMAIN        Domain for SSL certificate (default: localhost)"
     echo "  --force                Force reconfiguration"
     echo "  -h, --help             Show this help message"
     echo ""
@@ -54,6 +56,10 @@ while [[ $# -gt 0 ]]; do
         --enable-ssl)
             ENABLE_SSL=true
             shift
+            ;;
+        --domain)
+            DOMAIN="$2"
+            shift 2
             ;;
         --force)
             FORCE=true
@@ -126,16 +132,102 @@ done
 
 # Ask about SSL
 if [ "$ENABLE_SSL" = false ]; then
-    echo "SSL Configuration:"
+    echo ""
+    print_color "$CYAN" "SSL Configuration:"
     read -p "Enable SSL/TLS encryption? (y/n): " ssl_choice
     [[ "$ssl_choice" =~ ^[Yy]$ ]] && ENABLE_SSL=true
 fi
 
-[ "$ENABLE_SSL" = true ] && print_color "$GREEN" "SSL will be enabled"
+USE_CA_PROVIDED=false
+MACHINE_IP=""
+
+if [ "$ENABLE_SSL" = true ]; then
+    print_color "$GREEN" "SSL will be enabled"
+    
+    # Ask for certificate type
+    echo ""
+    print_color "$CYAN" "Certificate Options:"
+    print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+    print_color "$GRAY" "2. Use CA-provided certificates (for production)"
+    read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+    
+    if [ "$cert_choice" = "2" ]; then
+        print_color "$GREEN" "CA-provided certificates selected"
+        print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
+        print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+        ENABLE_SSL=false
+        USE_CA_PROVIDED=true
+    else
+        print_color "$GREEN" "Self-signed certificates selected"
+        
+        # Ask for domain name
+        read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
+        if [ -n "$domain_input" ]; then
+            DOMAIN="$domain_input"
+        fi
+        print_color "$CYAN" "Using domain: $DOMAIN"
+        
+        # Detect machine IP addresses
+        echo ""
+        print_color "$CYAN" "Detecting machine IP addresses..."
+        
+        if command -v ip &> /dev/null; then
+            # Use 'ip' command (modern Linux)
+            IPS=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+        elif command -v ifconfig &> /dev/null; then
+            # Fallback to ifconfig (older systems)
+            IPS=$(ifconfig 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+        else
+            IPS=""
+        fi
+        
+        if [ -n "$IPS" ]; then
+            print_color "$GREEN" "Detected IP addresses:"
+            i=0
+            IP_ARRAY=()
+            while IFS= read -r ip; do
+                if [ -n "$ip" ]; then
+                    echo "  [$i] $ip"
+                    IP_ARRAY+=("$ip")
+                    i=$((i+1))
+                fi
+            done <<< "$IPS"
+            
+            if [ ${#IP_ARRAY[@]} -gt 0 ]; then
+                read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+                
+                if [ -n "$ip_choice" ]; then
+                    SELECTED_IPS=()
+                    IFS=',' read -ra INDICES <<< "$ip_choice"
+                    for index in "${INDICES[@]}"; do
+                        index=$(echo "$index" | xargs)  # Trim whitespace
+                        if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#IP_ARRAY[@]}" ]; then
+                            SELECTED_IPS+=("${IP_ARRAY[$index]}")
+                        fi
+                    done
+                    
+                    if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                        MACHINE_IP=$(IFS=','; echo "${SELECTED_IPS[*]}")
+                        print_color "$CYAN" "Selected IPs: $MACHINE_IP"
+                    else
+                        print_color "$GRAY" "No valid IPs selected, skipping"
+                    fi
+                else
+                    print_color "$GRAY" "No IPs selected (localhost/domain only)"
+                fi
+            fi
+        else
+            print_color "$GRAY" "Could not detect IP addresses, skipping"
+        fi
+    fi
+else
+    print_color "$YELLOW" "SSL will be disabled (unencrypted connections only)"
+fi
 
 # Generate or prompt for password
 if [ -z "$PASSWORD" ]; then
-    echo "Password Setup:"
+    echo ""
+    print_color "$CYAN" "Password Setup:"
     read -p "Generate secure password automatically? (y/n): " pass_choice
     
     if [[ "$pass_choice" =~ ^[Yy]$ ]] || [ -z "$pass_choice" ]; then
@@ -214,11 +306,34 @@ print_color "$GREEN" "Created acl.txt"
 # Create password file
 echo "Setting up authentication..."
 echo "$USERNAME:$PASSWORD" > config/passwords.txt
-docker run --rm -v "$(pwd)/config:/config" -w /config eclipse-mosquitto:2.0.22 mosquitto_passwd -U passwords.txt 2>/dev/null || {
-    print_color "$YELLOW" "Password will be hashed on first startup"
-}
-print_color "$GREEN" "Password file created"
+
+# Try to hash the password using mosquitto_passwd
+print_color "$GRAY" "Creating password hash..."
+HASH_SUCCESS=false
+
+# Method 1: Try direct volume mount
+if docker run --rm -v "$(pwd)/config:/config" -w /config eclipse-mosquitto:2.0.22 mosquitto_passwd -U passwords.txt 2>/dev/null; then
+    HASH_SUCCESS=true
+    print_color "$GREEN" "Password file created for user '$USERNAME'"
+else
+    # Method 2: Try alternative approach
+    print_color "$YELLOW" "Volume mount method failed, trying alternative..."
+    
+    # Create temp file and try to hash it
+    if docker run --rm -v "$(pwd):/work" -w /work eclipse-mosquitto:2.0.22 sh -c "cd config && mosquitto_passwd -U passwords.txt" 2>/dev/null; then
+        HASH_SUCCESS=true
+        print_color "$GREEN" "Password file created with proper hash"
+    else
+        print_color "$YELLOW" "Container hash method failed, password will be hashed on first startup"
+    fi
+fi
+
 print_color "$YELLOW" "Password: $PASSWORD"
+print_color "$GRAY" "  (Save this password - it won't be shown again)"
+
+if [ "$HASH_SUCCESS" = false ]; then
+    print_color "$GRAY" "Note: Mosquitto will hash the password on first startup"
+fi
 
 # Set permissions
 chmod -R 777 data logs 2>/dev/null || true
@@ -233,20 +348,46 @@ if [ "$ENABLE_SSL" = true ]; then
         
         # Generate CA
         docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl genrsa -out ca.key 2048
-        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl req -new -x509 -days 365 -key ca.key -out ca.crt -subj "/C=US/ST=State/L=City/O=MQTT/CN=MQTT-CA"
+        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl req -new -x509 -days 365 -key ca.key -out ca.crt \
+            -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=MQTT-CA"
         
-        # Generate server cert
+        # Build SAN list
+        SAN_LIST="DNS:$DOMAIN,DNS:localhost,DNS:127.0.0.1,DNS:mqtt,IP:127.0.0.1,IP:::1"
+        if [ -n "$MACHINE_IP" ]; then
+            IFS=',' read -ra IP_ARRAY <<< "$MACHINE_IP"
+            for ip in "${IP_ARRAY[@]}"; do
+                ip=$(echo "$ip" | xargs)  # Trim whitespace
+                SAN_LIST="$SAN_LIST,IP:$ip"
+            done
+        fi
+        
+        # Generate server cert with SAN
         docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl genrsa -out server.key 2048
-        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=MQTT/CN=localhost"
-        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365
+        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr \
+            -subj "/C=US/ST=State/L=City/O=MQTT-Broker/CN=$DOMAIN" \
+            -addext "subjectAltName=$SAN_LIST"
+        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key \
+            -CAcreateserial -out server.crt -days 365 -copy_extensions copy
         
         # Cleanup
-        rm -f certs/*.csr certs/*.srl
+        docker run --rm -v "$(pwd)/certs:/certs" -w /certs alpine sh -c "rm -f server.csr ca.srl"
         
-        [ -f "certs/server.crt" ] && print_color "$GREEN" "SSL certificates generated"
+        if [ -f "certs/ca.crt" ] && [ -f "certs/server.crt" ] && [ -f "certs/server.key" ]; then
+            print_color "$GREEN" "SSL certificates generated successfully using Docker OpenSSL"
+            print_color "$GREEN" "SSL certificate generation complete"
+            print_color "$GRAY" "Note: alpine/openssl image preserved for future SSL operations"
+        else
+            print_color "$RED" "SSL certificate generation failed"
+            print_color "$YELLOW" "SSL will be disabled for this installation"
+            ENABLE_SSL=false
+            
+            # Update .env
+            sed -i 's/ENABLE_SSL=true/ENABLE_SSL=false/' .env
+        fi
         
-        # Update mosquitto.conf for SSL
-        cat >> config/mosquitto.conf << EOF
+        # Update mosquitto.conf for SSL if successful
+        if [ "$ENABLE_SSL" = true ]; then
+            cat >> config/mosquitto.conf << EOF
 
 # SSL Configuration
 listener 8883
@@ -257,48 +398,110 @@ keyfile /mosquitto/certs/server.key
 tls_version tlsv1.2
 require_certificate false
 EOF
-        
-        # Update .env
-        sed -i 's/ENABLE_SSL=false/ENABLE_SSL=true/' .env
-        print_color "$GREEN" "SSL configuration enabled"
+            
+            # Update .env
+            sed -i 's/ENABLE_SSL=false/ENABLE_SSL=true/' .env
+            print_color "$GREEN" "SSL configuration enabled"
+        fi
     fi
 fi
 
-# Update docker-compose.yml for SSL if enabled
-if [ "$ENABLE_SSL" = true ]; then
-    echo "Updating Docker Compose configuration for SSL..."
-    
-    # Ensure certificate volumes are mounted (should already be in docker-compose.yml)
-    if ! grep -q "./certs:/mosquitto/certs" docker-compose.yml; then
-        print_color "$YELLOW" "Adding certs volume mount to docker-compose.yml"
-        sed -i '/mosquitto.conf/a\      - ./certs:/mosquitto/certs' docker-compose.yml
-    fi
-    
-    print_color "$GREEN" "Docker Compose configuration updated for SSL"
+# Initialize backup system
+print_color "$CYAN" "Initializing backup system..."
+if [ ! -d "data/backups" ]; then
+    mkdir -p "data/backups"
 fi
+print_color "$GREEN" "Backup system initialized"
 
 # Test config
-docker-compose config > /dev/null 2>&1 && print_color "$GREEN" "Configuration valid"
+print_color "$CYAN" "Testing configuration..."
+if docker-compose config > /dev/null 2>&1; then
+    print_color "$GREEN" "Configuration valid"
+else
+    print_color "$RED" "Docker Compose configuration has errors!"
+    print_color "$GRAY" "Run 'docker-compose config' to see details."
+    exit 1
+fi
 
 # Summary
 print_color "$CYAN" "=================================================================="
 print_color "$CYAN" "Installation Summary"
 print_color "$CYAN" "=================================================================="
+print_color "$GREEN" "Directory structure created"
+print_color "$GREEN" "Authentication configured"
+print_color "$GREEN" "Permissions set"
+if [ "$ENABLE_SSL" = true ]; then
+    print_color "$GREEN" "SSL certificates generated and configured"
+fi
+print_color "$GREEN" "Backup system initialized"
+print_color "$GREEN" "Configuration validated"
+echo ""
+print_color "$CYAN" "MQTT Broker Details:"
 echo "  Username: $USERNAME"
 print_color "$YELLOW" "  Password: $PASSWORD"
-echo "  MQTT Port: 1883"
-[ "$ENABLE_SSL" = true ] && echo "  MQTT SSL Port: 8883"
+echo "  MQTT Port: 1883 (unencrypted)"
+if [ "$ENABLE_SSL" = true ]; then
+    echo "  MQTT SSL Port: 8883 (encrypted)"
+fi
+echo "  WebSocket Port: 9002"
+echo ""
 print_color "$GREEN" "Installation completed!"
+print_color "$CYAN" "=================================================================="
 
 # Ask to start (only if not in force mode - stack installer will start services)
 if [ "$FORCE" = false ]; then
+    echo ""
     read -p "Start MQTT broker now? (y/n): " start_choice
     if [[ "$start_choice" =~ ^[Yy]$ ]]; then
+        print_color "$GREEN" "Starting MQTT broker..."
         docker-compose up -d
-        print_color "$GREEN" "MQTT broker started!"
+        
+        if [ $? -eq 0 ]; then
+            print_color "$GREEN" "MQTT broker started successfully!"
+            
+            print_color "$YELLOW" "Waiting for broker to initialize..."
+            sleep 5
+            
+            print_color "$CYAN" "Checking broker status..."
+            if docker-compose ps | grep -q "mosquitto.*Up"; then
+                print_color "$GREEN" "[OK] MQTT broker is running successfully!"
+                print_color "$GREEN" "[OK] Ready to accept connections"
+            else
+                print_color "$YELLOW" "[WARN] Broker may still be starting up"
+                print_color "$GRAY" "Check logs with: docker-compose logs mosquitto"
+            fi
+        else
+            print_color "$RED" "Failed to start MQTT broker"
+            print_color "$GRAY" "Check configuration and try: docker-compose up -d"
+        fi
     else
-        print_color "$GRAY" "MQTT not started (will be started by stack installer)"
+        print_color "$YELLOW" "MQTT broker not started"
+        echo ""
+        print_color "$CYAN" "To start manually:"
+        print_color "$GRAY" "1. Start the MQTT broker: docker-compose up -d"
+        print_color "$GRAY" "2. Check status: docker-compose ps"
+        print_color "$GRAY" "3. View logs: docker-compose logs -f mosquitto"
     fi
+    
+    echo ""
+    print_color "$CYAN" "Management Commands:"
+    print_color "$GRAY" "==================="
+    if [ "$USE_CA_PROVIDED" = true ]; then
+        print_color "$CYAN" "- Install CA certificates: ./management/manage-ssl.sh install-ca"
+        print_color "$CYAN" "- Enable SSL after installing: ./management/manage-ssl.sh enable"
+    fi
+    print_color "$GRAY" "- User management: ./management/manage-users.sh list"
+    print_color "$GRAY" "- SSL management: ./management/manage-ssl.sh status"
+    print_color "$GRAY" "- Create backup: ./management/backup.sh"
+    print_color "$GRAY" "- Test connection with credentials above"
+    echo ""
+    print_color "$CYAN" "Configuration files:"
+    print_color "$GRAY" "  - docker-compose.yml (main configuration)"
+    print_color "$GRAY" "  - .env (environment variables)"
+    print_color "$GRAY" "  - config/mosquitto.conf (broker settings)"
+    print_color "$GRAY" "  - config/passwords.txt (user authentication)"
+    print_color "$GRAY" "  - config/acl.txt (access control)"
+    
     [ -d "management" ] && cd management
 else
     print_color "$GRAY" "Configuration complete (stack installer will start services)"

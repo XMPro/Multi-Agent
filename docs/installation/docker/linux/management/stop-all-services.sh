@@ -3,7 +3,7 @@
 # Stop All Docker Stack Services (Linux)
 # =================================================================
 
-set -euo pipefail
+set -eo pipefail
 
 # Color codes for output
 RED='\033[0;31m'
@@ -71,37 +71,80 @@ else
     exit 1
 fi
 
+# Verify expected folders exist
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt")
+MISSING_FOLDERS=()
+
+for folder in "${EXPECTED_FOLDERS[@]}"; do
+    if [ ! -d "$folder" ]; then
+        MISSING_FOLDERS+=("$folder")
+    fi
+done
+
+if [ ${#MISSING_FOLDERS[@]} -eq 3 ]; then
+    print_color "$RED" "No service folders found in: $(pwd)"
+    print_color "$YELLOW" "Expected folders: neo4j, milvus, mqtt"
+    exit 1
+fi
+
+if [ ${#MISSING_FOLDERS[@]} -gt 0 ]; then
+    print_color "$YELLOW" "Warning: Missing service folders: ${MISSING_FOLDERS[*]}"
+fi
+
+# Confirm action
+echo ""
+if [ "$REMOVE_VOLUMES" = true ]; then
+    print_color "$RED" "WARNING: This will stop all services AND remove their data volumes!"
+    print_color "$RED" "All data will be permanently deleted."
+else
+    print_color "$CYAN" "This will stop all running services (data will be preserved)."
+fi
+
+echo ""
+read -p "Continue? (y/n): " CONFIRM
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    print_color "$YELLOW" "Operation cancelled"
+    exit 0
+fi
+
 # Services to stop
 SERVICES=("neo4j" "milvus" "mqtt")
+STOPPED_SERVICES=()
+FAILED_SERVICES=()
+
+# Stop services
+echo ""
+print_color "$CYAN" "Stopping Services..."
+print_color "$GRAY" "===================="
 
 # Stop each service
 for SERVICE in "${SERVICES[@]}"; do
     if [ -d "$SERVICE" ]; then
         echo ""
         print_color "$CYAN" "Stopping $SERVICE..."
-        print_color "$GRAY" "===================="
         
         cd "$SERVICE"
         
         # Check if docker-compose.yml exists
         if [ ! -f "docker-compose.yml" ]; then
-            print_color "$YELLOW" "  No docker-compose.yml found, skipping"
+            print_color "$YELLOW" "No docker-compose.yml found, skipping"
             cd ..
             continue
         fi
         
         # Stop the service
-        if docker-compose ps 2>/dev/null | grep -q "Up"; then
-            if [ "$REMOVE_VOLUMES" = true ]; then
-                print_color "$YELLOW" "  Stopping and removing containers and volumes..."
-                docker-compose down -v
-            else
-                print_color "$YELLOW" "  Stopping containers..."
-                docker-compose down
-            fi
-            print_color "$GREEN" "  $SERVICE stopped successfully"
+        if [ "$REMOVE_VOLUMES" = true ]; then
+            docker-compose down -v 2>&1
         else
-            print_color "$GRAY" "  $SERVICE is not running"
+            docker-compose down 2>&1
+        fi
+        
+        if [ $? -eq 0 ]; then
+            print_color "$GREEN" "$SERVICE stopped successfully"
+            STOPPED_SERVICES+=("$SERVICE")
+        else
+            print_color "$RED" "Failed to stop $SERVICE (exit code: $?)"
+            FAILED_SERVICES+=("$SERVICE")
         fi
         
         cd ..
@@ -110,15 +153,25 @@ for SERVICE in "${SERVICES[@]}"; do
     fi
 done
 
+# Summary
 echo ""
 print_color "$CYAN" "=================================================================="
+print_color "$CYAN" "Summary"
+print_color "$CYAN" "=================================================================="
 
-if [ "$REMOVE_VOLUMES" = true ]; then
-    print_color "$GREEN" "All services stopped and data volumes removed!"
-    print_color "$YELLOW" "WARNING: All data has been deleted!"
-else
-    print_color "$GREEN" "All services stopped successfully!"
-    print_color "$GRAY" "Data volumes preserved. Use --remove-volumes to delete data."
+if [ ${#STOPPED_SERVICES[@]} -gt 0 ]; then
+    print_color "$GREEN" "Successfully stopped: ${STOPPED_SERVICES[*]}"
 fi
 
+if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
+    print_color "$RED" "Failed to stop: ${FAILED_SERVICES[*]}"
+fi
+
+if [ "$REMOVE_VOLUMES" = true ]; then
+    echo ""
+    print_color "$YELLOW" "Data volumes have been removed"
+fi
+
+echo ""
+print_color "$GREEN" "All operations completed"
 print_color "$CYAN" "=================================================================="

@@ -9,9 +9,12 @@ param(
     [switch]$SkipChecks = $false,
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
-    [string]$Neo4jPassword = "",
-    [string]$MilvusPassword = "",
-    [string]$MqttPassword = "",
+    # For production: Passwords should NOT be passed as parameters
+    # Instead, they will be:
+    # 1. Read from environment variables (NEO4J_PASSWORD, MILVUS_PASSWORD, MQTT_PASSWORD)
+    # 2. Prompted interactively if not found in environment
+    # 3. Generated securely if not provided
+    # This prevents passwords from appearing in process lists or command history
     [switch]$AutoStart = $false,
     [switch]$InstallCertificates = $false
 )
@@ -274,6 +277,49 @@ if ($EnableSSL) {
     if ($Domain -ne "localhost") {
         $Neo4jParams.Domain = $Domain
         $MilvusParams.Domain = $Domain
+    }
+}
+
+# Get passwords from environment variables or prompt interactively
+# This is more secure than command-line parameters
+$Neo4jPassword = $env:NEO4J_PASSWORD
+$MilvusPassword = $env:MILVUS_PASSWORD
+$MqttPassword = $env:MQTT_PASSWORD
+
+# If passwords not in environment and not in automation mode, prompt interactively
+if (-not $Neo4jPassword -and -not $AutoStart) {
+    Write-Host ""
+    Write-Host "Neo4j Password Configuration:" -ForegroundColor Cyan
+    Write-Host "Leave blank to auto-generate a secure password" -ForegroundColor Gray
+    $SecureNeo4jPassword = Read-Host "Enter Neo4j password" -AsSecureString
+    if ($SecureNeo4jPassword.Length -gt 0) {
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureNeo4jPassword)
+        $Neo4jPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+    }
+}
+
+if (-not $MilvusPassword -and -not $AutoStart) {
+    Write-Host ""
+    Write-Host "Milvus Password Configuration:" -ForegroundColor Cyan
+    Write-Host "Leave blank to auto-generate a secure password" -ForegroundColor Gray
+    $SecureMilvusPassword = Read-Host "Enter Milvus password" -AsSecureString
+    if ($SecureMilvusPassword.Length -gt 0) {
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureMilvusPassword)
+        $MilvusPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+    }
+}
+
+if (-not $MqttPassword -and -not $AutoStart) {
+    Write-Host ""
+    Write-Host "MQTT Password Configuration:" -ForegroundColor Cyan
+    Write-Host "Leave blank to auto-generate a secure password" -ForegroundColor Gray
+    $SecureMqttPassword = Read-Host "Enter MQTT password" -AsSecureString
+    if ($SecureMqttPassword.Length -gt 0) {
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureMqttPassword)
+        $MqttPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
     }
 }
 

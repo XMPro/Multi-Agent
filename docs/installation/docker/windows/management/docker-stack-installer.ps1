@@ -9,9 +9,12 @@ param(
     [switch]$SkipChecks = $false,
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
-    [string]$Neo4jPassword = "",
-    [string]$MilvusPassword = "",
-    [string]$MqttPassword = "",
+    # For production: Passwords should NOT be passed as parameters
+    # Instead, they will be:
+    # 1. Read from environment variables (NEO4J_PASSWORD, MILVUS_PASSWORD, MQTT_PASSWORD)
+    # 2. Prompted interactively if not found in environment
+    # 3. Generated securely if not provided
+    # This prevents passwords from appearing in process lists or command history
     [switch]$AutoStart = $false,
     [switch]$InstallCertificates = $false
 )
@@ -241,20 +244,6 @@ if ($MissingFolders.Count -gt 0) {
 
 Write-Host "All expected service folders found" -ForegroundColor Green
 
-# Configure services
-Write-Host ""
-Write-Host "Configuring Services..." -ForegroundColor White
-Write-Host "======================" -ForegroundColor Gray
-
-# Track which services configured successfully
-$ConfiguredServices = @{}
-
-# Configure Neo4j using the install script
-Write-Host ""
-Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
-Write-Host "===================" -ForegroundColor Gray
-Write-Host "Running Neo4j installation script..." -ForegroundColor White
-
 # Build parameters for service install scripts
 $Neo4jParams = @{
     Force = $true
@@ -277,23 +266,44 @@ if ($EnableSSL) {
     }
 }
 
+# Get passwords from environment variables only (for automation)
+# Do NOT prompt - let individual service installers handle password prompting
+$Neo4jPassword = $env:NEO4J_PASSWORD
+$MilvusPassword = $env:MILVUS_PASSWORD
+$MqttPassword = $env:MQTT_PASSWORD
+
+# Add passwords to params only if provided via environment variables
 if ($Neo4jPassword) {
     $Neo4jParams.Password = $Neo4jPassword
+    Write-Host "Using Neo4j password from environment variable" -ForegroundColor Gray
 }
 
 if ($MilvusPassword) {
     $MilvusParams.Password = $MilvusPassword
+    Write-Host "Using Milvus password from environment variable" -ForegroundColor Gray
 }
 
 if ($MqttPassword) {
     $MqttParams.Password = $MqttPassword
+    Write-Host "Using MQTT password from environment variable" -ForegroundColor Gray
 }
+
+# Configure services
+Write-Host ""
+Write-Host "Configuring Services..." -ForegroundColor White
+Write-Host "======================" -ForegroundColor Gray
+
+# Track which services configured successfully
+$ConfiguredServices = @{}
+
+# Configure Neo4j using the install script
+Write-Host ""
+Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
+Write-Host "===================" -ForegroundColor Gray
+Write-Host "Running Neo4j installation script..." -ForegroundColor White
 
 Set-Location "neo4j"
 try {
-    if ($Neo4jPassword) {
-        Write-Host "Using provided Neo4j password" -ForegroundColor Gray
-    }
     if ($EnableSSL) {
         Write-Host "SSL enabled for Neo4j" -ForegroundColor Gray
     }
@@ -318,9 +328,6 @@ Write-Host "Running Milvus installation script..." -ForegroundColor White
 
 Set-Location "milvus"
 try {
-    if ($MilvusPassword) {
-        Write-Host "Using provided Milvus password" -ForegroundColor Gray
-    }
     if ($EnableSSL) {
         Write-Host "SSL enabled for Milvus" -ForegroundColor Gray
     }
@@ -350,9 +357,6 @@ Write-Host "Running MQTT installation script..." -ForegroundColor White
 
 Set-Location "mqtt"
 try {
-    if ($MqttPassword) {
-        Write-Host "Using provided MQTT password" -ForegroundColor Gray
-    }
     if ($EnableSSL) {
         Write-Host "SSL enabled for MQTT" -ForegroundColor Gray
     }

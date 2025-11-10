@@ -205,6 +205,8 @@ if (-not $Password) {
             exit 1
         }
     }
+} else {
+    Write-Host "Using provided password for user '$Username'" -ForegroundColor Gray
 }
 
 # Update .env file with configuration

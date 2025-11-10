@@ -13,12 +13,13 @@ param(
 Write-Host "Docker Stack Prepare Script" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 
-# Get current directory (should be docs/installation/docker)
+# Get current directory (should be docs/installation/docker/windows)
 $CurrentDir = Get-Location
+$ParentDir = Split-Path $CurrentDir -Parent
 
 # Validate we're in the correct directory
-if (-not (Test-Path "src") -or -not (Test-Path "management")) {
-    Write-Host "Error: This script must be run from the docs/installation/docker directory!" -ForegroundColor Red
+if (-not (Test-Path "$ParentDir\src")) {
+    Write-Host "Error: This script must be run from the docs/installation/docker/windows directory!" -ForegroundColor Red
     exit 1
 }
 
@@ -64,7 +65,7 @@ try {
     
     $Services = @("neo4j", "milvus", "mqtt")
     foreach ($Service in $Services) {
-        $SourcePath = Join-Path "src" $Service
+        $SourcePath = Join-Path "$ParentDir\src" $Service
         $DestPath = Join-Path $TempDir $Service
         
         if (Test-Path $SourcePath) {
@@ -77,7 +78,7 @@ try {
     # Copy Cypher scripts to Neo4j updates folder
     Write-Host "Processing Cypher scripts..." -ForegroundColor White
     
-    $CypherSourceDir = Join-Path $CurrentDir ".."
+    $CypherSourceDir = Join-Path $ParentDir ".."
     $Neo4jUpdatesDir = Join-Path $TempDir "neo4j\updates"
     
     # Find all .cypher files in the installation directory
@@ -110,7 +111,7 @@ try {
         
         if ($PipAvailable) {
             # Download neo4j Python driver and its dependencies
-            $DownloadResult = pip download neo4j -d $Neo4jPackagesDir 2>&1
+            pip download neo4j -d $Neo4jPackagesDir 2>&1 | Out-Null
             
             if ($LASTEXITCODE -eq 0) {
                 $PackageCount = (Get-ChildItem -Path $Neo4jPackagesDir -Filter "*.whl").Count
@@ -171,7 +172,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
             Copy-Item -Path $ScriptSource -Destination $ScriptDest -Force
             Write-Host "  Added $Script to management/" -ForegroundColor Green
         } else {
-            Write-Host "  Warning: $Script not found" -ForegroundColor Yellow
+            Write-Host "  Warning: $Script not found at $ScriptSource" -ForegroundColor Yellow
         }
     }
     
@@ -309,7 +310,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         Copy-Item -Path $InstallerSource -Destination $InstallerDest -Force
         Write-Host "  Copied docker-stack-installer.ps1 to dist/" -ForegroundColor Green
     } else {
-        Write-Host "  Warning: docker-stack-installer.ps1 not found" -ForegroundColor Yellow
+        Write-Host "  Warning: docker-stack-installer.ps1 not found at $InstallerSource" -ForegroundColor Yellow
     }
     
     # Handle offline deployment if requested
@@ -322,7 +323,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         Write-Host "Checking Docker..." -ForegroundColor White
         $DockerAvailable = $false
         try {
-            $dockerVersion = docker version 2>&1
+            docker version 2>&1 | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 $DockerAvailable = $true
                 Write-Host "  Docker available" -ForegroundColor Green
@@ -409,7 +410,6 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
             foreach ($ImageConfig in $DockerImages) {
                 $AllImageVersions = @($ImageConfig.Primary) + $ImageConfig.Fallbacks
                 $Success = $false
-                $SuccessfulImage = $null
                 
                 Write-Host "  $($ImageConfig.Description): $($ImageConfig.Primary)" -ForegroundColor White
                 
@@ -435,7 +435,6 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                             
                             if ($PullProcess.ExitCode -eq 0) {
                                 $SuccessfulDownloads += $ImageVersion
-                                $SuccessfulImage = $ImageVersion
                                 $Success = $true
                                 if ($ImageVersion -ne $ImageConfig.Primary) {
                                     Write-Host "    Using fallback: $ImageVersion" -ForegroundColor Cyan

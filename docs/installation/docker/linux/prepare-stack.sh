@@ -83,6 +83,15 @@ if [ ! -d "$PARENT_DIR/src" ]; then
     exit 1
 fi
 
+# Check if zip command is available
+if ! command -v zip &> /dev/null; then
+    print_color "$RED" "Error: 'zip' command not found!"
+    print_color "$YELLOW" "Install zip:"
+    print_color "$GRAY" "  Ubuntu/Debian: sudo apt-get install zip"
+    print_color "$GRAY" "  RHEL/CentOS:   sudo yum install zip"
+    exit 1
+fi
+
 # Set default output path if not provided
 if [ -z "$OUTPUT_PATH" ]; then
     OUTPUT_PATH="$CURRENT_DIR/dist"
@@ -144,15 +153,27 @@ echo "Processing Cypher scripts..."
 CYPHER_SOURCE_DIR="$(dirname "$PARENT_DIR")"
 NEO4J_UPDATES_DIR="$TEMP_DIR/neo4j/updates"
 
+# Ensure the updates directory exists
+if [ ! -d "$NEO4J_UPDATES_DIR" ]; then
+    print_color "$YELLOW" "  Neo4j updates directory not found, creating it..."
+    mkdir -p "$NEO4J_UPDATES_DIR"
+fi
+
 # Find all .cypher files in the installation directory
 CYPHER_COUNT=0
-if compgen -G "$CYPHER_SOURCE_DIR/*.cypher" > /dev/null; then
-    for CYPHER_FILE in "$CYPHER_SOURCE_DIR"/*.cypher; do
-        if [ -f "$CYPHER_FILE" ]; then
-            cp "$CYPHER_FILE" "$NEO4J_UPDATES_DIR/"
-            ((CYPHER_COUNT++))
-        fi
-    done
+shopt -s nullglob  # Enable nullglob to handle no matches gracefully
+for CYPHER_FILE in "$CYPHER_SOURCE_DIR"/*.cypher; do
+    if [ -f "$CYPHER_FILE" ]; then
+        cp "$CYPHER_FILE" "$NEO4J_UPDATES_DIR/" || {
+            print_color "$RED" "  Failed to copy $CYPHER_FILE"
+            continue
+        }
+        CYPHER_COUNT=$((CYPHER_COUNT + 1))
+    fi
+done
+shopt -u nullglob  # Disable nullglob
+
+if [ $CYPHER_COUNT -gt 0 ]; then
     print_color "$GREEN" "  Added $CYPHER_COUNT Cypher script(s)"
 else
     print_color "$YELLOW" "  No Cypher scripts found"
@@ -200,6 +221,11 @@ EOF
     fi
 else
     print_color "$YELLOW" "  pip not found, skipping Python package download"
+    print_color "$GRAY" "  For offline deployments, install pip to download packages:"
+    print_color "$GRAY" "    Ubuntu/Debian: sudo apt update && sudo apt install python3-pip"
+    print_color "$GRAY" "    Or try:        sudo apt install python3-pip-whl python3-setuptools-whl"
+    print_color "$GRAY" "    RHEL/CentOS:   sudo yum install python3-pip"
+    print_color "$GRAY" "  Note: pip is optional - watcher will download packages at runtime if internet is available"
 fi
 
 # Copy management scripts
@@ -213,7 +239,7 @@ mkdir -p "$MANAGEMENT_DIR"
 MANAGEMENT_SCRIPTS=("install-ca-certificates.sh" "stop-all-services.sh")
 
 for SCRIPT in "${MANAGEMENT_SCRIPTS[@]}"; do
-    SCRIPT_SOURCE="$CURRENT_DIR/$SCRIPT"
+    SCRIPT_SOURCE="$CURRENT_DIR/management/$SCRIPT"
     SCRIPT_DEST="$MANAGEMENT_DIR/$SCRIPT"
     
     if [ -f "$SCRIPT_SOURCE" ]; then
@@ -221,7 +247,7 @@ for SCRIPT in "${MANAGEMENT_SCRIPTS[@]}"; do
         chmod +x "$SCRIPT_DEST"
         print_color "$GREEN" "  Added $SCRIPT to management/"
     else
-        print_color "$YELLOW" "  Warning: $SCRIPT not found"
+        print_color "$YELLOW" "  Warning: $SCRIPT not found at $SCRIPT_SOURCE"
     fi
 done
 
@@ -355,7 +381,7 @@ print_color "$GREEN" "  Created: ${ZIP_SIZE_MB} MB"
 
 # Copy docker-stack-installer.sh to dist folder
 echo "Copying installer to dist folder..."
-INSTALLER_SOURCE="$CURRENT_DIR/docker-stack-installer.sh"
+INSTALLER_SOURCE="$CURRENT_DIR/management/docker-stack-installer.sh"
 INSTALLER_DEST="$OUTPUT_PATH/docker-stack-installer.sh"
 
 if [ -f "$INSTALLER_SOURCE" ]; then
@@ -363,7 +389,7 @@ if [ -f "$INSTALLER_SOURCE" ]; then
     chmod +x "$INSTALLER_DEST"
     print_color "$GREEN" "  Copied docker-stack-installer.sh to dist/"
 else
-    print_color "$YELLOW" "  Warning: docker-stack-installer.sh not found"
+    print_color "$YELLOW" "  Warning: docker-stack-installer.sh not found at $INSTALLER_SOURCE"
 fi
 
 # Handle offline deployment if requested
@@ -380,6 +406,7 @@ if [ "$OFFLINE" = true ]; then
         echo ""
         print_color "$RED" "ERROR: Docker required for offline package creation"
         print_color "$YELLOW" "Install Docker Engine: https://docs.docker.com/engine/install/"
+        print_color "$YELLOW" "For WSL2: sudo apt-get install docker.io && sudo service docker start"
         exit 1
     fi
     
@@ -528,6 +555,67 @@ EOF
     echo "Package Type: Offline Deployment" >> "$OUTPUT_PATH/OFFLINE-INSTALLATION-INSTRUCTIONS.md"
     echo "Images Included: ${#SUCCESSFUL_DOWNLOADS[@]}" >> "$OUTPUT_PATH/OFFLINE-INSTALLATION-INSTRUCTIONS.md"
     echo "Missing Images: ${#FAILED_DOWNLOADS[@]}" >> "$OUTPUT_PATH/OFFLINE-INSTALLATION-INSTRUCTIONS.md"
+    
+    # Offer to clean up Docker images
+    if [ ${#SUCCESSFUL_DOWNLOADS[@]} -gt 0 ]; then
+        echo ""
+        print_color "$CYAN" "Docker Image Cleanup"
+        print_color "$CYAN" "=================================================================="
+        print_color "$YELLOW" "The Docker images have been saved to the TAR file and are now cached"
+        print_color "$YELLOW" "in your local Docker environment (using ~5-8 GB of disk space)."
+        echo ""
+        print_color "$GRAY" "You can safely remove these images from Docker to free up space."
+        print_color "$GRAY" "The TAR file contains all images needed for offline deployment."
+        echo ""
+        
+        read -p "Remove Docker images from local cache? (y/n): " cleanup_choice
+        if [[ "$cleanup_choice" =~ ^[Yy]$ ]]; then
+            echo ""
+            print_color "$YELLOW" "Removing Docker images..."
+            
+            REMOVED_COUNT=0
+            FAILED_REMOVE=0
+            
+            for IMAGE in "${SUCCESSFUL_DOWNLOADS[@]}"; do
+                # Try to remove and capture error message
+                ERROR_MSG=$(docker rmi "$IMAGE" 2>&1)
+                if [ $? -eq 0 ]; then
+                    print_color "$GREEN" "  Removed: $IMAGE"
+                    REMOVED_COUNT=$((REMOVED_COUNT + 1))
+                else
+                    # Show why it failed
+                    if echo "$ERROR_MSG" | grep -q "image is being used"; then
+                        print_color "$YELLOW" "  In use: $IMAGE"
+                    elif echo "$ERROR_MSG" | grep -q "image is referenced"; then
+                        print_color "$YELLOW" "  Referenced: $IMAGE (used by other images)"
+                    elif echo "$ERROR_MSG" | grep -q "No such image"; then
+                        print_color "$GRAY" "  Already removed: $IMAGE"
+                    else
+                        print_color "$YELLOW" "  Cannot remove: $IMAGE"
+                        print_color "$GRAY" "    Reason: $(echo "$ERROR_MSG" | head -1)"
+                    fi
+                    FAILED_REMOVE=$((FAILED_REMOVE + 1))
+                fi
+            done
+            
+            echo ""
+            if [ $REMOVED_COUNT -gt 0 ]; then
+                print_color "$GREEN" "Removed $REMOVED_COUNT image(s)"
+            fi
+            if [ $FAILED_REMOVE -gt 0 ]; then
+                print_color "$GRAY" "Skipped $FAILED_REMOVE image(s) (in use or already removed)"
+            fi
+            
+            # Show disk space freed
+            echo ""
+            print_color "$CYAN" "Docker disk usage after cleanup:"
+            docker system df
+        else
+            echo ""
+            print_color "$GRAY" "Docker images kept in local cache"
+            print_color "$GRAY" "To remove later, run: docker image prune -a"
+        fi
+    fi
 fi
 
 echo ""

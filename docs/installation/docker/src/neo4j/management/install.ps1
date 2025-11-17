@@ -395,14 +395,14 @@ if (-not (Test-Path "init-scripts\README.md")) {
 This directory contains Cypher scripts that will be executed when Neo4j starts for the first time.
 
 ## Usage
-- Place `.cypher` files in this directory
+- Place .cypher files in this directory
 - Scripts are executed in alphabetical order
-- Use numbered prefixes for execution order (e.g., `01-constraints.cypher`, `02-indexes.cypher`)
+- Use numbered prefixes for execution order (e.g., 01-constraints.cypher, 02-indexes.cypher)
 
 ## Examples
-- `01-constraints.cypher` - Create database constraints
-- `02-indexes.cypher` - Create database indexes  
-- `03-initial-data.cypher` - Load initial data
+- 01-constraints.cypher - Create database constraints
+- 02-indexes.cypher - Create database indexes  
+- 03-initial-data.cypher - Load initial data
 "@
     $InitReadme | Out-File -FilePath "init-scripts\README.md" -Encoding UTF8
 }
@@ -414,13 +414,13 @@ if (-not (Test-Path "updates\README.md")) {
 This directory is monitored by the Neo4j watcher service for new Cypher scripts.
 
 ## Usage
-- Drop `.cypher` files here to execute them automatically
-- Files are processed once and moved to `processed/` directory
-- Monitor logs with: `docker-compose logs neo4j-watcher`
+- Drop .cypher files here to execute them automatically
+- Files are processed once and moved to processed/ directory
+- Monitor logs with: docker-compose logs neo4j-watcher
 
 ## File Naming
-- Use descriptive names: `add-user-nodes.cypher`
-- Include timestamps if needed: `2024-01-15-update-schema.cypher`
+- Use descriptive names: add-user-nodes.cypher
+- Include timestamps if needed: 2024-01-15-update-schema.cypher
 "@
     $UpdatesReadme | Out-File -FilePath "updates\README.md" -Encoding UTF8
 }

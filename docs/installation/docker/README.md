@@ -4,11 +4,6 @@ This directory contains scripts for creating and deploying a complete Docker sta
 
 ## Platform Selection
 
-Choose your platform:
-
-- **[Windows Installation](windows/README.md)** - PowerShell scripts for Windows 10/11
-- **[Linux Installation](linux/README.md)** - Bash scripts for Ubuntu, Debian, RHEL, CentOS
-
 Both platforms deploy the same services with identical functionality:
 - **Neo4j** - Graph database for knowledge graphs and relationships
 - **Milvus** - Vector database for embeddings and similarity search
@@ -485,10 +480,6 @@ The prepare script automatically copies all `.cypher` files from `docs/installat
 - Monitor execution with: `docker-compose logs neo4j-watcher`
 
 ## Support
-
-For platform-specific documentation and detailed instructions:
-- **Windows**: See [windows/README.md](windows/README.md)
-- **Linux**: See [linux/README.md](linux/README.md)
 
 For service-specific documentation:
 - **Neo4j**: See `src/neo4j/neo4j_readme.md`

@@ -81,6 +81,11 @@ try {
     $CypherSourceDir = Join-Path $ParentDir ".."
     $Neo4jUpdatesDir = Join-Path $TempDir "neo4j\updates"
     
+    # Create the updates directory if it doesn't exist
+    if (-not (Test-Path $Neo4jUpdatesDir)) {
+        New-Item -ItemType Directory -Force -Path $Neo4jUpdatesDir | Out-Null
+    }
+    
     # Find all .cypher files in the installation directory
     $CypherFiles = Get-ChildItem -Path $CypherSourceDir -Filter "*.cypher" -File
     

@@ -153,11 +153,8 @@ echo "Processing Cypher scripts..."
 CYPHER_SOURCE_DIR="$(dirname "$PARENT_DIR")"
 NEO4J_UPDATES_DIR="$TEMP_DIR/neo4j/updates"
 
-# Ensure the updates directory exists
-if [ ! -d "$NEO4J_UPDATES_DIR" ]; then
-    print_color "$YELLOW" "  Neo4j updates directory not found, creating it..."
-    mkdir -p "$NEO4J_UPDATES_DIR"
-fi
+# Create the updates directory if it doesn't exist
+mkdir -p "$NEO4J_UPDATES_DIR"
 
 # Find all .cypher files in the installation directory
 CYPHER_COUNT=0

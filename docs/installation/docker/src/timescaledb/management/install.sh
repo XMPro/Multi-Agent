@@ -144,7 +144,7 @@ echo ""
 echo "Creating Directory Structure..."
 print_color "$GRAY" "=============================="
 
-for dir in config init backups certs; do
+for dir in init backups; do
     if [ ! -d "$dir" ]; then
         mkdir -p "$dir"
         print_color "$GREEN" "Created directory: $dir"
@@ -152,114 +152,6 @@ for dir in config init backups certs; do
         print_color "$GRAY" "Directory exists: $dir"
     fi
 done
-
-# Create PostgreSQL configuration file
-echo ""
-echo "Creating PostgreSQL Configuration..."
-print_color "$GRAY" "===================================="
-
-SSL_ENABLED="off"
-[ "$ENABLE_SSL" = true ] && SSL_ENABLED="on"
-
-cat > config/postgresql.conf << 'EOF'
-# =================================================================
-# PostgreSQL Configuration for TimescaleDB
-# Production-Grade Settings
-# =================================================================
-
-# Connection Settings
-listen_addresses = '*'
-port = 5432
-max_connections = 100
-superuser_reserved_connections = 3
-
-# Memory Settings (adjust based on your server's RAM)
-# For a system with 8GB RAM:
-shared_buffers = 2GB                    # 25% of RAM
-effective_cache_size = 6GB              # 75% of RAM
-work_mem = 20MB                         # RAM / max_connections / 4
-maintenance_work_mem = 512MB            # RAM / 16
-
-# Query Tuning
-random_page_cost = 1.1                  # For SSD storage
-effective_io_concurrency = 200          # For SSD storage
-default_statistics_target = 100
-
-# Write Ahead Log (WAL)
-wal_level = replica
-wal_buffers = 16MB
-min_wal_size = 1GB
-max_wal_size = 4GB
-checkpoint_completion_target = 0.9
-archive_mode = on
-archive_command = 'test ! -f /backups/wal/%f && cp %p /backups/wal/%f'
-
-# Replication (for future HA setup)
-max_wal_senders = 10
-max_replication_slots = 10
-hot_standby = on
-
-# Logging
-logging_collector = on
-log_directory = 'log'
-log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
-log_rotation_age = 1d
-log_rotation_size = 100MB
-log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
-log_checkpoints = on
-log_connections = on
-log_disconnections = on
-log_duration = off
-log_lock_waits = on
-log_statement = 'ddl'
-log_temp_files = 0
-log_autovacuum_min_duration = 0
-
-# Autovacuum
-autovacuum = on
-autovacuum_max_workers = 4
-autovacuum_naptime = 10s
-autovacuum_vacuum_threshold = 50
-autovacuum_analyze_threshold = 50
-autovacuum_vacuum_scale_factor = 0.02
-autovacuum_analyze_scale_factor = 0.01
-autovacuum_vacuum_cost_delay = 2ms
-autovacuum_vacuum_cost_limit = 200
-
-# Background Writer
-bgwriter_delay = 200ms
-bgwriter_lru_maxpages = 100
-bgwriter_lru_multiplier = 2.0
-
-# Async Commit (trade-off between performance and durability)
-synchronous_commit = on                 # Set to 'off' for better performance with acceptable data loss risk
-
-# TimescaleDB Specific Settings
-shared_preload_libraries = 'timescaledb'
-timescaledb.telemetry_level = off
-timescaledb.max_background_workers = 8
-
-# SSL Configuration (if enabled)
-ssl = SSL_ENABLED_PLACEHOLDER
-ssl_cert_file = '/var/lib/postgresql/certs/server.crt'
-ssl_key_file = '/var/lib/postgresql/certs/server.key'
-ssl_ca_file = '/var/lib/postgresql/certs/ca.crt'
-ssl_prefer_server_ciphers = on
-ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'
-ssl_min_protocol_version = 'TLSv1.2'
-
-# Locale
-lc_messages = 'en_US.utf8'
-lc_monetary = 'en_US.utf8'
-lc_numeric = 'en_US.utf8'
-lc_time = 'en_US.utf8'
-default_text_search_config = 'pg_catalog.english'
-EOF
-
-# Replace SSL placeholder
-sed -i "s/SSL_ENABLED_PLACEHOLDER/$SSL_ENABLED/" config/postgresql.conf
-
-print_color "$GREEN" "Created: config/postgresql.conf"
 
 # Create initialization SQL script
 echo ""
@@ -312,18 +204,8 @@ POSTGRES_USER=$USERNAME
 POSTGRES_PASSWORD=$PASSWORD
 POSTGRES_PORT=$PORT
 
-# Performance Tuning (adjust based on your server)
-POSTGRES_SHARED_BUFFERS=2GB
-POSTGRES_EFFECTIVE_CACHE_SIZE=6GB
-POSTGRES_WORK_MEM=20MB
-POSTGRES_MAINTENANCE_WORK_MEM=512MB
-
 # TimescaleDB Settings
 TIMESCALEDB_TELEMETRY=off
-
-# SSL Configuration
-ENABLE_SSL=$( [ "$ENABLE_SSL" = true ] && echo "true" || echo "false" )
-DOMAIN=$DOMAIN
 
 # Backup Configuration
 BACKUP_RETENTION_DAYS=30
@@ -332,40 +214,6 @@ BACKUP_RETENTION_DAYS=30
 EOF
 
 print_color "$GREEN" "Created: .env"
-
-# Handle SSL configuration
-if [ "$ENABLE_SSL" = true ]; then
-    echo ""
-    echo "Configuring SSL/TLS..."
-    print_color "$GRAY" "======================"
-    
-    # Check if certificates already exist
-    if [ -f "certs/server.crt" ]; then
-        print_color "$YELLOW" "SSL certificates already exist"
-        if [ "$FORCE" = false ]; then
-            read -p "Recreate certificates? (y/n): " recreate
-            if [[ "$recreate" =~ ^[Yy]$ ]]; then
-                chmod +x manage-ssl.sh
-                ./manage-ssl.sh --enable --domain "$DOMAIN" --force
-            else
-                print_color "$GREEN" "Using existing certificates"
-            fi
-        fi
-    else
-        chmod +x manage-ssl.sh
-        ./manage-ssl.sh --enable --domain "$DOMAIN" --force
-    fi
-else
-    echo ""
-    print_color "$YELLOW" "SSL/TLS is disabled"
-    print_color "$GRAY" "To enable SSL later, run: ./manage-ssl.sh --enable"
-fi
-
-# Check docker-compose.yml
-if [ ! -f "../docker-compose.yml" ]; then
-    echo ""
-    print_color "$YELLOW" "Warning: docker-compose.yml not found in parent directory"
-fi
 
 # Display installation summary
 echo ""
@@ -384,16 +232,6 @@ echo ""
 echo "Connection String:"
 print_color "$GRAY" "  postgresql://${USERNAME}:${PASSWORD}@localhost:${PORT}/${DATABASE_NAME}"
 
-if [ "$ENABLE_SSL" = true ]; then
-    echo ""
-    echo "SSL Configuration:"
-    print_color "$GREEN" "  Enabled: Yes"
-    print_color "$GRAY" "  Domain: $DOMAIN"
-    print_color "$GRAY" "  Certificates: certs/"
-    echo "  Connection String (SSL):"
-    print_color "$GRAY" "    postgresql://${USERNAME}:${PASSWORD}@localhost:${PORT}/${DATABASE_NAME}?sslmode=require"
-fi
-
 echo ""
 echo "Next Steps:"
 print_color "$GRAY" "  1. Start the database: docker-compose up -d"
@@ -404,7 +242,6 @@ print_color "$GRAY" "  4. Connect: docker exec -it timescaledb psql -U $USERNAME
 echo ""
 print_color "$YELLOW" "Security Notes:"
 print_color "$WHITE" "  - Store the password securely"
-print_color "$WHITE" "  - Consider enabling SSL for production"
 print_color "$WHITE" "  - Configure firewall rules for port $PORT"
 print_color "$WHITE" "  - Regularly backup your data"
 

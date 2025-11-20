@@ -9,16 +9,7 @@ param(
 # Ensure we're in the neo4j directory (not management subdirectory)
 $CurrentLocation = Get-Location
 if ($CurrentLocation.Path.EndsWith("management")) {
-    # If we're in the management directory, go up one level to neo4j directory
     Set-Location ..
-    Write-Host "Changed from management directory to neo4j directory" -ForegroundColor Gray
-} elseif (Test-Path "management") {
-    # If we're already in neo4j directory (has management subdirectory), stay here
-    Write-Host "Already in neo4j directory" -ForegroundColor Gray
-} else {
-    # We might be in the wrong location
-    Write-Host "Warning: Current directory may not be correct for Neo4j installation" -ForegroundColor Yellow
-    Write-Host "Expected to be in neo4j directory or neo4j/management directory" -ForegroundColor Yellow
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan

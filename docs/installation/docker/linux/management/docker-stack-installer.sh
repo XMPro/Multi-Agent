@@ -99,7 +99,7 @@ done
 
 print_color "$CYAN" "=================================================================="
 print_color "$CYAN" "Docker Stack One-Click Installer (Linux)"
-print_color "$CYAN" "Neo4j, Milvus, and MQTT Services"
+print_color "$CYAN" "Neo4j, Milvus, MQTT, and TimescaleDB Services"
 print_color "$CYAN" "=================================================================="
 
 # Function to check if a command exists
@@ -107,10 +107,28 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Check if service folders already exist (rerun scenario)
+EXISTING_SERVICES=()
+EXPECTED_SERVICES=("neo4j" "milvus" "mqtt" "timescaledb")
+for service in "${EXPECTED_SERVICES[@]}"; do
+    if [ -d "$service" ]; then
+        EXISTING_SERVICES+=("$service")
+    fi
+done
+
 # Get zip file path if not provided
 if [ -z "$ZIP_PATH" ]; then
-    # Look for ZIP files in current directory
-    mapfile -t LOCAL_ZIP_FILES < <(find . -maxdepth 1 -name "*.zip" -type f | sort)
+    # If service folders already exist, skip ZIP extraction
+    if [ ${#EXISTING_SERVICES[@]} -gt 0 ]; then
+        print_color "$YELLOW" "Detected existing service folders: ${EXISTING_SERVICES[*]}"
+        print_color "$GREEN" "Skipping ZIP extraction - using existing installation"
+        echo ""
+        SKIP_EXTRACTION=true
+    else
+        SKIP_EXTRACTION=false
+        
+        # Look for ZIP files in current directory
+        mapfile -t LOCAL_ZIP_FILES < <(find . -maxdepth 1 -name "*.zip" -type f | sort)
     
     if [ ${#LOCAL_ZIP_FILES[@]} -eq 1 ]; then
         ZIP_PATH="${LOCAL_ZIP_FILES[0]}"
@@ -132,15 +150,18 @@ if [ -z "$ZIP_PATH" ]; then
         print_color "$RED" "No ZIP file found in current directory."
         read -p "Enter path to ZIP file: " ZIP_PATH
     fi
+    fi
 fi
 
-# Validate zip file exists
-if [ ! -f "$ZIP_PATH" ]; then
-    print_color "$RED" "ZIP file not found: $ZIP_PATH"
-    exit 1
+# Validate zip file exists (only if we need to extract)
+if [ "$SKIP_EXTRACTION" != true ]; then
+    if [ ! -f "$ZIP_PATH" ]; then
+        print_color "$RED" "ZIP file not found: $ZIP_PATH"
+        exit 1
+    fi
+    
+    echo "Selected ZIP file: $ZIP_PATH"
 fi
-
-echo "Selected ZIP file: $ZIP_PATH"
 
 # Set installation path to current directory if not provided
 if [ -z "$INSTALL_PATH" ]; then
@@ -190,13 +211,14 @@ if [ "$SKIP_CHECKS" = false ]; then
     fi
 fi
 
-# Extract ZIP file
-echo ""
-echo "Extracting ZIP file..."
-print_color "$GRAY" "====================="
+# Extract ZIP file (only if needed)
+if [ "$SKIP_EXTRACTION" != true ]; then
+    echo ""
+    echo "Extracting ZIP file..."
+    print_color "$GRAY" "====================="
 
-# Check if unzip is available
-if ! command_exists unzip; then
+    # Check if unzip is available
+    if ! command_exists unzip; then
     print_color "$RED" "unzip command not found!"
     print_color "$YELLOW" "Install unzip: sudo apt-get install unzip (Ubuntu/Debian)"
     print_color "$YELLOW" "              sudo yum install unzip (RHEL/CentOS)"
@@ -234,12 +256,12 @@ if [ ${#CONFLICTING_FILES[@]} -gt 0 ]; then
 else
     unzip -q "$ZIP_PATH" -d "$INSTALL_PATH"
     print_color "$GREEN" "ZIP file extracted successfully"
-fi
+    fi
 
-# Change to installation directory
-cd "$INSTALL_PATH"
+    # Change to installation directory
+    cd "$INSTALL_PATH"
 
-# Move the ZIP file to an archive folder
+    # Move the ZIP file to an archive folder
 echo ""
 echo "Archiving deployment files..."
 ARCHIVE_DIR="$INSTALL_PATH/archive"
@@ -267,6 +289,10 @@ if [ -f "$TAR_PATH" ]; then
     else
         print_color "$YELLOW" "Could not move tar file to archive"
     fi
+    fi
+else
+    echo ""
+    print_color "$GREEN" "Using existing installation (ZIP extraction skipped)"
 fi
 
 # Verify extracted structure

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   timescaledb:
     image: timescale/timescaledb:latest-pg16
@@ -11,19 +9,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password must be set}
       
-      # Performance tuning (adjust based on available resources)
-      # These are production-grade defaults for a system with 4GB RAM
-      # Adjust according to your server's specifications
-      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-1GB}
-      POSTGRES_EFFECTIVE_CACHE_SIZE: ${POSTGRES_EFFECTIVE_CACHE_SIZE:-3GB}
-      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-16MB}
-      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
-      
       # TimescaleDB specific settings
       TIMESCALEDB_TELEMETRY: ${TIMESCALEDB_TELEMETRY:-off}
-      
-      # SSL configuration
-      POSTGRES_INITDB_ARGS: ${POSTGRES_INITDB_ARGS:-}
       
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -32,10 +19,7 @@ services:
       # Data persistence
       - timescaledb_data:/var/lib/postgresql/data
       
-      # Custom configuration (if exists)
-      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      
-      # SSL certificates (if SSL enabled)
+      # SSL certificates (mounted when SSL is enabled)
       - ./certs:/var/lib/postgresql/certs:ro
       
       # Backup directory
@@ -44,10 +28,27 @@ services:
       # Initialization scripts
       - ./init:/docker-entrypoint-initdb.d:ro
       
-    command: 
-      - postgres
-      - -c
-      - config_file=/etc/postgresql/postgresql.conf
+    command: >
+      postgres
+      -c ssl=${ENABLE_SSL:-off}
+      -c ssl_cert_file=/var/lib/postgresql/certs/server.crt
+      -c ssl_key_file=/var/lib/postgresql/certs/server.key
+      -c ssl_ca_file=/var/lib/postgresql/certs/ca.crt
+      -c ssl_min_protocol_version=TLSv1.2
+      -c shared_preload_libraries=timescaledb
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c timescaledb.telemetry_level=off
       
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-timescaledb}"]
@@ -58,16 +59,6 @@ services:
       
     networks:
       - timescaledb_network
-      
-    # Resource limits (adjust based on your infrastructure)
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 4G
-        reservations:
-          cpus: '1.0'
-          memory: 2G
 
 volumes:
   timescaledb_data:

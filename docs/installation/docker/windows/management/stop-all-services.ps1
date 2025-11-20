@@ -1,6 +1,6 @@
 # =================================================================
 # Stop All Docker Services Script
-# Stops Neo4j, Milvus, and MQTT services
+# Stops Neo4j, Milvus, MQTT, and TimescaleDB services
 # =================================================================
 
 param(
@@ -35,7 +35,7 @@ if (-not (Test-Path $InstallPath)) {
 Set-Location $InstallPath
 
 # Verify expected folders exist
-$ExpectedFolders = @("neo4j", "milvus", "mqtt")
+$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb")
 $MissingFolders = @()
 
 foreach ($folder in $ExpectedFolders) {
@@ -44,9 +44,9 @@ foreach ($folder in $ExpectedFolders) {
     }
 }
 
-if ($MissingFolders.Count -eq 3) {
+if ($MissingFolders.Count -eq 4) {
     Write-Host "No service folders found in: $InstallPath" -ForegroundColor Red
-    Write-Host "Expected folders: neo4j, milvus, mqtt" -ForegroundColor Yellow
+    Write-Host "Expected folders: neo4j, milvus, mqtt, timescaledb" -ForegroundColor Yellow
     exit 1
 }
 
@@ -152,6 +152,32 @@ if (Test-Path "mqtt") {
     } catch {
         Write-Host "Error stopping MQTT: $($_.Exception.Message)" -ForegroundColor Red
         $FailedServices += "MQTT"
+    }
+    Set-Location ..
+}
+
+# Stop TimescaleDB
+if (Test-Path "timescaledb") {
+    Write-Host ""
+    Write-Host "Stopping TimescaleDB..." -ForegroundColor White
+    Set-Location "timescaledb"
+    try {
+        if ($RemoveVolumes) {
+            docker-compose down -v
+        } else {
+            docker-compose down
+        }
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "TimescaleDB stopped successfully" -ForegroundColor Green
+            $StoppedServices += "TimescaleDB"
+        } else {
+            Write-Host "Failed to stop TimescaleDB (exit code: $LASTEXITCODE)" -ForegroundColor Red
+            $FailedServices += "TimescaleDB"
+        }
+    } catch {
+        Write-Host "Error stopping TimescaleDB: $($_.Exception.Message)" -ForegroundColor Red
+        $FailedServices += "TimescaleDB"
     }
     Set-Location ..
 }

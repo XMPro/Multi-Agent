@@ -8,16 +8,7 @@ param(
 # Ensure we're in the mqtt directory (not management subdirectory)
 $CurrentLocation = Get-Location
 if ($CurrentLocation.Path.EndsWith("management")) {
-    # If we're in the management directory, go up one level to mqtt directory
     Set-Location ..
-    Write-Host "Changed from management directory to mqtt directory" -ForegroundColor Gray
-} elseif (Test-Path "management") {
-    # If we're already in mqtt directory (has management subdirectory), stay here
-    Write-Host "Already in mqtt directory" -ForegroundColor Gray
-} else {
-    # We might be in the wrong location
-    Write-Host "Warning: Current directory may not be correct for MQTT installation" -ForegroundColor Yellow
-    Write-Host "Expected to be in mqtt directory or mqtt/management directory" -ForegroundColor Yellow
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan

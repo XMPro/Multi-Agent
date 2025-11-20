@@ -10,12 +10,6 @@ param(
 $CurrentLocation = Get-Location
 if ($CurrentLocation.Path.EndsWith("management")) {
     Set-Location ..
-    Write-Host "Changed from management directory to milvus directory" -ForegroundColor Gray
-} elseif (Test-Path "management") {
-    Write-Host "Already in milvus directory" -ForegroundColor Gray
-} else {
-    Write-Host "Warning: Current directory may not be correct for Milvus installation" -ForegroundColor Yellow
-    Write-Host "Expected to be in milvus directory or milvus/management directory" -ForegroundColor Yellow
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan

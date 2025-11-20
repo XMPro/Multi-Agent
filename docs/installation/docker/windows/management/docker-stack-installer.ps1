@@ -21,7 +21,7 @@ param(
 
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host "Docker Stack One-Click Installer" -ForegroundColor Cyan
-Write-Host "Neo4j, Milvus, and MQTT Services" -ForegroundColor Cyan
+Write-Host "Neo4j, Milvus, MQTT, and TimescaleDB Services" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 
 # Function to check if a command exists
@@ -35,10 +35,30 @@ function Test-Command {
     }
 }
 
+# Check if service folders already exist (rerun scenario)
+$ExistingServices = @()
+$ExpectedServices = @("neo4j", "milvus", "mqtt", "timescaledb")
+foreach ($service in $ExpectedServices) {
+    if (Test-Path $service) {
+        $ExistingServices += $service
+    }
+}
+
 # Get zip file path if not provided
 if (-not $ZipPath) {
-    # First, look for ZIP files in the current directory
-    $LocalZipFiles = Get-ChildItem -Path "." -Filter "*.zip" | Sort-Object Name
+    # If service folders already exist, skip ZIP extraction
+    if ($ExistingServices.Count -gt 0) {
+        Write-Host "Detected existing service folders: $($ExistingServices -join ', ')" -ForegroundColor Yellow
+        Write-Host "Skipping ZIP extraction - using existing installation" -ForegroundColor Green
+        Write-Host ""
+        
+        # Set a flag to skip extraction
+        $SkipExtraction = $true
+    } else {
+        $SkipExtraction = $false
+        
+        # First, look for ZIP files in the current directory
+        $LocalZipFiles = Get-ChildItem -Path "." -Filter "*.zip" | Sort-Object Name
     
     if ($LocalZipFiles.Count -eq 1) {
         # If exactly one ZIP file found, use it automatically
@@ -73,15 +93,18 @@ if (-not $ZipPath) {
             exit 1
         }
     }
+    }
 }
 
-# Validate zip file exists
-if (-not (Test-Path $ZipPath)) {
-    Write-Host "ZIP file not found: $ZipPath" -ForegroundColor Red
-    exit 1
+# Validate zip file exists (only if we need to extract)
+if (-not $SkipExtraction) {
+    if (-not (Test-Path $ZipPath)) {
+        Write-Host "ZIP file not found: $ZipPath" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "Selected ZIP file: $ZipPath" -ForegroundColor White
 }
-
-Write-Host "Selected ZIP file: $ZipPath" -ForegroundColor White
 
 # Set installation path to current directory if not provided
 if (-not $InstallPath) {
@@ -131,12 +154,13 @@ if (-not $SkipChecks) {
     }
 }
 
-# Extract ZIP file
-Write-Host ""
-Write-Host "Extracting ZIP file..." -ForegroundColor White
-Write-Host "=====================" -ForegroundColor Gray
+# Extract ZIP file (only if needed)
+if (-not $SkipExtraction) {
+    Write-Host ""
+    Write-Host "Extracting ZIP file..." -ForegroundColor White
+    Write-Host "=====================" -ForegroundColor Gray
 
-try {
+    try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     
     # Check if extraction directory has conflicting files
@@ -182,15 +206,15 @@ try {
         [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $InstallPath)
         Write-Host "ZIP file extracted successfully" -ForegroundColor Green
     }
-} catch {
-    Write-Host "Failed to extract ZIP file: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
-}
+    } catch {
+        Write-Host "Failed to extract ZIP file: $($_.Exception.Message)" -ForegroundColor Red
+        exit 1
+    }
 
-# Change to installation directory
-Set-Location $InstallPath
+    # Change to installation directory
+    Set-Location $InstallPath
 
-# Move the ZIP file and tar file (if present) to an archive folder
+    # Move the ZIP file and tar file (if present) to an archive folder
 Write-Host ""
 Write-Host "Archiving deployment files..." -ForegroundColor White
 $ArchiveDir = Join-Path $InstallPath "archive"
@@ -224,6 +248,10 @@ if (Test-Path $TarPath) {
         Write-Host "Could not move tar file to archive: $($_.Exception.Message)" -ForegroundColor Yellow
         Write-Host "Tar file remains at: $TarPath" -ForegroundColor Gray
     }
+    }
+} else {
+    Write-Host ""
+    Write-Host "Using existing installation (ZIP extraction skipped)" -ForegroundColor Green
 }
 
 # Verify extracted structure
@@ -544,7 +572,7 @@ if ($ConfiguredServices["neo4j"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping Neo4j startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping Neo4j startup (not selected)" -ForegroundColor Yellow
 }
 
 # Check and start Milvus if configured successfully
@@ -576,7 +604,7 @@ if ($ConfiguredServices["milvus"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping Milvus startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping Milvus startup (not selected)" -ForegroundColor Yellow
 }
 
 # Check and start MQTT if configured successfully
@@ -608,7 +636,7 @@ if ($ConfiguredServices["mqtt"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping MQTT startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping MQTT startup (not selected)" -ForegroundColor Yellow
 }
 
 # Check and start TimescaleDB if configured successfully
@@ -640,7 +668,7 @@ if ($ConfiguredServices["timescaledb"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping TimescaleDB startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping TimescaleDB startup (not selected)" -ForegroundColor Yellow
 }
 
 # Wait for services to initialize

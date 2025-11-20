@@ -49,166 +49,82 @@ export TIMESCALEDB_PASSWORD="your_secure_password"
 ```
 timescaledb/
 ├── docker-compose.yml          # Docker Compose configuration
+├── docker-entrypoint.sh        # Custom entrypoint (fixes SSL cert permissions)
 ├── timescaledb_readme.md       # This file
 ├── .env                        # Environment variables (created during install)
 ├── config/
-│   └── postgresql.conf         # PostgreSQL configuration
+│   ├── postgresql.conf.template # PostgreSQL config template
+│   └── postgresql.conf         # PostgreSQL configuration (generated)
 ├── init/
 │   └── 01-init-timescaledb.sql # Initialization SQL scripts
 ├── certs/                      # SSL certificates (if SSL enabled)
-│   ├── ca.crt
-│   ├── server.crt
-│   └── server.key
-├── backups/                    # Database backups
+│   ├── ca.crt                  # Certificate Authority
+│   ├── server.crt              # Server certificate
+│   └── server.key              # Server private key
+├── backups/                    # Automated backups (pgBackRest)
+├── pgadmin/
+│   └── servers.json            # pgAdmin server configuration
+├── pgbackrest/
+│   ├── pgbackrest.conf         # pgBackRest configuration
+│   └── cron                    # Backup schedule
 └── management/                 # Management scripts
     ├── install.ps1/sh          # Installation scripts
-    ├── backup.ps1/sh           # Backup scripts
-    ├── restore.ps1/sh          # Restore scripts
     └── manage-ssl.ps1/sh       # SSL management scripts
 ```
+
+## Included Services
+
+### TimescaleDB
+- **Container**: `timescaledb`
+- **Port**: 5432
+- **Purpose**: Time-series database with PostgreSQL compatibility
+
+### pgAdmin
+- **Container**: `timescaledb-pgadmin`
+- **Port**: 5050
+- **Purpose**: Web-based database administration interface
+- **Pre-configured**: TimescaleDB server connection ready to use
+
+### pgBackRest
+- **Container**: `timescaledb-pgbackrest`
+- **Purpose**: Automated backup and restore system
+- **Schedule**: Daily full backups + hourly incrementals
+- **Features**: Compression, retention policies, point-in-time recovery
 
 ## Accessing TimescaleDB
 
 ### Connection Information
 
 **Default Access:**
-- **Host**: localhost
+- **Host**: localhost (or your machine's IP/DNS for remote access)
 - **Port**: 5432
-- **Database**: timescaledb
-- **User**: postgres
-- **Password**: (set during installation)
+- **Database**: timescaledb (configurable during installation)
+- **User**: postgres (configurable during installation)
+- **Password**: (set during installation, check .env file)
+
+**pgAdmin Web UI:**
+- **URL (HTTP)**: http://localhost:5050
+- **URL (HTTPS)**: https://localhost:5051 (when SSL is enabled)
+- **Email**: admin@timescaledb.local
+- **Password**: (generated during installation, check .env file)
+- **Note**: TimescaleDB server is pre-configured in pgAdmin
+- **SSL**: Automatically enabled when TimescaleDB SSL is enabled
 
 ### Connection String
 
+**Without SSL:**
 ```
 postgresql://postgres:your_password@localhost:5432/timescaledb
 ```
 
-### Using psql
-
-```bash
-# Connect to database
-docker exec -it timescaledb psql -U postgres -d timescaledb
-
-# Or from host (if psql installed)
-psql -h localhost -U postgres -d timescaledb
+**With SSL:**
+```
+postgresql://postgres:your_password@localhost:5432/timescaledb?sslmode=require
 ```
 
-### Using Programming Languages
-
-**Python (psycopg2):**
-```python
-import psycopg2
-
-conn = psycopg2.connect(
-    host="localhost",
-    port=5432,
-    database="timescaledb",
-    user="postgres",
-    password="your_password"
-)
+**Remote Access:**
 ```
-
-**Node.js (pg):**
-```javascript
-const { Client } = require('pg');
-
-const client = new Client({
-    host: 'localhost',
-    port: 5432,
-    database: 'timescaledb',
-    user: 'postgres',
-    password: 'your_password'
-});
-```
-
-## Working with Time-Series Data
-
-### Creating a Hypertable
-
-```sql
--- Create a regular table
-CREATE TABLE sensor_data (
-    time TIMESTAMPTZ NOT NULL,
-    sensor_id INTEGER,
-    temperature DOUBLE PRECISION,
-    humidity DOUBLE PRECISION
-);
-
--- Convert to hypertable
-SELECT create_hypertable('sensor_data', 'time');
-
--- Create index for better query performance
-CREATE INDEX ON sensor_data (sensor_id, time DESC);
-```
-
-### Inserting Data
-
-```sql
-INSERT INTO sensor_data VALUES
-    (NOW(), 1, 23.5, 45.2),
-    (NOW(), 2, 24.1, 43.8);
-```
-
-### Querying Time-Series Data
-
-```sql
--- Get recent data
-SELECT * FROM sensor_data
-WHERE time > NOW() - INTERVAL '1 hour'
-ORDER BY time DESC;
-
--- Aggregate data
-SELECT 
-    time_bucket('5 minutes', time) AS bucket,
-    sensor_id,
-    AVG(temperature) as avg_temp
-FROM sensor_data
-WHERE time > NOW() - INTERVAL '1 day'
-GROUP BY bucket, sensor_id
-ORDER BY bucket DESC;
-```
-
-### Continuous Aggregates
-
-```sql
--- Create continuous aggregate for faster queries
-CREATE MATERIALIZED VIEW sensor_data_hourly
-WITH (timescaledb.continuous) AS
-SELECT 
-    time_bucket('1 hour', time) AS bucket,
-    sensor_id,
-    AVG(temperature) as avg_temperature,
-    MAX(temperature) as max_temperature,
-    MIN(temperature) as min_temperature
-FROM sensor_data
-GROUP BY bucket, sensor_id;
-
--- Refresh policy (automatic updates)
-SELECT add_continuous_aggregate_policy('sensor_data_hourly',
-    start_offset => INTERVAL '3 hours',
-    end_offset => INTERVAL '1 hour',
-    schedule_interval => INTERVAL '1 hour');
-```
-
-### Data Compression
-
-```sql
--- Enable compression
-ALTER TABLE sensor_data SET (
-    timescaledb.compress,
-    timescaledb.compress_segmentby = 'sensor_id'
-);
-
--- Add compression policy (compress data older than 7 days)
-SELECT add_compression_policy('sensor_data', INTERVAL '7 days');
-```
-
-### Data Retention
-
-```sql
--- Drop data older than 90 days
-SELECT add_retention_policy('sensor_data', INTERVAL '90 days');
+postgresql://postgres:your_password@YOUR_MACHINE_IP:5432/timescaledb
 ```
 
 ## Performance Tuning
@@ -242,38 +158,80 @@ WHERE state = 'active';
 
 ## Backup and Restore
 
-### Create Backup
+### Automated Backup System (pgBackRest)
 
-**Windows:**
-```powershell
-.\management\backup.ps1 -BackupName "my_backup"
-```
+TimescaleDB includes **pgBackRest**, a production-grade automated backup solution that runs continuously.
 
-**Linux:**
-```bash
-./management/backup.sh --name my_backup
-```
+**Backup Schedule:**
+- **Full Backup**: Daily at 2:00 AM
+- **Incremental Backup**: Every hour
+- **Retention**: Configurable during installation (default: 30 days)
+- **Compression**: Enabled (gzip)
+- **Storage**: `./backups` directory
 
-### Restore Backup
+**Data Storage:**
+- **Database Data**: Docker volume `timescaledb_data` (persistent, survives container recreation)
+- **Automated Backups**: `./backups` directory (managed by pgBackRest)
 
-**Windows:**
-```powershell
-.\management\restore.ps1 -BackupFile "backups/my_backup.sql.gz"
-```
-
-**Linux:**
-```bash
-./management/restore.sh --file backups/my_backup.sql.gz
-```
-
-### Automated Backups
-
-Consider setting up automated backups using cron (Linux) or Task Scheduler (Windows):
+### View Backup Information
 
 ```bash
-# Daily backup at 2 AM
-0 2 * * * /path/to/timescaledb/management/backup.sh --name daily_$(date +\%Y\%m\%d)
+# List all backups
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info
+
+# View detailed backup info
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info --output=json
 ```
+
+### Manual Backup (On-Demand)
+
+**Using pgBackRest (Recommended):**
+```bash
+# Create full backup manually
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb --type=full backup
+
+# Create incremental backup manually
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb --type=incr backup
+```
+
+### Restore from Backup
+
+**Restore to Latest:**
+```bash
+# Stop TimescaleDB
+docker-compose stop timescaledb
+
+# Restore latest backup
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb restore
+
+# Start TimescaleDB
+docker-compose start timescaledb
+```
+
+**Point-in-Time Recovery (PITR):**
+```bash
+# Restore to specific time
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb \
+  --type=time --target="2024-01-15 14:30:00" restore
+```
+
+**Restore Specific Backup:**
+```bash
+# List backups to find backup label
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info
+
+# Restore specific backup
+docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb \
+  --set=20240115-143000F restore
+```
+
+### Backup Best Practices
+
+1. **Monitor Backup Status**: Regularly check `docker-compose logs pgbackrest`
+2. **Test Restores**: Periodically test backup restoration
+3. **Offsite Storage**: Copy backups to offsite location for disaster recovery
+4. **Retention Policy**: Adjust retention based on compliance requirements
+5. **Disk Space**: Monitor `./backups` directory size
 
 ## SSL/TLS Configuration
 
@@ -362,7 +320,7 @@ FROM timescaledb_information.hypertables;
 If the database becomes corrupted:
 
 1. Stop the container: `docker-compose down`
-2. Restore from backup: `./management/restore.sh`
+2. Restore from backup using pgBackRest (see "Restore from Backup" section above)
 3. Start the container: `docker-compose up -d`
 
 ## Common Operations

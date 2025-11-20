@@ -64,7 +64,7 @@ if (Test-Path ".env") {
 
 # Create directory structure
 Write-Host "Creating directory structure..." -ForegroundColor White
-$Directories = @("init", "backups", "certs")
+$Directories = @("init", "backups", "certs", "config", "pgadmin", "pgbackrest")
 foreach ($Dir in $Directories) {
     if (-not (Test-Path $Dir)) {
         New-Item -ItemType Directory -Force -Path $Dir | Out-Null
@@ -73,6 +73,22 @@ foreach ($Dir in $Directories) {
         Write-Host "Directory exists: $Dir" -ForegroundColor Gray
     }
 }
+
+# Ask about backup retention
+Write-Host ""
+Write-Host "Backup Retention Configuration:" -ForegroundColor White
+Write-Host "How many days should automated backups be retained?" -ForegroundColor White
+Write-Host "  7 days   - Minimal retention (development/testing)" -ForegroundColor Gray
+Write-Host "  30 days  - Standard production (recommended)" -ForegroundColor Gray
+Write-Host "  90 days  - Extended retention (compliance)" -ForegroundColor Gray
+Write-Host "  365 days - Long-term retention (regulatory)" -ForegroundColor Gray
+$RetentionChoice = Read-Host "Enter retention days (default: 30)"
+if ($RetentionChoice -match '^\d+$') {
+    $BackupRetentionDays = [int]$RetentionChoice
+} else {
+    $BackupRetentionDays = 30
+}
+Write-Host "Backup retention set to: $BackupRetentionDays days" -ForegroundColor Green
 
 # Ask about SSL setup (unless already specified via parameter)
 if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
@@ -203,13 +219,165 @@ ENABLE_SSL=$($EnableSSL.ToString().ToLower())
 SSL_DOMAIN=$Domain
 
 # Backup Configuration
-BACKUP_RETENTION_DAYS=30
+BACKUP_RETENTION_DAYS=$BackupRetentionDays
+PGBACKREST_STANZA=timescaledb
 
 # Generated on: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 "@
 
+# Generate pgAdmin password
+Write-Host "Generating pgAdmin password..." -ForegroundColor White
+$PgAdminPassword = -join ((65..90) + (97..122) + (48..57) + @(33,35,37,38,42,43,45,61,63,64) | Get-Random -Count 24 | ForEach-Object {[char]$_})
+Write-Host "Generated pgAdmin password: $PgAdminPassword" -ForegroundColor Green
+
+# Add pgAdmin configuration to .env
+$EnvContent += @"
+
+# pgAdmin Configuration
+PGADMIN_EMAIL=admin@timescaledb.local
+PGADMIN_PASSWORD=$PgAdminPassword
+PGADMIN_PORT=5050
+"@
+
 $EnvContent | Out-File -FilePath ".env" -Encoding ASCII
 Write-Host "Created .env file with configuration" -ForegroundColor Green
+
+# Create pgAdmin servers.json configuration
+Write-Host "Creating pgAdmin configuration..." -ForegroundColor White
+$ServersJson = @"
+{
+  "Servers": {
+    "1": {
+      "Name": "TimescaleDB",
+      "Group": "Servers",
+      "Host": "timescaledb",
+      "Port": 5432,
+      "MaintenanceDB": "$DatabaseName",
+      "Username": "$Username",
+      "SSLMode": "$( if ($EnableSSL) { 'require' } else { 'prefer' })",
+      "PassFile": "/tmp/pgpassfile"
+    }
+  }
+}
+"@
+
+$ServersJson | Out-File -FilePath "pgadmin\servers.json" -Encoding UTF8
+Write-Host "Created pgAdmin configuration" -ForegroundColor Green
+
+# Create nginx configuration for pgAdmin SSL
+if ($EnableSSL) {
+    Write-Host "Creating nginx configuration for pgAdmin HTTPS..." -ForegroundColor White
+    $NginxConfig = @"
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream pgadmin {
+        server pgadmin:80;
+    }
+
+    # Redirect HTTP to HTTPS
+    server {
+        listen 80;
+        server_name $Domain;
+        return 301 https://`$host`$request_uri;
+    }
+
+    # HTTPS server
+    server {
+        listen 443 ssl;
+        server_name $Domain;
+
+        ssl_certificate /etc/nginx/ssl/server.crt;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            proxy_pass http://pgadmin;
+            proxy_set_header Host `$host;
+            proxy_set_header X-Real-IP `$remote_addr;
+            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto `$scheme;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade `$http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }
+}
+"@
+    $NginxConfig | Out-File -FilePath "pgadmin\nginx.conf" -Encoding ASCII
+    Write-Host "Created nginx.conf for pgAdmin HTTPS" -ForegroundColor Green
+} else {
+    # Create simple nginx config without SSL
+    Write-Host "Creating nginx configuration for pgAdmin HTTP..." -ForegroundColor White
+    $NginxConfig = @"
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream pgadmin {
+        server pgadmin:80;
+    }
+
+    server {
+        listen 80;
+        server_name $Domain;
+
+        location / {
+            proxy_pass http://pgadmin;
+            proxy_set_header Host `$host;
+            proxy_set_header X-Real-IP `$remote_addr;
+            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto `$scheme;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade `$http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }
+}
+"@
+    $NginxConfig | Out-File -FilePath "pgadmin\nginx.conf" -Encoding ASCII
+    Write-Host "Created nginx.conf for pgAdmin HTTP" -ForegroundColor Green
+}
+
+# Create pgBackRest configuration
+Write-Host "Creating pgBackRest configuration..." -ForegroundColor White
+$PgBackRestConf = @"
+[global]
+repo1-path=/var/lib/pgbackrest
+repo1-retention-full=$BackupRetentionDays
+log-level-console=info
+log-level-file=detail
+process-max=2
+compress-type=gz
+compress-level=6
+
+[timescaledb]
+pg1-host=timescaledb
+pg1-port=5432
+pg1-path=/var/lib/postgresql/data
+pg1-user=$Username
+"@
+
+$PgBackRestConf | Out-File -FilePath "pgbackrest\pgbackrest.conf" -Encoding ASCII
+Write-Host "Created pgBackRest configuration (retention: $BackupRetentionDays days)" -ForegroundColor Green
+
+# Create pgBackRest cron schedule
+$CronSchedule = @"
+# pgBackRest automated backup schedule
+# Daily full backup at 2 AM
+0 2 * * * pgbackrest --stanza=timescaledb --type=full backup
+
+# Hourly incremental backup
+0 * * * * pgbackrest --stanza=timescaledb --type=incr backup
+"@
+
+$CronSchedule | Out-File -FilePath "pgbackrest\cron" -Encoding ASCII
+Write-Host "Created pgBackRest backup schedule" -ForegroundColor Green
 
 # Create initialization SQL script
 Write-Host "Creating initialization script..." -ForegroundColor White
@@ -243,6 +411,52 @@ END
 
 $initSQL | Out-File -FilePath "init\01-init-timescaledb.sql" -Encoding UTF8
 Write-Host "Created initialization script" -ForegroundColor Green
+
+# Generate PostgreSQL configuration file from template
+Write-Host "Generating PostgreSQL configuration..." -ForegroundColor White
+$templatePath = "config\postgresql.conf.template"
+$configPath = "config\postgresql.conf"
+
+if (Test-Path $templatePath) {
+    $configContent = Get-Content $templatePath -Raw
+    
+    if ($EnableSSL) {
+        $configContent = $configContent -replace '{{SSL_STATUS}}', 'enabled'
+        $configContent = $configContent -replace '{{SSL_ENABLED}}', 'on'
+        $configContent = $configContent -replace '{{SSL_CERT_LINE}}', 'ssl_cert_file = ''/var/lib/postgresql/certs/server.crt'''
+        $configContent = $configContent -replace '{{SSL_KEY_LINE}}', 'ssl_key_file = ''/var/lib/postgresql/certs/server.key'''
+        $configContent = $configContent -replace '{{SSL_CA_LINE}}', 'ssl_ca_file = ''/var/lib/postgresql/certs/ca.crt'''
+        $configContent = $configContent -replace '{{SSL_MIN_PROTOCOL_LINE}}', 'ssl_min_protocol_version = ''TLSv1.2'''
+    } else {
+        $configContent = $configContent -replace '{{SSL_STATUS}}', 'disabled'
+        $configContent = $configContent -replace '{{SSL_ENABLED}}', 'off'
+        $configContent = $configContent -replace '{{SSL_CERT_LINE}}', '# ssl_cert_file not configured (SSL disabled)'
+        $configContent = $configContent -replace '{{SSL_KEY_LINE}}', '# ssl_key_file not configured (SSL disabled)'
+        $configContent = $configContent -replace '{{SSL_CA_LINE}}', '# ssl_ca_file not configured (SSL disabled)'
+        $configContent = $configContent -replace '{{SSL_MIN_PROTOCOL_LINE}}', '# ssl_min_protocol_version not configured (SSL disabled)'
+    }
+    
+    # Use ASCII encoding to avoid UTF-8 BOM issues with PostgreSQL
+    $configContent | Out-File -FilePath $configPath -Encoding ASCII -NoNewline
+    Write-Host "Created PostgreSQL configuration file" -ForegroundColor Green
+} else {
+    Write-Host "Warning: Template file not found at $templatePath" -ForegroundColor Yellow
+    Write-Host "Creating basic configuration file..." -ForegroundColor Yellow
+    
+    # Create a basic config if template is missing
+    $basicConfig = @"
+# Basic PostgreSQL Configuration
+listen_addresses = '*'
+port = 5432
+max_connections = 100
+shared_preload_libraries = 'timescaledb'
+timescaledb.telemetry_level = off
+ssl = off
+"@
+    # Use ASCII encoding to avoid UTF-8 BOM issues with PostgreSQL
+    $basicConfig | Out-File -FilePath $configPath -Encoding ASCII -NoNewline
+    Write-Host "Created basic configuration file" -ForegroundColor Green
+}
 
 # Set proper permissions for data directories
 Write-Host "Setting directory permissions..." -ForegroundColor White
@@ -348,6 +562,17 @@ if ($EnableSSL) {
     Write-Host "  Connection: $connStr" -ForegroundColor White
 }
 Write-Host ""
+Write-Host "pgAdmin Web UI Details:" -ForegroundColor Cyan
+if ($EnableSSL) {
+    Write-Host "  URL: https://localhost:5051 (HTTPS)" -ForegroundColor White
+    Write-Host "  HTTP Redirect: http://localhost:5050 -> https://localhost:5051" -ForegroundColor Gray
+} else {
+    Write-Host "  URL: http://localhost:5050" -ForegroundColor White
+}
+Write-Host "  Email: admin@timescaledb.local" -ForegroundColor White
+Write-Host "  Password: $PgAdminPassword" -ForegroundColor Yellow
+Write-Host "  Note: TimescaleDB server is pre-configured in pgAdmin" -ForegroundColor Gray
+Write-Host ""
 Write-Host "Installation completed successfully!" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Cyan
 
@@ -403,19 +628,45 @@ if ($UseCAProvided) {
     Write-Host "- Install CA certificates: .\management\manage-ssl.ps1 -Enable -Domain '$Domain'" -ForegroundColor Cyan
 }
 Write-Host "- SSL management: .\management\manage-ssl.ps1 -Enable/-Disable" -ForegroundColor White
-Write-Host "- Create backup: .\management\backup.ps1" -ForegroundColor White
-Write-Host "- Restore backup: .\management\restore.ps1 -BackupFile 'path'" -ForegroundColor White
 Write-Host ""
 Write-Host "Configuration files:" -ForegroundColor Cyan
 Write-Host "  - docker-compose.yml (main configuration)" -ForegroundColor White
 Write-Host "  - .env (environment variables)" -ForegroundColor White
 Write-Host "  - init/01-init-timescaledb.sql (initialization script)" -ForegroundColor White
+Write-Host "  - config/postgresql.conf (PostgreSQL configuration)" -ForegroundColor White
+Write-Host "  - pgadmin/servers.json (pgAdmin server configuration)" -ForegroundColor White
 if ($EnableSSL) {
     Write-Host "  - certs/ (SSL certificates)" -ForegroundColor White
 }
 
+Write-Host ""
+Write-Host "==================================================================" -ForegroundColor Cyan
+Write-Host "Automated Backup System (pgBackRest)" -ForegroundColor Cyan
+Write-Host "==================================================================" -ForegroundColor Cyan
+Write-Host "Backup Configuration:" -ForegroundColor White
+Write-Host "  - Automated backups: ENABLED (pgBackRest)" -ForegroundColor Green
+Write-Host "  - Full backup: Daily at 2:00 AM" -ForegroundColor Gray
+Write-Host "  - Incremental backup: Every hour" -ForegroundColor Gray
+Write-Host "  - Retention: $BackupRetentionDays days" -ForegroundColor Gray
+Write-Host "  - Compression: Enabled (gzip)" -ForegroundColor Gray
+Write-Host "  - Storage: ./backups directory" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Data Storage:" -ForegroundColor White
+Write-Host "  - Database data: Docker volume 'timescaledb_data' (persistent)" -ForegroundColor Gray
+Write-Host "  - Automated backups: ./backups directory (pgBackRest)" -ForegroundColor Gray
+Write-Host ""
+Write-Host "The Docker volume persists data even when containers are recreated." -ForegroundColor Green
+Write-Host "Automated backups run continuously via pgBackRest container." -ForegroundColor Green
+Write-Host ""
+Write-Host "Backup Management:" -ForegroundColor White
+Write-Host "  - View backup info: docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info" -ForegroundColor Cyan
+Write-Host "  - Manual backup: docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb --type=full backup" -ForegroundColor Cyan
+Write-Host "  - Restore: See timescaledb_readme.md for restore procedures" -ForegroundColor Cyan
+Write-Host "==================================================================" -ForegroundColor Cyan
+
 # Return to appropriate directory based on how script was called
 if ($Force) {
+    Write-Host ""
     Write-Host "Staying in timescaledb directory for stack installer" -ForegroundColor Gray
 } else {
     Set-Location management

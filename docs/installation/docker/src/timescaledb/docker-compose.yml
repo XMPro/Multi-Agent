@@ -19,8 +19,8 @@ services:
       # Data persistence
       - timescaledb_data:/var/lib/postgresql/data
       
-      # SSL certificates (mounted when SSL is enabled)
-      - ./certs:/var/lib/postgresql/certs:ro
+      # SSL certificates (always mounted, but only used when SSL is enabled)
+      - ./certs:/var/lib/postgresql/certs
       
       # Backup directory
       - ./backups:/backups
@@ -28,27 +28,17 @@ services:
       # Initialization scripts
       - ./init:/docker-entrypoint-initdb.d:ro
       
+      # Custom PostgreSQL configuration
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      
+      # Custom entrypoint to fix certificate permissions
+      - ./docker-entrypoint.sh:/usr/local/bin/custom-entrypoint.sh:ro
+      
+    entrypoint: ["/bin/bash", "/usr/local/bin/custom-entrypoint.sh"]
+    
     command: >
       postgres
-      -c ssl=${ENABLE_SSL:-off}
-      -c ssl_cert_file=/var/lib/postgresql/certs/server.crt
-      -c ssl_key_file=/var/lib/postgresql/certs/server.key
-      -c ssl_ca_file=/var/lib/postgresql/certs/ca.crt
-      -c ssl_min_protocol_version=TLSv1.2
-      -c shared_preload_libraries=timescaledb
-      -c max_connections=100
-      -c shared_buffers=256MB
-      -c effective_cache_size=1GB
-      -c maintenance_work_mem=128MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-      -c work_mem=4MB
-      -c min_wal_size=1GB
-      -c max_wal_size=4GB
-      -c timescaledb.telemetry_level=off
+      -c config_file=/etc/postgresql/postgresql.conf
       
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-timescaledb}"]
@@ -60,10 +50,93 @@ services:
     networks:
       - timescaledb_network
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: timescaledb-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@timescaledb.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?pgAdmin password must be set}
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'True'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      - timescaledb
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  pgadmin-nginx:
+    image: nginx:alpine
+    container_name: timescaledb-pgadmin-nginx
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_HTTPS_PORT:-5051}:443"
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - ./pgadmin/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/ssl:ro
+    depends_on:
+      - pgadmin
+    networks:
+      - timescaledb_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  pgbackrest:
+    image: pgbackrest/pgbackrest:latest
+    container_name: timescaledb-pgbackrest
+    restart: unless-stopped
+    environment:
+      PGBACKREST_STANZA: ${PGBACKREST_STANZA:-timescaledb}
+      PGBACKREST_REPO1_PATH: /var/lib/pgbackrest
+      PGBACKREST_REPO1_RETENTION_FULL: ${BACKUP_RETENTION_DAYS:-30}
+      PGBACKREST_LOG_LEVEL_CONSOLE: info
+      PGBACKREST_LOG_LEVEL_FILE: detail
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-timescaledb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/var/lib/pgbackrest
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - ./pgbackrest/cron:/etc/cron.d/pgbackrest:ro
+    depends_on:
+      - timescaledb
+    networks:
+      - timescaledb_network
+    command: >
+      sh -c "
+      crond -f -l 2
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   timescaledb_data:
     driver: local
     name: timescaledb_data
+  pgadmin_data:
+    driver: local
+    name: pgadmin_data
 
 networks:
   timescaledb_network:

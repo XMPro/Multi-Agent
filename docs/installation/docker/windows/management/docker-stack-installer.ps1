@@ -782,7 +782,8 @@ $SelfSignedServices = @()
 $CertPaths = @(
     @{Service="Neo4j"; Path="neo4j\certs\bolt\trusted\ca.crt"},
     @{Service="Milvus"; Path="milvus\certs\milvus\trusted\ca.crt"},
-    @{Service="MQTT"; Path="mqtt\certs\ca.crt"}
+    @{Service="MQTT"; Path="mqtt\certs\ca.crt"},
+    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"}
 )
 
 foreach ($CertPath in $CertPaths) {

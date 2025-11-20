@@ -1,0 +1,6 @@
+# pgBackRest automated backup schedule
+# Daily full backup at 2 AM
+0 2 * * * pgbackrest --stanza=timescaledb --type=full backup
+
+# Hourly incremental backup
+0 * * * * pgbackrest --stanza=timescaledb --type=incr backup

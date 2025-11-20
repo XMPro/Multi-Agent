@@ -227,22 +227,81 @@ if (Test-Path $TarPath) {
 }
 
 # Verify extracted structure
-$ExpectedFolders = @("neo4j", "milvus", "mqtt")
-$MissingFolders = @()
+$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb")
+$AvailableFolders = @()
 
 foreach ($folder in $ExpectedFolders) {
-    if (-not (Test-Path $folder)) {
-        $MissingFolders += $folder
+    if (Test-Path $folder) {
+        $AvailableFolders += $folder
     }
 }
 
-if ($MissingFolders.Count -gt 0) {
-    Write-Host "Missing expected folders: $($MissingFolders -join ', ')" -ForegroundColor Red
+if ($AvailableFolders.Count -eq 0) {
+    Write-Host "No service folders found in the ZIP file!" -ForegroundColor Red
     Write-Host "Please ensure the ZIP file contains the correct Docker stack structure." -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "All expected service folders found" -ForegroundColor Green
+Write-Host "Found service folders: $($AvailableFolders -join ', ')" -ForegroundColor Green
+
+# Ask user which services to install
+Write-Host ""
+Write-Host "Service Installation Selection" -ForegroundColor Cyan
+Write-Host "=============================" -ForegroundColor Gray
+Write-Host "You can choose which services to install. Services will only be" -ForegroundColor White
+Write-Host "configured and started if you select them." -ForegroundColor White
+Write-Host ""
+
+$ServicesToInstall = @{}
+
+# Ask about Neo4j
+if (Test-Path "neo4j") {
+    $InstallNeo4j = Read-Host "Do you want to install Neo4j Graph Database? (y/n)"
+    $ServicesToInstall["neo4j"] = ($InstallNeo4j -eq "Y" -or $InstallNeo4j -eq "y")
+}
+
+# Ask about Milvus
+if (Test-Path "milvus") {
+    $InstallMilvus = Read-Host "Do you want to install Milvus Vector Database? (y/n)"
+    $ServicesToInstall["milvus"] = ($InstallMilvus -eq "Y" -or $InstallMilvus -eq "y")
+}
+
+# Ask about MQTT
+if (Test-Path "mqtt") {
+    $InstallMqtt = Read-Host "Do you want to install MQTT Message Broker? (y/n)"
+    $ServicesToInstall["mqtt"] = ($InstallMqtt -eq "Y" -or $InstallMqtt -eq "y")
+}
+
+# Ask about TimescaleDB
+if (Test-Path "timescaledb") {
+    $InstallTimescaleDB = Read-Host "Do you want to install TimescaleDB Time-Series Database? (y/n)"
+    $ServicesToInstall["timescaledb"] = ($InstallTimescaleDB -eq "Y" -or $InstallTimescaleDB -eq "y")
+}
+
+# Show installation summary
+Write-Host ""
+Write-Host "Installation Summary:" -ForegroundColor Cyan
+$SelectedServices = $ServicesToInstall.Keys | Where-Object { $ServicesToInstall[$_] -eq $true }
+$SkippedServices = $ServicesToInstall.Keys | Where-Object { $ServicesToInstall[$_] -eq $false }
+
+if ($SelectedServices.Count -gt 0) {
+    Write-Host "  Services to install: $($SelectedServices -join ', ')" -ForegroundColor Green
+} else {
+    Write-Host "  No services selected for installation!" -ForegroundColor Red
+    Write-Host "Exiting installer." -ForegroundColor Yellow
+    exit 0
+}
+
+if ($SkippedServices.Count -gt 0) {
+    Write-Host "  Services to skip: $($SkippedServices -join ', ')" -ForegroundColor Yellow
+}
+
+Write-Host ""
+$ContinueInstall = Read-Host "Continue with installation? (y/n)"
+if ($ContinueInstall -ne "Y" -and $ContinueInstall -ne "y") {
+    Write-Host "Installation cancelled by user" -ForegroundColor Yellow
+    exit 0
+}
 
 # Build parameters for service install scripts
 $Neo4jParams = @{
@@ -254,15 +313,20 @@ $MilvusParams = @{
 $MqttParams = @{
     Force = $true
 }
+$TimescaleDBParams = @{
+    Force = $true
+}
 
 if ($EnableSSL) {
     $Neo4jParams.EnableSSL = $true
     $MilvusParams.EnableSSL = $true
     $MqttParams.EnableSSL = $true
+    $TimescaleDBParams.EnableSSL = $true
     
     if ($Domain -ne "localhost") {
         $Neo4jParams.Domain = $Domain
         $MilvusParams.Domain = $Domain
+        $TimescaleDBParams.Domain = $Domain
     }
 }
 
@@ -271,6 +335,7 @@ if ($EnableSSL) {
 $Neo4jPassword = $env:NEO4J_PASSWORD
 $MilvusPassword = $env:MILVUS_PASSWORD
 $MqttPassword = $env:MQTT_PASSWORD
+$TimescaleDBPassword = $env:TIMESCALEDB_PASSWORD
 
 # Add passwords to params only if provided via environment variables
 if ($Neo4jPassword) {
@@ -288,6 +353,11 @@ if ($MqttPassword) {
     Write-Host "Using MQTT password from environment variable" -ForegroundColor Gray
 }
 
+if ($TimescaleDBPassword) {
+    $TimescaleDBParams.Password = $TimescaleDBPassword
+    Write-Host "Using TimescaleDB password from environment variable" -ForegroundColor Gray
+}
+
 # Configure services
 Write-Host ""
 Write-Host "Configuring Services..." -ForegroundColor White
@@ -296,87 +366,136 @@ Write-Host "======================" -ForegroundColor Gray
 # Track which services configured successfully
 $ConfiguredServices = @{}
 
-# Configure Neo4j using the install script
-Write-Host ""
-Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
-Write-Host "===================" -ForegroundColor Gray
-Write-Host "Running Neo4j installation script..." -ForegroundColor White
+# Configure Neo4j using the install script (if selected)
+if ($ServicesToInstall["neo4j"]) {
+    Write-Host ""
+    Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
+    Write-Host "===================" -ForegroundColor Gray
+    Write-Host "Running Neo4j installation script..." -ForegroundColor White
 
-Set-Location "neo4j"
-try {
-    if ($EnableSSL) {
-        Write-Host "SSL enabled for Neo4j" -ForegroundColor Gray
+    Set-Location "neo4j"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for Neo4j" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @Neo4jParams
+        Write-Host "Neo4j configured successfully" -ForegroundColor Green
+        $ConfiguredServices["neo4j"] = $true
+    } catch {
+        Write-Host "Neo4j installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "Neo4j will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["neo4j"] = $false
     }
-    
-    & ".\management\install.ps1" @Neo4jParams
-    Write-Host "Neo4j configured successfully" -ForegroundColor Green
-    $ConfiguredServices["neo4j"] = $true
-} catch {
-    Write-Host "Neo4j installation failed with error:" -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
-    Write-Host "Neo4j will be skipped during startup..." -ForegroundColor Yellow
-    $ConfiguredServices["neo4j"] = $false
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping Neo4j (not selected)" -ForegroundColor Gray
 }
-Set-Location $InstallPath
 
-# Configure Milvus using the install script
-Write-Host ""
-Write-Host "Milvus Configuration:" -ForegroundColor Cyan
-Write-Host "====================" -ForegroundColor Gray
-Write-Host "Running Milvus installation script..." -ForegroundColor White
+# Configure Milvus using the install script (if selected)
+if ($ServicesToInstall["milvus"]) {
+    Write-Host ""
+    Write-Host "Milvus Configuration:" -ForegroundColor Cyan
+    Write-Host "====================" -ForegroundColor Gray
+    Write-Host "Running Milvus installation script..." -ForegroundColor White
 
-Set-Location "milvus"
-try {
-    if ($EnableSSL) {
-        Write-Host "SSL enabled for Milvus" -ForegroundColor Gray
+    Set-Location "milvus"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for Milvus" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @MilvusParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Milvus configured successfully" -ForegroundColor Green
+            $ConfiguredServices["milvus"] = $true
+        } else {
+            Write-Host "Milvus installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["milvus"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "Milvus installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "Milvus will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["milvus"] = $false
     }
-    
-    & ".\management\install.ps1" @MilvusParams
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Milvus configured successfully" -ForegroundColor Green
-        $ConfiguredServices["milvus"] = $true
-    } else {
-        Write-Host "Milvus installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
-        $ConfiguredServices["milvus"] = $true  # Still try to start if it completed
-    }
-} catch {
-    Write-Host "Milvus installation failed with error:" -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
-    Write-Host "Milvus will be skipped during startup..." -ForegroundColor Yellow
-    $ConfiguredServices["milvus"] = $false
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping Milvus (not selected)" -ForegroundColor Gray
 }
-Set-Location $InstallPath
 
-# Configure MQTT using the install script
-Write-Host ""
-Write-Host "MQTT Configuration:" -ForegroundColor Cyan
-Write-Host "==================" -ForegroundColor Gray
-Write-Host "Running MQTT installation script..." -ForegroundColor White
+# Configure MQTT using the install script (if selected)
+if ($ServicesToInstall["mqtt"]) {
+    Write-Host ""
+    Write-Host "MQTT Configuration:" -ForegroundColor Cyan
+    Write-Host "==================" -ForegroundColor Gray
+    Write-Host "Running MQTT installation script..." -ForegroundColor White
 
-Set-Location "mqtt"
-try {
-    if ($EnableSSL) {
-        Write-Host "SSL enabled for MQTT" -ForegroundColor Gray
+    Set-Location "mqtt"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for MQTT" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @MqttParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "MQTT configured successfully" -ForegroundColor Green
+            $ConfiguredServices["mqtt"] = $true
+        } else {
+            Write-Host "MQTT installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["mqtt"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "MQTT installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "MQTT will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["mqtt"] = $false
     }
-    
-    & ".\management\install.ps1" @MqttParams
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "MQTT configured successfully" -ForegroundColor Green
-        $ConfiguredServices["mqtt"] = $true
-    } else {
-        Write-Host "MQTT installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
-        $ConfiguredServices["mqtt"] = $true  # Still try to start if it completed
-    }
-} catch {
-    Write-Host "MQTT installation failed with error:" -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
-    Write-Host "MQTT will be skipped during startup..." -ForegroundColor Yellow
-    $ConfiguredServices["mqtt"] = $false
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping MQTT (not selected)" -ForegroundColor Gray
 }
-Set-Location $InstallPath
+
+# Configure TimescaleDB using the install script (if selected)
+if ($ServicesToInstall["timescaledb"]) {
+    Write-Host ""
+    Write-Host "TimescaleDB Configuration:" -ForegroundColor Cyan
+    Write-Host "=========================" -ForegroundColor Gray
+    Write-Host "Running TimescaleDB installation script..." -ForegroundColor White
+
+    Set-Location "timescaledb"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for TimescaleDB" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @TimescaleDBParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "TimescaleDB configured successfully" -ForegroundColor Green
+            $ConfiguredServices["timescaledb"] = $true
+        } else {
+            Write-Host "TimescaleDB installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["timescaledb"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "TimescaleDB installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "TimescaleDB will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["timescaledb"] = $false
+    }
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping TimescaleDB (not selected)" -ForegroundColor Gray
+}
 
 # Start only successfully configured services
 Write-Host ""
@@ -492,6 +611,38 @@ if ($ConfiguredServices["mqtt"]) {
     Write-Host "Skipping MQTT startup (configuration failed)" -ForegroundColor Yellow
 }
 
+# Check and start TimescaleDB if configured successfully
+if ($ConfiguredServices["timescaledb"]) {
+    Write-Host ""
+    Write-Host "Starting TimescaleDB..." -ForegroundColor White
+    Write-Host "======================" -ForegroundColor Gray
+
+    Set-Location "timescaledb"
+    try {
+        $TimescaleDBStatus = docker-compose ps --format json | ConvertFrom-Json
+        $TimescaleDBRunning = $TimescaleDBStatus | Where-Object { $_.Service -eq "timescaledb" -and $_.State -eq "running" }
+
+        if ($TimescaleDBRunning) {
+            Write-Host "TimescaleDB is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting TimescaleDB services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "TimescaleDB started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start TimescaleDB" -ForegroundColor Red
+            }
+        }
+    } catch {
+        Write-Host "Starting TimescaleDB..." -ForegroundColor Yellow
+        docker-compose up -d
+    }
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping TimescaleDB startup (configuration failed)" -ForegroundColor Yellow
+}
+
 # Wait for services to initialize
 Write-Host ""
 Write-Host "Waiting for services to initialize..." -ForegroundColor White
@@ -504,7 +655,10 @@ Write-Host "Final Service Status:" -ForegroundColor White
 Write-Host "====================" -ForegroundColor Gray
 
 $FinalStatus = @{}
-foreach ($service in @("neo4j", "milvus", "mqtt")) {
+foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb")) {
+    if (-not (Test-Path $service)) {
+        continue
+    }
     Set-Location $service
     try {
         $Status = docker-compose ps --format json | ConvertFrom-Json
@@ -551,6 +705,11 @@ if ($FinalStatus["mqtt"] -eq "running") {
     Write-Host "MQTT Broker: localhost:1883" -ForegroundColor Green
     Write-Host "MQTT WebSocket: ws://localhost:9002" -ForegroundColor Green
     Write-Host "  (Check MQTT install output above for username/password)" -ForegroundColor Gray
+}
+
+if ($FinalStatus["timescaledb"] -eq "running") {
+    Write-Host "TimescaleDB: localhost:5432" -ForegroundColor Green
+    Write-Host "  (Check TimescaleDB install output above for username/password)" -ForegroundColor Gray
 }
 
 Write-Host ""
@@ -868,6 +1027,77 @@ SSL Certificate:
     }
 }
 
+# Collect TimescaleDB credentials
+if ($ConfiguredServices["timescaledb"]) {
+    $CredentialsContent += @"
+
+
+# =================================================================
+# TimescaleDB Time-Series Database
+# =================================================================
+
+"@
+    
+    if (Test-Path "timescaledb\.env") {
+        $TimescaleDBEnv = Get-Content "timescaledb\.env" -Raw
+        
+        # Extract database name
+        if ($TimescaleDBEnv -match 'POSTGRES_DB=(.+)') {
+            $TimescaleDBName = $Matches[1].Trim()
+        } else {
+            $TimescaleDBName = "timescaledb"
+        }
+        
+        # Extract username
+        if ($TimescaleDBEnv -match 'POSTGRES_USER=(.+)') {
+            $TimescaleDBUser = $Matches[1].Trim()
+        } else {
+            $TimescaleDBUser = "postgres"
+        }
+        
+        # Extract password
+        if ($TimescaleDBEnv -match 'POSTGRES_PASSWORD=(.+)') {
+            $TimescaleDBPass = $Matches[1].Trim()
+        } else {
+            $TimescaleDBPass = "(check TimescaleDB .env file)"
+        }
+        
+        $CredentialsContent += @"
+Database: $TimescaleDBName
+Username: $TimescaleDBUser
+Password: $TimescaleDBPass
+
+"@
+    }
+    
+    $CredentialsContent += @"
+Access URLs:
+  - PostgreSQL: localhost:5432
+  - Connection String: postgresql://<username>:<password>@localhost:5432/<database>
+"@
+    
+    # Check if SSL is actually enabled in TimescaleDB
+    $TimescaleDBSSLEnabled = $false
+    if (Test-Path "timescaledb\.env") {
+        $TimescaleDBEnvContent = Get-Content "timescaledb\.env" -Raw
+        if ($TimescaleDBEnvContent -match 'ENABLE_SSL=true') {
+            $TimescaleDBSSLEnabled = $true
+        }
+    }
+    
+    if ($TimescaleDBSSLEnabled -and (Test-Path "timescaledb\certs\ca.crt")) {
+        $CredentialsContent += @"
+
+  - SSL Connection String: postgresql://<username>:<password>@localhost:5432/<database>?sslmode=require
+
+SSL Certificate:
+  - CA Certificate: timescaledb\certs\ca.crt
+  - Server Certificate: timescaledb\certs\server.crt
+  - Server Key: timescaledb\certs\server.key
+"@
+    }
+}
+
 # Add management information
 $CredentialsContent += @"
 
@@ -895,6 +1125,10 @@ Service-Specific Management:
   - MQTT Restore: .\mqtt\management\restore.ps1
   - MQTT Users: .\mqtt\management\manage-users.ps1
   - MQTT SSL: .\mqtt\management\manage-ssl.ps1
+  
+  - TimescaleDB Backup: .\timescaledb\management\backup.ps1
+  - TimescaleDB Restore: .\timescaledb\management\restore.ps1
+  - TimescaleDB SSL: .\timescaledb\management\manage-ssl.ps1
 
 # =================================================================
 # Security Notes

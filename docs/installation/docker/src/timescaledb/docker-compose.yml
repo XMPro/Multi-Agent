@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timescaledb
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      POSTGRES_DB: ${POSTGRES_DB:-timescaledb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password must be set}
+      
+      # Performance tuning (adjust based on available resources)
+      # These are production-grade defaults for a system with 4GB RAM
+      # Adjust according to your server's specifications
+      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-1GB}
+      POSTGRES_EFFECTIVE_CACHE_SIZE: ${POSTGRES_EFFECTIVE_CACHE_SIZE:-3GB}
+      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-16MB}
+      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
+      
+      # TimescaleDB specific settings
+      TIMESCALEDB_TELEMETRY: ${TIMESCALEDB_TELEMETRY:-off}
+      
+      # SSL configuration
+      POSTGRES_INITDB_ARGS: ${POSTGRES_INITDB_ARGS:-}
+      
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+      
+    volumes:
+      # Data persistence
+      - timescaledb_data:/var/lib/postgresql/data
+      
+      # Custom configuration (if exists)
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      
+      # SSL certificates (if SSL enabled)
+      - ./certs:/var/lib/postgresql/certs:ro
+      
+      # Backup directory
+      - ./backups:/backups
+      
+      # Initialization scripts
+      - ./init:/docker-entrypoint-initdb.d:ro
+      
+    command: 
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-timescaledb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+    networks:
+      - timescaledb_network
+      
+    # Resource limits (adjust based on your infrastructure)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+volumes:
+  timescaledb_data:
+    driver: local
+    name: timescaledb_data
+
+networks:
+  timescaledb_network:
+    driver: bridge
+    name: timescaledb_network

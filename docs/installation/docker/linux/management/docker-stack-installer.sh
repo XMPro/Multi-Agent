@@ -270,22 +270,89 @@ if [ -f "$TAR_PATH" ]; then
 fi
 
 # Verify extracted structure
-EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt")
-MISSING_FOLDERS=()
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb")
+AVAILABLE_FOLDERS=()
 
 for folder in "${EXPECTED_FOLDERS[@]}"; do
-    if [ ! -d "$folder" ]; then
-        MISSING_FOLDERS+=("$folder")
+    if [ -d "$folder" ]; then
+        AVAILABLE_FOLDERS+=("$folder")
     fi
 done
 
-if [ ${#MISSING_FOLDERS[@]} -gt 0 ]; then
-    print_color "$RED" "Missing expected folders: ${MISSING_FOLDERS[*]}"
+if [ ${#AVAILABLE_FOLDERS[@]} -eq 0 ]; then
+    print_color "$RED" "No service folders found in the ZIP file!"
     print_color "$YELLOW" "Please ensure the ZIP file contains the correct Docker stack structure."
     exit 1
 fi
 
-print_color "$GREEN" "All expected service folders found"
+print_color "$GREEN" "Found service folders: ${AVAILABLE_FOLDERS[*]}"
+
+# Ask user which services to install
+echo ""
+print_color "$CYAN" "Service Installation Selection"
+print_color "$GRAY" "============================="
+echo "You can choose which services to install. Services will only be"
+echo "configured and started if you select them."
+echo ""
+
+declare -A SERVICES_TO_INSTALL
+
+# Ask about Neo4j
+if [ -d "neo4j" ]; then
+    read -p "Do you want to install Neo4j Graph Database? (y/n): " install_neo4j
+    [[ "$install_neo4j" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[neo4j]=true || SERVICES_TO_INSTALL[neo4j]=false
+fi
+
+# Ask about Milvus
+if [ -d "milvus" ]; then
+    read -p "Do you want to install Milvus Vector Database? (y/n): " install_milvus
+    [[ "$install_milvus" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[milvus]=true || SERVICES_TO_INSTALL[milvus]=false
+fi
+
+# Ask about MQTT
+if [ -d "mqtt" ]; then
+    read -p "Do you want to install MQTT Message Broker? (y/n): " install_mqtt
+    [[ "$install_mqtt" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[mqtt]=true || SERVICES_TO_INSTALL[mqtt]=false
+fi
+
+# Ask about TimescaleDB
+if [ -d "timescaledb" ]; then
+    read -p "Do you want to install TimescaleDB Time-Series Database? (y/n): " install_timescaledb
+    [[ "$install_timescaledb" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[timescaledb]=true || SERVICES_TO_INSTALL[timescaledb]=false
+fi
+
+# Show installation summary
+echo ""
+print_color "$CYAN" "Installation Summary:"
+SELECTED_SERVICES=()
+SKIPPED_SERVICES=()
+
+for service in "${!SERVICES_TO_INSTALL[@]}"; do
+    if [ "${SERVICES_TO_INSTALL[$service]}" = true ]; then
+        SELECTED_SERVICES+=("$service")
+    else
+        SKIPPED_SERVICES+=("$service")
+    fi
+done
+
+if [ ${#SELECTED_SERVICES[@]} -gt 0 ]; then
+    print_color "$GREEN" "  Services to install: ${SELECTED_SERVICES[*]}"
+else
+    print_color "$RED" "  No services selected for installation!"
+    print_color "$YELLOW" "Exiting installer."
+    exit 0
+fi
+
+if [ ${#SKIPPED_SERVICES[@]} -gt 0 ]; then
+    print_color "$YELLOW" "  Services to skip: ${SKIPPED_SERVICES[*]}"
+fi
+
+echo ""
+read -p "Continue with installation? (y/n): " continue_install
+if [[ ! "$continue_install" =~ ^[Yy]$ ]]; then
+    print_color "$YELLOW" "Installation cancelled by user"
+    exit 0
+fi
 
 # Configure services
 echo ""
@@ -300,92 +367,141 @@ declare -A CONFIGURED_SERVICES
 NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
 MILVUS_PASSWORD="${MILVUS_PASSWORD:-}"
 MQTT_PASSWORD="${MQTT_PASSWORD:-}"
+TIMESCALEDB_PASSWORD="${TIMESCALEDB_PASSWORD:-}"
 
 # Show if using environment variables
 [ -n "$NEO4J_PASSWORD" ] && print_color "$GRAY" "Using Neo4j password from environment variable"
 [ -n "$MILVUS_PASSWORD" ] && print_color "$GRAY" "Using Milvus password from environment variable"
 [ -n "$MQTT_PASSWORD" ] && print_color "$GRAY" "Using MQTT password from environment variable"
+[ -n "$TIMESCALEDB_PASSWORD" ] && print_color "$GRAY" "Using TimescaleDB password from environment variable"
 
-# Configure Neo4j
-echo ""
-print_color "$CYAN" "Neo4j Configuration:"
-print_color "$GRAY" "==================="
-echo "Running Neo4j installation script..."
+# Configure Neo4j (if selected)
+if [ "${SERVICES_TO_INSTALL[neo4j]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "Neo4j Configuration:"
+    print_color "$GRAY" "==================="
+    echo "Running Neo4j installation script..."
 
-cd neo4j
-NEO4J_ARGS="--force"
-[ "$ENABLE_SSL" = true ] && NEO4J_ARGS="$NEO4J_ARGS --enable-ssl"
-[ "$DOMAIN" != "localhost" ] && NEO4J_ARGS="$NEO4J_ARGS --domain $DOMAIN"
-[ -n "$NEO4J_PASSWORD" ] && NEO4J_ARGS="$NEO4J_ARGS --password $NEO4J_PASSWORD"
+    cd neo4j
+    NEO4J_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && NEO4J_ARGS="$NEO4J_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && NEO4J_ARGS="$NEO4J_ARGS --domain $DOMAIN"
+    [ -n "$NEO4J_PASSWORD" ] && NEO4J_ARGS="$NEO4J_ARGS --password $NEO4J_PASSWORD"
 
-if [ -f "management/install.sh" ]; then
-    chmod +x management/install.sh
-    if ./management/install.sh $NEO4J_ARGS; then
-        print_color "$GREEN" "Neo4j configured successfully"
-        CONFIGURED_SERVICES[neo4j]=true
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $NEO4J_ARGS; then
+            print_color "$GREEN" "Neo4j configured successfully"
+            CONFIGURED_SERVICES[neo4j]=true
+        else
+            print_color "$RED" "Neo4j installation failed"
+            CONFIGURED_SERVICES[neo4j]=false
+        fi
     else
-        print_color "$RED" "Neo4j installation failed"
+        print_color "$YELLOW" "Neo4j install script not found"
         CONFIGURED_SERVICES[neo4j]=false
     fi
+    cd "$INSTALL_PATH"
 else
-    print_color "$YELLOW" "Neo4j install script not found"
-    CONFIGURED_SERVICES[neo4j]=false
+    echo ""
+    print_color "$GRAY" "Skipping Neo4j (not selected)"
 fi
-cd "$INSTALL_PATH"
 
-# Configure Milvus
-echo ""
-print_color "$CYAN" "Milvus Configuration:"
-print_color "$GRAY" "===================="
-echo "Running Milvus installation script..."
+# Configure Milvus (if selected)
+if [ "${SERVICES_TO_INSTALL[milvus]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "Milvus Configuration:"
+    print_color "$GRAY" "===================="
+    echo "Running Milvus installation script..."
 
-cd milvus
-MILVUS_ARGS="--force"
-[ "$ENABLE_SSL" = true ] && MILVUS_ARGS="$MILVUS_ARGS --enable-ssl"
-[ "$DOMAIN" != "localhost" ] && MILVUS_ARGS="$MILVUS_ARGS --domain $DOMAIN"
-[ -n "$MILVUS_PASSWORD" ] && MILVUS_ARGS="$MILVUS_ARGS --password $MILVUS_PASSWORD"
+    cd milvus
+    MILVUS_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && MILVUS_ARGS="$MILVUS_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && MILVUS_ARGS="$MILVUS_ARGS --domain $DOMAIN"
+    [ -n "$MILVUS_PASSWORD" ] && MILVUS_ARGS="$MILVUS_ARGS --password $MILVUS_PASSWORD"
 
-if [ -f "management/install.sh" ]; then
-    chmod +x management/install.sh
-    if ./management/install.sh $MILVUS_ARGS; then
-        print_color "$GREEN" "Milvus configured successfully"
-        CONFIGURED_SERVICES[milvus]=true
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $MILVUS_ARGS; then
+            print_color "$GREEN" "Milvus configured successfully"
+            CONFIGURED_SERVICES[milvus]=true
+        else
+            print_color "$RED" "Milvus installation failed"
+            CONFIGURED_SERVICES[milvus]=false
+        fi
     else
-        print_color "$RED" "Milvus installation failed"
+        print_color "$YELLOW" "Milvus install script not found"
         CONFIGURED_SERVICES[milvus]=false
     fi
+    cd "$INSTALL_PATH"
 else
-    print_color "$YELLOW" "Milvus install script not found"
-    CONFIGURED_SERVICES[milvus]=false
+    echo ""
+    print_color "$GRAY" "Skipping Milvus (not selected)"
 fi
-cd "$INSTALL_PATH"
 
-# Configure MQTT
-echo ""
-print_color "$CYAN" "MQTT Configuration:"
-print_color "$GRAY" "=================="
-echo "Running MQTT installation script..."
+# Configure MQTT (if selected)
+if [ "${SERVICES_TO_INSTALL[mqtt]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "MQTT Configuration:"
+    print_color "$GRAY" "=================="
+    echo "Running MQTT installation script..."
 
-cd mqtt
-MQTT_ARGS="--force"
-[ "$ENABLE_SSL" = true ] && MQTT_ARGS="$MQTT_ARGS --enable-ssl"
-[ "$DOMAIN" != "localhost" ] && MQTT_ARGS="$MQTT_ARGS --domain $DOMAIN"
-[ -n "$MQTT_PASSWORD" ] && MQTT_ARGS="$MQTT_ARGS --password $MQTT_PASSWORD"
+    cd mqtt
+    MQTT_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && MQTT_ARGS="$MQTT_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && MQTT_ARGS="$MQTT_ARGS --domain $DOMAIN"
+    [ -n "$MQTT_PASSWORD" ] && MQTT_ARGS="$MQTT_ARGS --password $MQTT_PASSWORD"
 
-if [ -f "management/install.sh" ]; then
-    chmod +x management/install.sh
-    if ./management/install.sh $MQTT_ARGS; then
-        print_color "$GREEN" "MQTT configured successfully"
-        CONFIGURED_SERVICES[mqtt]=true
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $MQTT_ARGS; then
+            print_color "$GREEN" "MQTT configured successfully"
+            CONFIGURED_SERVICES[mqtt]=true
+        else
+            print_color "$RED" "MQTT installation failed"
+            CONFIGURED_SERVICES[mqtt]=false
+        fi
     else
-        print_color "$RED" "MQTT installation failed"
+        print_color "$YELLOW" "MQTT install script not found"
         CONFIGURED_SERVICES[mqtt]=false
     fi
+    cd "$INSTALL_PATH"
 else
-    print_color "$YELLOW" "MQTT install script not found"
-    CONFIGURED_SERVICES[mqtt]=false
+    echo ""
+    print_color "$GRAY" "Skipping MQTT (not selected)"
 fi
-cd "$INSTALL_PATH"
+
+# Configure TimescaleDB (if selected)
+if [ "${SERVICES_TO_INSTALL[timescaledb]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "TimescaleDB Configuration:"
+    print_color "$GRAY" "========================="
+    echo "Running TimescaleDB installation script..."
+
+    cd timescaledb
+    TIMESCALEDB_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --domain $DOMAIN"
+    [ -n "$TIMESCALEDB_PASSWORD" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --password $TIMESCALEDB_PASSWORD"
+
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $TIMESCALEDB_ARGS; then
+            print_color "$GREEN" "TimescaleDB configured successfully"
+            CONFIGURED_SERVICES[timescaledb]=true
+        else
+            print_color "$RED" "TimescaleDB installation failed"
+            CONFIGURED_SERVICES[timescaledb]=false
+        fi
+    else
+        print_color "$YELLOW" "TimescaleDB install script not found"
+        CONFIGURED_SERVICES[timescaledb]=false
+    fi
+    cd "$INSTALL_PATH"
+else
+    echo ""
+    print_color "$GRAY" "Skipping TimescaleDB (not selected)"
+fi
 
 # Start services
 echo ""
@@ -464,6 +580,23 @@ if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
     cd ..
 fi
 
+# Start TimescaleDB
+if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
+    echo ""
+    echo "Starting TimescaleDB..."
+    print_color "$GRAY" "======================"
+    
+    cd timescaledb
+    if docker-compose ps 2>/dev/null | grep -q "timescaledb.*Up"; then
+        print_color "$GREEN" "TimescaleDB is already running"
+    else
+        echo "Starting TimescaleDB services..."
+        docker-compose up -d
+        print_color "$GREEN" "TimescaleDB started successfully"
+    fi
+    cd ..
+fi
+
 # Wait for services to initialize
 echo ""
 echo "Waiting for services to initialize..."
@@ -475,7 +608,7 @@ echo ""
 echo "Final Service Status:"
 print_color "$GRAY" "===================="
 
-for service in neo4j milvus mqtt; do
+for service in neo4j milvus mqtt timescaledb; do
     if [ -d "$service" ]; then
         cd "$service"
         if docker-compose ps 2>/dev/null | grep -q "Up"; then
@@ -513,6 +646,11 @@ if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
     print_color "$GREEN" "MQTT Broker: localhost:1883"
     print_color "$GREEN" "MQTT WebSocket: ws://localhost:9002"
     print_color "$GRAY" "  (Check MQTT install output above for username/password)"
+fi
+
+if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
+    print_color "$GREEN" "TimescaleDB: localhost:5432"
+    print_color "$GRAY" "  (Check TimescaleDB install output above for username/password)"
 fi
 
 echo ""
@@ -690,6 +828,41 @@ if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
         echo "  - CA Certificate: mqtt/certs/ca.crt" >> CREDENTIALS.txt
         echo "  - Client Certificate: mqtt/certs/client.crt" >> CREDENTIALS.txt
         echo "  - Client Key: mqtt/certs/client.key" >> CREDENTIALS.txt
+    fi
+fi
+
+if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# TimescaleDB Time-Series Database" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    # Parse TimescaleDB credentials from .env
+    if [ -f "timescaledb/.env" ]; then
+        TIMESCALEDB_DB=$(grep "^POSTGRES_DB=" timescaledb/.env | cut -d= -f2)
+        TIMESCALEDB_USER=$(grep "^POSTGRES_USER=" timescaledb/.env | cut -d= -f2)
+        TIMESCALEDB_PASS=$(grep "^POSTGRES_PASSWORD=" timescaledb/.env | cut -d= -f2)
+        
+        echo "Database: ${TIMESCALEDB_DB:-timescaledb}" >> CREDENTIALS.txt
+        echo "Username: ${TIMESCALEDB_USER:-postgres}" >> CREDENTIALS.txt
+        echo "Password: ${TIMESCALEDB_PASS:-check .env file}" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+    fi
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - PostgreSQL: localhost:5432" >> CREDENTIALS.txt
+    echo "  - Connection String: postgresql://<username>:<password>@localhost:5432/<database>" >> CREDENTIALS.txt
+    
+    # Check if SSL is enabled
+    if grep -q "ENABLE_SSL=true" timescaledb/.env 2>/dev/null && [ -f "timescaledb/certs/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - SSL Connection String: postgresql://<username>:<password>@localhost:5432/<database>?sslmode=require" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: timescaledb/certs/ca.crt" >> CREDENTIALS.txt
+        echo "  - Server Certificate: timescaledb/certs/server.crt" >> CREDENTIALS.txt
+        echo "  - Server Key: timescaledb/certs/server.key" >> CREDENTIALS.txt
     fi
 fi
 

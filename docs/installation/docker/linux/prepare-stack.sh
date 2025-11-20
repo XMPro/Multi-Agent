@@ -135,7 +135,7 @@ trap cleanup EXIT
 # Copy source directories
 echo "Copying services..."
 
-SERVICES=("neo4j" "milvus" "mqtt")
+SERVICES=("neo4j" "milvus" "mqtt" "timescaledb")
 for SERVICE in "${SERVICES[@]}"; do
     SOURCE_PATH="$PARENT_DIR/src/$SERVICE"
     DEST_PATH="$TEMP_DIR/$SERVICE"
@@ -259,6 +259,7 @@ This package contains a complete Docker stack deployment for:
 - **Neo4j** - Graph database
 - **Milvus** - Vector database  
 - **MQTT** - Message broker
+- **TimescaleDB** - Time-series database
 
 ## Directory Structure
 
@@ -419,6 +420,7 @@ if [ "$OFFLINE" = true ]; then
         ["quay.io/coreos/etcd:v3.6.5"]="etcd"
         ["zilliz/attu:v2.6"]="Attu"
         ["nginx:alpine"]="Nginx"
+        ["timescale/timescaledb:latest-pg16"]="TimescaleDB"
     )
     
     echo "Downloading Docker images..."

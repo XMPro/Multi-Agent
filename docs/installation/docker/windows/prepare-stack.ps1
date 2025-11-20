@@ -63,7 +63,7 @@ try {
     # Copy source directories
     Write-Host "Copying services..." -ForegroundColor White
     
-    $Services = @("neo4j", "milvus", "mqtt")
+    $Services = @("neo4j", "milvus", "mqtt", "timescaledb")
     foreach ($Service in $Services) {
         $SourcePath = Join-Path "$ParentDir\src" $Service
         $DestPath = Join-Path $TempDir $Service
@@ -398,6 +398,11 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Primary = "nginx:alpine"
                 Fallbacks = @("nginx:stable-alpine")
                 Description = "Nginx"
+            },
+            @{
+                Primary = "timescale/timescaledb:latest-pg16"
+                Fallbacks = @("timescale/timescaledb:2.18.0-pg16", "timescale/timescaledb:2.17.2-pg16")
+                Description = "TimescaleDB"
             }
         )
         

@@ -87,7 +87,8 @@ $ServiceCerts = @(
     @{Service="Neo4j"; Path="neo4j\certs\bolt\trusted\ca.crt"; Name="Neo4j Bolt CA"},
     @{Service="Neo4j"; Path="neo4j\certs\https\trusted\ca.crt"; Name="Neo4j HTTPS CA"},
     @{Service="Milvus"; Path="milvus\tls\ca.pem"; Name="Milvus CA"},
-    @{Service="MQTT"; Path="mqtt\certs\ca.crt"; Name="MQTT CA"}
+    @{Service="MQTT"; Path="mqtt\certs\ca.crt"; Name="MQTT CA"},
+    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"; Name="TimescaleDB CA"}
 )
 
 $AvailableCerts = @()

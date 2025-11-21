@@ -61,12 +61,12 @@ timescaledb/
 │   ├── ca.crt                  # Certificate Authority
 │   ├── server.crt              # Server certificate
 │   └── server.key              # Server private key
-├── backups/                    # Automated backups (pgBackRest)
+├── backups/                    # Automated backups
+├── backup/
+│   └── backup.sh               # Automated backup script
 ├── pgadmin/
-│   └── servers.json            # pgAdmin server configuration
-├── pgbackrest/
-│   ├── pgbackrest.conf         # pgBackRest configuration
-│   └── cron                    # Backup schedule
+│   ├── servers.json            # pgAdmin server configuration
+│   └── nginx.conf              # nginx configuration for SSL
 └── management/                 # Management scripts
     ├── install.ps1/sh          # Installation scripts
     └── manage-ssl.ps1/sh       # SSL management scripts
@@ -80,16 +80,16 @@ timescaledb/
 - **Purpose**: Time-series database with PostgreSQL compatibility
 
 ### pgAdmin
-- **Container**: `timescaledb-pgadmin`
-- **Port**: 5050
+- **Container**: `timescaledb-pgadmin` + `timescaledb-pgadmin-nginx`
+- **Port**: 5050 (HTTP), 5051 (HTTPS when SSL enabled)
 - **Purpose**: Web-based database administration interface
 - **Pre-configured**: TimescaleDB server connection ready to use
 
-### pgBackRest
-- **Container**: `timescaledb-pgbackrest`
-- **Purpose**: Automated backup and restore system
-- **Schedule**: Daily full backups + hourly incrementals
-- **Features**: Compression, retention policies, point-in-time recovery
+### Automated Backup
+- **Container**: `timescaledb-backup`
+- **Purpose**: Automated backup system using pg_dump
+- **Schedule**: Daily at 2:00 AM
+- **Features**: Compression, configurable retention
 
 ## Accessing TimescaleDB
 
@@ -158,79 +158,57 @@ WHERE state = 'active';
 
 ## Backup and Restore
 
-### Automated Backup System (pgBackRest)
+### Automated Backup System
 
-TimescaleDB includes **pgBackRest**, a production-grade automated backup solution that runs continuously.
+TimescaleDB includes an automated backup solution that runs continuously using standard PostgreSQL tools.
 
 **Backup Schedule:**
-- **Full Backup**: Daily at 2:00 AM
-- **Incremental Backup**: Every hour
+- **Daily Backup**: Every day at 2:00 AM
 - **Retention**: Configurable during installation (default: 30 days)
 - **Compression**: Enabled (gzip)
 - **Storage**: `./backups` directory
 
 **Data Storage:**
 - **Database Data**: Docker volume `timescaledb_data` (persistent, survives container recreation)
-- **Automated Backups**: `./backups` directory (managed by pgBackRest)
+- **Automated Backups**: `./backups` directory
 
 ### View Backup Information
 
 ```bash
 # List all backups
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info
+ls -lh ./backups
 
-# View detailed backup info
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info --output=json
+# View backup logs
+docker-compose logs backup
 ```
 
 ### Manual Backup (On-Demand)
 
-**Using pgBackRest (Recommended):**
 ```bash
-# Create full backup manually
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb --type=full backup
-
-# Create incremental backup manually
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb --type=incr backup
+# Create backup manually
+docker exec timescaledb-backup /usr/local/bin/backup.sh
 ```
 
 ### Restore from Backup
 
-**Restore to Latest:**
 ```bash
 # Stop TimescaleDB
 docker-compose stop timescaledb
 
-# Restore latest backup
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb restore
+# Restore from backup file
+gunzip < ./backups/timescaledb_YYYYMMDD_HHMMSS.sql.gz | \
+  docker exec -i timescaledb psql -U postgres -d timescaledb
 
 # Start TimescaleDB
 docker-compose start timescaledb
 ```
 
-**Point-in-Time Recovery (PITR):**
-```bash
-# Restore to specific time
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb \
-  --type=time --target="2024-01-15 14:30:00" restore
-```
-
-**Restore Specific Backup:**
-```bash
-# List backups to find backup label
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info
-
-# Restore specific backup
-docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb \
-  --set=20240115-143000F restore
-```
-
 ### Backup Best Practices
 
-1. **Monitor Backup Status**: Regularly check `docker-compose logs pgbackrest`
+1. **Monitor Backup Status**: Regularly check `docker-compose logs backup`
 2. **Test Restores**: Periodically test backup restoration
-3. **Offsite Storage**: Copy backups to offsite location for disaster recovery
-4. **Retention Policy**: Adjust retention based on compliance requirements
+3. **Offsite Storage**: Copy `./backups` directory to offsite location for disaster recovery
+4. **Retention Policy**: Adjust retention during installation based on compliance requirements
 5. **Disk Space**: Monitor `./backups` directory size
 
 ## SSL/TLS Configuration
@@ -320,7 +298,7 @@ FROM timescaledb_information.hypertables;
 If the database becomes corrupted:
 
 1. Stop the container: `docker-compose down`
-2. Restore from backup using pgBackRest (see "Restore from Backup" section above)
+2. Restore from backup (see "Restore from Backup" section above)
 3. Start the container: `docker-compose up -d`
 
 ## Common Operations

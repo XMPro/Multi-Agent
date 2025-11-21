@@ -534,10 +534,6 @@ if ($EnableSSL) {
 }
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    # If called with -Force (from stack installer), stay in service directory
-    Write-Host "Staying in neo4j directory for stack installer" -ForegroundColor Gray
-} else {
-    # If called manually, return to management directory
+if (-not $Force) {
     Set-Location management
 }

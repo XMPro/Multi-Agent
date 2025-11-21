@@ -64,7 +64,17 @@ if (Test-Path ".env") {
 
 # Create directory structure
 Write-Host "Creating directory structure..." -ForegroundColor White
-$Directories = @("init", "backups", "certs", "config", "pgadmin", "pgbackrest")
+$Directories = @(
+    "init", 
+    "backups", 
+    "certs", 
+    "config", 
+    "pgadmin", 
+    "backup",
+    "timescaledb-data",
+    "timescaledb-data\data",
+    "timescaledb-data\pgadmin"
+)
 foreach ($Dir in $Directories) {
     if (-not (Test-Path $Dir)) {
         New-Item -ItemType Directory -Force -Path $Dir | Out-Null
@@ -220,21 +230,32 @@ SSL_DOMAIN=$Domain
 
 # Backup Configuration
 BACKUP_RETENTION_DAYS=$BackupRetentionDays
-PGBACKREST_STANZA=timescaledb
 
 # Generated on: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 "@
 
-# Generate pgAdmin password
+# Generate pgAdmin password and email
+Write-Host ""
+Write-Host "pgAdmin Configuration:" -ForegroundColor White
+$PgAdminEmailChoice = Read-Host "Enter email for pgAdmin login (default: admin@example.com)"
+if ($PgAdminEmailChoice -and $PgAdminEmailChoice -match '^[^@]+@[^@]+\.[^@]+$') {
+    $PgAdminEmail = $PgAdminEmailChoice
+} else {
+    $PgAdminEmail = "admin@example.com"
+}
+Write-Host "pgAdmin email set to: $PgAdminEmail" -ForegroundColor Green
+
 Write-Host "Generating pgAdmin password..." -ForegroundColor White
-$PgAdminPassword = -join ((65..90) + (97..122) + (48..57) + @(33,35,37,38,42,43,45,61,63,64) | Get-Random -Count 24 | ForEach-Object {[char]$_})
+# Use safe charset for .env compatibility (no special shell characters)
+$SafeChars = (65..90) + (97..122) + (48..57) + @(95, 45)  # A-Z, a-z, 0-9, _, -
+$PgAdminPassword = -join ($SafeChars | Get-Random -Count 24 | ForEach-Object {[char]$_})
 Write-Host "Generated pgAdmin password: $PgAdminPassword" -ForegroundColor Green
 
 # Add pgAdmin configuration to .env
 $EnvContent += @"
 
 # pgAdmin Configuration
-PGADMIN_EMAIL=admin@timescaledb.local
+PGADMIN_EMAIL=$PgAdminEmail
 PGADMIN_PASSWORD=$PgAdminPassword
 PGADMIN_PORT=5050
 "@
@@ -344,40 +365,46 @@ http {
     Write-Host "Created nginx.conf for pgAdmin HTTP" -ForegroundColor Green
 }
 
-# Create pgBackRest configuration
-Write-Host "Creating pgBackRest configuration..." -ForegroundColor White
-$PgBackRestConf = @"
-[global]
-repo1-path=/var/lib/pgbackrest
-repo1-retention-full=$BackupRetentionDays
-log-level-console=info
-log-level-file=detail
-process-max=2
-compress-type=gz
-compress-level=6
+# Create backup script
+Write-Host "Creating automated backup script..." -ForegroundColor White
+$BackupScript = @"
+#!/bin/sh
+set -e
 
-[timescaledb]
-pg1-host=timescaledb
-pg1-port=5432
-pg1-path=/var/lib/postgresql/data
-pg1-user=$Username
+TIMESTAMP=`$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups"
+RETENTION_DAYS=`${BACKUP_RETENTION_DAYS:-30}
+
+# Create backup directory if it doesn't exist
+mkdir -p "`$BACKUP_DIR"
+
+# Backup filename
+BACKUP_FILE="`$BACKUP_DIR/timescaledb_`${TIMESTAMP}.sql.gz"
+
+echo "`$(date): Starting backup to `$BACKUP_FILE"
+
+# Perform backup using pg_dump
+pg_dump -Fc "`$PGDATABASE" | gzip > "`$BACKUP_FILE"
+
+if [ `$? -eq 0 ]; then
+    echo "`$(date): Backup completed successfully: `$BACKUP_FILE"
+    
+    # Clean up old backups
+    echo "`$(date): Cleaning up backups older than `$RETENTION_DAYS days"
+    find "`$BACKUP_DIR" -name "*.sql.gz" -type f -mtime +`$RETENTION_DAYS -delete
+    
+    # List current backups
+    BACKUP_COUNT=`$(ls -1 "`$BACKUP_DIR"/*.sql.gz 2>/dev/null | wc -l)
+    BACKUP_SIZE=`$(du -sh "`$BACKUP_DIR" 2>/dev/null | cut -f1)
+    echo "`$(date): Current backups: `$BACKUP_COUNT files, Total size: `$BACKUP_SIZE"
+else
+    echo "`$(date): Backup failed!"
+    exit 1
+fi
 "@
 
-$PgBackRestConf | Out-File -FilePath "pgbackrest\pgbackrest.conf" -Encoding ASCII
-Write-Host "Created pgBackRest configuration (retention: $BackupRetentionDays days)" -ForegroundColor Green
-
-# Create pgBackRest cron schedule
-$CronSchedule = @"
-# pgBackRest automated backup schedule
-# Daily full backup at 2 AM
-0 2 * * * pgbackrest --stanza=timescaledb --type=full backup
-
-# Hourly incremental backup
-0 * * * * pgbackrest --stanza=timescaledb --type=incr backup
-"@
-
-$CronSchedule | Out-File -FilePath "pgbackrest\cron" -Encoding ASCII
-Write-Host "Created pgBackRest backup schedule" -ForegroundColor Green
+$BackupScript | Out-File -FilePath "backup\backup.sh" -Encoding ASCII
+Write-Host "Created automated backup script (retention: $BackupRetentionDays days)" -ForegroundColor Green
 
 # Create initialization SQL script
 Write-Host "Creating initialization script..." -ForegroundColor White
@@ -479,8 +506,8 @@ if ($EnableSSL) {
             # Generate CA certificate
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -x509 -days 365 -key ca.key -out ca.crt -subj "/C=US/ST=State/L=City/O=TimescaleDB/CN=TimescaleDB-CA"
             
-            # Generate server private key
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out server.key 4096
+            # Generate server private key with temp name
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl genrsa -out temp_server.key 4096
             
             # Build SAN list
             $SANList = "DNS:$Domain,DNS:localhost,DNS:127.0.0.1,DNS:timescaledb,IP:127.0.0.1,IP:::1"
@@ -492,16 +519,18 @@ if ($EnableSSL) {
             }
             
             # Generate server CSR with SAN
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=TimescaleDB/CN=$Domain" -addext "subjectAltName=$SANList"
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl req -new -key temp_server.key -out temp_server.csr -subj "/C=US/ST=State/L=City/O=TimescaleDB/CN=$Domain" -addext "subjectAltName=$SANList"
             
-            # Sign server certificate
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -copy_extensions copy
+            # Sign server certificate with temp name
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in temp_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out temp_server.crt -days 365 -copy_extensions copy
             
-            # Set proper permissions on server.key for PostgreSQL
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "chmod 600 server.key && chmod 644 server.crt ca.crt"
-            
-            # Clean up
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "rm -f server.csr ca.srl ca.key"
+            # Move temp files to final names and set permissions
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "
+                mv temp_server.key server.key &&
+                mv temp_server.crt server.crt &&
+                chmod 644 server.key server.crt ca.crt &&
+                rm -f temp_server.csr ca.srl ca.key
+            "
             
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {
                 Write-Host "SSL certificates generated successfully" -ForegroundColor Green
@@ -569,7 +598,7 @@ if ($EnableSSL) {
 } else {
     Write-Host "  URL: http://localhost:5050" -ForegroundColor White
 }
-Write-Host "  Email: admin@timescaledb.local" -ForegroundColor White
+Write-Host "  Email: $PgAdminEmail" -ForegroundColor White
 Write-Host "  Password: $PgAdminPassword" -ForegroundColor Yellow
 Write-Host "  Note: TimescaleDB server is pre-configured in pgAdmin" -ForegroundColor Gray
 Write-Host ""
@@ -641,33 +670,29 @@ if ($EnableSSL) {
 
 Write-Host ""
 Write-Host "==================================================================" -ForegroundColor Cyan
-Write-Host "Automated Backup System (pgBackRest)" -ForegroundColor Cyan
+Write-Host "Automated Backup System" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host "Backup Configuration:" -ForegroundColor White
-Write-Host "  - Automated backups: ENABLED (pgBackRest)" -ForegroundColor Green
-Write-Host "  - Full backup: Daily at 2:00 AM" -ForegroundColor Gray
-Write-Host "  - Incremental backup: Every hour" -ForegroundColor Gray
+Write-Host "  - Automated backups: ENABLED" -ForegroundColor Green
+Write-Host "  - Schedule: Daily at 2:00 AM" -ForegroundColor Gray
 Write-Host "  - Retention: $BackupRetentionDays days" -ForegroundColor Gray
 Write-Host "  - Compression: Enabled (gzip)" -ForegroundColor Gray
 Write-Host "  - Storage: ./backups directory" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Data Storage:" -ForegroundColor White
 Write-Host "  - Database data: Docker volume 'timescaledb_data' (persistent)" -ForegroundColor Gray
-Write-Host "  - Automated backups: ./backups directory (pgBackRest)" -ForegroundColor Gray
+Write-Host "  - Automated backups: ./backups directory" -ForegroundColor Gray
 Write-Host ""
 Write-Host "The Docker volume persists data even when containers are recreated." -ForegroundColor Green
-Write-Host "Automated backups run continuously via pgBackRest container." -ForegroundColor Green
+Write-Host "Automated backups run continuously via backup container." -ForegroundColor Green
 Write-Host ""
 Write-Host "Backup Management:" -ForegroundColor White
-Write-Host "  - View backup info: docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb info" -ForegroundColor Cyan
-Write-Host "  - Manual backup: docker exec timescaledb-pgbackrest pgbackrest --stanza=timescaledb --type=full backup" -ForegroundColor Cyan
-Write-Host "  - Restore: See timescaledb_readme.md for restore procedures" -ForegroundColor Cyan
+Write-Host "  - View backups: ls -lh ./backups" -ForegroundColor Cyan
+Write-Host "  - Manual backup: docker exec timescaledb-backup /usr/local/bin/backup.sh" -ForegroundColor Cyan
+Write-Host "  - View logs: docker-compose logs backup" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    Write-Host ""
-    Write-Host "Staying in timescaledb directory for stack installer" -ForegroundColor Gray
-} else {
+if (-not $Force) {
     Set-Location management
 }

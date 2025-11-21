@@ -17,7 +17,7 @@ services:
       
     volumes:
       # Data persistence
-      - timescaledb_data:/var/lib/postgresql/data
+      - ./timescaledb-data/data:/var/lib/postgresql/data
       
       # SSL certificates (always mounted, but only used when SSL is enabled)
       - ./certs:/var/lib/postgresql/certs
@@ -55,13 +55,21 @@ services:
     container_name: timescaledb-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@timescaledb.local}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?pgAdmin password must be set}
-      PGADMIN_CONFIG_SERVER_MODE: 'True'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'True'
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_ENABLE_TLS: ${ENABLE_SSL:-False}
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - ./timescaledb-data/pgadmin:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./certs/server.crt:/certs/server.cert:ro
+      - ./certs/server.key:/certs/server.key:ro
+      - ./pgadmin-entrypoint.sh:/pgadmin-entrypoint.sh:ro
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+      - "${PGADMIN_HTTPS_PORT:-5051}:443"
+    entrypoint: ["/bin/sh", "/pgadmin-entrypoint.sh"]
     depends_on:
       - timescaledb
     networks:
@@ -77,51 +85,30 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  pgadmin-nginx:
-    image: nginx:alpine
-    container_name: timescaledb-pgadmin-nginx
-    restart: unless-stopped
-    ports:
-      - "${PGADMIN_HTTPS_PORT:-5051}:443"
-      - "${PGADMIN_PORT:-5050}:80"
-    volumes:
-      - ./pgadmin/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/ssl:ro
-    depends_on:
-      - pgadmin
-    networks:
-      - timescaledb_network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  pgbackrest:
-    image: pgbackrest/pgbackrest:latest
-    container_name: timescaledb-pgbackrest
+  backup:
+    image: postgres:16-alpine
+    container_name: timescaledb-backup
     restart: unless-stopped
     environment:
-      PGBACKREST_STANZA: ${PGBACKREST_STANZA:-timescaledb}
-      PGBACKREST_REPO1_PATH: /var/lib/pgbackrest
-      PGBACKREST_REPO1_RETENTION_FULL: ${BACKUP_RETENTION_DAYS:-30}
-      PGBACKREST_LOG_LEVEL_CONSOLE: info
-      PGBACKREST_LOG_LEVEL_FILE: detail
-      POSTGRES_HOST: timescaledb
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB:-timescaledb}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGHOST: timescaledb
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-timescaledb}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
     volumes:
-      - ./backups:/var/lib/pgbackrest
-      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
-      - ./pgbackrest/cron:/etc/cron.d/pgbackrest:ro
+      - ./backups:/backups
+      - ./backup/backup.sh:/backup.sh:ro
     depends_on:
-      - timescaledb
+      timescaledb:
+        condition: service_healthy
     networks:
       - timescaledb_network
     command: >
       sh -c "
+      cp /backup.sh /usr/local/bin/backup.sh &&
+      chmod +x /usr/local/bin/backup.sh &&
+      echo '0 2 * * * /usr/local/bin/backup.sh' > /etc/crontabs/root &&
       crond -f -l 2
       "
     logging:
@@ -129,14 +116,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-volumes:
-  timescaledb_data:
-    driver: local
-    name: timescaledb_data
-  pgadmin_data:
-    driver: local
-    name: pgadmin_data
 
 networks:
   timescaledb_network:

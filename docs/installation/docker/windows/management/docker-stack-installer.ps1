@@ -1091,6 +1091,19 @@ if ($ConfiguredServices["timescaledb"]) {
             $TimescaleDBPass = "(check TimescaleDB .env file)"
         }
         
+        # Extract pgAdmin credentials
+        if ($TimescaleDBEnv -match 'PGADMIN_EMAIL=(.+)') {
+            $PgAdminEmail = $Matches[1].Trim()
+        } else {
+            $PgAdminEmail = "admin@example.com"
+        }
+        
+        if ($TimescaleDBEnv -match 'PGADMIN_PASSWORD=(.+)') {
+            $PgAdminPass = $Matches[1].Trim()
+        } else {
+            $PgAdminPass = "(check TimescaleDB .env file)"
+        }
+        
         $CredentialsContent += @"
 Database: $TimescaleDBName
 Username: $TimescaleDBUser
@@ -1117,6 +1130,8 @@ Access URLs:
     if ($TimescaleDBSSLEnabled -and (Test-Path "timescaledb\certs\ca.crt")) {
         $CredentialsContent += @"
 
+  - pgAdmin Web UI (HTTPS): https://localhost:5051
+  - pgAdmin Web UI (HTTP redirect): http://localhost:5050
   - SSL Connection String: postgresql://<username>:<password>@localhost:5432/<database>?sslmode=require
 
 SSL Certificate:
@@ -1124,7 +1139,20 @@ SSL Certificate:
   - Server Certificate: timescaledb\certs\server.crt
   - Server Key: timescaledb\certs\server.key
 "@
+    } else {
+        $CredentialsContent += @"
+
+  - pgAdmin Web UI: http://localhost:5050
+"@
     }
+    
+    $CredentialsContent += @"
+
+
+pgAdmin Web UI:
+  - Email: $PgAdminEmail
+  - Password: $PgAdminPass
+"@
 }
 
 # Add management information

@@ -725,8 +725,6 @@ if ($EnableSSL) {
 }
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    Write-Host "Staying in milvus directory for stack installer" -ForegroundColor Gray
-} else {
+if (-not $Force) {
     Set-Location management
 }

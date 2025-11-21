@@ -507,10 +507,6 @@ Write-Host "  - config/passwords.txt (user authentication)" -ForegroundColor Whi
 Write-Host "  - config/acl.txt (access control)" -ForegroundColor White
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    # If called with -Force (from stack installer), stay in service directory
-    Write-Host "Staying in mqtt directory for stack installer" -ForegroundColor Gray
-} else {
-    # If called manually, return to management directory
+if (-not $Force) {
     Set-Location management
 }

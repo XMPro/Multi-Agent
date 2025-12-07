@@ -93,9 +93,15 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### B
 
+**Bayesian Inference**: A statistical method for updating probabilities based on new evidence, fundamental to MAGS confidence scoring and uncertainty quantification.
+
 **Behavioral Adaptation**: The process by which agents adjust their actions and strategies based on performance monitoring and feedback.
 
+**Bernoulli's Utility Theory**: The foundational principle (1738) that people value outcomes based on utility (satisfaction) rather than absolute value, exhibiting diminishing returns. Forms the basis for MAGS objective functions and decision-making.
+
 **Borda Count**: A consensus algorithm where participants rank options and points are assigned based on rankings to determine the winner.
+
+**Byzantine Fault Tolerance**: The ability of a distributed system to reach consensus even when some components fail arbitrarily or maliciously. MAGS uses Byzantine consensus (3f+1 agents to tolerate f failures) for safety-critical decisions.
 
 **Bounded Autonomy**: A framework where AI systems operate independently within well-defined constraints, maintaining freedom of action within predetermined safe envelopes while preserving human agency over boundary conditions. This approach ensures that agents can adapt to changing conditions while remaining within appropriate operational limits.
 
@@ -191,7 +197,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Deontic Principles**: A branch of logic that deals with duty, obligation, and permission. In XMPro MAGS, these principles establish clear rules for AI agents regarding what they must do (obligations), what they can do (permissions), and what they must not do (prohibitions).
 
-**Deontic Rules**: Ethical guidelines and behavioral constraints that govern what actions are permitted, obligatory, or forbidden for agents.
+**Deontic Logic**: A branch of modal logic dealing with obligation, permission, and prohibition. In MAGS, deontic logic provides formal foundations for Rules of Engagement, enabling verifiable compliance and explainable governance.
+
+**Deontic Rules**: Ethical guidelines and behavioral constraints that govern what actions are permitted, obligatory, or forbidden for agents. Five types: Obligation (O), Permission (P), Prohibition (F), Conditional (C), and Normative (N).
 
 **Deontic Token**: A permission object that authorizes specific types of communication between agents with defined scope and expiration.
 
@@ -203,7 +211,11 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### E
 
+**Ebbinghaus Forgetting Curve**: The principle (1885) that memory decays exponentially over time without reinforcement. MAGS uses this for intelligent memory decay and cleanup, with importance-adjusted decay rates.
+
 **Emergence Architecture**: The deliberate design of conditions that allow valuable system properties to emerge from component interactions, rather than attempting to impose those properties through direct intervention.
+
+**Episodic Memory**: Memory of specific events with temporal context ("what happened when"). In MAGS, stored in time series databases for temporal queries and trend analysis.
 
 **Emergent Optimization**: Solutions that arise from collective agent behavior rather than predetermined algorithms, allowing systems to discover solutions that transcend traditional optimization methods.
 
@@ -306,7 +318,13 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Multi-Agent Generative Systems (MAGS)**: See MAGS.
 
+**Multi-Objective Optimization**: The process of optimizing multiple competing objectives simultaneously. MAGS uses Pareto optimization to generate non-dominated solutions and enable explicit trade-off analysis.
+
+**Multi-Store Memory Model**: The cognitive architecture (Atkinson-Shiffrin 1968) with sensory, short-term, and long-term memory stores. MAGS implements this with cache (short-term) and polyglot persistence (long-term).
+
 ### N
+
+**Nash Equilibrium**: A stable state in multi-agent systems (Nash 1950) where no agent can improve by changing strategy alone. MAGS uses Nash equilibrium for fair resource allocation and consensus solutions.
 
 **Neo4j Graph**: Implementation of graph database operations specifically for Neo4j, including connection management and query execution.
 
@@ -382,7 +400,15 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Pool Metrics**: Performance measurements for database connection pools and resource management.
 
-**PDDL (Planning Domain Definition Language)**: A formal language used to describe planning problems in artificial intelligence, providing a standardized way to encode planning problems and serving as the de facto standard for representing planning problems in AI research.
+**Pareto Optimality**: A state where improving one objective requires sacrificing another (Pareto 1896). MAGS generates Pareto-optimal solutions for multi-objective decisions, enabling explicit trade-off analysis.
+
+**Paxos**: A consensus algorithm (Lamport 1998) for asynchronous distributed systems. MAGS uses Paxos-style consensus for distributed agent coordination without timing assumptions.
+
+**PDDL (Planning Domain Definition Language)**: A formal language (McDermott et al. 1998) used to describe planning problems in artificial intelligence, providing a standardized way to encode planning problems and serving as the de facto standard for representing planning problems in AI research.
+
+**Polyglot Persistence**: The practice (Fowler 2011) of using different databases for different data types. MAGS uses vector databases for semantic memory, graph databases for structural memory, time series databases for episodic memory, and cache for short-term memory.
+
+**Prospect Theory**: The behavioral economics theory (Kahneman & Tversky 1979) that people evaluate outcomes relative to reference points with loss aversion. MAGS uses prospect theory for context-aware significance assessment.
 
 **Predictive Maintenance**: An industrial maintenance strategy that uses data analysis, sensor monitoring, and machine learning to predict equipment failures before they occur, enabling proactive maintenance scheduling and reducing unplanned downtime.
 
@@ -395,6 +421,8 @@ Remember, this glossary is a living document. Your input and expertise help make
 ### R
 
 **RAG (Retrieval-Augmented Generation)**: A technique that enhances language model responses with information retrieved from a knowledge base, enabling agents to access and incorporate relevant information from organizational documents and systems.
+
+**Raft**: An understandable consensus algorithm (Ongaro & Ousterhout 2014) with leader election and log replication. MAGS uses Raft-style consensus for team coordination with automatic failover.
 
 **Recent Memory Cache**: A high-performance cache for frequently accessed recent memories to improve retrieval speed.
 
@@ -418,7 +446,11 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Shared Decision Space**: A collaborative framework where multiple agents can access and contribute to collective decision-making processes, enabling coordination and consensus-building across agent teams.
 
+**Semantic Memory**: General knowledge without temporal context ("what we know"). In MAGS, stored in vector databases for similarity-based retrieval and pattern matching.
+
 **Shared Memory Space**: A collaborative memory architecture where agents can access and build upon observations, reflections, and decisions from other agents, creating collective intelligence and institutional knowledge.
+
+**STRIPS**: The foundational AI planning system (Fikes & Nilsson 1971) that formalized planning as state-space search with preconditions and effects. PDDL is the modern evolution of STRIPS.
 
 **Shared Telemetry Components**: Common telemetry infrastructure shared across different system components.
 
@@ -458,13 +490,17 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Tool Library**: A collection of tools available to agents, with access controlled by permissions and configurations.
 
+**Tulving's Memory Types**: The distinction (1972) between episodic (temporal experiences) and semantic (atemporal knowledge) memory. MAGS implements both types with appropriate storage and retrieval strategies.
+
 **Topics**: Standardized message broker topic definitions for routing different types of messages.
 
 **Trust Factor**: A measure of the reliability of information sources, affecting how memories are weighted and processed.
 
 ### U
 
-**Unanimous**: A consensus algorithm requiring all participants to agree on the same option.
+**Unanimous**: A consensus algorithm requiring all participants to agree on the same option. MAGS uses unanimous consensus for highest-criticality decisions requiring complete stakeholder alignment.
+
+**Utility Function**: A mathematical representation of preferences that maps outcomes to numerical values. MAGS uses utility functions (linear, logarithmic, exponential, piecewise) for multi-objective optimization.
 
 **Utility Text Processing**: A comprehensive toolkit for text manipulation, parsing, and formatting operations throughout the system.
 

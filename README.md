@@ -4,24 +4,20 @@
 
 
 ## Multi-Agent Generative Systems (MAGS)
- 
-XMPro's Multi-Agent Generative Systems (MAGS) deploy teams of AI agents that function as virtual workers, collaborating to complete operational tasks in industrial settings. These agents integrate computational software with large language models (LLMs), working together to optimize processes and enhance advanced predictive maintenance. Importantly, MAGS are designed to augment human experts in operational scenarios, combining AI capabilities with human expertise for optimal results. This innovative approach leverages generative AI to simulate, optimize, and execute complex industrial operations in real-time.
 
-XMPro's MAGS implementation utilizes [three distinct types of agents](docs/concepts/agent_types.md), each with specialized roles and capabilities:
+XMPro MAGS deploys teams of AI agents that function as virtual workers, collaborating on operational tasks in industrial settings. Unlike LLM wrappers, MAGS is **~90% business process intelligence** (decision-making, planning, memory, optimization) and only **~10% LLM utility** (communication and explanation).
 
-1. Content Agents: These agents leverage Large Language Models (LLMs) to generate, curate, and manage information. They excel in tasks related to content creation, documentation management, and compliance support, forming the backbone of information processing in MAGS.
+**What Makes MAGS Different**:
+- Agents observe operations, learn from experience, and make autonomous decisions
+- Teams coordinate through formal consensus mechanisms
+- Sophisticated memory systems enable continuous improvement
+- Research-grounded decision frameworks ensure optimal, explainable choices
 
-2. Decision Agents: Acting as the strategic core of MAGS, Decision Agents simulate human-like reasoning and decision-making processes to optimize industrial operations. These agents observe, reflect, plan, and act autonomously, managing complex, dynamic environments where rapid, data-driven decisions are crucial for maintaining optimal performance.
+**Three Agent Types**: [Content](docs/concepts/agent_types.md) (information management), [Decision](docs/concepts/agent_types.md) (autonomous reasoning), and [Hybrid](docs/concepts/agent_types.md) (combined capabilities). See [Agent Types](docs/concepts/agent_types.md) for details.
 
-3. Hybrid Agents: Combining the strengths of Content and Decision Agents, Hybrid Agents are versatile problem-solvers capable of handling tasks that require both data synthesis and strategic decision-making. They excel in roles that demand flexibility, integrating content generation with real-time decision execution.
+**Research Foundation**: MAGS Decision Agents build on Stanford's "Generative Agents: Interactive Simulacra of Human Behavior" (Park et al., 2023), extending the observe-reflect-plan-act architecture for industrial applications. [[2304.03442] Generative Agents](https://arxiv.org/abs/2304.03442)
 
-XMPro's Decision Agents, in particular, were inspired by groundbreaking research from Stanford University, as detailed in "Generative Agents: Interactive Simulacra of Human Behavior" by Joon Sung Park, Joseph C. O'Brien, Carrie J. Cai, Meredith Ringel Morris, Percy Liang, and Michael S. Bernstein. This research introduced the concept of generative agents - computational software agents that simulate believable human behavior. These agents can perform a wide range of human-like activities, from daily routines to complex social interactions, and are capable of forming opinions, initiating conversations, and planning future actions based on past experiences. [[2304.03442] Generative Agents: Interactive Simulacra of Human Behavior (arxiv.org)](https://arxiv.org/abs/2304.03442 "https://arxiv.org/abs/2304.03442")
- 
-The Stanford research describes an architecture that extends large language models to store a complete record of an agent's experiences in natural language, synthesize those memories into higher-level reflections over time, and dynamically retrieve them to plan behavior. This approach allows for the creation of believable individual and emergent social behaviors in simulated environments.
-
-![XMPro ORPA Memory Cycle:](docs/concepts/images/XMProORPAMemoryCycle.png)
- 
-XMPro's Decision Agents build upon this foundation, adapting and extending these concepts for industrial applications. By incorporating the principles of observation, planning, and reflection from the Stanford research, XMPro's Decision Agents can make complex, context-aware decisions in industrial settings, continuously learning and adapting to changing conditions.
+![XMPro ORPA Memory Cycle](docs/concepts/images/XMProORPAMemoryCycle.png)
 
 ## Key Features
 
@@ -34,28 +30,58 @@ XMPro's Decision Agents build upon this foundation, adapting and extending these
 - **Real-time**: Execution of specialized functions such as reliability engineering and root cause analysis by agent teams.
 - **Scalable architecture**: Capable of deploying multiple agent teams based on specific operational needs and complexities.
 
+## Getting Started
+
+**New to MAGS?** Start with the [Getting Started Guide](docs/getting-started/README.md)
+
+**Quick Links**:
+- [Evaluation Prompt](docs/getting-started/evaluation-prompt.md) - Interactive LLM assessment (recommended)
+- [Evaluation Guide](docs/getting-started/evaluation-guide.md) - Detailed written assessment
+- [Understanding MAGS](docs/getting-started/understanding-mags.md) - Core concepts in plain language
+- [First Steps](docs/getting-started/first-steps.md) - Role-based learning paths
+
+**Essential Reading**:
+1. [Why MAGS is Different](docs/architecture/two-layer-framework.md) - The intelligence platform framework
+2. [Agent Types](docs/concepts/agent_types.md) - Content, Decision, and Hybrid agents
+3. [ORPA Cycle](docs/concepts/orpa-cycle.md) - How agents think and act
+4. [Use Cases](docs/use-cases/README.md) - Real-world applications
+
+**Technical Deep Dive**:
+1. [15 Business Process Capabilities](docs/architecture/business-process-intelligence.md)
+2. [Research Foundations](docs/research-foundations/README.md)
+3. [Design Patterns](docs/design-patterns/README.md)
+4. [Best Practices](docs/best-practices/README.md)
+
 ## Repository Structure
 - [`/docs`](docs): Comprehensive documentation (see Documentation section for details)
 - [`/src`](src): Source code for XMPro MAGS components
 
 ## Documentation
-Our comprehensive documentation is organized in the `/docs` folder:
-- [`/accessibility`](docs/accessibility.md): Guidelines and resources for web accessibility, including ARIA implementation
-- [`/architecture`](docs/architecture): Detailed architecture diagrams for MAGS sub-processes
-- [`/concepts`](docs/concepts): Exploration of key concepts, ideas, and methodologies underlying XMPro AI Agents
-- [`/faq`](docs/faq.md): Frequently Asked Questions about XMPro MAGS
-- [`Glossary.md`](docs/Glossary.md): A comprehensive glossary covering:
-  - Fundamental concepts in generative AI
-  - Multi-Agent system architectures
-  - XMPro-specific terminology and tools
-  - Industry-standard AI and machine learning terms
-- [`/naming-conventions`](docs/naming-conventions): Explanation of naming conventions used throughout the project
-- [`/technical-details`](docs/technical-details): In-depth technical explanations with diagrams
 
-For a quick start, we recommend:
-1. Review the [FAQ](docs/faq.md) for common questions and answers
-2. Explore the [Glossary](/docs/Glossary.md) to familiarize yourself with key concepts and terminology
-3. Dive into specific topics in the [concepts](docs/concepts) folder
+Our comprehensive documentation is organized in the `/docs` folder:
+
+**Core Documentation**:
+- [`/getting-started`](docs/getting-started): New user onboarding and evaluation
+- [`/architecture`](docs/architecture): System architecture and framework positioning
+- [`/concepts`](docs/concepts): Key concepts, ideas, and methodologies
+- [`/research-foundations`](docs/research-foundations): Academic foundations across 10 research domains
+- [`/use-cases`](docs/use-cases): Real-world application scenarios
+- [`/design-patterns`](docs/design-patterns): Proven implementation patterns
+- [`/best-practices`](docs/best-practices): Implementation guidance
+
+**Capability Categories**:
+- [`/cognitive-intelligence`](docs/cognitive-intelligence): Memory, learning, and adaptation
+- [`/decision-orchestration`](docs/decision-orchestration): Coordination and consensus
+- [`/performance-optimization`](docs/performance-optimization): Goals and optimization
+- [`/integration-execution`](docs/integration-execution): External interfaces and execution
+
+**Supporting Resources**:
+- [`Glossary.md`](docs/Glossary.md): Comprehensive terminology reference
+- [`/faq`](docs/faq.md): Frequently Asked Questions
+- [`/installation`](docs/installation.md): Setup and deployment guide
+- [`/accessibility`](docs/accessibility.md): Web accessibility guidelines
+- [`/naming-conventions`](docs/naming-conventions): Project naming standards
+- [`/technical-details`](docs/technical-details): Technical explanations
 
 ## Installation
 
@@ -86,6 +112,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 > The MIT License is a permissive license that allows you to do anything you want with the code as long as you provide attribution back to XMPro and don't hold us liable.
 
 **Important Legal Notice**: This repository contains open-source components licensed under the MIT License. However, it is essential to understand that the core XMPro AI agent technology, including its proprietary algorithms and implementations, remains the exclusive intellectual property of XMPro. The open-source materials provided herein serve as a framework and reference implementation, and do not grant any rights to XMPro's commercially protected, proprietary agent technology. Any use, reproduction, or distribution of XMPro's proprietary components is strictly prohibited without express written permission from XMPro.
+
+## Stay Updated
+
+**The Digital Engineer Newsletter**
+Pieter van Schalkwyk writes regularly about Multi-Agent Systems, Industrial AI, and Digital Transformation.
+
+📧 Subscribe: [The Digital Engineer on LinkedIn](https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7107692183964585984)
 
 ## Contact
 

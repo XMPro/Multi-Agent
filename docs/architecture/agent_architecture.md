@@ -1,15 +1,85 @@
 # Agent Architecture
 
 ## Table of Contents
-1. [Introduction](#introduction)
-2. [Agent Structure](#agent-structure)
-3. [Component Descriptions](#component-descriptions)
-4. [Relationships](#relationships)
-5. [Memory Parameters in Detail](#memory-parameters-in-detail)
+1. [Architecture Philosophy](#architecture-philosophy)
+2. [Introduction](#introduction)
+3. [Agent Structure](#agent-structure)
+4. [Component Descriptions](#component-descriptions)
+5. [Relationships](#relationships)
+6. [Memory Parameters in Detail](#memory-parameters-in-detail)
+7. [Theoretical Foundations](#theoretical-foundations)
+8. [Related Capabilities](#related-capabilities)
+
+## Architecture Philosophy
+
+### How Agent Architecture Embodies the Two-Layer Framework
+
+The agent architecture in MAGS reflects the fundamental principle of the [two-layer framework](two-layer-framework.md): **intelligence first, communication second**.
+
+**Intelligence Layer Components** (~90%):
+- **Memory Parameters**: Implement cognitive science principles (Atkinson-Shiffrin, Ebbinghaus, Tulving)
+- **Decision Parameters**: Enable planning and adaptation based on established theories
+- **Deontic Rules**: Enforce governance through deontic logic
+- **Skills & Experience**: Define domain-specific capabilities
+
+**Utility Layer Components** (~10%):
+- **Model Provider/Name**: LLM selection for communication
+- **Prompts**: Natural language interfaces (observation, reflection, system)
+- **RAG Settings**: Knowledge retrieval for context
+
+**Key Principle**: The agent profile defines **what the agent can do** (intelligence), while LLM settings define **how it communicates** (utility).
+
+### Design Principles for Separation of Concerns
+
+#### Principle 1: Intelligence-Driven Configuration
+Agent capabilities are defined by:
+- Memory management parameters (cognitive intelligence)
+- Decision-making parameters (planning and optimization)
+- Governance rules (deontic principles)
+- Skills and experience (domain expertise)
+
+**Not** by:
+- LLM model selection
+- Prompt engineering
+- Token limits
+
+#### Principle 2: Provider-Agnostic Design
+The architecture supports any LLM provider:
+- `model_provider`: Abstracted interface
+- `model_name`: Configurable per agent
+- Prompts: Standardized structure
+
+**Benefit**: Switch LLM providers without changing agent intelligence.
+
+#### Principle 3: Capability-Based Architecture
+Agents are organized around [15 business process capabilities](business-process-intelligence.md):
+- Memory significance and synthetic memory
+- Content-specific processing
+- Memory management and retrieval
+- Plan adaptation and change detection
+- And 11 more...
+
+**Benefit**: Architecture remains stable as LLM technology evolves.
+
+---
 
 ## Introduction
 
 This document provides a detailed explanation of the agent architecture in the XMPro AI Agents system, focusing on the structure of Agent Profile and Agent Instance.
+
+### Purpose and Scope
+
+This architecture enables:
+- **Cognitive Intelligence**: Memory, learning, and adaptation
+- **Decision-Making**: Planning, consensus, and optimization
+- **Governance**: Rule enforcement and compliance
+- **Communication**: Natural language interaction
+
+The agent profile serves as a blueprint that combines:
+- Research-based intelligence capabilities
+- Domain-specific expertise
+- Organizational policies
+- Communication preferences
 
 ## Agent Structure
 
@@ -188,6 +258,84 @@ By adjusting these parameters, you can create agents with different memory chara
 
 ### Conclusion
 
-These memory parameters, as part of the agent profile, play a crucial role in defining an agent's cognitive behavior. They control how the agent manages its observations, when it reflects on its experiences, how quickly it forgets less important information, and how much of its recent history it considers in its decision-making processes. 
+These memory parameters, as part of the agent profile, play a crucial role in defining an agent's cognitive behavior. They control how the agent manages its observations, when it reflects on its experiences, how quickly it forgets less important information, and how much of its recent history it considers in its decision-making processes.
 
 By allowing these parameters to be adjusted when creating or modifying agent profiles, the MAGS system provides a powerful mechanism for creating diverse agents with varying cognitive characteristics. This flexibility enables the creation of agents tailored to specific tasks, environments, or experimental scenarios, enhancing the versatility and effectiveness of the multi-agent system.
+
+---
+
+## Theoretical Foundations
+
+The agent architecture is grounded in decades of research across multiple disciplines. Each component of the agent profile connects to established theoretical foundations.
+
+### Cognitive Science Foundations
+
+**Memory Parameters** implement principles from:
+- **Atkinson-Shiffrin Memory Model (1968)**: Multi-store memory system
+- **Ebbinghaus Forgetting Curve (1885)**: Exponential memory decay
+- **Tulving's Memory Types (1972)**: Episodic vs. semantic memory
+- **Murdock's Recency Effect (1962)**: Temporal proximity in retrieval
+
+[Learn more about Memory Systems →](../concepts/memory-systems.md)
+
+### Decision Theory Foundations
+
+**Decision Parameters** are based on:
+- **Planning Theory**: STRIPS (1971), PDDL (1998), HTN Planning (1994)
+- **Adaptive Control**: Model Reference Adaptive Control
+- **Multi-Objective Optimization**: Pareto optimality, Nash equilibrium
+
+[Learn more about Planning →](../concepts/planning-approaches.md)
+
+### Governance Foundations
+
+**Deontic Rules** implement:
+- **Deontic Logic**: Obligations, permissions, prohibitions
+- **Organizational Theory**: Hierarchies and authority
+- **Compliance Management**: Rule enforcement and auditing
+
+[Learn more about Deontic Principles →](../concepts/deontic-principles.md)
+
+---
+
+## Related Capabilities
+
+The agent architecture enables the [15 business process intelligence capabilities](business-process-intelligence.md):
+
+### Cognitive Intelligence
+- Memory Significance & Synthetic Memory
+- Content-Specific Processing
+- Memory Management & Retrieval
+- Plan Adaptation & Change Detection
+
+### Decision Orchestration
+- Consensus Management
+- Communication Framework
+- Agent Lifecycle & Governance
+
+### Performance Optimization
+- Goal Optimization & Utility Functions
+- Plan Optimization
+- Performance Monitoring & Confidence
+
+### Integration & Execution
+- Tool Orchestration, DataStream Integration, Telemetry, Monitoring, Quality Control
+
+[Learn more about all capabilities →](business-process-intelligence.md)
+
+---
+
+## Related Documentation
+
+- [Two-Layer Framework](two-layer-framework.md)
+- [Business Process Intelligence](business-process-intelligence.md)
+- [System Components](system-components.md)
+- [Data Architecture](data-architecture.md)
+- [Memory Systems](../concepts/memory-systems.md)
+- [Agent Types](../concepts/agent_types.md)
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: December 5, 2024
+**Status**: ✅ Enhanced with Framework Context

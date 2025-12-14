@@ -9,9 +9,43 @@
 
 ## Executive Summary
 
-Not every AI agent scenario requires the sophistication of MAGS (Multi-Agent Generative Systems). This guide helps organizations make informed decisions about when to use simpler alternatives, ensuring optimal resource allocation and faster time-to-value.
+Not every AI agent scenario requires the sophistication of MAGS (Multi-Agent Generative Systems). XMPro's Agentic Operations platform provides a comprehensive suite of AI capabilities designed to match the right solution to your specific needs.
 
-**Key Principle:** Use the simplest solution that meets your requirements. MAGS is designed for complex, multi-stakeholder scenarios requiring consensus, coordination, and industrial-grade reliability.
+**Key Principle:** Use the simplest XMPro solution that meets your requirements. MAGS is designed for complex, multi-stakeholder scenarios requiring consensus, coordination, and industrial-grade reliability.
+
+---
+
+## XMPro Agentic Operations: The Complete Suite
+
+XMPro offers four distinct AI agent capabilities, each optimized for different use cases:
+
+### 1. **XMPro DataStream GenAI Agents** 
+**Best for:** Rule-based solutions with LLM capability
+- Predictable workflows with AI enhancement
+- Real-time data processing with intelligent decision support
+- Integration with OT/IoT systems through XMPro Data Streams
+- Low-code/no-code configuration
+
+### 2. **AI Assistant**
+**Best for:** Interactive information access with chat interface
+- Dynamic access to real-time operational data
+- Conversational interface for data exploration
+- Subject matter expert knowledge retrieval
+- Single-user productivity enhancement
+
+### 3. **AI Advisor**
+**Best for:** Situational awareness with dynamic data
+- Real-time monitoring and alerting
+- Context-aware recommendations
+- Operational intelligence and insights
+- Proactive guidance based on current conditions
+
+### 4. **MAGS (Multi-Agent Generative Systems)**
+**Best for:** Complex multi-stakeholder coordination
+- Formal consensus mechanisms
+- Multi-agent collaboration and coordination
+- Safety-critical operations with audit trails
+- Distributed intelligence across organizational boundaries
 
 ---
 
@@ -19,229 +53,140 @@ Not every AI agent scenario requires the sophistication of MAGS (Multi-Agent Gen
 
 ### Quick Assessment Questions
 
-Answer these questions to determine if MAGS is appropriate for your use case:
+Answer these questions to determine which XMPro solution is appropriate:
 
-| Question | If YES → | If NO → |
-|----------|----------|---------|
-| Is the workflow **predictable and rule-based**? | Use deterministic code | Continue assessment |
-| Is it **simple information retrieval** without actions? | Use standard RAG | Continue assessment |
-| Does it require **single-user productivity** only? | Use Microsoft 365 Copilot | Continue assessment |
-| Can a **single agent** handle all requirements? | Test single-agent first | Continue assessment |
-| Do you need **rapid prototyping** (days, not weeks)? | Use Microsoft Copilot Studio | Continue assessment |
-| Does it require **multi-agent consensus**? | ✅ Consider MAGS | Continue assessment |
-| Is it **safety-critical** with audit requirements? | ✅ Consider MAGS | Continue assessment |
-| Does it involve **multiple stakeholders** with conflicting goals? | ✅ Consider MAGS | Continue assessment |
+| Question | Recommended Solution |
+|----------|---------------------|
+| Is the workflow **predictable and rule-based**? | XMPro DataStream GenAI Agents |
+| Do you need **chat-based information access**? | AI Assistant |
+| Do you need **real-time situational awareness**? | AI Advisor |
+| Does it require **multi-agent consensus**? | MAGS |
+| Is it **safety-critical** with audit requirements? | MAGS |
+| Does it involve **multiple stakeholders** with conflicting goals? | MAGS |
 
 ---
 
-## 1. When to Use Deterministic Code or Non-Generative AI
+## 1. When to Use XMPro DataStream GenAI Agents
 
-### Use Cases
+### Ideal Use Cases
 
-❌ **Don't use MAGS for:**
-- Fixed business rules and validation logic
-- Predictable data transformations
-- Mathematical calculations and algorithms
-- Scheduled batch processing
-- Simple if-then-else workflows
-- Data pipeline orchestration with known steps
+✅ **Use DataStream GenAI Agents for:**
+- Predictable workflows enhanced with AI reasoning
+- Real-time data processing with intelligent decision support
+- Rule-based automation with LLM-powered flexibility
+- Integration with OT/IoT systems and sensors
+- Data transformation and enrichment pipelines
+- Scheduled batch processing with AI insights
+- Event-driven workflows with contextual understanding
 
-### Why Not MAGS?
+### Why DataStream GenAI Agents?
 
-- **Cost:** Deterministic code is cheaper to run (no LLM costs)
-- **Speed:** Faster execution without LLM latency
-- **Reliability:** 100% predictable outcomes
-- **Simplicity:** Easier to test, debug, and maintain
+- **Real-Time Integration:** Direct connection to operational data through XMPro Data Streams
+- **Low-Code Configuration:** Visual designer for rapid development
+- **Hybrid Intelligence:** Combines deterministic rules with LLM reasoning
+- **Cost-Effective:** Optimized for high-volume, predictable workflows
+- **Proven Reliability:** Built on XMPro's industrial-grade platform
 
-### Recommended Alternatives
+### Example Scenarios
 
-| Scenario | Recommended Solution |
-|----------|---------------------|
-| Business rule validation | Azure Functions, Logic Apps |
-| Data transformation | Azure Data Factory, Databricks |
-| Predictive analytics | Azure Machine Learning (traditional ML) |
-| Scheduled workflows | Azure Logic Apps, Power Automate |
-
-### Example
-
-**Scenario:** Validate invoice data against business rules  
-**Wrong Choice:** MAGS multi-agent system  
-**Right Choice:** Azure Function with validation logic  
-**Reason:** Fixed rules, no reasoning required, deterministic outcome needed
-
----
-
-## 2. When to Use Standard RAG (Retrieval-Augmented Generation)
-
-### Use Cases
-
-❌ **Don't use MAGS for:**
-- FAQ chatbots with static knowledge base
-- Document search with generative summaries
-- Knowledge base assistants (single-turn interactions)
-- Content generation from fixed templates
-- Simple question-answering systems
-
-### Why Not MAGS?
-
-- **Complexity:** RAG is simpler to implement and maintain
-- **Cost:** Lower operational costs (no multi-agent coordination)
-- **Latency:** Faster response times (single LLM call)
-- **Sufficient:** Meets requirements without orchestration
-
-### Recommended Alternatives
-
-| Scenario | Recommended Solution |
-|----------|---------------------|
-| Internal knowledge base | Microsoft Foundry with RAG |
-| Customer support FAQ | Azure OpenAI + Azure AI Search |
-| Document Q&A | Microsoft Copilot Studio with knowledge sources |
-| Content summarization | Azure OpenAI with prompt engineering |
-
-### Example
-
-**Scenario:** Employee HR policy chatbot  
-**Wrong Choice:** MAGS with multiple agents  
-**Right Choice:** RAG application with Azure AI Search  
-**Reason:** Static knowledge, single-turn Q&A, no actions required
-
----
-
-## 3. When to Use Microsoft 365 Copilot or SaaS Agents
-
-### Use Cases
-
-❌ **Don't use MAGS for:**
-- Personal productivity enhancement
-- Email drafting and summarization
-- Meeting notes and action items
-- Document creation and editing
-- Calendar management
-- Simple task automation within M365
-
-### Why Not MAGS?
-
-- **Ready-to-use:** SaaS agents are pre-built and immediately available
-- **Integration:** Native integration with M365 apps
-- **Cost:** Included in M365 licensing
-- **Maintenance:** No custom code to maintain
-
-### Recommended Alternatives
-
-| Scenario | Recommended Solution |
-|----------|---------------------|
-| Email assistance | Microsoft 365 Copilot |
-| Document drafting | Microsoft 365 Copilot (Word) |
-| Data analysis | Microsoft 365 Copilot (Excel) |
-| Meeting summaries | Microsoft 365 Copilot (Teams) |
-| Code assistance | GitHub Copilot |
-| Security operations | Microsoft Security Copilot |
-
-### Example
-
-**Scenario:** Help employees draft professional emails  
-**Wrong Choice:** Custom MAGS implementation  
-**Right Choice:** Microsoft 365 Copilot  
-**Reason:** Standard productivity task, no custom business logic needed
-
----
-
-## 4. When to Use Single-Agent Solutions
-
-### Use Cases
-
-❌ **Don't use MAGS for:**
-- Single-user workflows without coordination
-- Tasks that don't cross organizational boundaries
-- Scenarios without conflicting objectives
-- Simple automation without consensus requirements
-- Low-complexity decision-making
-
-### Why Not MAGS?
-
-- **Simplicity:** Single agent is easier to develop and maintain
-- **Cost:** Lower operational costs (one agent vs. team)
-- **Latency:** Faster execution without coordination overhead
-- **Sufficient:** Meets requirements without multi-agent complexity
-
-### Recommended Alternatives
-
-| Scenario | Recommended Solution |
-|----------|---------------------|
-| Customer service bot | Microsoft Copilot Studio (single agent) |
-| Data analysis assistant | Microsoft Foundry (declarative agent) |
-| Process automation | Microsoft Foundry (hosted agent) |
-| Task execution | Azure OpenAI with function calling |
-
-### Decision Criteria
-
-**Test with a single agent first if:**
-- ✅ One role/perspective is sufficient
-- ✅ No conflicting objectives between stakeholders
-- ✅ No security/compliance boundaries to cross
-- ✅ No need for formal consensus or voting
-- ✅ Low to moderate complexity
-
-**Consider MAGS if single agent fails to:**
-- ❌ Handle conflicting requirements
-- ❌ Provide sufficient expertise across domains
-- ❌ Meet audit and compliance requirements
-- ❌ Scale to handle complexity
-- ❌ Coordinate across organizational boundaries
-
-### Example
-
-**Scenario:** Automated customer order processing  
-**Test First:** Single agent with order processing logic  
-**Escalate to MAGS if:** Multiple departments need to approve, conflicting policies exist, or consensus required
-
----
-
-## 5. When to Use Microsoft Copilot Studio (Low-Code)
-
-### Use Cases
-
-❌ **Don't use MAGS for:**
-- Rapid prototyping and proof-of-concepts
-- Business user-led development
-- Simple conversational interfaces
-- Standard workflow automation
-- Time-to-market is critical (days/weeks)
-
-### Why Not MAGS?
-
-- **Speed:** Faster development with low-code tools
-- **Accessibility:** Business users can build without coding
-- **Cost:** Lower development costs
-- **Sufficient:** Meets requirements for moderate complexity
-
-### Recommended Alternatives
-
-| Scenario | Recommended Solution |
-|----------|---------------------|
-| Conversational bot | Microsoft Copilot Studio |
-| Workflow automation | Power Automate + Copilot Studio |
-| Form processing | Power Apps + AI Builder |
-| Simple task agents | Copilot Studio with connectors |
+| Industry | Use Case | Why DataStream GenAI Agents? |
+|----------|----------|------------------------------|
+| **Manufacturing** | Quality control validation | Rule-based checks enhanced with AI anomaly detection |
+| **Energy** | Sensor data processing | Real-time data transformation with intelligent alerting |
+| **Mining** | Equipment monitoring | Predictable workflows with AI-powered insights |
+| **Utilities** | Asset performance tracking | Scheduled analysis with contextual recommendations |
 
 ### When to Escalate to MAGS
 
-Consider MAGS when Copilot Studio limitations are reached:
-- Need for complex multi-agent coordination
-- Advanced memory and learning requirements
-- Custom cognitive architectures (ORPA)
-- Industrial-grade reliability and self-healing
-- Sophisticated consensus mechanisms
-
-### Example
-
-**Scenario:** IT helpdesk chatbot  
-**Start With:** Microsoft Copilot Studio  
-**Escalate to MAGS if:** Requires multi-department coordination, complex troubleshooting logic, or formal escalation protocols
+Consider MAGS when DataStream GenAI Agents cannot provide:
+- Multi-stakeholder consensus requirements
+- Complex agent-to-agent coordination
+- Formal voting or approval processes
+- Distributed decision-making across teams
 
 ---
 
-## 6. When MAGS IS the Right Choice
+## 2. When to Use AI Assistant
+
+### Ideal Use Cases
+
+✅ **Use AI Assistant for:**
+- Interactive data exploration and analysis
+- Conversational access to operational information
+- Subject matter expert knowledge retrieval
+- Real-time data querying with natural language
+- Single-user productivity enhancement
+- Ad-hoc information requests
+- Training and onboarding support
+
+### Why AI Assistant?
+
+- **Dynamic Data Access:** Real-time connection to operational systems
+- **Natural Language Interface:** Intuitive chat-based interaction
+- **Contextual Understanding:** Leverages organizational knowledge
+- **Rapid Deployment:** Quick setup and configuration
+- **User-Friendly:** No technical expertise required
+
+### Example Scenarios
+
+| Industry | Use Case | Why AI Assistant? |
+|----------|----------|-------------------|
+| **Manufacturing** | Production data queries | Operators need quick access to real-time metrics |
+| **Healthcare** | Patient information lookup | Clinicians need fast, conversational data access |
+| **Logistics** | Shipment tracking | Staff need instant status updates via chat |
+| **Retail** | Inventory inquiries | Store managers need real-time stock information |
+
+### When to Escalate to MAGS
+
+Consider MAGS when AI Assistant cannot provide:
+- Multi-agent collaboration requirements
+- Complex decision-making workflows
+- Formal approval processes
+- Cross-departmental coordination
+
+---
+
+## 3. When to Use AI Advisor
+
+### Ideal Use Cases
+
+✅ **Use AI Advisor for:**
+- Real-time situational awareness and monitoring
+- Proactive alerts and recommendations
+- Context-aware operational guidance
+- Performance optimization insights
+- Risk detection and mitigation
+- Operational intelligence dashboards
+- Continuous monitoring with intelligent alerting
+
+### Why AI Advisor?
+
+- **Situational Awareness:** Real-time understanding of operational context
+- **Proactive Guidance:** Anticipates issues before they become critical
+- **Dynamic Data Integration:** Continuously updated with live information
+- **Actionable Insights:** Provides specific, context-aware recommendations
+- **Always-On Monitoring:** 24/7 operational intelligence
+
+### Example Scenarios
+
+| Industry | Use Case | Why AI Advisor? |
+|----------|----------|-----------------|
+| **Energy** | Grid stability monitoring | Real-time awareness with proactive recommendations |
+| **Manufacturing** | Production optimization | Continuous monitoring with performance insights |
+| **Transportation** | Fleet management | Dynamic routing and maintenance recommendations |
+| **Oil & Gas** | Safety monitoring | Proactive risk detection and mitigation guidance |
+
+### When to Escalate to MAGS
+
+Consider MAGS when AI Advisor cannot provide:
+- Multi-stakeholder decision coordination
+- Formal consensus mechanisms
+- Complex agent collaboration
+- Distributed autonomous operations
+
+---
+
+## 4. When MAGS IS the Right Choice
 
 ### Core Scenarios for MAGS
 
@@ -254,10 +199,10 @@ Consider MAGS when Copilot Studio limitations are reached:
 - Resource allocation across competing priorities
 
 #### Safety-Critical Operations
-- Industrial process control
-- Healthcare decision support
-- Financial trading and risk management
-- Infrastructure management (power, water, transportation)
+- Industrial process control requiring multiple validations
+- Healthcare decision support with multi-specialist input
+- Financial trading with risk management oversight
+- Infrastructure management with redundant decision-making
 
 #### Complex Coordination
 - Multi-step workflows requiring agent collaboration
@@ -289,131 +234,122 @@ Consider MAGS when Copilot Studio limitations are reached:
 
 ---
 
-## 7. Cost-Benefit Analysis Framework
+## 5. XMPro Solution Comparison
 
-### Total Cost of Ownership (TCO) Comparison
+### Capability Matrix
 
-| Solution Type | Development Cost | Operational Cost | Maintenance Cost | Time to Value |
-|--------------|------------------|------------------|------------------|---------------|
-| **Deterministic Code** | Low | Very Low | Low | Fast (days) |
-| **Standard RAG** | Low-Medium | Low | Low-Medium | Fast (weeks) |
-| **SaaS Agents** | Very Low | Medium | Very Low | Immediate |
-| **Single Agent** | Medium | Medium | Medium | Medium (weeks) |
-| **Copilot Studio** | Low | Medium | Low | Fast (days-weeks) |
+| Capability | DataStream GenAI | AI Assistant | AI Advisor | MAGS |
+|-----------|------------------|--------------|------------|------|
+| **Real-Time Data Access** | ✅ Native | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Rule-Based Logic** | ✅ Primary | ❌ No | ⚠️ Limited | ⚠️ Limited |
+| **Chat Interface** | ❌ No | ✅ Primary | ⚠️ Optional | ⚠️ Optional |
+| **Proactive Monitoring** | ⚠️ Limited | ❌ No | ✅ Primary | ✅ Yes |
+| **Multi-Agent Coordination** | ❌ No | ❌ No | ❌ No | ✅ Primary |
+| **Consensus Mechanisms** | ❌ No | ❌ No | ❌ No | ✅ Yes |
+| **Development Complexity** | Low | Low | Low-Medium | High |
+| **Time to Value** | Days | Days | Days-Weeks | Months |
+| **Operational Cost** | Low | Low | Medium | High |
+
+### Cost-Benefit Analysis
+
+| Solution | Development Cost | Operational Cost | Maintenance Cost | Time to Value |
+|----------|------------------|------------------|------------------|---------------|
+| **DataStream GenAI** | Low | Low | Low | Fast (days) |
+| **AI Assistant** | Low | Low | Low | Fast (days) |
+| **AI Advisor** | Low-Medium | Medium | Low-Medium | Fast (days-weeks) |
 | **MAGS** | High | High | Medium | Slower (months) |
-
-### When MAGS ROI Justifies Cost
-
-MAGS investment is justified when:
-
-1. **High-Value Decisions:** Decisions impact millions of dollars or critical operations
-2. **Compliance Requirements:** Regulatory penalties exceed implementation costs
-3. **Safety-Critical:** Failures could result in injury, death, or environmental damage
-4. **Operational Efficiency:** Multi-agent coordination saves significant time/resources
-5. **Competitive Advantage:** Sophisticated AI capabilities differentiate your business
-
-### ROI Calculation Template
-
-```
-MAGS ROI = (Annual Benefits - Annual Costs) / Implementation Cost
-
-Annual Benefits:
-+ Operational cost savings
-+ Revenue increase from faster decisions
-+ Risk reduction (compliance, safety)
-+ Competitive advantage value
-
-Annual Costs:
-- Infrastructure (compute, storage, networking)
-- LLM API costs
-- Maintenance and support
-- Training and change management
-
-Implementation Cost:
-- Development effort
-- Integration work
-- Testing and validation
-- Initial training
-```
 
 ---
 
-## 8. Migration Path Decision Tree
+## 6. When to Consider External Alternatives
+
+Only after evaluating all XMPro Agentic Operations capabilities should you consider external alternatives:
+
+### External Options (Last Resort)
+
+**Consider external solutions only if:**
+- ❌ None of the XMPro solutions meet your requirements
+- ❌ You need capabilities outside XMPro's operational focus
+- ❌ Integration with XMPro platform is not feasible
+- ❌ Specific vendor requirements mandate alternative solutions
+
+### Common External Alternatives
+
+| Scenario | External Option | Why Last Resort? |
+|----------|----------------|------------------|
+| Personal productivity | Microsoft 365 Copilot | XMPro focuses on operational intelligence, not office productivity |
+| Code development | GitHub Copilot | Outside XMPro's operational scope |
+| Security operations | Microsoft Security Copilot | Specialized security focus beyond XMPro's domain |
+| Generic chatbots | Various SaaS options | XMPro solutions provide operational data integration |
+
+---
+
+## 7. Decision Tree
 
 ```mermaid
 graph TD
-    A[New AI Agent Project] --> B{Predictable workflow?}
-    B -->|Yes| C[Use Deterministic Code]
-    B -->|No| D{Simple Q&A only?}
-    D -->|Yes| E[Use Standard RAG]
-    D -->|No| F{Personal productivity?}
-    F -->|Yes| G[Use M365 Copilot]
-    F -->|No| H{Rapid prototype needed?}
-    H -->|Yes| I[Use Copilot Studio]
-    H -->|No| J{Single agent sufficient?}
-    J -->|Yes| K[Test Single Agent]
-    J -->|No| L{Multi-stakeholder consensus?}
-    L -->|Yes| M[Use MAGS]
-    L -->|No| N{Safety-critical?}
-    N -->|Yes| M
-    N -->|No| O{Complex coordination?}
-    O -->|Yes| M
-    O -->|No| K
-    K --> P{Single agent failed?}
-    P -->|Yes| M
-    P -->|No| Q[Deploy Single Agent]
+    A[New AI Agent Project] --> B{Predictable workflow with rules?}
+    B -->|Yes| C[XMPro DataStream GenAI Agents]
+    B -->|No| D{Need chat interface for data access?}
+    D -->|Yes| E[AI Assistant]
+    D -->|No| F{Need proactive monitoring?}
+    F -->|Yes| G[AI Advisor]
+    F -->|No| H{Multi-stakeholder consensus needed?}
+    H -->|Yes| I[MAGS]
+    H -->|No| J{Safety-critical with audit trails?}
+    J -->|Yes| I
+    J -->|No| K{Complex agent coordination?}
+    K -->|Yes| I
+    K -->|No| L[Re-evaluate: Start with DataStream GenAI or AI Assistant]
 ```
 
 ---
 
-## 9. Common Anti-Patterns
+## 8. Common Anti-Patterns
 
-### ❌ Anti-Pattern 1: "AI for Everything"
+### ❌ Anti-Pattern 1: "MAGS for Everything"
 
-**Problem:** Using MAGS for simple tasks that don't require AI  
-**Example:** Using multi-agent system for basic data validation  
-**Solution:** Use deterministic code for predictable logic
+**Problem:** Using MAGS for simple tasks that don't require multi-agent coordination  
+**Example:** Using MAGS for basic data validation  
+**Solution:** Use XMPro DataStream GenAI Agents for rule-based workflows
 
-### ❌ Anti-Pattern 2: "Premature Optimization"
+### ❌ Anti-Pattern 2: "Ignoring XMPro's Simpler Solutions"
 
-**Problem:** Starting with MAGS before validating single-agent approach  
-**Example:** Building multi-agent system without testing simpler solutions  
-**Solution:** Follow Microsoft's decision tree - test single agent first
+**Problem:** Building custom solutions when XMPro has built-in capabilities  
+**Example:** Creating custom chatbot instead of using AI Assistant  
+**Solution:** Evaluate all XMPro Agentic Operations capabilities first
 
-### ❌ Anti-Pattern 3: "Technology-Driven"
+### ❌ Anti-Pattern 3: "External-First Thinking"
 
-**Problem:** Choosing MAGS because it's sophisticated, not because it's needed  
-**Example:** Using consensus mechanisms when no conflicting objectives exist  
-**Solution:** Start with business requirements, then select appropriate technology
+**Problem:** Defaulting to external solutions without considering XMPro's integrated capabilities  
+**Example:** Using external RAG solution instead of AI Assistant with real-time data  
+**Solution:** Leverage XMPro's native operational data integration
 
-### ❌ Anti-Pattern 4: "Ignoring SaaS Options"
+### ❌ Anti-Pattern 4: "Premature Complexity"
 
-**Problem:** Building custom solution when SaaS agent would suffice  
-**Example:** Creating custom email assistant instead of using M365 Copilot  
-**Solution:** Evaluate SaaS agents first before custom development
+**Problem:** Starting with MAGS before validating simpler XMPro solutions  
+**Example:** Building multi-agent system without testing DataStream GenAI Agents  
+**Solution:** Start simple, escalate only when necessary
 
-### ❌ Anti-Pattern 5: "Over-Engineering"
+### ❌ Anti-Pattern 5: "Technology-Driven Selection"
 
-**Problem:** Adding multi-agent complexity for future requirements that may never materialize  
-**Example:** Building consensus mechanisms "just in case" they're needed later  
-**Solution:** Implement what's needed now, design for future extensibility
+**Problem:** Choosing solution based on sophistication rather than requirements  
+**Example:** Using MAGS because it's advanced, not because it's needed  
+**Solution:** Match solution to actual business requirements
 
 ---
 
-## 10. Decision Checklist
-
-Use this checklist to validate your technology choice:
+## 9. Decision Checklist
 
 ### Before Choosing MAGS
 
-- [ ] Confirmed that deterministic code is insufficient
-- [ ] Validated that standard RAG doesn't meet requirements
-- [ ] Evaluated available SaaS agents (M365 Copilot, etc.)
-- [ ] Tested single-agent approach and documented limitations
+- [ ] Confirmed that XMPro DataStream GenAI Agents are insufficient
+- [ ] Validated that AI Assistant doesn't meet requirements
+- [ ] Tested AI Advisor and documented limitations
 - [ ] Identified specific multi-agent requirements (consensus, coordination, etc.)
 - [ ] Calculated ROI and confirmed positive business case
 - [ ] Assessed organizational readiness for complex AI system
-- [ ] Confirmed availability of required expertise (AI, DevOps, domain experts)
+- [ ] Confirmed availability of required expertise
 - [ ] Validated compliance and security requirements
 - [ ] Obtained executive sponsorship and budget approval
 
@@ -423,30 +359,29 @@ Use this checklist to validate your technology choice:
 - [ ] Single stakeholder with no conflicting objectives
 - [ ] Tight timeline (< 3 months to production)
 - [ ] Limited budget (< $100K for implementation)
-- [ ] No in-house AI/ML expertise
 - [ ] Simple, predictable workflows
 - [ ] No regulatory or safety-critical requirements
-- [ ] Existing SaaS solution meets 80%+ of requirements
+- [ ] XMPro's simpler solutions meet 80%+ of requirements
 
 ---
 
-## 11. Recommended Approach
+## 10. Recommended Approach
 
-### Step 1: Start Simple
+### Step 1: Start with XMPro's Simpler Solutions
 
-1. **Evaluate SaaS Options:** Check Microsoft 365 Copilot, Security Copilot, etc.
-2. **Test Standard RAG:** Build proof-of-concept with Azure OpenAI + AI Search
-3. **Try Low-Code:** Prototype in Microsoft Copilot Studio
+1. **Evaluate DataStream GenAI Agents:** For rule-based workflows with AI enhancement
+2. **Test AI Assistant:** For conversational data access needs
+3. **Try AI Advisor:** For situational awareness and monitoring
 
-### Step 2: Validate Need for Custom Agent
+### Step 2: Validate Need for MAGS
 
-1. **Document Limitations:** Why don't simpler solutions work?
-2. **Test Single Agent:** Build minimal viable agent with Microsoft Foundry
-3. **Measure Performance:** Does it meet requirements?
+1. **Document Limitations:** Why don't simpler XMPro solutions work?
+2. **Identify Multi-Agent Requirements:** Consensus, coordination, distributed intelligence
+3. **Measure Complexity:** Does the scenario truly require agent collaboration?
 
 ### Step 3: Escalate to MAGS Only When Necessary
 
-1. **Identify Multi-Agent Requirements:** Consensus, coordination, expertise distribution
+1. **Confirm Multi-Stakeholder Needs:** Multiple departments, conflicting objectives
 2. **Validate Business Case:** ROI justifies complexity and cost
 3. **Confirm Organizational Readiness:** Skills, budget, executive support
 
@@ -458,47 +393,55 @@ Use this checklist to validate your technology choice:
 
 ---
 
-## 12. Summary
+## 11. Summary
 
-### Use MAGS When You Need:
+### XMPro Agentic Operations Decision Guide
 
-✅ Multi-stakeholder consensus and coordination  
-✅ Safety-critical operations with audit requirements  
-✅ Complex industrial processes requiring distributed intelligence  
-✅ Regulatory compliance with explainability mandates  
-✅ Industrial-grade reliability and self-healing  
-✅ Advanced cognitive architecture (ORPA)  
-✅ Sophisticated memory and learning capabilities  
+**Use XMPro DataStream GenAI Agents when:**
+- ✅ Predictable workflows with AI enhancement
+- ✅ Real-time data processing needs
+- ✅ Rule-based automation with flexibility
+- ✅ Low-code/no-code development preferred
 
-### Don't Use MAGS When:
+**Use AI Assistant when:**
+- ✅ Chat-based data access needed
+- ✅ Interactive information exploration
+- ✅ Single-user productivity focus
+- ✅ Natural language interface preferred
 
-❌ Workflow is predictable and rule-based  
-❌ Simple information retrieval is sufficient  
-❌ Personal productivity is the primary goal  
-❌ Single agent can handle all requirements  
-❌ Rapid prototyping is critical  
-❌ Budget or timeline is constrained  
-❌ No multi-agent coordination needed  
+**Use AI Advisor when:**
+- ✅ Real-time situational awareness needed
+- ✅ Proactive monitoring and alerting
+- ✅ Context-aware recommendations
+- ✅ Continuous operational intelligence
+
+**Use MAGS when:**
+- ✅ Multi-stakeholder consensus required
+- ✅ Safety-critical operations with audit trails
+- ✅ Complex agent coordination needed
+- ✅ Distributed intelligence across boundaries
+- ✅ Regulatory compliance with explainability
+- ✅ Industrial-grade reliability required
 
 ### Key Principle
 
-**"Use the simplest solution that meets your requirements. Escalate to MAGS only when simpler approaches fail to deliver the necessary capabilities."**
+**"Start with the simplest XMPro solution that meets your requirements. Leverage XMPro's integrated Agentic Operations capabilities before considering external alternatives. Escalate to MAGS only when multi-agent coordination is truly necessary."**
 
 ---
 
 ## Next Steps
 
 1. **Review Your Use Case:** Apply the decision framework to your scenario
-2. **Complete the Checklist:** Validate technology choice systematically
-3. **Consult Experts:** Engage with MAGS team if multi-agent requirements are confirmed
-4. **Start Simple:** Test simpler alternatives before committing to MAGS
+2. **Start with XMPro's Simpler Solutions:** Test DataStream GenAI, AI Assistant, or AI Advisor first
+3. **Complete the Checklist:** Validate technology choice systematically
+4. **Consult XMPro Experts:** Engage with the team if MAGS requirements are confirmed
 5. **Document Decision:** Record rationale for technology choice for future reference
 
 ---
 
 **Related Documents:**
-- [Azure CAF Alignment Analysis](../strategic-positioning/azure-caf-alignment-analysis.md)
-- [Migration from Single-Agent to Multi-Agent Playbook](migration-single-to-multi-agent.md) *(coming soon)*
-- [MAGS Business Adoption Framework](../adoption-framework/README.md) *(coming soon)*
+- [XMPro DataStream Documentation](../integration-execution/datastream-integration.md)
+- [MAGS Architecture](../architecture/README.md)
+- [Use Cases](../use-cases/README.md)
 
-**Document Status:** ✅ Ready for Review and Stakeholder Validation
+**Document Status:** ✅ Updated to reflect XMPro Agentic Operations capabilities

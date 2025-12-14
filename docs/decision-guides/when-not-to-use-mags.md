@@ -17,6 +17,10 @@ Not every AI agent scenario requires the sophistication of MAGS (Multi-Agent Gen
 
 ## XMPro Agentic Operations: The Complete Suite
 
+![The Roles that XMPro GenAI Agents Supports](images/xmprogenAIagents.png)
+
+*Figure: XMPro's comprehensive Agentic Operations platform showing the four distinct AI agent capabilities, each optimized for different operational needs - from rule-based DataStream agents to sophisticated Multi-Agent Generative Systems.*
+
 XMPro offers four distinct AI agent capabilities, each optimized for different use cases:
 
 ### 1. **XMPro DataStream GenAI Agents** 

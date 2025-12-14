@@ -83,7 +83,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **AgentOps**: A holistic approach to developing, deploying, and managing AI agents in industrial environments, bringing DevOps principles to AI agent management through lifecycle management, continuous improvement, and human-AI collaboration.
 
-**APEX (Agent Platform EXperience)**: XMPro's comprehensive management platform for Multi-Agent Generative Systems that provides agent lifecycle management, governance frameworks, and observability capabilities for industrial AI deployment.
+**APEX (Agent Platform EXperience)**: XMPro's internal, proprietary management platform for Multi-Agent Generative Systems that provides agent lifecycle management, governance frameworks, and observability capabilities for industrial AI deployment. APEX is not publicly available.
 
 **Approval Voting**: A consensus algorithm where participants can vote for multiple options in a decision-making process.
 

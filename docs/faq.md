@@ -46,7 +46,7 @@ Agents communicate through a robust messaging infrastructure using:
 - Event-driven message patterns
 
 ### What is the APEX platform?
-[APEX (Agent Platform EXperience)](docs/concepts/agentopsapex.md) is XMPro's AgentOps platform that manages the lifecycle, integration, and optimization of MAGS-based AI agents. It provides tools for deployment, monitoring, and governance of agent operations.
+[APEX (Agent Platform EXperience)](docs/concepts/agentopsapex.md) is XMPro's internal, proprietary AgentOps platform that manages the lifecycle, integration, and optimization of MAGS-based AI agents. It provides tools for deployment, monitoring, and governance of agent operations. APEX is not publicly available.
 
 ### How are agent teams organized?
 Teams are organized following a structured hierarchy:

@@ -1,5 +1,7 @@
 # APEX AgentOps for Scaling Multi Agent Generative Systems
 
+> **Note**: APEX is XMPro's internal, proprietary approach to implementing Agentic Operations and is not publicly available.
+
 This article explains how MAGS, APEX and AgentOp form a comprehensive solution for organizations looking to leverage advanced AI capabilities in their operations, offering a structured, scalable, and responsible way to implement and manage intelligent AI agents
 
 ## MAGS (Multi-Agent Generative Systems):
@@ -20,7 +22,7 @@ MAGS represents a significant advancement in AI agent technology, enabling organ
 ## XMPro APEX (Agent Platform EXperience):
 
 ### What it is:
-APEX is an AgentOps platform that manages the lifecycle, integration, and optimization of MAGS-based AI agents.
+APEX is XMPro's internal, proprietary AgentOps platform that manages the lifecycle, integration, and optimization of MAGS-based AI agents.
 
 ### What it does:
 - Provides a comprehensive environment for developing, deploying, and managing AI agents.

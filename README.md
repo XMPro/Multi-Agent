@@ -39,6 +39,7 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 - [Evaluation Guide](docs/getting-started/evaluation-guide.md) - Detailed written assessment
 - [Understanding MAGS](docs/getting-started/understanding-mags.md) - Core concepts in plain language
 - [First Steps](docs/getting-started/first-steps.md) - Role-based learning paths
+- [When NOT to Use MAGS](docs/decision-guides/when-not-to-use-mags.md) - Decision framework for technology selection
 
 **Essential Reading**:
 1. [Why MAGS is Different](docs/architecture/two-layer-framework.md) - The intelligence platform framework
@@ -69,11 +70,19 @@ Our comprehensive documentation is organized in the `/docs` folder:
 - [`/design-patterns`](docs/design-patterns): Proven implementation patterns
 - [`/best-practices`](docs/best-practices): Implementation guidance
 
+**Adoption & Decision Guidance**:
+- [`/adoption-guidance`](docs/adoption-guidance): Incremental adoption and risk mitigation strategies
+- [`/decision-guides`](docs/decision-guides): When to use MAGS and migration strategies
+
+**Responsible AI & Compliance**:
+- [`/responsible-ai`](docs/responsible-ai): Policies, explainability, human oversight, and compliance
+
 **Capability Categories**:
 - [`/cognitive-intelligence`](docs/cognitive-intelligence): Memory, learning, and adaptation
 - [`/decision-orchestration`](docs/decision-orchestration): Coordination and consensus
 - [`/performance-optimization`](docs/performance-optimization): Goals and optimization
 - [`/integration-execution`](docs/integration-execution): External interfaces and execution
+- [`/integration`](docs/integration): Integration patterns and approaches
 
 **Supporting Resources**:
 - [`Glossary.md`](docs/Glossary.md): Comprehensive terminology reference

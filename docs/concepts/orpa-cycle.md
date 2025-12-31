@@ -608,8 +608,138 @@ graph TD
 
 ---
 
+## Decision Trace Capture During ORPA
+
+### Overview
+
+As MAGS agents execute ORPA cycles, they automatically create **decision traces**—complete records of decisions with full context, reasoning, and outcomes. These traces feed the **DecisionGraph** in the XMPro AO Platform, enabling precedent search, pattern discovery, and decision simulation.
+
+**Purpose:** Capture not just what the agent did, but **why it was allowed to do it**—turning operational precedent into queryable organizational knowledge.
+
+### What Gets Captured
+
+**During Observe:**
+- Which entities accessed (sensors, data sources)
+- What triggered the observation
+- Significance assessment
+
+**During Reflect:**
+- Which historical data reviewed
+- What patterns recognized
+- What insights generated
+
+**During Plan:**
+- Which precedents searched
+- What policies evaluated
+- What exceptions considered
+- What confidence calculated
+
+**During Act:**
+- Complete decision with PROV-O provenance
+- Approval chain (if human-in-the-loop)
+- Generated plan
+- Execution status
+
+**After Outcome:**
+- Result (success/failure)
+- Outcome evidence
+- Lessons learned
+
+### Agent Trajectory
+
+The **trajectory** is the path an agent takes through systems during an ORPA cycle:
+
+**Example Trajectory:**
+```
+Observe: VibrationSensor-001
+Reflect: BearingHistory-001, SimilarFailures-DB
+Plan: ProductionSchedule-001, SparePartsInventory-001
+Act: MaintenancePlan-789
+```
+
+**Why It Matters:**
+- Trajectories reveal which entities matter for which decisions
+- Patterns emerge from analyzing many trajectories
+- Organizational structure discovered from agent behavior
+- "Learned ontology" - schema as output, not input
+
+### Integration with DecisionGraph
+
+**MAGS Role:**
+- Execute ORPA cycles
+- Create decision traces
+- Record trajectories
+
+**AO Platform DecisionGraph Role:**
+- Store decision traces (RDF triple-store)
+- Discover patterns from trajectories
+- Enable precedent search
+- Support decision simulation
+- Validate against standards (ISO 14224, IDO)
+
+**Together:**
+- MAGS provides agent intelligence
+- DecisionGraph provides organizational intelligence
+- Hybrid ontology (standards + learned patterns)
+
+### Benefits
+
+**1. Precedent-Based Decisions:**
+- Agents query past similar decisions
+- Learn from organizational experience
+- Higher success rates
+
+**2. Continuous Learning:**
+- Patterns discovered from trajectories
+- System gets smarter over time
+- Knowledge compounds
+
+**3. Trust Through Transparency:**
+- Every decision explainable
+- Complete audit trails
+- Regulatory compliance
+
+**4. Organizational Knowledge:**
+- Expertise preserved
+- Tribal knowledge captured
+- New agents learn from experienced
+
+### Example: Bearing Maintenance Decision
+
+**ORPA Cycle:**
+1. **Observe**: Vibration at 6.8 mm/s (below threshold but increasing)
+2. **Reflect**: "Rapid increase rate indicates imminent failure"
+3. **Plan**: Search precedents → Find 12 similar successful decisions → Recommend early maintenance
+4. **Act**: Request supervisor approval → Approved → Schedule maintenance
+
+**Decision Trace Captured:**
+- WHO: Agent-MAINT-001, approved by Supervisor-Jane
+- WHAT: Prevent bearing failure, early maintenance
+- WHEN: 2025-01-15 10:30:00
+- WHY: Vibration pattern, precedents show 87% success rate
+- HOW: Followed BearingMaintenancePattern
+- OUTCOME: Success - failure prevented
+
+**Future Benefit:**
+- Next agent facing similar situation queries DecisionGraph
+- Finds this decision as precedent
+- Makes better-informed decision
+
+### Learn More
+
+**Decision Traces Concept:**
+- [Decision Traces](decision-traces.md) - Complete explanation
+
+**AO Platform DecisionGraph:**
+- [DecisionGraph Architecture](../../../xmpro-ao-platform/docs/design/24-DecisionGraph-Architecture.md)
+- [Decision Traces Provenance](../../../xmpro-ao-platform/docs/design/25-Decision-Traces-Provenance.md)
+- [Examples](../../../xmpro-ao-platform/examples/decision-traces/)
+
+---
+
 ## Related Documentation
 
+- [Decision Traces](decision-traces.md) - **NEW: How ORPA creates decision traces**
 - [Cognitive Intelligence](../cognitive-intelligence/README.md)
 - [Memory Significance](../cognitive-intelligence/memory-significance.md)
 - [Synthetic Memory](../cognitive-intelligence/synthetic-memory.md)
@@ -624,10 +754,11 @@ graph TD
 - Neisser, U. (1976). "Cognition and Reality"
 - Schön, D. A. (1983). "The Reflective Practitioner"
 - Kahneman, D. (2011). "Thinking, Fast and Slow"
+- Gupta, J. & Koratana, A. (2024). "How do you build a context graph?" - Context graphs and decision traces
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: December 5, 2024  
-**Status**: ✅ Complete  
-**Next**: [Memory Systems](memory-systems.md)
+**Document Version**: 1.1
+**Last Updated**: December 31, 2025
+**Status**: ✅ Complete
+**Next**: [Memory Systems](memory-systems.md) or [Decision Traces](decision-traces.md)

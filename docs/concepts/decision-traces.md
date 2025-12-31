@@ -309,24 +309,6 @@ The **DecisionGraph** is part of the XMPro AO Platform—a hybrid ontology syste
 
 ---
 
-## Strategic Importance
-
-**Market Opportunity:**
-Jaya Gupta (Foundation Capital) identifies "context graphs" as the next trillion-dollar platform opportunity—systems of record for decisions, not just data.
-
-**MAGS Position:**
-- MAGS agents create decision traces
-- DecisionGraph stores and analyzes them
-- Hybrid ontology (standards + learned)
-- Unique competitive position
-
-**Key Insight:**
-> "The next $50B company will be built on learned ontologies. Structure that emerges from how work actually happens, not how you designed it to happen." - Jaya Gupta
-
-MAGS agents discover this structure through their ORPA cycles. The DecisionGraph captures and makes it queryable.
-
----
-
 ## Related Concepts
 
 - **[ORPA Cycle](orpa-cycle.md)** - How agents create decision traces

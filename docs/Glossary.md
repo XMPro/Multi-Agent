@@ -49,13 +49,15 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Adaptation Type**: Classification of events that trigger replanning (ResourceChange, TimeConstraint, GoalAchievement, NewInformation).
 
-**Agent**: An autonomous entity within the MAGS system capable of perceiving its environment, making decisions, and taking actions to achieve goals. There are three main types of agents in XMPro MAGS:
+**Agent**: An autonomous entity within the MAGS system capable of perceiving its environment, making decisions, and taking actions to achieve goals. There are two main types of agents in XMPro MAGS:
 
-   1. **Content Agents**: Focus on creating and managing information using Large Language Models (LLMs) for content generation, curation, and organization. They excel at tasks such as compiling reports, maintaining knowledge bases, creating documentation, and processing technical documents.
+   1. **Content Agents**: LLM-based agents that focus on creating and managing information using Large Language Models for content generation, curation, and organization. They excel at tasks such as compiling reports, maintaining knowledge bases, creating documentation, and processing technical documents. Primarily LLM-powered (~80-90%).
    
-   2. **Decision Agents**: Use LLMs for complex reasoning and decision-making through the ORPA (Observe, Reflect, Plan, Act) cycle. They analyze operational data, evaluate options, and make informed decisions based on deep knowledge of processes, quality standards, and operational metrics. These agents typically form the backbone of MAGS in industrial settings.
+   2. **Cognitive Agents**: ORPA-based agents that use the full cognitive architecture (Observe, Reflect, Plan, Act) for complex reasoning and autonomous decision-making. They analyze operational data, evaluate options, and make informed decisions based on deep knowledge of processes, quality standards, and operational metrics. These agents form the backbone of MAGS in industrial settings, implementing ~90% business process intelligence with ~10% LLM utility.
    
-   3. **Assistant Agents**: Serve as the primary interface between human operators and the technical systems. They understand natural language requests, translate them into system actions, and return results in user-friendly formats while maintaining awareness of user roles and access permissions.
+   3. **Hybrid Cognitive Agents**: Agents that combine full ORPA cognitive architecture with enhanced content generation capabilities, enabling end-to-end workflows that include analysis, documentation, and action.
+   
+   4. **Assistant Agents**: Serve as the primary interface between human operators and the technical systems. They understand natural language requests, translate them into system actions, and return results in user-friendly formats while maintaining awareness of user roles and access permissions.
 
    All agents work collaboratively within teams to optimize complex industrial processes and enhance productivity while operating under Rules of Engagement that ensure safe and ethical behavior.
 
@@ -77,7 +79,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Agent Team**: A collection of agents working together toward common objectives, with defined roles, communication protocols, and consensus configurations.
 
-**Agent Type**: A classification of agents based on their primary function (Content, Decision, Assistant).
+**Agent Trajectory**: The path an agent takes through systems and entities during an ORPA cycle, recording which entities were accessed, in what order, and in what context. Agent trajectories are analyzed to discover decision patterns and organizational structure. Multiple trajectories reveal co-occurrence patterns (which entities are accessed together), typical decision flows, and structural equivalences. *See also*: Decision Trace, Learned Ontology, ORPA Cycle.
+
+**Agent Type**: A classification of agents based on their primary architecture and function (Content, Cognitive, Hybrid Cognitive, Assistant).
 
 **Agent-Washing**: The practice of rebranding simple automation, basic workflows, or coded systems as "intelligent agents" without implementing the cognitive capabilities required for true agency. This misleading practice obscures the distinction between genuine AI agents and enhanced traditional automation.
 
@@ -117,7 +121,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Causal Analysis**: The process of identifying cause-and-effect relationships in industrial systems to understand what events lead to specific outcomes, enabling better decision-making and problem prevention.
 
-**Cognitive Agents**: AI agents that perform complex operational decisions by emulating how experienced human operators think and work. These agents use sophisticated reasoning processes to handle knowledge-intensive decision-making that goes beyond simple content processing or workflow automation.
+**Cognitive Agents**: ORPA-based AI agents that implement the full cognitive architecture (Observe, Reflect, Plan, Act) for autonomous reasoning and strategic decision-making in complex, dynamic environments. These agents use formal planning, optimization algorithms, and decision theory—not just LLM generation—to achieve optimal outcomes. They embody ~90% business process intelligence (decision-making, planning, memory, optimization) and only ~10% LLM utility (communication and explanation). Cognitive Agents form the backbone of MAGS in industrial settings, enabling continuous learning, adaptation, and improvement through sophisticated memory systems and research-grounded decision frameworks.
 
 **Coherent Causation**: The principle that value in complex systems emerges from the aligned interaction of system elements across multiple scales of organization, focusing on enhancing the coherence of interactions rather than optimizing individual components.
 
@@ -171,7 +175,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Contractor Model**: XMPro's approach to integrating external AI frameworks (like AutoGen, LangGraph, CrewAI) as specialized service providers within the MAGS ecosystem. External agents function as "contractors" for specific tasks while operating under XMPro's governance framework.
 
-**Content Agents**: Specialized AI agents that focus on creating and managing information using Large Language Models (LLMs) for content generation, curation, and organization. They excel at tasks such as compiling reports, maintaining knowledge bases, creating documentation, processing technical documents, and turning raw information into structured formats that support operational decisions.
+**Content Agents**: LLM-based AI agents that focus on creating and managing information using Large Language Models for content generation, curation, and organization. They excel at tasks such as compiling reports, maintaining knowledge bases, creating documentation, processing technical documents, and turning raw information into structured formats that support operational decisions. Content Agents are primarily LLM-powered (~80-90%) with limited cognitive architecture, operating under supervised conditions with human review typical for their outputs.
 
 **Content Processing**: The system for analyzing, categorizing, and extracting information from various types of content.
 
@@ -185,7 +189,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **DataStream Designer**: XMPro's visual development environment for building real-time data processing pipelines using drag-and-drop components. This platform enables subject matter experts to create and modify agent deployments without coding requirements.
 
-**Decision Agents**: AI agents that form the backbone of Multi-Agent Generative Systems (MAGS) in industrial settings. They use Large Language Models (LLMs) for complex reasoning and decision-making through the ORPA (Observe, Reflect, Plan, Act) cycle. These agents analyze data, evaluate options, and make informed decisions based on deep knowledge of processes, quality standards, and operational metrics.
+**Decision Agents** *(formerly)*: See **Cognitive Agents**. The term "Decision Agents" has been replaced with "Cognitive Agents" to better emphasize the ORPA-based cognitive architecture and the ~90% business process intelligence that distinguishes these agents from LLM wrappers. This terminology change clarifies that these agents use sophisticated cognitive frameworks for autonomous reasoning, not just LLM-based decision generation.
 
 **Decision Intelligence**: The discipline of improving decision-making by understanding and engineering the decisions themselves rather than just automating processes. It focuses on determining the right actions based on current conditions, historical data, and defined objectives.
 
@@ -193,7 +197,11 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Decision Parameters**: Configuration settings that govern how an agent makes decisions, including planning cycles and thresholds.
 
+**Decision Trace**: A complete record of a decision with full context, reasoning, precedents, and outcomes—captured automatically as MAGS agents execute their ORPA cycles. Unlike simple logs, decision traces capture not just what happened, but why it was allowed to happen, including observations that triggered the decision, reasoning that led to it, precedents that informed it, policies evaluated, exceptions granted, and outcomes validated. Decision traces are stored in the XMPro AO Platform DecisionGraph using PROV-O (W3C Provenance Ontology) for complete auditability. *See also*: DecisionGraph, Agent Trajectory, Learned Ontology.
+
 **Decision Type**: Classification of decisions in the system (Planning decisions made by single agents, Consensus decisions involving multiple agents).
+
+**DecisionGraph**: A hybrid ontology system in the XMPro AO Platform that combines industry-standard ontologies (ISO 14224, IDO, ISA-95) with learned decision patterns discovered from MAGS agent behavior. The DecisionGraph stores decision traces, enables precedent search, discovers patterns from agent trajectories, validates patterns against standards, and supports decision simulation. It provides both interoperability (through standards) and adaptability (through learning). *See also*: Decision Trace, Learned Ontology, Hybrid Ontology.
 
 **Deontic Principles**: A branch of logic that deals with duty, obligation, and permission. In XMPro MAGS, these principles establish clear rules for AI agents regarding what they must do (obligations), what they can do (permissions), and what they must not do (prohibitions).
 
@@ -253,6 +261,12 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Human Intervention Type**: Classification of human involvement required in consensus processes (ConsensusBlock when consensus is triggered during cooldown periods).
 
+**Hybrid Cognitive Agents**: AI agents that combine full ORPA cognitive architecture with enhanced content generation capabilities. These versatile agents handle tasks requiring both autonomous reasoning and sophisticated content creation, enabling end-to-end workflows from analysis through documentation to action. Hybrid Cognitive Agents maintain the full cognitive foundation (~90% business intelligence) while integrating advanced LLM capabilities for comprehensive problem-solving without handoffs between specialists.
+
+**Hybrid Agents** *(formerly)*: See **Hybrid Cognitive Agents**. The term has been updated to "Hybrid Cognitive Agents" to clarify that these agents are built on a cognitive architecture foundation (full ORPA cycle) with enhanced content capabilities, rather than a simple mix of content and decision features.
+
+**Hybrid Ontology**: An approach that combines prescribed ontologies (industry standards like ISO 14224, IDO, ISA-95) with learned ontologies (patterns discovered from agent behavior). The hybrid approach provides both interoperability (through standards) and adaptability (through learning). In the XMPro DecisionGraph, standards define equipment types and relationships while learned patterns capture decision flows and success factors. *See also*: Learned Ontology, DecisionGraph, Decision Trace.
+
 ### I
 
 **Intelligent Digital Twin**: An advanced digital twin that incorporates AI agents and real-time decision-making capabilities, enabling autonomous optimization and adaptive responses to changing conditions.
@@ -269,7 +283,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Language Model**: The AI model used by agents for natural language understanding and generation, supporting multiple providers.
 
-**Large Language Models (LLMs)**: Advanced artificial intelligence models trained on vast amounts of text data. In Multi-Agent Generative Systems, LLMs are used by Content Agents primarily for content generation and curation, while Decision Agents utilize them for reasoning tasks including observing, reflecting, planning, and action.
+**Large Language Models (LLMs)**: Advanced artificial intelligence models trained on vast amounts of text data. In Multi-Agent Generative Systems, LLMs are used by Content Agents primarily for content generation and curation (~80-90% of their capability), while Cognitive Agents utilize them as the ~10% utility layer for communication and explanation, with the ~90% intelligence layer provided by business process intelligence (decision-making, planning, memory, optimization).
+
+**Learned Ontology**: An organizational structure that emerges from observing how work actually happens, rather than being prescribed upfront by humans. In the XMPro DecisionGraph, learned ontologies are discovered by analyzing MAGS agent trajectories—which entities agents access together, in what order, with what success rates. Patterns emerge from accumulated agent behavior and are validated against industry standards (ISO 14224, IDO). This approach captures tacit knowledge and adapts continuously as operations evolve. *See also*: Hybrid Ontology, Agent Trajectory, Decision Trace.
 
 **Lightweight Agent Instance**: A simplified representation of an agent used in team contexts, containing only essential information for efficient operations.
 

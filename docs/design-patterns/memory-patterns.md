@@ -474,7 +474,7 @@ graph TD
     DB4 --> S
     
     S --> C[Unified Context]
-    C --> D[Decision Agent]
+    C --> D[Cognitive Agent]
     
     style Q fill:#e1f5ff
     style R fill:#fff4e1

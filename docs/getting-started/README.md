@@ -40,7 +40,7 @@ Think of MAGS as a team of specialized virtual workers that can observe operatio
    - How agents think and work
 
 2. [Agent Types](../concepts/agent_types.md) (10 min)
-   - Content, Decision, and Hybrid agents
+   - Content and Cognitive agents
    - When to use each type
 
 3. [Use Cases](../use-cases/README.md) (10 min)

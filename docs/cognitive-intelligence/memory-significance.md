@@ -343,12 +343,12 @@ Different agent types weight factors differently:
 - Frequency pattern: MEDIUM weight
 - Activity context: LOW weight
 
-**Decision Agents** (focus on action):
+**Cognitive Agents** (focus on action):
 - Activity context: HIGH weight
 - Frequency pattern: HIGH weight
 - Semantic novelty: MEDIUM weight
 
-**Hybrid Agents** (balanced):
+**Hybrid Cognitive Agents** (balanced):
 - All factors: MEDIUM-HIGH weight
 - Balanced consideration
 

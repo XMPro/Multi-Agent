@@ -58,22 +58,25 @@ Teams are organized following a structured hierarchy:
 ## Agent Types and Capabilities
 
 ### What types of agents are available in MAGS?
-MAGS includes three main [types of agents](docs/concepts/agent_types.md):
+MAGS includes two main [types of agents](docs/concepts/agent_types.md) (with a hybrid variant):
 
 1. **Content Agents**
-   - Focus on information gathering and analysis
+   - LLM-based information generation and curation
    - Excel at documentation and compliance support
-   - Utilize LLMs for content generation
+   - Primarily LLM-powered (~80-90%)
+   - Supervised operation with human review
 
-2. **Decision Agents**
-   - Analyze data and make strategic decisions
-   - Handle complex process optimization
-   - Employ advanced reasoning capabilities
+2. **Cognitive Agents**
+   - ORPA-based autonomous reasoning and decision-making
+   - Handle complex process optimization with full cognitive architecture
+   - Implement ~90% business process intelligence + ~10% LLM utility
+   - High autonomy with continuous learning and adaptation
 
-3. **Hybrid Agents**
-   - Combine content and decision-making capabilities
-   - Versatile problem-solvers
-   - Handle complex scenarios requiring both analysis and action
+3. **Hybrid Cognitive Agents**
+   - Combine full ORPA cognitive architecture with enhanced content capabilities
+   - Versatile end-to-end problem-solvers
+   - Handle complex scenarios requiring analysis, documentation, and action
+   - Maintain cognitive foundation while adding sophisticated content generation
 
 ### How do agents learn and adapt?
 Agents learn through:

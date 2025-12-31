@@ -20,23 +20,24 @@ MAGS is **~90% intelligence** (decision-making, planning, memory, optimization) 
 
 Think of agents as specialized team members:
 
-**Content Agents**: Documentation specialists
+**Content Agents**: LLM-based information specialists
 - Generate reports and documentation
 - Maintain knowledge bases
 - Support compliance activities
 - Curate information
+- Primarily LLM-powered (~80-90%)
 
-**Decision Agents**: Operations experts
-- Monitor equipment and processes
-- Predict failures and issues
-- Optimize operations
-- Make recommendations
+**Cognitive Agents**: ORPA-based operations experts
+- Monitor equipment and processes with full ORPA cycle
+- Predict failures and optimize using cognitive architecture
+- Make autonomous decisions with memory and learning
+- Primarily business intelligence (~90%) with LLM utility (~10%)
 
-**Hybrid Agents**: Versatile generalists
-- Combine analysis with action
-- Handle end-to-end workflows
-- Adapt to various tasks
-- Bridge content and decisions
+**Hybrid Cognitive Agents**: Full-spectrum problem solvers
+- Combine cognitive reasoning with enhanced content generation
+- Handle end-to-end workflows (analysis + documentation + action)
+- Full ORPA cycle + advanced LLM integration
+- Both cognitive architecture and content capabilities
 
 ---
 

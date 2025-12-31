@@ -13,9 +13,9 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 - Sophisticated memory systems enable continuous improvement
 - Research-grounded decision frameworks ensure optimal, explainable choices
 
-**Three Agent Types**: [Content](docs/concepts/agent_types.md) (information management), [Decision](docs/concepts/agent_types.md) (autonomous reasoning), and [Hybrid](docs/concepts/agent_types.md) (combined capabilities). See [Agent Types](docs/concepts/agent_types.md) for details.
+**Two Agent Types**: [Content Agents](docs/concepts/agent_types.md) (LLM-based information generation) and [Cognitive Agents](docs/concepts/agent_types.md) (ORPA-based autonomous reasoning with memory and learning). [Hybrid Cognitive Agents](docs/concepts/agent_types.md) combine both capabilities. See [Agent Types](docs/concepts/agent_types.md) for details.
 
-**Research Foundation**: MAGS Decision Agents build on Stanford's "Generative Agents: Interactive Simulacra of Human Behavior" (Park et al., 2023), extending the observe-reflect-plan-act architecture for industrial applications. [[2304.03442] Generative Agents](https://arxiv.org/abs/2304.03442)
+**Research Foundation**: MAGS Cognitive Agents build on Stanford's "Generative Agents: Interactive Simulacra of Human Behavior" (Park et al., 2023), extending the observe-reflect-plan-act architecture for industrial applications. [[2304.03442] Generative Agents](https://arxiv.org/abs/2304.03442)
 
 ![XMPro ORPA Memory Cycle](docs/concepts/images/XMProORPAMemoryCycle.png)
 
@@ -43,7 +43,7 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 
 **Essential Reading**:
 1. [Why MAGS is Different](docs/architecture/two-layer-framework.md) - The intelligence platform framework
-2. [Agent Types](docs/concepts/agent_types.md) - Content, Decision, and Hybrid agents
+2. [Agent Types](docs/concepts/agent_types.md) - Content and Cognitive agents
 3. [ORPA Cycle](docs/concepts/orpa-cycle.md) - How agents think and act
 4. [Use Cases](docs/use-cases/README.md) - Real-world applications
 

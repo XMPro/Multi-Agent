@@ -28,17 +28,18 @@ Unlike monolithic AI systems or simple chatbots, MAGS agents are specialized ent
 
 ### Primary Classification
 
-**Three Core Types**:
+**Two Core Types** (with hybrid variant):
 
-1. **Content Agents**: LLM-powered information generation and curation
-2. **Decision Agents**: Autonomous reasoning and strategic decision-making
-3. **Hybrid Agents**: Combined content and decision capabilities
+1. **Content Agents**: LLM-based information generation and curation
+2. **Cognitive Agents**: ORPA-based autonomous reasoning with memory and learning
+3. **Hybrid Cognitive Agents**: Cognitive architecture + enhanced content capabilities
 
 **Classification Criteria**:
-- **Primary Capability**: What the agent does best
-- **Cognitive Architecture**: How the agent processes information
-- **Autonomy Level**: Degree of independent operation
-- **Interaction Pattern**: How the agent works with others
+- **Primary Architecture**: LLM-based vs ORPA-based cognitive framework
+- **Intelligence Distribution**: ~90% LLM vs ~90% business intelligence
+- **Cognitive Capabilities**: Limited vs full ORPA cycle with memory systems
+- **Autonomy Level**: Supervised vs high autonomous operation
+- **Primary Value**: Content efficiency vs decision optimization
 
 ---
 
@@ -174,17 +175,18 @@ Content Agents automate information-intensive tasks, ensuring consistency, accur
 
 ---
 
-## 2. Decision Agents: Strategic Reasoning and Optimization
+## 2. Cognitive Agents: ORPA-Based Autonomous Reasoning
 
 ### Overview
 
-Decision Agents embody autonomous reasoning capabilities, implementing the ORPA cycle (Observe-Reflect-Plan-Act) to make strategic decisions in complex, dynamic environments. These agents use formal planning, optimization algorithms, and decision theory—not just LLM generation—to achieve optimal outcomes.
+Cognitive Agents embody the full ORPA cognitive architecture (Observe-Reflect-Plan-Act) for autonomous reasoning and strategic decision-making in complex, dynamic environments. These agents implement ~90% business process intelligence (decision-making, planning, memory, optimization) with only ~10% LLM utility (communication and explanation). They use formal planning, optimization algorithms, and decision theory—not just LLM generation—to achieve optimal outcomes, distinguishing MAGS from LLM wrapper frameworks.
 
 **Core Characteristics**:
-- **Primary Capability**: Autonomous decision-making and optimization
-- **Cognitive Architecture**: ORPA cycle with formal reasoning
+- **Primary Architecture**: ORPA-based cognitive framework with sophisticated memory systems
+- **Intelligence Distribution**: ~90% business process intelligence + ~10% LLM utility
+- **Cognitive Capabilities**: Full observe-reflect-plan-act cycle with learning and adaptation
 - **Autonomy Level**: High (autonomous within constraints)
-- **Interaction Pattern**: Continuous monitoring and action
+- **Research Foundation**: 300+ years of integrated research (economics, cognitive science, decision theory)
 
 ### Capabilities
 
@@ -320,28 +322,30 @@ Example:
 
 ### Value Proposition
 
-Decision Agents provide autonomous, optimal decision-making that continuously improves operations. Their formal reasoning capabilities enable them to handle complex scenarios with provable correctness, driving significant improvements in efficiency, quality, and reliability.
+Cognitive Agents provide autonomous, optimal decision-making that continuously improves operations through sophisticated cognitive architecture. Their formal reasoning capabilities, grounded in 300+ years of research, enable them to handle complex scenarios with provable correctness, driving significant improvements in efficiency, quality, and reliability. This distinguishes MAGS from LLM wrappers that rely primarily on text generation.
 
 **Key Benefits**:
 - 20-40% improvement in operational efficiency
 - 50-70% reduction in unplanned downtime
 - 15-30% improvement in product quality
-- Autonomous 24/7 optimization
-- Explainable, auditable decisions
+- Autonomous 24/7 optimization with learning
+- Explainable, auditable decisions based on formal frameworks
+- Continuous improvement through memory and adaptation
 
 ---
 
-## 3. Hybrid Agents: Integrated Content and Decision Capabilities
+## 3. Hybrid Cognitive Agents: Cognitive Architecture + Enhanced Content
 
 ### Overview
 
-Hybrid Agents combine content generation with decision-making capabilities, enabling them to both analyze information and take strategic action. These versatile agents handle tasks requiring both synthesis and execution, providing holistic solutions to complex challenges.
+Hybrid Cognitive Agents combine the full ORPA cognitive architecture with enhanced content generation capabilities, enabling end-to-end workflows from analysis through documentation to action. These versatile agents maintain the cognitive foundation (~90% business intelligence) while integrating advanced LLM capabilities for comprehensive problem-solving without handoffs between specialists.
 
 **Core Characteristics**:
-- **Primary Capability**: Content + Decision integration
-- **Cognitive Architecture**: LLM + ORPA hybrid
-- **Autonomy Level**: Variable (context-dependent)
-- **Interaction Pattern**: Multi-modal (content + action)
+- **Primary Architecture**: Full ORPA cycle + enhanced LLM integration
+- **Intelligence Distribution**: ~90% business intelligence + enhanced content capabilities
+- **Cognitive Capabilities**: Complete cognitive framework with advanced content generation
+- **Autonomy Level**: Variable (context-dependent, typically high)
+- **Primary Value**: Holistic solutions combining reasoning and communication
 
 ### Capabilities
 
@@ -433,14 +437,15 @@ Applications:
 
 ### Value Proposition
 
-Hybrid Agents provide end-to-end solutions, from analysis through documentation to execution. Their integrated capabilities enable comprehensive problem-solving without handoffs between specialists, improving efficiency and coherence.
+Hybrid Cognitive Agents provide end-to-end solutions, from analysis through documentation to execution, all grounded in cognitive architecture. Their integrated capabilities enable comprehensive problem-solving without handoffs between specialists, maintaining the intelligence and learning capabilities of Cognitive Agents while adding sophisticated content generation.
 
 **Key Benefits**:
-- Seamless analysis-to-action workflow
-- Reduced coordination overhead
-- Comprehensive solutions
-- Flexible deployment
-- Efficient resource utilization
+- Seamless analysis-to-documentation-to-action workflow
+- Reduced coordination overhead (no handoffs needed)
+- Comprehensive solutions with full cognitive capabilities
+- Flexible deployment across diverse scenarios
+- Efficient resource utilization with single-agent workflows
+- Maintains learning and adaptation capabilities
 
 ---
 
@@ -453,8 +458,8 @@ Hybrid Agents provide end-to-end solutions, from analysis through documentation 
 **Structure**:
 ```
 Team Composition:
-  - 1 Coordinator (Decision Agent)
-  - 3-5 Specialists (Content or Decision Agents)
+  - 1 Coordinator (Cognitive Agent)
+  - 3-5 Specialists (Content or Cognitive Agents)
   - 1 Documenter (Content Agent)
 
 Roles:
@@ -463,12 +468,12 @@ Roles:
   Documenter: Captures decisions and rationale
 
 Example: Predictive Maintenance Team
-  - Coordinator: Maintenance Planner
+  - Coordinator: Maintenance Planner (Cognitive Agent)
   - Specialists:
-    * Equipment Diagnostician
-    * Failure Predictor
-    * Resource Coordinator
-  - Documenter: Maintenance Recorder
+    * Equipment Diagnostician (Cognitive Agent)
+    * Failure Predictor (Cognitive Agent)
+    * Resource Coordinator (Cognitive Agent)
+  - Documenter: Maintenance Recorder (Content Agent)
 ```
 
 **When to Use**:
@@ -485,22 +490,22 @@ Example: Predictive Maintenance Team
 
 **Structure**:
 ```
-Stage 1: Data Collection (Decision Agent)
+Stage 1: Data Collection (Cognitive Agent)
   ↓
-Stage 2: Analysis (Decision Agent)
+Stage 2: Analysis (Cognitive Agent)
   ↓
-Stage 3: Planning (Decision Agent)
+Stage 3: Planning (Cognitive Agent)
   ↓
 Stage 4: Documentation (Content Agent)
   ↓
-Stage 5: Execution (Decision Agent)
+Stage 5: Execution (Cognitive Agent)
 
 Example: Quality Management Pipeline
-  Stage 1: Quality Monitor (detect deviations)
-  Stage 2: Root Cause Analyzer (identify causes)
-  Stage 3: Corrective Action Planner (develop solutions)
-  Stage 4: Compliance Documenter (record actions)
-  Stage 5: Process Adjuster (implement changes)
+  Stage 1: Quality Monitor (detect deviations) - Cognitive Agent
+  Stage 2: Root Cause Analyzer (identify causes) - Cognitive Agent
+  Stage 3: Corrective Action Planner (develop solutions) - Cognitive Agent
+  Stage 4: Compliance Documenter (record actions) - Content Agent
+  Stage 5: Process Adjuster (implement changes) - Cognitive Agent
 ```
 
 **When to Use**:
@@ -518,8 +523,8 @@ Example: Quality Management Pipeline
 **Structure**:
 ```
 Team Composition:
-  - 10-100 Simple Agents (Decision Agents)
-  - 1 Aggregator (Hybrid Agent)
+  - 10-100 Simple Agents (Cognitive Agents)
+  - 1 Aggregator (Hybrid Cognitive Agent)
   - Emergent coordination (no central control)
 
 Behavior:
@@ -528,11 +533,11 @@ Behavior:
   Aggregator: Synthesizes swarm output
 
 Example: Distributed Monitoring Swarm
-  - 50 Equipment Monitors (one per asset)
+  - 50 Equipment Monitors (one per asset) - Cognitive Agents
   - Each monitors local equipment
   - Share observations with neighbors
   - Emergent pattern detection
-  - Aggregator synthesizes insights
+  - Aggregator synthesizes insights - Hybrid Cognitive Agent
 ```
 
 **When to Use**:
@@ -549,19 +554,19 @@ Example: Distributed Monitoring Swarm
 
 **Structure**:
 ```
-Level 1: Strategic (Hybrid Agent)
+Level 1: Strategic (Hybrid Cognitive Agent)
   ↓ delegates to
-Level 2: Tactical (Decision Agents)
+Level 2: Tactical (Cognitive Agents)
   ↓ delegates to
-Level 3: Operational (Decision Agents)
+Level 3: Operational (Cognitive Agents)
   ↓ supported by
 Level 4: Support (Content Agents)
 
 Example: Plant Optimization Hierarchy
-  Level 1: Plant Optimizer (strategic goals)
-  Level 2: Line Optimizers (tactical execution)
-  Level 3: Equipment Controllers (operational control)
-  Level 4: Documentation Agents (support)
+  Level 1: Plant Optimizer (strategic goals) - Hybrid Cognitive Agent
+  Level 2: Line Optimizers (tactical execution) - Cognitive Agents
+  Level 3: Equipment Controllers (operational control) - Cognitive Agents
+  Level 4: Documentation Agents (support) - Content Agents
 ```
 
 **When to Use**:
@@ -582,17 +587,17 @@ Example: Plant Optimization Hierarchy
 - Data summarization
 - Compliance checking
 
-**Moderate Tasks** (Decision Agent):
+**Moderate Tasks** (Cognitive Agent):
 - Process optimization
 - Anomaly detection
 - Performance monitoring
 - Predictive maintenance
 
-**Complex Tasks** (Hybrid Agent or Team):
-- Strategic planning
-- Multi-objective optimization
-- Innovation initiatives
-- Comprehensive audits
+**Complex Tasks** (Hybrid Cognitive Agent or Team):
+- Strategic planning with documentation
+- Multi-objective optimization with reporting
+- Innovation initiatives (research + planning + documentation)
+- Comprehensive audits (analysis + documentation + recommendations)
 
 ### By Autonomy Requirements
 
@@ -602,13 +607,13 @@ Example: Plant Optimization Hierarchy
 - Documentation support
 - Information provision
 
-**Medium Autonomy** (Decision Agent):
+**Medium Autonomy** (Cognitive Agent):
 - Autonomous within constraints
 - Human oversight
 - Escalation on uncertainty
 - Bounded decision-making
 
-**High Autonomy** (Decision Agent Team):
+**High Autonomy** (Cognitive Agent Team):
 - Fully autonomous operation
 - Self-coordination
 - Emergency response
@@ -616,17 +621,19 @@ Example: Plant Optimization Hierarchy
 
 ### By Domain Expertise
 
-**Generalist** (Hybrid Agent):
-- Broad knowledge
+**Generalist** (Hybrid Cognitive Agent):
+- Broad knowledge across domains
 - Flexible application
 - Multiple domains
 - Adaptable role
+- Full cognitive capabilities
 
-**Specialist** (Content or Decision Agent):
-- Deep expertise
+**Specialist** (Content or Cognitive Agent):
+- Deep expertise in specific domain
 - Focused domain
 - Expert-level performance
 - Specific role
+- Optimized for particular tasks
 
 ---
 
@@ -641,17 +648,20 @@ Content Agents:
   Consistency Score: >95%
   Compliance Rate: 100%
 
-Decision Agents:
+Cognitive Agents:
   Decision Quality: >85% optimal
   Response Time: <1 second
   Autonomy Rate: >80% autonomous
   Accuracy: >90% correct
+  Learning Rate: Continuous improvement
+  Memory Efficiency: >90% relevant retrieval
 
-Hybrid Agents:
+Hybrid Cognitive Agents:
   End-to-End Efficiency: >75%
   Solution Completeness: >90%
   Flexibility Score: >80%
   Integration Quality: >85%
+  Cognitive + Content Balance: Optimal
 ```
 
 ### Team Performance Metrics
@@ -675,8 +685,8 @@ Collective Performance:
 ## Related Documentation
 
 ### Core Concepts
-- [ORPA Cycle](orpa-cycle.md) - Decision agent cognitive cycle
-- [Decision Making](decision-making.md) - Decision agent capabilities
+- [ORPA Cycle](orpa-cycle.md) - Cognitive agent cognitive cycle
+- [Decision Making](decision-making.md) - Cognitive agent capabilities
 - [Consensus Mechanisms](consensus-mechanisms.md) - Team coordination
 - [Deontic Principles](deontic-principles.md) - Agent governance
 
@@ -690,8 +700,8 @@ Collective Performance:
 - [Communication Patterns](../design-patterns/communication-patterns.md) - Agent interaction
 
 ### Use Cases
-- [Predictive Maintenance](../use-cases/predictive-maintenance.md) - Decision agent example
-- [Quality Management](../use-cases/quality-management.md) - Hybrid agent example
+- [Predictive Maintenance](../use-cases/predictive-maintenance.md) - Cognitive agent example
+- [Quality Management](../use-cases/quality-management.md) - Hybrid cognitive agent example
 - [Process Optimization](../use-cases/process-optimization.md) - Team example
 
 ---

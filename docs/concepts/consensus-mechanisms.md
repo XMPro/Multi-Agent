@@ -89,6 +89,8 @@ Maintenance Timing Consensus (Nash Equilibrium):
     - Predictable: Equilibrium is unique
 ```
 
+**Note on Economic Incentives**: While MAGS uses Nash equilibrium for fair compromise through rational strategy selection, emerging protocols like [Agency Protocol](../Glossary.md#a) explore economic enforcement through staking and slashing mechanisms. These approaches make promise-keeping economically rational by backing commitments with staked value that can be forfeited on misbehavior—a complementary trust layer that could enhance specific inter-enterprise or high-stakes scenarios.
+
 ---
 
 ### Byzantine Fault Tolerance: Consensus Despite Failures (Lamport et al., 1982)

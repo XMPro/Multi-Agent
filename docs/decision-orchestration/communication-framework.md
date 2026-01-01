@@ -887,6 +887,74 @@ Out-of-Order Rate:
 
 ---
 
+## Emerging Trust Protocols
+
+While the communication protocols discussed above (MQTT, DDS, HTTP/REST) focus on message transport and exchange, an emerging category of protocols addresses the **trust and commitment layer** for multi-agent systems.
+
+### Agency Protocol (Emerging)
+
+**Agency Protocol** represents a different architectural layer from communication protocols like A2A, ACP, and MCP. Rather than defining how agents exchange messages, it provides an economic and cryptographic infrastructure for building trust between autonomous agents.
+
+**Key Characteristics**:
+- **Cryptographic Promises**: Agents issue signed commitments about future behavior
+- **Economic Staking**: Promises backed by staked credits that can be slashed on misbehavior
+- **Verifiable Assessments**: Other agents or validators provide cryptographic assessments
+- **Game-Theoretic Incentives**: Promise-keeping designed as Nash equilibrium
+
+**Architectural Position**:
+```
+┌─────────────────────────────────────────┐
+│ Application Layer: MAGS Agents          │
+└─────────────────────────────────────────┘
+           ↓                    ↓
+┌──────────────────┐  ┌──────────────────┐
+│ Trust Layer      │  │ Communication    │
+│ (Agency Protocol)│  │ Layer (A2A, ACP, │
+│                  │  │ MCP, MQTT, DDS)  │
+└──────────────────┘  └──────────────────┘
+           ↓                    ↓
+┌─────────────────────────────────────────┐
+│ Infrastructure Layer                    │
+└─────────────────────────────────────────┘
+```
+
+**Potential MAGS Applications**:
+- **Inter-Enterprise Collaboration**: Agents from different organizations making credible commitments
+- **Contractor Agent Governance**: External agents (AutoGen, CrewAI, etc.) staking on performance
+- **High-Stakes Decisions**: Economic accountability for critical autonomous decisions
+- **Reputation Systems**: Building trust through verifiable track records
+
+**Current Status**:
+- **Maturity**: Experimental (yellow paper stage)
+- **Adoption**: Not yet mainstream like A2A/ACP/MCP
+- **Standardization**: Not under Linux Foundation or similar governance
+- **MAGS Integration**: Potential future enhancement, not currently implemented
+
+**Distinction from Communication Protocols**:
+
+| Aspect | Communication Protocols | Agency Protocol |
+|--------|------------------------|-----------------|
+| **Focus** | Message exchange, transport | Trust, commitment, accountability |
+| **Mechanism** | JSON-RPC, REST, MQTT, DDS | Cryptographic signatures, staking |
+| **Purpose** | Enable information sharing | Enable credible commitments |
+| **Layer** | Transport + Interaction | Trust + Economics |
+| **Examples** | A2A, ACP, MCP, MQTT, DDS | Agency Protocol |
+
+**Why This Matters**:
+
+MAGS currently implements trust through:
+- Confidence scoring and escalation
+- Deontic rules (obligations, permissions, prohibitions)
+- Decision traces and audit trails
+- Human-in-the-loop governance
+- Consensus mechanisms with Byzantine fault tolerance
+
+Agency Protocol represents a **complementary approach** using economic incentives and cryptographic verification. While not essential for current MAGS operations, it could enhance specific scenarios requiring decentralized trust without central authority.
+
+**Learn More**: See [`Agency Protocol`](../Glossary.md#a) in the Glossary for detailed definition and cross-references.
+
+---
+
 ## Related Documentation
 
 ### Core Concepts

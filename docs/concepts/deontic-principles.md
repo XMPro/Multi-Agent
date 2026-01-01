@@ -89,6 +89,8 @@ Safety Rules (Deontic Logic):
   von Wright principle: Formal, verifiable governance
 ```
 
+**Note on Economic Enforcement**: While MAGS uses formal deontic logic for rule specification and compliance checking, emerging approaches like [Agency Protocol](../Glossary.md#a) explore economic enforcement mechanisms. These systems use cryptographic staking and slashing to make rule compliance economically rational—agents stake value on promises and lose stakes on violations. This represents a complementary enforcement layer that could enhance accountability in specific inter-enterprise or high-stakes scenarios where traditional governance mechanisms may be insufficient.
+
 ---
 
 ### Conditional Obligations (Chisholm, 1963)

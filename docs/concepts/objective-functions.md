@@ -102,9 +102,60 @@ MAGS: Objective functions mathematically define and optimize goals
 
 ---
 
+## Utility Functions and Objective Functions
+
+### The Relationship
+
+**Objective Functions** combine multiple **Utility Functions** to evaluate overall performance toward goals.
+
+**Utility Function:**
+- Transforms raw measure values into normalized utility scores (0.0 to 1.0)
+- Captures non-linear preferences (diminishing returns, accelerating value, loss aversion)
+- Based on 250+ years of utility theory (Bernoulli 1738, Kahneman & Tversky 1979)
+- Types: Linear, Logarithmic, Exponential, Prospect Theory, Risk-Adjusted
+
+**Objective Function:**
+- Combines multiple utility functions
+- Aggregation strategies: Weighted Sum, Weighted Product, Nash Product, Lexicographic
+- Role: "controlling" (drives decisions) or "monitoring" (tracks performance)
+- Represents overall goal (equipment health, production efficiency, quality)
+
+**Example:**
+```
+Equipment Health Objective =
+  Weighted combination of:
+  - Vibration utility (40% weight)
+  - Temperature utility (30% weight)
+  - Pressure utility (30% weight)
+```
+
+### How They Work Together
+
+**1. Measures** provide raw values
+- Example: Vibration sensor reads 6.8 mm/s
+
+**2. Utility Functions** transform to utility scores
+- Example: Vibration 6.8 mm/s → Utility 0.6 (warning zone)
+
+**3. Objective Functions** combine utilities
+- Example: Equipment Health = 0.4×0.6 + 0.3×0.8 + 0.3×0.9 = 0.75
+
+**4. Agents** use objective scores for decision-making
+- Example: Health score 0.75 → Acceptable, continue monitoring
+
+### Integration with Decision Traces
+
+**Decision traces** capture which utility functions and objective functions were used in decisions, enabling analysis of what works and continuous improvement.
+
+**See Also:**
+- [Decision Traces](decision-traces.md) - How decisions are captured with complete context
+
+---
+
 ## Related Documentation
 
 - [Decision-Making](decision-making.md)
+- [Decision Traces](decision-traces.md)
 - [Goal Optimization](../performance-optimization/goal-optimization.md)
 - [Plan Optimization](../performance-optimization/plan-optimization.md)
 - [Business Process Intelligence](../architecture/business-process-intelligence.md)
@@ -120,6 +171,6 @@ MAGS: Objective functions mathematically define and optimize goals
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: December 5, 2024  
-**Status**: ✅ Complete - PHASE 2 COMPLETE! 🎉
+**Document Version**: 1.1
+**Last Updated**: January 6, 2026
+**Status**: ✅ Complete

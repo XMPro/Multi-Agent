@@ -518,7 +518,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 **Unanimous**: A consensus algorithm requiring all participants to agree on the same option. MAGS uses unanimous consensus for highest-criticality decisions requiring complete stakeholder alignment.
 
-**Utility Function**: A mathematical representation of preferences that maps outcomes to numerical values. MAGS uses utility functions (linear, logarithmic, exponential, piecewise) for multi-objective optimization.
+**Utility Function**: A mathematical representation of preferences that maps outcomes to numerical values. MAGS uses utility functions (linear, logarithmic, exponential, piecewise) for multi-objective optimization. *See also*: Objective Function, Multi-Objective Optimization, Pareto Optimality.
 
 **Utility Text Processing**: A comprehensive toolkit for text manipulation, parsing, and formatting operations throughout the system.
 

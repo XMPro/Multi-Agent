@@ -295,7 +295,27 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### M
 
-**MAGS (Multi-Agent Generative Systems)**: Dynamic teams of virtual workers powered by advanced artificial intelligence that work independently and collaboratively to optimize operational outcomes. MAGS combine Large Language Models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions.
+**MAGS (Multi-Agent Generative Systems)**: An **agentic business process runtime** where **independent AI agents work collaboratively** to execute operational decisions **within bounded autonomy**.
+
+**Note 1 - Collective Intelligence:**
+
+MAGS enables multi-agent coordination where specialized agents work toward shared team objectives. Agents coordinate through distributed consensus protocols that resolve conflicts via collaborative iteration across multiple rounds. The system provides shared memory and decision spaces allowing agents to access team experiences and knowledge through semantic search. All decisions are captured in persistent decision traces that provide complete audit trails of decisions, reasoning, confidence scores, and outcomes for compliance and continuous learning.
+
+**Note 2 - Hybrid Intelligence:**
+
+MAGS combines deterministic mathematical optimization with adaptive generative AI reasoning. Mathematical optimization is achieved through configurable objective functions (team and agent-level goals) and utility functions (Linear, Logarithmic, Exponential, Inverse Exponential) that provide precise, repeatable evaluation of options and resource allocation. Generative AI reasoning provides LLM-powered natural language understanding, complex analysis, and adaptive learning from observations and team interactions. Agents continuously improve through memory cycles (Observe → Reflect → Plan → Act → Communicate) and balance competing objectives through configurable aggregation strategies (WeightedSum, WeightedProduct, MinMax, NashProduct).
+
+**Note 3 - Production Runtime:**
+
+MAGS operates as a production-grade runtime with 24/7 autonomous operation, executing continuous memory cycles without human intervention. Bounded autonomy is enforced through policy constraints (must/must not/may/must if rules), objective thresholds (critical/warning/target levels), governance frameworks, and escalation protocols that trigger human intervention when boundaries are reached. The system provides self-healing through MAPE control loops (Monitor, Analyze, Plan, Execute) with automatic failure detection, repair queues, circuit breakers, and eventual consistency guarantees. Event-driven execution is achieved through real-time integration with industrial systems via data stream connectors supporting industrial protocols including OPC-UA, SCADA, MES, ERP, and historians.
+
+**Note 4 - Architecture:**
+
+MAGS uses a multi-database persistence architecture combining graph databases for relationships and structure, time-series databases for temporal data and decisions (source of truth), vector databases for semantic search and similarity matching, and optional triple stores for semantic reasoning. Distributed coordination is achieved through asynchronous message broker communication, enabling fault-tolerant, loosely-coupled agent coordination with network partition tolerance. The compiled runtime uses configuration-driven agent behavior (parametric profiles loaded from databases) providing IP protection by keeping business logic in compiled code rather than accessible files. Production-grade reliability is ensured through distributed transaction patterns, forward recovery mechanisms, intelligent retry logic, and comprehensive observability.
+
+**Note 5 - Enterprise Governance:**
+
+MAGS provides IP protection through compiled runtime code and database-backed knowledge, preventing unauthorized copying of business logic. Version management is database-driven with automated rollback capabilities, complete change tracking, and audit trails of all configuration updates. Access control is enforced through role-based permissions with complete audit trails of all access and modifications. Secure execution is guaranteed by eliminating file system access and arbitrary command execution, with all operations performed through controlled database transactions and API calls.
 
 **MAGS Components**: The platform's foundation built on multi-agent collaboration, including:
    - Agent Profile (Template)
@@ -550,23 +570,34 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### X
 
-**XMPro Multi-Agent Generative Systems (MAGS)**: 
-MAGS (Multi-Agent Generative Systems) are dynamic teams of virtual workers powered by advanced artificial intelligence. These self-organizing teams work independently and collaboratively to optimize operational outcomes and achieve specified goals. Key features of MAGS include:
+**XMPro MAGS (Multi-Agent Generative Systems)**: **An agentic business process runtime** where **independent AI agents work collaboratively in teams** to execute operational decisions 24/7 **within bounded autonomy**, combining **mathematical optimization** with **generative AI reasoning**.
 
-   - **Independence and Agency**: Each virtual worker functions autonomously, making decisions and taking actions independently within their defined scope.
-   
-   - **Planning and Reflection**: They can plan ahead, reflect on past actions, and adjust strategies accordingly, enabling continuous improvement.
-   
-   - **Anticipatory and Goal-Seeking**: They proactively identify and work towards operational objectives, always striving for optimal outcomes.
-   
-   - **Always-On Collaboration**: They operate 24/7, constantly monitoring, communicating, and responding to changes in their environment, ensuring seamless coordination.
-   
-   - **Adaptive Reasoning and Decision-Making**: They use advanced AI to analyze situations, solve problems, and make informed choices, adapting their execution techniques based on inputs and environmental considerations.
-   
-   - **Complex Workflow Execution**: They can handle and optimize intricate operational processes with minimal human intervention, streamlining complex tasks.
-   
-   - **Rules of Engagement**: Agents and teams operate under a structured set of deontic principles, including obligations, permissions, prohibitions, conditional rules, and normative guidelines. These rules govern their behavior, ensure ethical operations, maintain safety standards, and facilitate effective collaboration while providing a framework for autonomous decision-making within predefined boundaries.
+**Collective Intelligence:**
+- **Multi-agent coordination** - Independent agents working collaboratively toward shared team objectives
+- **Distributed consensus** - Coordinated decision-making through collaborative iteration
+- **Shared memory and decision spaces** - Team-wide access to experiences and knowledge
+- **Persistent decision traces** - Complete audit trails of decisions, reasoning, and outcomes
 
-   MAGS combines the power of large language models with specialized AI agents to simulate complex processes, optimize operations, and adapt to changing conditions. This makes them valuable tools for improving efficiency and driving innovation across various industries and operational scenarios. 
+**Hybrid Intelligence:**
+- **Mathematical optimization** - Deterministic objective and utility functions for precise evaluation
+- **Generative AI reasoning** - LLM-powered learning, language understanding, and complex analysis
+- **Continuous improvement** - Adaptive learning through observation and reflection
+- **Multi-criteria evaluation** - Balancing competing objectives through configurable strategies
 
-   The integration of deontic principles through the Rules of Engagement ensures that MAGS operates efficiently, ethically, and safely, particularly in critical industrial environments where reliability and accountability are paramount.
+**Production Runtime:**
+- **24/7 autonomous operation** - Always-on execution without human intervention
+- **Bounded autonomy** - Policy constraints, governance frameworks, and escalation protocols
+- **Self-healing** - Automatic failure detection, repair, and recovery
+- **Event-driven execution** - Real-time integration via XMPro DataStreams
+
+**Architecture:**
+- **Multi-database persistence** - Hybrid architecture for relationships, temporal data, and semantic search
+- **Distributed coordination** - Asynchronous message-based communication for fault tolerance
+- **Compiled runtime** - Configuration-driven behavior with IP protection
+- **Production-grade reliability** - 99.9% uptime with comprehensive observability
+
+**Enterprise Governance:**
+- **IP protection** - Compiled runtime and database-backed knowledge
+- **Version management** - Database-driven versioning with automated rollback
+- **Access control** - Role-based permissions with complete audit trails
+- **Secure execution** - No file system access or arbitrary command execution

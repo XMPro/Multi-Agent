@@ -307,15 +307,15 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 > **Note 3 - Production Runtime:**
 >
-> MAGS operates as a production-grade runtime with 24/7 autonomous operation, executing continuous memory cycles without human intervention. Bounded autonomy is enforced through policy constraints (must/must not/may/must if rules), objective thresholds (critical/warning/target levels), governance frameworks, and escalation protocols that trigger human intervention when boundaries are reached. The system provides self-healing through MAPE control loops (Monitor, Analyze, Plan, Execute) with automatic failure detection, repair queues, circuit breakers, and eventual consistency guarantees. Event-driven execution is achieved through real-time integration with industrial systems via data stream connectors supporting industrial protocols including OPC-UA, SCADA, MES, ERP, and historians.
+> MAGS operates as a production-grade runtime with 24/7 autonomous operation, executing continuous memory cycles without human intervention. Bounded autonomy is enforced through policy constraints (must/must not/may/must if rules), objective thresholds (critical/warning/target levels), governance frameworks, and escalation protocols that trigger human intervention when boundaries are reached. The system provides self-healing through MAPE control loops (Monitor, Analyze, Plan, Execute) with automatic failure detection, repair mechanisms, circuit breakers, and eventual consistency guarantees. Event-driven execution is achieved through real-time integration with industrial systems via data stream connectors supporting industrial protocols including OPC-UA, SCADA, MES, ERP, and historians.
 
 > **Note 4 - Architecture:**
 >
-> MAGS uses a multi-database persistence architecture combining graph databases for relationships and structure, time-series databases for temporal data and decisions (source of truth), vector databases for semantic search and similarity matching, and optional triple stores for semantic reasoning. Distributed coordination is achieved through asynchronous message broker communication, enabling fault-tolerant, loosely-coupled agent coordination with network partition tolerance. The compiled runtime uses configuration-driven agent behavior (parametric profiles loaded from databases) providing IP protection by keeping business logic in compiled code rather than accessible files. Production-grade reliability is ensured through distributed transaction patterns, forward recovery mechanisms, intelligent retry logic, and comprehensive observability.
+> MAGS uses a multi-database persistence architecture combining graph databases for relationships and structure, time-series databases for temporal data and decisions (source of truth), vector databases for semantic search and similarity matching, and optional triple stores for semantic reasoning. Distributed coordination is achieved through asynchronous message broker communication, enabling fault-tolerant, loosely-coupled agent coordination with network partition tolerance. Production-grade reliability is ensured through distributed transaction patterns, forward recovery mechanisms, intelligent retry logic, and comprehensive observability.
 
 > **Note 5 - Enterprise Governance:**
 >
-> MAGS provides IP protection through compiled runtime code and database-backed knowledge, preventing unauthorized copying of business logic. Version management is database-driven with automated rollback capabilities, complete change tracking, and audit trails of all configuration updates. Access control is enforced through role-based permissions with complete audit trails of all access and modifications. Secure execution is guaranteed by eliminating file system access and arbitrary command execution, with all operations performed through controlled database transactions and API calls.
+> MAGS provides enhanced security and governance through runtime validation and enforcement. Security is ensured through controlled execution environments that validate all agent actions against policy constraints and objective thresholds at runtime, preventing unauthorized or malicious operations. IP protection mechanisms prevent unauthorized copying of business logic and accumulated knowledge. Version management provides automated rollback capabilities, complete change tracking, and audit trails of all configuration updates. Access control is enforced through role-based permissions with comprehensive audit trails of all access and modifications. The runtime architecture provides tamper resistance through validation mechanisms that prevent unauthorized modifications that could compromise agent behavior, introduce security vulnerabilities, or bypass governance controls.
 
 **MAGS Components**: The platform's foundation built on multi-agent collaboration, including:
    - Agent Profile (Template)
@@ -593,11 +593,13 @@ Remember, this glossary is a living document. Your input and expertise help make
 > **Architecture:**
 > - **Multi-database persistence** - Hybrid architecture for relationships, temporal data, and semantic search
 > - **Distributed coordination** - Asynchronous message-based communication for fault tolerance
-> - **Compiled runtime** - Configuration-driven behavior with IP protection
+> - **Parametric runtime** - Configuration-driven agent behavior with IP protection
 > - **Production-grade reliability** - 99.9% uptime with comprehensive observability
 
 > **Enterprise Governance:**
-> - **IP protection** - Compiled runtime and database-backed knowledge
+> - **Security** - Parametric runtime architecture eliminates file system vulnerabilities and arbitrary command execution
+> - **IP protection** - Compiled runtime and database-backed knowledge prevent unauthorized copying
+> - **Governance enforcement** - Runtime validation of all actions against policy constraints
 > - **Version management** - Database-driven versioning with automated rollback
 > - **Access control** - Role-based permissions with complete audit trails
-> - **Secure execution** - No file system access or arbitrary command execution
+> - **Tamper resistance** - Database transactions prevent unauthorized modifications

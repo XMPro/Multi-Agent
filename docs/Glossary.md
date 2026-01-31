@@ -295,7 +295,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### M
 
-**MAGS (Multi-Agent Generative Systems)**: An **agentic business process runtime** where **independent AI agents work collaboratively** to execute operational decisions **within bounded autonomy**.
+**MAGS (Multi-Agent Generative Systems)**: An **agentic business process runtime** where **independent AI agents work collaboratively** to execute operational decisions and **optimize objectives** through **mathematical utility and objective functions** **within bounded autonomy**.
 
 > **Note 1 - Collective Intelligence:**
 >
@@ -570,7 +570,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### X
 
-**XMPro MAGS (Multi-Agent Generative Systems)**: **An agentic business process runtime** where **independent AI agents work collaboratively in teams** to execute operational decisions 24/7 **within bounded autonomy**, combining **mathematical optimization** with **generative AI reasoning**.
+**XMPro MAGS (Multi-Agent Generative Systems)**: **An agentic business process runtime** where **independent AI agents work collaboratively in teams** to execute operational decisions and **optimize objectives** through **mathematical utility and objective functions** 24/7 **within bounded autonomy**.
 
 > **Collective Intelligence:**
 > - **Multi-agent coordination** - Independent agents working collaboratively toward shared team objectives
@@ -579,7 +579,7 @@ Remember, this glossary is a living document. Your input and expertise help make
 > - **Persistent decision traces** - Complete audit trails of decisions, reasoning, and outcomes
 
 > **Hybrid Intelligence:**
-> - **Mathematical optimization** - Deterministic objective and utility functions for precise evaluation
+> - **Mathematical optimization** - Deterministic objective and utility functions for precise evaluation across business, technical, operational, quality, and safety domains
 > - **Generative AI reasoning** - LLM-powered learning, language understanding, and complex analysis
 > - **Continuous improvement** - Adaptive learning through observation and reflection
 > - **Multi-criteria evaluation** - Balancing competing objectives through configurable strategies

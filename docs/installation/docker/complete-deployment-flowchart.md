@@ -32,26 +32,31 @@ flowchart TD
     G --> P{install neo4j?}
     G --> Q{install mqtt?}
     G --> R{install milvus?}
+    G --> S{install timescaledb?}
     
-    P -->|yes| S[neo4j installation process]
-    Q -->|yes| T[mqtt installation process]
-    R -->|yes| U[milvus installation process]
+    P -->|yes| T[neo4j installation process]
+    Q -->|yes| U[mqtt installation process]
+    R -->|yes| V[milvus installation process]
+    S -->|yes| W[timescaledb installation process]
     
-    P -->|no| V[skip neo4j]
-    Q -->|no| W[skip mqtt]
-    R -->|no| X[skip milvus]
+    P -->|no| X[skip neo4j]
+    Q -->|no| Y[skip mqtt]
+    R -->|no| Z[skip milvus]
+    S -->|no| AA[skip timescaledb]
     
-    S --> Y[all services complete]
-    T --> Y
-    U --> Y
-    V --> Y
-    W --> Y
-    X --> Y
+    T --> AB[all services complete]
+    U --> AB
+    V --> AB
+    W --> AB
+    X --> AB
+    Y --> AB
+    Z --> AB
+    AA --> AB
     
-    Y --> Z[deployment complete<br/>services ready]
+    AB --> AC[deployment complete<br/>services ready]
     
     style A fill:#e1f5fe
-    style Z fill:#c8e6c9
+    style AC fill:#c8e6c9
     style J fill:#ffcdd2
 ```
 
@@ -269,60 +274,135 @@ flowchart TD
     style I fill:#ffcdd2
 ```
 
+## TimescaleDB Installation Process
+
+```mermaid
+flowchart TD
+    A[start timescaledb installation] --> B[check docker availability]
+    B --> C[check existing containers]
+    C --> D{containers running?}
+    D -->|yes| E[ask to stop containers]
+    D -->|no| F[create directory structure]
+    E --> G{user confirms stop?}
+    G -->|yes| H[stop containers]
+    G -->|no| I[exit installation]
+    H --> F
+    
+    F --> J[create directories:<br/>- init, backups, certs<br/>- config, pgadmin, backup<br/>- timescaledb-data with data, pgadmin]
+    
+    J --> K[configure backup retention<br/>7/30/90/365 days]
+    
+    K --> L{enable ssl?}
+    L -->|yes| M{certificate type?}
+    L -->|no| N[configure without ssl]
+    
+    M -->|self-signed| O[generate ssl certificates<br/>using alpine/openssl container]
+    M -->|ca-provided| P[configure for ca certs<br/>install later]
+    
+    O --> Q{preserve offline images?}
+    Q -->|yes| R[check image age<br/>preserve if from offline package]
+    Q -->|no| S[remove temporary images]
+    
+    R --> T[create postgresql.conf<br/>from template with ssl config]
+    S --> T
+    P --> T
+    N --> U[create .env file<br/>set passwords and config]
+    T --> U
+    
+    U --> V[create pgadmin servers.json<br/>pre-configure timescaledb connection]
+    V --> W[create nginx.conf for pgadmin<br/>http or https based on ssl]
+    
+    W --> X[create backup script<br/>automated daily backups]
+    X --> Y[create init sql script<br/>enable timescaledb extension]
+    
+    Y --> Z[set directory permissions]
+    Z --> AA[test configuration<br/>docker-compose config]
+    AA --> AB{start timescaledb now?}
+    AB -->|yes| AC[docker-compose up -d]
+    AB -->|no| AD[installation complete<br/>manual start required]
+    
+    AC --> AE[wait for initialization<br/>15 seconds]
+    AE --> AF[check container status]
+    AF --> AG{timescaledb running?}
+    AG -->|yes| AH[timescaledb ready<br/>postgresql: localhost:5432<br/>pgadmin: localhost:5050/5051]
+    AG -->|no| AI[check logs for issues]
+    
+    style A fill:#e1f5fe
+    style AH fill:#c8e6c9
+    style AD fill:#c8e6c9
+    style I fill:#ffcdd2
+```
+
 ## Service Architecture Overview
 
 ```mermaid
 flowchart LR
-    A[neo4j graph database] --> D[agent memory & knowledge]
-    B[mqtt message broker] --> E[agent communication]
-    C[milvus vector database] --> F[semantic search & embeddings]
+    A[neo4j graph database] --> E[agent memory & knowledge]
+    B[mqtt message broker] --> F[agent communication]
+    C[milvus vector database] --> G[semantic search & embeddings]
+    D[timescaledb time-series] --> H[temporal data & metrics]
     
-    D --> G[multi-agent system]
-    E --> G
-    F --> G
+    E --> I[multi-agent system]
+    F --> I
+    G --> I
+    H --> I
     
-    G --> H[industrial ai applications]
+    I --> J[industrial ai applications]
     
     subgraph "neo4j features"
-        I[cypher query language]
-        J[graph relationships]
-        K[constraint enforcement]
-        L[automatic script processing]
+        K[cypher query language]
+        L[graph relationships]
+        M[constraint enforcement]
+        N[automatic script processing]
     end
     
     subgraph "mqtt features"
-        M[publish/subscribe messaging]
-        N[ssl/tls encryption]
-        O[user authentication]
-        P[websocket support]
+        O[publish/subscribe messaging]
+        P[ssl/tls encryption]
+        Q[user authentication]
+        R[websocket support]
     end
     
     subgraph "milvus features"
-        Q[vector similarity search]
-        R[multiple index types]
-        S[horizontal scaling]
-        T[minio object storage]
-        U[etcd metadata store]
+        S[vector similarity search]
+        T[multiple index types]
+        U[horizontal scaling]
+        V[minio object storage]
+        W[etcd metadata store]
     end
     
-    A -.-> I
-    A -.-> J
+    subgraph "timescaledb features"
+        X[hypertables & partitioning]
+        Y[continuous aggregates]
+        Z[data compression]
+        AA[automated retention]
+        AB[postgresql compatibility]
+    end
+    
     A -.-> K
     A -.-> L
+    A -.-> M
+    A -.-> N
     
-    B -.-> M
-    B -.-> N
     B -.-> O
     B -.-> P
+    B -.-> Q
+    B -.-> R
     
-    C -.-> Q
-    C -.-> R
     C -.-> S
     C -.-> T
     C -.-> U
+    C -.-> V
+    C -.-> W
     
-    style G fill:#c8e6c9
-    style H fill:#e1f5fe
+    D -.-> X
+    D -.-> Y
+    D -.-> Z
+    D -.-> AA
+    D -.-> AB
+    
+    style I fill:#c8e6c9
+    style J fill:#e1f5fe
 ```
 
 ## Deployment Summary
@@ -330,7 +410,7 @@ flowchart LR
 The complete deployment process provides:
 
 - **Flexible deployment**: Online or offline installation paths
-- **Service modularity**: Install only needed services (Neo4j, MQTT, Milvus)
+- **Service modularity**: Install only needed services (Neo4j, MQTT, Milvus, TimescaleDB)
 - **SSL/TLS support**: Optional encryption for all services
 - **Offline capability**: Pre-download images for air-gapped environments
 - **Image preservation**: Smart cleanup that preserves offline-loaded images
@@ -341,3 +421,4 @@ Each service provides specific capabilities for the multi-agent system:
 - **Neo4j**: Stores agent knowledge, relationships, and enforces data constraints
 - **MQTT**: Enables secure agent-to-agent communication with pub/sub messaging
 - **Milvus**: Provides semantic search and vector similarity for AI embeddings
+- **TimescaleDB**: Time-series database for sensor data, metrics, and temporal analytics

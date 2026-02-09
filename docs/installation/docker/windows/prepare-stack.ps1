@@ -403,6 +403,16 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Primary = "timescale/timescaledb:latest-pg16"
                 Fallbacks = @("timescale/timescaledb:2.18.0-pg16", "timescale/timescaledb:2.17.2-pg16")
                 Description = "TimescaleDB"
+            },
+            @{
+                Primary = "dpage/pgadmin4:latest"
+                Fallbacks = @("dpage/pgadmin4:8.15", "dpage/pgadmin4:8.14")
+                Description = "pgAdmin"
+            },
+            @{
+                Primary = "postgres:16-alpine"
+                Fallbacks = @("postgres:16.7-alpine", "postgres:16.6-alpine")
+                Description = "PostgreSQL (for backups)"
             }
         )
         

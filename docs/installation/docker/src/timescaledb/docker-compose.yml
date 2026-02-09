@@ -19,7 +19,7 @@ services:
       # Data persistence
       - ./timescaledb-data/data:/var/lib/postgresql/data
       
-      # SSL certificates (always mounted, but only used when SSL is enabled)
+      # SSL certificates (mounted read-write so entrypoint can fix permissions)
       - ./certs:/var/lib/postgresql/certs
       
       # Backup directory
@@ -31,10 +31,10 @@ services:
       # Custom PostgreSQL configuration
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       
-      # Custom entrypoint to fix certificate permissions
-      - ./docker-entrypoint.sh:/usr/local/bin/custom-entrypoint.sh:ro
+      # Custom entrypoint for SSL permission fixes
+      - ./docker-entrypoint.sh:/docker-entrypoint.sh:ro
       
-    entrypoint: ["/bin/bash", "/usr/local/bin/custom-entrypoint.sh"]
+    entrypoint: ["/docker-entrypoint.sh"]
     
     command: >
       postgres
@@ -59,19 +59,39 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?pgAdmin password must be set}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      PGADMIN_ENABLE_TLS: ${ENABLE_SSL:-False}
     volumes:
       - ./timescaledb-data/pgadmin:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
       - ./certs/server.crt:/certs/server.cert:ro
       - ./certs/server.key:/certs/server.key:ro
-      - ./pgadmin-entrypoint.sh:/pgadmin-entrypoint.sh:ro
+    depends_on:
+      - timescaledb
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  pgadmin-nginx:
+    image: nginx:alpine
+    container_name: timescaledb-pgadmin-nginx
+    restart: unless-stopped
     ports:
       - "${PGADMIN_PORT:-5050}:80"
       - "${PGADMIN_HTTPS_PORT:-5051}:443"
-    entrypoint: ["/bin/sh", "/pgadmin-entrypoint.sh"]
+    volumes:
+      - ./pgadmin/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/ssl:ro
     depends_on:
-      - timescaledb
+      pgadmin:
+        condition: service_healthy
     networks:
       - timescaledb_network
     healthcheck:
@@ -98,7 +118,7 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
     volumes:
       - ./backups:/backups
-      - ./backup/backup.sh:/backup.sh:ro
+      - ./management/backup.sh:/backup.sh:ro
     depends_on:
       timescaledb:
         condition: service_healthy

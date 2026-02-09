@@ -1,5 +1,5 @@
 // Create Library once
-MERGE (lib:Library {name: "Main Prompt Library"})
+MERGE (lib:Library {name: "Prompt Library"})
 ON CREATE SET lib.type = "Prompt", lib.created_date = datetime();
 
 // Define all prompts as a collection of maps

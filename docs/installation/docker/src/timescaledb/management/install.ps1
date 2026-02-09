@@ -65,12 +65,11 @@ if (Test-Path ".env") {
 # Create directory structure
 Write-Host "Creating directory structure..." -ForegroundColor White
 $Directories = @(
-    "init", 
-    "backups", 
-    "certs", 
-    "config", 
-    "pgadmin", 
-    "backup",
+    "init",
+    "backups",
+    "certs",
+    "config",
+    "pgadmin",
     "timescaledb-data",
     "timescaledb-data\data",
     "timescaledb-data\pgadmin"
@@ -282,7 +281,9 @@ $ServersJson = @"
 }
 "@
 
-$ServersJson | Out-File -FilePath "pgadmin\servers.json" -Encoding UTF8
+# Write without BOM to avoid JSON parsing issues
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$PWD\pgadmin\servers.json", $ServersJson, $utf8NoBom)
 Write-Host "Created pgAdmin configuration" -ForegroundColor Green
 
 # Create nginx configuration for pgAdmin SSL
@@ -302,7 +303,8 @@ http {
     server {
         listen 80;
         server_name $Domain;
-        return 301 https://`$host`$request_uri;
+        # Use explicit hostname and port to avoid port stripping
+        return 301 https://$Domain`:5051`$request_uri;
     }
 
     # HTTPS server
@@ -318,10 +320,15 @@ http {
 
         location / {
             proxy_pass http://pgadmin;
-            proxy_set_header Host `$host;
+            # Use `$http_host to preserve port in Host header
+            proxy_set_header Host `$http_host;
             proxy_set_header X-Real-IP `$remote_addr;
             proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto `$scheme;
+            # Force https scheme for pgAdmin redirects
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Script-Name /;
+            # Disable proxy redirect rewriting
+            proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Upgrade `$http_upgrade;
             proxy_set_header Connection "upgrade";
@@ -350,10 +357,14 @@ http {
 
         location / {
             proxy_pass http://pgadmin;
-            proxy_set_header Host `$host;
+            # Use `$http_host to preserve port in Host header
+            proxy_set_header Host `$http_host;
             proxy_set_header X-Real-IP `$remote_addr;
             proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto `$scheme;
+            proxy_set_header X-Script-Name /;
+            # Disable proxy redirect rewriting
+            proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Upgrade `$http_upgrade;
             proxy_set_header Connection "upgrade";
@@ -403,8 +414,33 @@ else
 fi
 "@
 
-$BackupScript | Out-File -FilePath "backup\backup.sh" -Encoding ASCII
+$BackupScript | Out-File -FilePath "management\backup.sh" -Encoding ASCII
 Write-Host "Created automated backup script (retention: $BackupRetentionDays days)" -ForegroundColor Green
+
+# Create docker-entrypoint.sh with Unix line endings
+Write-Host "Creating docker-entrypoint.sh..." -ForegroundColor White
+$dockerEntrypoint = @"
+#!/bin/bash
+set -e
+
+# Fix SSL certificate permissions if they exist
+if [ -d "/var/lib/postgresql/certs" ] && [ -f "/var/lib/postgresql/certs/server.key" ]; then
+    echo "Fixing SSL certificate permissions..."
+    chown postgres:postgres /var/lib/postgresql/certs/server.key /var/lib/postgresql/certs/server.crt /var/lib/postgresql/certs/ca.crt 2>/dev/null || true
+    chmod 600 /var/lib/postgresql/certs/server.key 2>/dev/null || true
+    chmod 644 /var/lib/postgresql/certs/server.crt /var/lib/postgresql/certs/ca.crt 2>/dev/null || true
+    echo "SSL certificate permissions fixed"
+fi
+
+# Execute the original docker entrypoint with all arguments
+exec docker-entrypoint.sh "`$@"
+"@
+
+# Convert to Unix line endings and write without BOM
+$unixContent = $dockerEntrypoint -replace "`r`n", "`n"
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$PWD\docker-entrypoint.sh", $unixContent, $utf8NoBom)
+Write-Host "Created docker-entrypoint.sh with Unix line endings" -ForegroundColor Green
 
 # Create initialization SQL script
 Write-Host "Creating initialization script..." -ForegroundColor White
@@ -525,12 +561,7 @@ if ($EnableSSL) {
             docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl x509 -req -in temp_server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out temp_server.crt -days 365 -copy_extensions copy
             
             # Move temp files to final names and set permissions
-            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "
-                mv temp_server.key server.key &&
-                mv temp_server.crt server.crt &&
-                chmod 644 server.key server.crt ca.crt &&
-                rm -f temp_server.csr ca.srl ca.key
-            "
+            docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine sh -c "mv temp_server.key server.key && mv temp_server.crt server.crt && chmod 600 server.key && chmod 644 server.crt ca.crt && rm -f temp_server.csr ca.srl ca.key"
             
             if ((Test-Path "certs\ca.crt") -and (Test-Path "certs\server.crt") -and (Test-Path "certs\server.key")) {
                 Write-Host "SSL certificates generated successfully" -ForegroundColor Green

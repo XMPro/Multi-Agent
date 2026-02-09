@@ -12,9 +12,8 @@ ON CREATE SET
   so.author = 'XMPro',
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
-  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
+  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
-  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
@@ -158,13 +157,30 @@ ON CREATE SET
     "max_ci_rounds": 3,
     "timeout_minutes": 60
   }',
-so.created_date = datetime()
+  so.config_saga_retry = '{
+    "max_retries": 3,
+    "initial_delay_ms": 100,
+    "max_delay_ms": 30000,
+    "backoff_multiplier": 2.0,
+    "use_jitter": true
+  }',
+  so.config_agent_repair = '{
+    "enabled": true,
+    "repair_cycle_interval_minutes": 5,
+    "max_repair_attempts": 3,
+    "repair_batch_size": 50,
+    "repair_timeout_seconds": 30,
+    "circuit_breaker_failure_threshold": 5,
+    "circuit_breaker_timeout_minutes": 5,
+    "health_assessment_interval_minutes": 10
+  }',
+  so.created_date = datetime(),
+  so.last_modified_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
-  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
+  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
-  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
@@ -307,6 +323,23 @@ ON MATCH SET
     "objective_function_conflict_threshold": 0.2,
     "max_ci_rounds": 3,
     "timeout_minutes": 60
+  }',
+  so.config_saga_retry = '{
+    "max_retries": 3,
+    "initial_delay_ms": 100,
+    "max_delay_ms": 30000,
+    "backoff_multiplier": 2.0,
+    "use_jitter": true
+  }',
+  so.config_agent_repair = '{
+    "enabled": true,
+    "repair_cycle_interval_minutes": 5,
+    "max_repair_attempts": 3,
+    "repair_batch_size": 50,
+    "repair_timeout_seconds": 30,
+    "circuit_breaker_failure_threshold": 5,
+    "circuit_breaker_timeout_minutes": 5,
+    "health_assessment_interval_minutes": 10
   }',
   so.last_modified_date = datetime()
 RETURN so

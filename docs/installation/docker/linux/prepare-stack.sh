@@ -421,6 +421,8 @@ if [ "$OFFLINE" = true ]; then
         ["zilliz/attu:v2.6"]="Attu"
         ["nginx:alpine"]="Nginx"
         ["timescale/timescaledb:latest-pg16"]="TimescaleDB"
+        ["dpage/pgadmin4:latest"]="pgAdmin"
+        ["postgres:16-alpine"]="PostgreSQL (for backups)"
     )
     
     echo "Downloading Docker images..."

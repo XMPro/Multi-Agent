@@ -696,6 +696,7 @@ CERT_SERVICES=()
 [ -f "neo4j/certs/bolt/trusted/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("Neo4j"); }
 [ -f "milvus/tls/ca.pem" ] && { HAS_CERTS=true; CERT_SERVICES+=("Milvus"); }
 [ -f "mqtt/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("MQTT"); }
+[ -f "timescaledb/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("TimescaleDB"); }
 
 if [ "$HAS_CERTS" = true ]; then
     print_color "$YELLOW" "Found self-signed CA certificates for: ${CERT_SERVICES[*]}"

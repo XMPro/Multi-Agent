@@ -291,6 +291,10 @@ if ($InstalledCount -gt 0) {
     if ($ServicesSummary.ContainsKey("MQTT")) {
         Write-Host "- MQTT SSL: localhost:8883" -ForegroundColor White
     }
+    if ($ServicesSummary.ContainsKey("TimescaleDB")) {
+        Write-Host "- TimescaleDB PostgreSQL: postgresql://user:pass@localhost:5432/db?sslmode=require" -ForegroundColor White
+        Write-Host "- pgAdmin Web UI: https://localhost:5051" -ForegroundColor White
+    }
 }
 
 if ($SkippedCount -gt 0) {

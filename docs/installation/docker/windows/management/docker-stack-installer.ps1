@@ -764,6 +764,7 @@ Write-Host "CA Certificate Locations:" -ForegroundColor White
 Write-Host "  - Neo4j: neo4j\\certs\\bolt\\trusted\\ca.crt" -ForegroundColor Gray
 Write-Host "  - Milvus: milvus\\certs\\milvus\\trusted\\ca.crt" -ForegroundColor Gray
 Write-Host "  - MQTT: mqtt\\certs\\ca.crt" -ForegroundColor Gray
+Write-Host "  - TimescaleDB: timescaledb\\certs\\ca.crt" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Install on client machines:" -ForegroundColor White
 Write-Host "  Import-Certificate -FilePath 'ca.crt' -CertStoreLocation Cert:\\LocalMachine\\Root" -ForegroundColor Gray

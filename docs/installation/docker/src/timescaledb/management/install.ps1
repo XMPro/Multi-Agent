@@ -304,7 +304,7 @@ http {
         listen 80;
         server_name $Domain;
         # Use explicit hostname and port to avoid port stripping
-        return 301 https://$Domain`:5051`$request_uri;
+        return 302 https://$Domain`:5051`$request_uri;
     }
 
     # HTTPS server

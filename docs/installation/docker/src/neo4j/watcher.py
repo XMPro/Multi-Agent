@@ -201,7 +201,6 @@ def run_cypher_file(file_path):
 
 def watch_folder():
     """Watch folder for new .cypher files"""
-    processed_files = set()
     heartbeat_counter = 0
     
     print(f"[{datetime.now()}] Watcher loop started. Watching for .cypher files...")
@@ -213,7 +212,8 @@ def watch_folder():
             # Heartbeat every 6 iterations (1 minute at 10 second intervals)
             heartbeat_counter += 1
             if heartbeat_counter >= 6:
-                print(f"[{datetime.now()}] Watcher alive - heartbeat (checking every {CHECK_INTERVAL}s)")
+                print(f"[{datetime.now()}] Watcher alive - heartbeat (checking every {CHECK_INTERVAL}s, heartbeat every {CHECK_INTERVAL * 6}s)")
+
                 sys.stdout.flush()
                 heartbeat_counter = 0
             
@@ -221,9 +221,7 @@ def watch_folder():
             cypher_files = sorted(WATCH_DIR.glob("*.cypher"))
             
             for file_path in cypher_files:
-                if file_path.name not in processed_files:
-                    run_cypher_file(file_path)
-                    processed_files.add(file_path.name)
+                run_cypher_file(file_path)
             
             time.sleep(CHECK_INTERVAL)
             

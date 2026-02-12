@@ -302,7 +302,6 @@ CREATE INDEX team_name IF NOT EXISTS FOR (t:Team) ON (t.team_name);
 CREATE INDEX team_team_id_name_index IF NOT EXISTS FOR (t:Team) ON (t.team_id, t.team_name);
 
 // -------------------- Tool --------------------
-CREATE CONSTRAINT tool_name_unique IF NOT EXISTS FOR (t:Tool) REQUIRE t.name IS UNIQUE;
 CREATE CONSTRAINT tool_id_unique IF NOT EXISTS FOR (t:Tool) REQUIRE t.id IS UNIQUE;
 CREATE INDEX tool_active_name IF NOT EXISTS FOR (t:Tool) ON (t.active, t.name);
 CREATE INDEX tool_class_active IF NOT EXISTS FOR (t:Tool) ON (t.class_name, t.active);
@@ -311,7 +310,6 @@ CREATE INDEX tool_id IF NOT EXISTS FOR (t:Tool) ON (t.id);
 CREATE INDEX tool_active_class_name IF NOT EXISTS FOR (t:Tool) ON (t.active, t.class_name, t.name);
 
 // -------------------- Action --------------------
-CREATE CONSTRAINT action_name_unique IF NOT EXISTS FOR (a:Action) REQUIRE a.name IS UNIQUE;
 CREATE CONSTRAINT action_id_unique IF NOT EXISTS FOR (a:Action) REQUIRE a.id IS UNIQUE;
 CREATE INDEX action_id IF NOT EXISTS FOR (a:Action) ON (a.id);
 CREATE INDEX action_name IF NOT EXISTS FOR (a:Action) ON (a.name);

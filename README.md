@@ -52,20 +52,42 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 
 ---
 
+## 🧭 Documentation Journey
+
+**New to MAGS?** Follow this path:
+1. **Understand** → [What is MAGS?](docs/getting-started/understanding-mags.md) (15 min)
+2. **Explore** → [Core Concepts](docs/concepts/README.md) (1-2 hours)
+3. **Evaluate** → [Use Cases](docs/use-cases/README.md) + [When to Use MAGS](docs/decision-guides/README.md) (1 hour)
+4. **Learn** → [Architecture](docs/architecture/README.md) (2 hours)
+
+**Ready to implement?** Follow this path:
+1. **Design** → [Best Practices](docs/best-practices/README.md) (strategic guidance)
+2. **Configure** → [Implementation Guides](docs/implementation-guides/README.md) ⭐ (tactical procedures)
+3. **Build** → [Design Patterns](docs/design-patterns/README.md) (proven solutions)
+4. **Deploy** → [Installation Guide](docs/installation.md)
+
+**Operating MAGS?** Go here:
+- **Monitor** → [Performance Optimization](docs/performance-optimization/README.md)
+- **Troubleshoot** → [Technical Details](docs/technical-details/README.md)
+- **Comply** → [Responsible AI](docs/responsible-ai/README.md)
+
+---
+
 ## 📋 Quick Reference
 
 | I want to... | Go here | Time |
 |-------------|---------|------|
-| Understand what MAGS is | [Understanding MAGS](docs/getting-started/understanding-mags.md) | 15 min |
-| Evaluate if MAGS fits my needs | [Evaluation Guide](docs/getting-started/evaluation-guide.md) | 30 min |
-| Learn about agent types | [Agent Types](docs/concepts/agent_types.md) | 20 min |
-| See real-world examples | [Use Cases](docs/use-cases/README.md) | 45 min |
-| Understand the architecture | [Architecture](docs/architecture/README.md) | 2 hours |
-| Install and deploy | [Installation Guide](docs/installation.md) | 1-2 hours |
-| Find implementation patterns | [Design Patterns](docs/design-patterns/README.md) | 3 hours |
-| Optimize performance | [Performance Optimization](docs/performance-optimization/README.md) | 2 hours |
-| Ensure compliance | [Responsible AI](docs/responsible-ai/README.md) | 1 hour |
-| Look up terminology | [Glossary](docs/Glossary.md) | As needed |
+| **Understand what MAGS is** | [Understanding MAGS](docs/getting-started/understanding-mags.md) | 15 min |
+| **Evaluate if MAGS fits my needs** | [Evaluation Guide](docs/getting-started/evaluation-guide.md) | 30 min |
+| **Learn core concepts** | [Concepts](docs/concepts/README.md) | 1-2 hours |
+| **See real-world examples** | [Use Cases](docs/use-cases/README.md) | 45 min |
+| **Understand the architecture** | [Architecture](docs/architecture/README.md) | 2 hours |
+| **Design a MAGS solution** | [Best Practices](docs/best-practices/README.md) → [Design Patterns](docs/design-patterns/README.md) | 3-4 hours |
+| **Configure and implement** | [Implementation Guides](docs/implementation-guides/README.md) ⭐ | 3 hours |
+| **Install and deploy** | [Installation Guide](docs/installation.md) | 1-2 hours |
+| **Optimize performance** | [Performance Optimization](docs/performance-optimization/README.md) | 2 hours |
+| **Ensure compliance** | [Responsible AI](docs/responsible-ai/README.md) | 1 hour |
+| **Look up terminology** | [Glossary](docs/Glossary.md) | As needed |
 
 ---
 
@@ -89,6 +111,7 @@ graph TB
     subgraph "🔨 Implementation"
         Patterns[Design Patterns]
         Best[Best Practices]
+        IG[Implementation Guides]
         Install[Installation]
     end
     
@@ -117,7 +140,8 @@ graph TB
     ORPA --> Patterns
     
     Patterns --> Best
-    Best --> Install
+    Best --> IG
+    IG --> Install
     
     Arch --> Research
     Concepts --> Cognitive
@@ -157,7 +181,8 @@ graph TB
 4. [Memory Systems](docs/concepts/memory-systems.md) → 1 hour
 5. [Consensus Mechanisms](docs/concepts/consensus-mechanisms.md) → 1 hour
 6. [Best Practices](docs/best-practices/README.md) → 2 hours
-7. [Installation](docs/installation.md) → 2 hours
+7. [Implementation Guides](docs/implementation-guides/README.md) → 3 hours ⭐ NEW
+8. [Installation](docs/installation.md) → 2 hours
 
 ### 🌳 Advanced Path (1 week+)
 **Goal**: Master MAGS architecture and optimization
@@ -203,11 +228,18 @@ Practical guidance for building MAGS solutions
   - [Decision Patterns](docs/design-patterns/decision-patterns.md)
   - [Memory Patterns](docs/design-patterns/memory-patterns.md)
 
-- **[Best Practices](docs/best-practices)** - Production-ready guidance
+- **[Best Practices](docs/best-practices)** - Strategic guidance
   - [Agent Design Principles](docs/best-practices/agent-design-principles.md)
   - [Team Composition](docs/best-practices/team-composition.md)
   - [Objective Function Design](docs/best-practices/objective-function-design.md)
   - [Testing Strategies](docs/best-practices/testing-strategies.md)
+
+- **[Implementation Guides](docs/implementation-guides)** - Tactical implementation ⭐ NEW
+  - [Behavioural Rules](docs/implementation-guides/behavioural-rules.md)
+  - [Model Selection](docs/implementation-guides/model-selection.md)
+  - [Data Architecture](docs/implementation-guides/data-architecture.md)
+  - [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md)
+  - [Complete Guide](docs/implementation-guides/README.md)
 
 - **[Installation](docs/installation.md)** - Setup and deployment guide
   - [Docker Deployment](docs/installation/docker/README.md)

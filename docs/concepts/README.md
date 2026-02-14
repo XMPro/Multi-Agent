@@ -18,6 +18,8 @@ The XMpro AI Agents system is built on a foundation of advanced concepts in arti
 
 This folder contains detailed explanations of various concepts, including but not limited to:
 
+### Core MAGS Concepts
+
 1. [Why XMPro MAGS Part 1](whymags.md): This article examines the technical details of XMPro's approach and compares it to other agent frameworks in the market.
 2. [Why XMPro MAGS Part 2](whymagspt2.md): This article expands on part 1 and explains XMPro's Inter-Agent Interoperability approach for other agent frameworks.
 3. [APEX AgentOps for MAGS](agentopsapex.dm): How to scale MAGS using APEX for AgentOps
@@ -29,7 +31,25 @@ This folder contains detailed explanations of various concepts, including but no
 9. [LLM Hallucinations](hallucinations.md): What are and how to reduce Hallucinations in Multi-Agent Generative Systems with XMPro.
 10. [Models - Censored and Uncensored](model_censored_uncensored.md): Leveraging Censored and Uncensored Models for Optimal AI Performance in Industrial Applications
 11. [Planning Domain Definition Language (PDDL)](pddl.md): The standardized language for defining planning problems and domains in AI, and its implementation in XMPro MAGS.
-12. [Prompt Injection](prompt-injection.md): Cuide to understanding prompt injection in AI systems
+12. [Prompt Injection](prompt-injection.md): Guide to understanding prompt injection in AI systems
+
+### Concept Clarifications ⭐ NEW
+
+These documents clarify common points of confusion and explain key distinctions:
+
+13. [Profiles vs Instances](profiles-vs-instances.md): Understanding the difference between agent templates and deployed agents
+14. [Consensus vs Communication](consensus-vs-communication.md): When to use formal agreement vs lightweight messaging
+15. [Measures, Utilities & Objectives](measures-utilities-objectives.md): The three-layer value chain from raw data to decisions
+16. [Constraints vs Utilities](constraints-vs-utilities.md): Hard limits vs preferences in agent decision-making
+17. [Tools, Actions & DataStreams](tools-actions-datastreams.md): Understanding the data integration architecture
+18. [Team vs Agent Objectives](team-vs-agent-objectives.md): Why agents need different objectives for checks and balances
+19. [Observations, Reflections & Memories](observations-reflections-memories.md): The three-tier memory system explained
+20. [ORPA vs Planning Cycle](orpa-vs-planning-cycle.md): The thinking cycle vs the planning timer
+21. [Planning, Execution & Adaptation](planning-execution-adaptation.md): The three phases of agent operation
+22. [Concurrent Data Handling](concurrent-data-handling.md): How agents process real-time data streams
+23. [Assistant Agent Type](assistant-agent-type.md): Specialized capabilities of Assistant agents
+
+**For tactical implementation guidance**, see [Implementation Guides](../implementation-guides/README.md).
 
 ## Document Structure
 

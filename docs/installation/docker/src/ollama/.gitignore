@@ -1,0 +1,40 @@
+# Environment files
+.env
+
+# Certificates and keys
+certs/
+*.key
+*.crt
+*.pem
+*.csr
+*.srl
+
+# Credentials
+CREDENTIALS.txt
+
+# Logs
+logs/
+*.log
+
+# Backup files
+backup/
+backups/
+*.backup
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.user

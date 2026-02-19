@@ -88,7 +88,8 @@ $ServiceCerts = @(
     @{Service="Neo4j"; Path="neo4j\certs\https\trusted\ca.crt"; Name="Neo4j HTTPS CA"},
     @{Service="Milvus"; Path="milvus\tls\ca.pem"; Name="Milvus CA"},
     @{Service="MQTT"; Path="mqtt\certs\ca.crt"; Name="MQTT CA"},
-    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"; Name="TimescaleDB CA"}
+    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"; Name="TimescaleDB CA"},
+    @{Service="Ollama"; Path="ollama\certs\ca.crt"; Name="Ollama CA"}
 )
 
 $AvailableCerts = @()
@@ -123,8 +124,8 @@ if ($Remove) {
     Write-Host "Scanning certificate store for Docker stack CA certificates..." -ForegroundColor White
     Write-Host "=============================================================" -ForegroundColor Gray
     
-    $InstalledCerts = Get-ChildItem -Path $CertStore | Where-Object { 
-        $_.Subject -match "Neo4j-CA|MQTT-CA" -or ($_.Subject -match "O=Milvus" -and $_.Issuer -match "O=Milvus")
+    $InstalledCerts = Get-ChildItem -Path $CertStore | Where-Object {
+        $_.Subject -match "Neo4j-CA|MQTT-CA|Ollama-CA" -or ($_.Subject -match "O=Milvus" -and $_.Issuer -match "O=Milvus") -or ($_.Subject -match "O=Ollama" -and $_.Issuer -match "O=Ollama")
     }
     
     if ($InstalledCerts.Count -eq 0) {

@@ -136,6 +136,7 @@ declare -A SERVICE_CERTS=(
     ["milvus"]="milvus/tls/ca.pem|Milvus CA|milvus-ca"
     ["mqtt"]="mqtt/certs/ca.crt|MQTT CA|mqtt-ca"
     ["timescaledb"]="timescaledb/certs/ca.crt|TimescaleDB CA|timescaledb-ca"
+    ["ollama"]="ollama/certs/ca.crt|Ollama CA|ollama-ca"
 )
 
 # Arrays to track certificates

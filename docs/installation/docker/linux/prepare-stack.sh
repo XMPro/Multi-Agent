@@ -135,7 +135,7 @@ trap cleanup EXIT
 # Copy source directories
 echo "Copying services..."
 
-SERVICES=("neo4j" "milvus" "mqtt" "timescaledb")
+SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
 for SERVICE in "${SERVICES[@]}"; do
     SOURCE_PATH="$PARENT_DIR/src/$SERVICE"
     DEST_PATH="$TEMP_DIR/$SERVICE"
@@ -423,6 +423,7 @@ if [ "$OFFLINE" = true ]; then
         ["timescale/timescaledb:latest-pg16"]="TimescaleDB"
         ["dpage/pgadmin4:latest"]="pgAdmin"
         ["postgres:16-alpine"]="PostgreSQL (for backups)"
+        ["ollama/ollama:latest"]="Ollama"
     )
     
     echo "Downloading Docker images..."

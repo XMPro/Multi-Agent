@@ -72,7 +72,7 @@ else
 fi
 
 # Verify expected folders exist
-EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb")
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
 MISSING_FOLDERS=()
 
 for folder in "${EXPECTED_FOLDERS[@]}"; do
@@ -83,7 +83,7 @@ done
 
 if [ ${#MISSING_FOLDERS[@]} -eq 4 ]; then
     print_color "$RED" "No service folders found in: $(pwd)"
-    print_color "$YELLOW" "Expected folders: neo4j, milvus, mqtt, timescaledb"
+    print_color "$YELLOW" "Expected folders: neo4j, milvus, mqtt, timescaledb, ollama"
     exit 1
 fi
 
@@ -108,7 +108,7 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
 fi
 
 # Services to stop
-SERVICES=("neo4j" "milvus" "mqtt" "timescaledb")
+SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
 STOPPED_SERVICES=()
 FAILED_SERVICES=()
 

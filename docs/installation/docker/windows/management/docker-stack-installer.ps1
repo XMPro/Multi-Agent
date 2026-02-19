@@ -1,6 +1,6 @@
 # =================================================================
 # Docker Stack One-Click Installer
-# Neo4j, Milvus, and MQTT Services
+# Neo4j, Milvus, MQTT, TimescaleDB, and Ollama Services
 # =================================================================
 
 param(
@@ -21,7 +21,7 @@ param(
 
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host "Docker Stack One-Click Installer" -ForegroundColor Cyan
-Write-Host "Neo4j, Milvus, MQTT, and TimescaleDB Services" -ForegroundColor Cyan
+Write-Host "Neo4j, Milvus, MQTT, TimescaleDB, and Ollama Services" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 
 # Function to check if a command exists
@@ -37,7 +37,7 @@ function Test-Command {
 
 # Check if service folders already exist (rerun scenario)
 $ExistingServices = @()
-$ExpectedServices = @("neo4j", "milvus", "mqtt", "timescaledb")
+$ExpectedServices = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
 foreach ($service in $ExpectedServices) {
     if (Test-Path $service) {
         $ExistingServices += $service
@@ -255,7 +255,7 @@ if (Test-Path $TarPath) {
 }
 
 # Verify extracted structure
-$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb")
+$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
 $AvailableFolders = @()
 
 foreach ($folder in $ExpectedFolders) {
@@ -306,6 +306,12 @@ if (Test-Path "timescaledb") {
     $ServicesToInstall["timescaledb"] = ($InstallTimescaleDB -eq "Y" -or $InstallTimescaleDB -eq "y")
 }
 
+# Ask about Ollama
+if (Test-Path "ollama") {
+    $InstallOllama = Read-Host "Do you want to install Ollama LLM Service? (y/n)"
+    $ServicesToInstall["ollama"] = ($InstallOllama -eq "Y" -or $InstallOllama -eq "y")
+}
+
 # Show installation summary
 Write-Host ""
 Write-Host "Installation Summary:" -ForegroundColor Cyan
@@ -344,17 +350,22 @@ $MqttParams = @{
 $TimescaleDBParams = @{
     Force = $true
 }
+$OllamaParams = @{
+    Force = $true
+}
 
 if ($EnableSSL) {
     $Neo4jParams.EnableSSL = $true
     $MilvusParams.EnableSSL = $true
     $MqttParams.EnableSSL = $true
     $TimescaleDBParams.EnableSSL = $true
+    $OllamaParams.EnableSSL = $true
     
     if ($Domain -ne "localhost") {
         $Neo4jParams.Domain = $Domain
         $MilvusParams.Domain = $Domain
         $TimescaleDBParams.Domain = $Domain
+        $OllamaParams.Domain = $Domain
     }
 }
 
@@ -525,6 +536,40 @@ if ($ServicesToInstall["timescaledb"]) {
     Write-Host "Skipping TimescaleDB (not selected)" -ForegroundColor Gray
 }
 
+# Configure Ollama using the install script (if selected)
+if ($ServicesToInstall["ollama"]) {
+    Write-Host ""
+    Write-Host "Ollama Configuration:" -ForegroundColor Cyan
+    Write-Host "====================" -ForegroundColor Gray
+    Write-Host "Running Ollama installation script..." -ForegroundColor White
+
+    Set-Location "ollama"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for Ollama" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @OllamaParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Ollama configured successfully" -ForegroundColor Green
+            $ConfiguredServices["ollama"] = $true
+        } else {
+            Write-Host "Ollama installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["ollama"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "Ollama installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "Ollama will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["ollama"] = $false
+    }
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping Ollama (not selected)" -ForegroundColor Gray
+}
+
 # Start only successfully configured services
 Write-Host ""
 Write-Host "Starting Configured Services..." -ForegroundColor White
@@ -671,6 +716,38 @@ if ($ConfiguredServices["timescaledb"]) {
     Write-Host "Skipping TimescaleDB startup (not selected)" -ForegroundColor Yellow
 }
 
+# Check and start Ollama if configured successfully
+if ($ConfiguredServices["ollama"]) {
+    Write-Host ""
+    Write-Host "Starting Ollama..." -ForegroundColor White
+    Write-Host "=================" -ForegroundColor Gray
+
+    Set-Location "ollama"
+    try {
+        $OllamaStatus = docker-compose ps --format json | ConvertFrom-Json
+        $OllamaRunning = $OllamaStatus | Where-Object { $_.Service -eq "ollama" -and $_.State -eq "running" }
+
+        if ($OllamaRunning) {
+            Write-Host "Ollama is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting Ollama services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Ollama started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start Ollama" -ForegroundColor Red
+            }
+        }
+    } catch {
+        Write-Host "Starting Ollama..." -ForegroundColor Yellow
+        docker-compose up -d
+    }
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping Ollama startup (not selected)" -ForegroundColor Yellow
+}
+
 # Wait for services to initialize
 Write-Host ""
 Write-Host "Waiting for services to initialize..." -ForegroundColor White
@@ -683,7 +760,7 @@ Write-Host "Final Service Status:" -ForegroundColor White
 Write-Host "====================" -ForegroundColor Gray
 
 $FinalStatus = @{}
-foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb")) {
+foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")) {
     if (-not (Test-Path $service)) {
         continue
     }

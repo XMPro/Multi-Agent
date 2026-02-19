@@ -1,6 +1,6 @@
 # Docker Stack Installation
 
-This directory contains scripts for creating and deploying a complete Docker stack with Neo4j, Milvus, and MQTT services.
+This directory contains scripts for creating and deploying a complete Docker stack with Neo4j, Milvus, MQTT, TimescaleDB, and Ollama services.
 
 ## Platform Selection
 
@@ -8,6 +8,8 @@ Both platforms deploy the same services with identical functionality:
 - **Neo4j** - Graph database for knowledge graphs and relationships
 - **Milvus** - Vector database for embeddings and similarity search
 - **MQTT** - Message broker for real-time communication
+- **TimescaleDB** - Time-series database for temporal data and metrics
+- **Ollama** - Local LLM provider for AI inference and embeddings
 
 ## Quick Start
 
@@ -289,6 +291,16 @@ chmod +x docker-stack-installer.sh
 - **Features**: SSL/TLS support, user management, backup/restore
 - **Default User**: xmpro (password set during installation)
 
+### TimescaleDB Time-Series Database
+- **Ports**: 5432 (PostgreSQL), 5050/5051 (pgAdmin)
+- **Features**: SSL/TLS support, automated backups, hypertables, continuous aggregates
+- **Default User**: postgres (password set during installation)
+
+### Ollama Local LLM Provider
+- **Ports**: 11434 (HTTP API), 11443 (HTTPS with reverse proxy)
+- **Features**: Local LLM inference, embedding generation, GPU acceleration, offline operation
+- **Models**: User-selected (not included in offline package due to size)
+
 ## SSL/TLS Support
 
 All services support SSL/TLS encryption:
@@ -485,3 +497,5 @@ For service-specific documentation:
 - **Neo4j**: See `src/neo4j/neo4j_readme.md`
 - **Milvus**: See `src/milvus/milvus_readme.md`
 - **MQTT**: See `src/mqtt/mqtt_readme.md`
+- **TimescaleDB**: See `src/timescaledb/timescaledb_readme.md`
+- **Ollama**: See `src/ollama/ollama_readme.md`

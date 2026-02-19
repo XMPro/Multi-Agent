@@ -33,30 +33,35 @@ flowchart TD
     G --> Q{install mqtt?}
     G --> R{install milvus?}
     G --> S{install timescaledb?}
+    G --> T{install ollama?}
     
-    P -->|yes| T[neo4j installation process]
-    Q -->|yes| U[mqtt installation process]
-    R -->|yes| V[milvus installation process]
-    S -->|yes| W[timescaledb installation process]
+    P -->|yes| U[neo4j installation process]
+    Q -->|yes| V[mqtt installation process]
+    R -->|yes| W[milvus installation process]
+    S -->|yes| X[timescaledb installation process]
+    T -->|yes| Y[ollama installation process]
     
-    P -->|no| X[skip neo4j]
-    Q -->|no| Y[skip mqtt]
-    R -->|no| Z[skip milvus]
-    S -->|no| AA[skip timescaledb]
+    P -->|no| Z[skip neo4j]
+    Q -->|no| AA[skip mqtt]
+    R -->|no| AB[skip milvus]
+    S -->|no| AC[skip timescaledb]
+    T -->|no| AD[skip ollama]
     
-    T --> AB[all services complete]
-    U --> AB
-    V --> AB
-    W --> AB
-    X --> AB
-    Y --> AB
-    Z --> AB
-    AA --> AB
+    U --> AE[all services complete]
+    V --> AE
+    W --> AE
+    X --> AE
+    Y --> AE
+    Z --> AE
+    AA --> AE
+    AB --> AE
+    AC --> AE
+    AD --> AE
     
-    AB --> AC[deployment complete<br/>services ready]
+    AE --> AF[deployment complete<br/>services ready]
     
     style A fill:#e1f5fe
-    style AC fill:#c8e6c9
+    style AF fill:#c8e6c9
     style J fill:#ffcdd2
 ```
 
@@ -64,7 +69,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[start offline package creation] --> B[create service zip<br/>- copy neo4j, milvus, mqtt dirs<br/>- include cypher scripts<br/>- add ca cert installer<br/>- generate readme]
+    A[start offline package creation] --> B[create service zip<br/>- copy neo4j, milvus, mqtt, ollama dirs<br/>- include cypher scripts<br/>- add ca cert installer<br/>- generate readme]
     
     B --> C{docker desktop installer exists?}
     C -->|yes| D[skip download<br/>use existing installer]
@@ -84,6 +89,7 @@ flowchart TD
     G --> N[etcd: v3.6.5<br/>fallbacks: v3.6.4, v3.6.3, latest]
     G --> O[attu: v2.6<br/>fallbacks: v2.5, latest]
     G --> P[alpine: latest<br/>fallbacks: 3.19, 3.18]
+    G --> PA[ollama: latest<br/>fallback: specific version]
     
     H --> Q{download success?}
     I --> Q
@@ -94,6 +100,7 @@ flowchart TD
     N --> Q
     O --> Q
     P --> Q
+    PA --> Q
     
     Q -->|success| R[add to archive]
     Q -->|failed| S[try fallback version]
@@ -337,17 +344,19 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[neo4j graph database] --> E[agent memory & knowledge]
-    B[mqtt message broker] --> F[agent communication]
-    C[milvus vector database] --> G[semantic search & embeddings]
-    D[timescaledb time-series] --> H[temporal data & metrics]
+    A[neo4j graph database] --> F[agent memory & knowledge]
+    B[mqtt message broker] --> G[agent communication]
+    C[milvus vector database] --> H[semantic search & embeddings]
+    D[timescaledb time-series] --> I[temporal data & metrics]
+    E[ollama llm provider] --> J[local ai inference]
     
-    E --> I[multi-agent system]
-    F --> I
-    G --> I
-    H --> I
+    F --> K[multi-agent system]
+    G --> K
+    H --> K
+    I --> K
+    J --> K
     
-    I --> J[industrial ai applications]
+    K --> L[industrial ai applications]
     
     subgraph "neo4j features"
         K[cypher query language]
@@ -379,30 +388,44 @@ flowchart LR
         AB[postgresql compatibility]
     end
     
-    A -.-> K
-    A -.-> L
+    subgraph "ollama features"
+        AC[local llm inference]
+        AD[embedding generation]
+        AE[gpu acceleration]
+        AF[openai-compatible api]
+        AG[offline operation]
+    end
+    
     A -.-> M
     A -.-> N
+    A -.-> O
+    A -.-> P
     
-    B -.-> O
-    B -.-> P
     B -.-> Q
     B -.-> R
+    B -.-> S
+    B -.-> T
     
-    C -.-> S
-    C -.-> T
     C -.-> U
     C -.-> V
     C -.-> W
+    C -.-> X
+    C -.-> Y
     
-    D -.-> X
-    D -.-> Y
     D -.-> Z
     D -.-> AA
     D -.-> AB
+    D -.-> AC
+    D -.-> AD
     
-    style I fill:#c8e6c9
-    style J fill:#e1f5fe
+    E -.-> AE
+    E -.-> AF
+    E -.-> AG
+    E -.-> AH
+    E -.-> AI
+    
+    style K fill:#c8e6c9
+    style L fill:#e1f5fe
 ```
 
 ## Deployment Summary
@@ -410,7 +433,7 @@ flowchart LR
 The complete deployment process provides:
 
 - **Flexible deployment**: Online or offline installation paths
-- **Service modularity**: Install only needed services (Neo4j, MQTT, Milvus, TimescaleDB)
+- **Service modularity**: Install only needed services (Neo4j, MQTT, Milvus, TimescaleDB, Ollama)
 - **SSL/TLS support**: Optional encryption for all services
 - **Offline capability**: Pre-download images for air-gapped environments
 - **Image preservation**: Smart cleanup that preserves offline-loaded images
@@ -422,3 +445,4 @@ Each service provides specific capabilities for the multi-agent system:
 - **MQTT**: Enables secure agent-to-agent communication with pub/sub messaging
 - **Milvus**: Provides semantic search and vector similarity for AI embeddings
 - **TimescaleDB**: Time-series database for sensor data, metrics, and temporal analytics
+- **Ollama**: Local LLM provider for AI inference and embeddings without cloud dependencies

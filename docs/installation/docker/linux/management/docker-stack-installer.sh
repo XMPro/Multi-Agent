@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================
 # Docker Stack One-Click Installer (Linux)
-# Neo4j, Milvus, and MQTT Services
+# Neo4j, Milvus, MQTT, TimescaleDB, and Ollama Services
 # =================================================================
 
 set -euo pipefail
@@ -109,7 +109,7 @@ command_exists() {
 
 # Check if service folders already exist (rerun scenario)
 EXISTING_SERVICES=()
-EXPECTED_SERVICES=("neo4j" "milvus" "mqtt" "timescaledb")
+EXPECTED_SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
 for service in "${EXPECTED_SERVICES[@]}"; do
     if [ -d "$service" ]; then
         EXISTING_SERVICES+=("$service")
@@ -296,7 +296,7 @@ else
 fi
 
 # Verify extracted structure
-EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb")
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
 AVAILABLE_FOLDERS=()
 
 for folder in "${EXPECTED_FOLDERS[@]}"; do
@@ -345,6 +345,12 @@ fi
 if [ -d "timescaledb" ]; then
     read -p "Do you want to install TimescaleDB Time-Series Database? (y/n): " install_timescaledb
     [[ "$install_timescaledb" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[timescaledb]=true || SERVICES_TO_INSTALL[timescaledb]=false
+fi
+
+# Ask about Ollama
+if [ -d "ollama" ]; then
+    read -p "Do you want to install Ollama LLM Service? (y/n): " install_ollama
+    [[ "$install_ollama" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[ollama]=true || SERVICES_TO_INSTALL[ollama]=false
 fi
 
 # Show installation summary
@@ -529,6 +535,37 @@ else
     print_color "$GRAY" "Skipping TimescaleDB (not selected)"
 fi
 
+# Configure Ollama (if selected)
+if [ "${SERVICES_TO_INSTALL[ollama]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "Ollama Configuration:"
+    print_color "$GRAY" "===================="
+    echo "Running Ollama installation script..."
+
+    cd ollama
+    OLLAMA_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && OLLAMA_ARGS="$OLLAMA_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && OLLAMA_ARGS="$OLLAMA_ARGS --domain $DOMAIN"
+
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $OLLAMA_ARGS; then
+            print_color "$GREEN" "Ollama configured successfully"
+            CONFIGURED_SERVICES[ollama]=true
+        else
+            print_color "$RED" "Ollama installation failed"
+            CONFIGURED_SERVICES[ollama]=false
+        fi
+    else
+        print_color "$YELLOW" "Ollama install script not found"
+        CONFIGURED_SERVICES[ollama]=false
+    fi
+    cd "$INSTALL_PATH"
+else
+    echo ""
+    print_color "$GRAY" "Skipping Ollama (not selected)"
+fi
+
 # Start services
 echo ""
 echo "Starting Configured Services..."
@@ -623,6 +660,23 @@ if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
     cd ..
 fi
 
+# Start Ollama
+if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
+    echo ""
+    echo "Starting Ollama..."
+    print_color "$GRAY" "================="
+    
+    cd ollama
+    if docker-compose ps 2>/dev/null | grep -q "ollama.*Up"; then
+        print_color "$GREEN" "Ollama is already running"
+    else
+        echo "Starting Ollama services..."
+        docker-compose up -d
+        print_color "$GREEN" "Ollama started successfully"
+    fi
+    cd ..
+fi
+
 # Wait for services to initialize
 echo ""
 echo "Waiting for services to initialize..."
@@ -634,7 +688,7 @@ echo ""
 echo "Final Service Status:"
 print_color "$GRAY" "===================="
 
-for service in neo4j milvus mqtt timescaledb; do
+for service in neo4j milvus mqtt timescaledb ollama; do
     if [ -d "$service" ]; then
         cd "$service"
         if docker-compose ps 2>/dev/null | grep -q "Up"; then
@@ -678,6 +732,11 @@ fi
 if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
     print_color "$GREEN" "TimescaleDB: localhost:5432"
     print_color "$GRAY" "  (Check TimescaleDB install output above for username/password)"
+fi
+
+if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
+    print_color "$GREEN" "Ollama HTTP API: http://localhost:11434"
+    print_color "$GRAY" "  (Check Ollama install output above for SSL/model information)"
 fi
 
 echo ""

@@ -1,0 +1,90 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"     # HTTP API
+    volumes:
+      # Model storage
+      - ollama-data:/root/.ollama
+      # SSL certificates (if using reverse proxy)
+      - ./certs:/certs
+    environment:
+      # Network configuration - Allow external access
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_ORIGINS=*
+      
+      # GPU Configuration (set during install)
+      # - OLLAMA_GPU_DRIVER=${OLLAMA_GPU_DRIVER:-}
+      # - OLLAMA_GPU_LAYERS=${OLLAMA_GPU_LAYERS:-999}
+      
+      # Performance tuning
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-4}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-2}
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-5m}
+      
+      # Debug mode (set to 1 for verbose logging)
+      - OLLAMA_DEBUG=${OLLAMA_DEBUG:-0}
+      
+      # Timezone
+      - TZ=${TZ:-UTC}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - ollama-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    # GPU support configuration (uncommented during install if GPU detected)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # Nginx reverse proxy for HTTPS support (optional - enabled during install)
+  nginx-ssl:
+    image: nginx:alpine
+    container_name: ollama-nginx-ssl
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_HTTPS_PORT:-11443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - ollama-network
+    profiles:
+      - ssl
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider https://localhost:443/api/version --no-check-certificate || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ollama-network:
+    driver: bridge
+    name: ollama-network
+
+volumes:
+  ollama-data:
+    name: ollama-data

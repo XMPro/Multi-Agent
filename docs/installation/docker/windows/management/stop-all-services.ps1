@@ -1,6 +1,6 @@
 # =================================================================
 # Stop All Docker Services Script
-# Stops Neo4j, Milvus, MQTT, and TimescaleDB services
+# Stops Neo4j, Milvus, MQTT, TimescaleDB, and Ollama services
 # =================================================================
 
 param(
@@ -35,7 +35,7 @@ if (-not (Test-Path $InstallPath)) {
 Set-Location $InstallPath
 
 # Verify expected folders exist
-$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb")
+$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
 $MissingFolders = @()
 
 foreach ($folder in $ExpectedFolders) {
@@ -44,9 +44,9 @@ foreach ($folder in $ExpectedFolders) {
     }
 }
 
-if ($MissingFolders.Count -eq 4) {
+if ($MissingFolders.Count -eq 5) {
     Write-Host "No service folders found in: $InstallPath" -ForegroundColor Red
-    Write-Host "Expected folders: neo4j, milvus, mqtt, timescaledb" -ForegroundColor Yellow
+    Write-Host "Expected folders: neo4j, milvus, mqtt, timescaledb, ollama" -ForegroundColor Yellow
     exit 1
 }
 
@@ -178,6 +178,32 @@ if (Test-Path "timescaledb") {
     } catch {
         Write-Host "Error stopping TimescaleDB: $($_.Exception.Message)" -ForegroundColor Red
         $FailedServices += "TimescaleDB"
+    }
+    Set-Location ..
+}
+
+# Stop Ollama
+if (Test-Path "ollama") {
+    Write-Host ""
+    Write-Host "Stopping Ollama..." -ForegroundColor White
+    Set-Location "ollama"
+    try {
+        if ($RemoveVolumes) {
+            docker-compose down -v
+        } else {
+            docker-compose down
+        }
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Ollama stopped successfully" -ForegroundColor Green
+            $StoppedServices += "Ollama"
+        } else {
+            Write-Host "Failed to stop Ollama (exit code: $LASTEXITCODE)" -ForegroundColor Red
+            $FailedServices += "Ollama"
+        }
+    } catch {
+        Write-Host "Error stopping Ollama: $($_.Exception.Message)" -ForegroundColor Red
+        $FailedServices += "Ollama"
     }
     Set-Location ..
 }

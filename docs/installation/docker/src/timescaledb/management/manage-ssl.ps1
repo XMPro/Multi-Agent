@@ -248,7 +248,8 @@ http {
     server {
         listen 80;
         server_name $Domain;
-        return 301 https://`$host:5051`$request_uri;
+        # Redirect to HTTPS (internal port 443, mapped to external 5051)
+        return 301 https://`$host`$request_uri;
     }
 
     # HTTPS server

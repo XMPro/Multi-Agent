@@ -1,4 +1,8 @@
-// Create Library once
+// First, rename the existing library if it exists
+OPTIONAL MATCH (oldLib:Library {name: "Main Prompt Library"})
+SET oldLib.name = "Prompt Library";
+
+// Then create/match the library with the correct name
 MERGE (lib:Library {name: "Prompt Library"})
 ON CREATE SET lib.type = "Prompt", lib.created_date = datetime();
 
@@ -97,19 +101,48 @@ User: How should I handle equipment calibration scheduling for our new productio
 Assistant: [Long detailed response about calibration procedures, scheduling software, compliance requirements, etc.]
 
 Extract:
-â€¢ Recommended monthly calibration schedule for critical equipment, quarterly for secondary
-â€¢ Use CalibrationPro software - integrates with existing ERP system 
-â€¢ Must document per ISO 9001 requirements - keep records minimum 3 years
-â€¢ Schedule during planned maintenance windows to minimize downtime
-â€¢ Critical equipment: pressure sensors, flow meters, temperature controllers
-â€¢ Backup calibration vendor: TechCal Services (contact: 555-0123)
-â€¢ Warning: Never skip pressure sensor calibration - safety compliance issue
+- Recommended monthly calibration schedule for critical equipment, quarterly for secondary
+- Use CalibrationPro software - integrates with existing ERP system 
+- Must document per ISO 9001 requirements - keep records minimum 3 years
+- Schedule during planned maintenance windows to minimize downtime
+- Critical equipment: pressure sensors, flow meters, temperature controllers
+- Backup calibration vendor: TechCal Services (contact: 555-0123)
+- Warning: Never skip pressure sensor calibration - safety compliance issue
 
 [Return ONLY the compact extract]",
     reserved_fields: ["user_query", "agent_response"],
     category: "conversation",
     tags: ["conversation"],
     description: "Instructs the AI to create a concise summary of a conversation for future reference."
+  },
+  {
+    prompt_id: "XMAGS-CONVOPROGSUMMARY-PROMPT-001",
+    name: "Conversation Progressive Summary",
+    internal_name: "conversation_progressive_summary_prompt",
+    prompt: "Update the progressive conversation summary by incorporating the latest turn.
+
+Current Summary (Turn {turn_count}):
+{current_summary}
+
+Latest Turn:
+User: {user_query}
+Assistant: {agent_response}
+
+Create an updated rolling summary that:
+1. Preserves key context from the current summary
+2. Integrates new information from the latest turn
+3. Maintains chronological flow
+4. Highlights important decisions, recommendations, or insights
+5. Keeps the summary concise (max 200 words)
+6. Focuses on actionable information and key facts
+
+Format as a flowing narrative paragraph that captures the conversation's evolution.
+
+[Return ONLY the updated summary]",
+    reserved_fields: ["current_summary", "turn_count", "user_query", "agent_response"],
+    category: "conversation",
+    tags: ["conversation"],
+    description: "Instructs the AI to create progressive conversation summaries of a conversation for future reference."
   },
   {
     prompt_id: "XMAGS-CONVOOBSERVE-PROMPT-001",

@@ -357,15 +357,26 @@ http {
         server pgadmin:80;
     }
 
-    # Redirect HTTP to HTTPS
+    # HTTP server (port 5050)
     server {
         listen 80;
         server_name DOMAIN_PLACEHOLDER;
-        # Use explicit domain and port to preserve in redirect
-        return 301 https://DOMAIN_PLACEHOLDER:5051$request_uri;
+
+        location / {
+            proxy_pass http://pgadmin;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto http;
+            proxy_set_header X-Script-Name /;
+            proxy_redirect off;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
     }
 
-    # HTTPS server
+    # HTTPS server (port 5051)
     server {
         listen 443 ssl;
         server_name DOMAIN_PLACEHOLDER;
@@ -378,24 +389,31 @@ http {
 
         location / {
             proxy_pass http://pgadmin;
-            # Use $http_host to preserve port in Host header
-            proxy_set_header Host $http_host;
+            # Send external-facing host with port to pgAdmin
+            proxy_set_header Host DOMAIN_PLACEHOLDER:5051;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            # Force https scheme for pgAdmin redirects
+            # Tell pgAdmin it's being accessed via HTTPS
             proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Host DOMAIN_PLACEHOLDER:5051;
+            proxy_set_header X-Forwarded-Port 5051;
             proxy_set_header X-Script-Name /;
-            # Disable proxy redirect rewriting
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            
+            # Increase timeouts for long-running queries
+            proxy_connect_timeout 600;
+            proxy_send_timeout 600;
+            proxy_read_timeout 600;
+            send_timeout 600;
         }
     }
 }
 EOF
     sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" pgadmin/nginx.conf
-    print_color "$GREEN" "Created nginx.conf for pgAdmin HTTPS"
+    print_color "$GREEN" "Created nginx.conf for pgAdmin (HTTP on 5050, HTTPS on 5051)"
 else
     echo "Creating nginx configuration for pgAdmin HTTP..."
     cat > pgadmin/nginx.conf << 'EOF'

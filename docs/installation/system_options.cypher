@@ -142,7 +142,14 @@ ON CREATE SET
         "synthetic_weight": 1.1,
         "default_weight": 0.5
     },
-    "min_similarity_threshold": 0.3
+    "min_similarity_threshold": 0.3,
+    "conversation_context": {
+      "enable_adaptive_querying": true,
+      "topic_shift_similarity_threshold": 0.85,
+      "refresh_interval_turns": 5,
+      "cache_max_age_minutes": 10,
+      "enable_topic_shift_detection": true
+    }
   }',
   so.config_agent_communication = '{
     "trust_factor": 0.8
@@ -309,7 +316,14 @@ ON MATCH SET
         "synthetic_weight": 1.1,
         "default_weight": 0.5
     },
-    "min_similarity_threshold": 0.3
+    "min_similarity_threshold": 0.3,
+    "conversation_context": {
+      "enable_adaptive_querying": true,
+      "topic_shift_similarity_threshold": 0.85,
+      "refresh_interval_turns": 5,
+      "cache_max_age_minutes": 10,
+      "enable_topic_shift_detection": true
+    }
   }',
   so.config_agent_communication = '{
     "trust_factor": 0.8

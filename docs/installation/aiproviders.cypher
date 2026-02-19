@@ -11,26 +11,26 @@
 // Create or merge AI Providers Library node
 MERGE (libAI:Library {name: 'AI Providers Library', type: 'AIProvider'})
 ON CREATE SET 
-  libAI.created_at = datetime(),
-  libAI.updated_at = datetime()
+  libAI.created_date = datetime(),
+  libAI.last_modified_date = datetime()
 ON MATCH SET
-  libAI.updated_at = datetime()
+  libAI.last_modified_date = datetime()
 
 // Create or merge Agent RAG Library node
 MERGE (libRAG:Library {name: 'Agent RAG Library', type: 'RAG'})
 ON CREATE SET 
-  libRAG.created_at = datetime(),
-  libRAG.updated_at = datetime()
+  libRAG.created_date = datetime(),
+  libRAG.last_modified_date = datetime()
 ON MATCH SET
-  libRAG.updated_at = datetime()
+  libRAG.last_modified_date = datetime()
 
 // Create or merge Document Collections Library node
 MERGE (libDocs:Library {name: 'RAG Document Collections Library', type: 'DocumentCollection'})
 ON CREATE SET 
-  libDocs.created_at = datetime(),
-  libDocs.updated_at = datetime()
+  libDocs.created_date = datetime(),
+  libDocs.last_modified_date = datetime()
 ON MATCH SET
-  libDocs.updated_at = datetime()
+  libDocs.last_modified_date = datetime()
 
 WITH libAI, libRAG, libDocs
 
@@ -52,12 +52,12 @@ MERGE (p:AIProvider {name: provider.name})
 ON CREATE SET 
   p.embedding = provider.embedding,
   p.inferencing = provider.inferencing,
-  p.created_at = datetime(),
-  p.updated_at = datetime()
+  p.created_date = datetime(),
+  p.last_modified_date = datetime()
 ON MATCH SET
   p.embedding = provider.embedding,
   p.inferencing = provider.inferencing,
-  p.updated_at = datetime()
+  p.last_modified_date = datetime()
 
 MERGE (libAI)-[:CONTAINS]->(p)
 
@@ -74,7 +74,7 @@ UNWIND [
   {
     name: 'text-embedding-ada-002',
     cost: '$0.0001/1K tokens',
-    maxTokens: 8191,
+    max_tokens: 8191,
     dimensions: 1536,
     description: 'Most capable embedding model for most use cases.',
     status: 'available',
@@ -83,7 +83,7 @@ UNWIND [
   {
     name: 'text-embedding-3-small',
     cost: '$0.00002/1K tokens',
-    maxTokens: 8191,
+    max_tokens: 8191,
     dimensions: 1536,
     description: 'Smaller, faster, and cheaper embedding model',
     status: 'available',
@@ -92,7 +92,7 @@ UNWIND [
   {
     name: 'text-embedding-3-large',
     cost: '$0.00013/1K tokens',
-    maxTokens: 8192,
+    max_tokens: 8192,
     dimensions: 3072,
     description: 'Larger, more capable embedding model',
     status: 'available',
@@ -103,20 +103,20 @@ UNWIND [
 MERGE (m:EmbeddingModel {name: model.name})
 ON CREATE SET 
   m.cost = model.cost,
-  m.maxTokens = model.maxTokens,
+  m.max_tokens = model.max_tokens,
   m.dimensions = model.dimensions,
   m.description = model.description,
   m.status = model.status,
   m.usage = model.usage,
-  m.created_at = datetime(),
-  m.updated_at = datetime()
+  m.created_date = datetime(),
+  m.last_modified_date = datetime()
 ON MATCH SET
   m.cost = model.cost,
-  m.maxTokens = model.maxTokens,
+  m.max_tokens = model.max_tokens,
   m.dimensions = model.dimensions,
   m.description = model.description,
   m.status = model.status,
-  m.updated_at = datetime()
+  m.last_modified_date = datetime()
 
 MERGE (m)-[:USES]->(pOpenAI)
 
@@ -129,7 +129,7 @@ UNWIND [
   {
     name: 'nomic-embed-text:latest',
     cost: '$0.00/1K tokens',
-    maxTokens: 2048,
+    max_tokens: 2048,
     dimensions: 768,
     description: 'Basic Ollama embedding model',
     status: 'available',
@@ -138,7 +138,7 @@ UNWIND [
   {
     name: 'mxbai-embed-large:latest',
     cost: '$0.00/1K tokens',
-    maxTokens: 512,
+    max_tokens: 512,
     dimensions: 1024,
     description: 'High performance Ollama embedding model',
     status: 'available',
@@ -149,20 +149,20 @@ UNWIND [
 MERGE (m:EmbeddingModel {name: model.name})
 ON CREATE SET 
   m.cost = model.cost,
-  m.maxTokens = model.maxTokens,
+  m.max_tokens = model.max_tokens,
   m.dimensions = model.dimensions,
   m.description = model.description,
   m.status = model.status,
   m.usage = model.usage,
-  m.created_at = datetime(),
-  m.updated_at = datetime()
+  m.created_date = datetime(),
+  m.last_modified_date = datetime()
 ON MATCH SET
   m.cost = model.cost,
-  m.maxTokens = model.maxTokens,
+  m.max_tokens = model.max_tokens,
   m.dimensions = model.dimensions,
   m.description = model.description,
   m.status = model.status,
-  m.updated_at = datetime()
+  m.last_modified_date = datetime()
 
 MERGE (m)-[:USES]->(pOllama)
 
@@ -176,64 +176,60 @@ UNWIND [
   {
     strategy: 'Semantic',
     overlap: 70,
-    chunkSize: 1500,
+    chunk_size: 1500,
     description: 'Splits text based on semantic boundaries using NLP techniques',
-    smartSplitting: true,
-    initialBytesPerTokenEstimate: 3,
-    preserveStructure: true,
-    quality: 0.0
+    smart_splitting: true,
+    initial_bytes_per_token_estimate: 3,
+    preserve_structure: true
   },
   {
     strategy: 'Fixed Size',
     overlap: 25,
-    chunkSize: 256,
+    chunk_size: 256,
     description: 'Splits text into fixed-size chunks with configurable overlap',
-    smartSplitting: false,
-    initialBytesPerTokenEstimate: 3,
-    preserveStructure: false,
-    quality: 0.0
+    smart_splitting: false,
+    initial_bytes_per_token_estimate: 3,
+    preserve_structure: false
   },
   {
     strategy: 'Paragraph-based',
     overlap: 0,
-    chunkSize: 384,
+    chunk_size: 384,
     description: 'Splits text at paragraph boundaries',
-    smartSplitting: false,
-    initialBytesPerTokenEstimate: 3,
-    preserveStructure: true,
-    quality: 0.0
+    smart_splitting: false,
+    initial_bytes_per_token_estimate: 3,
+    preserve_structure: true
   },
   {
     strategy: 'Sentence-based',
     overlap: 10,
-    chunkSize: 128,
+    chunk_size: 128,
     description: 'Splits text at sentence boundaries',
-    smartSplitting: true,
-    initialBytesPerTokenEstimate: 3,
-    preserveStructure: false,
-    quality: 0.0
+    smart_splitting: true,
+    initial_bytes_per_token_estimate: 3,
+    preserve_structure: false
   }
 ] AS strat
 
 MERGE (s:ChunkingStrategy {strategy: strat.strategy})
 ON CREATE SET 
   s.overlap = strat.overlap,
-  s.chunkSize = strat.chunkSize,
+  s.chunk_size = strat.chunk_size,
   s.description = strat.description,
-  s.smartSplitting = strat.smartSplitting,
-  s.initialBytesPerTokenEstimate = strat.initialBytesPerTokenEstimate,
-  s.preserveStructure = strat.preserveStructure,
+  s.smart_splitting = strat.smart_splitting,
+  s.initial_bytes_per_token_estimate = strat.initial_bytes_per_token_estimate,
+  s.preserve_structure = strat.preserve_structure,
   s.quality = strat.quality,
-  s.created_at = datetime(),
-  s.updated_at = datetime()
+  s.created_date = datetime(),
+  s.last_modified_date = datetime()
 ON MATCH SET
   s.overlap = strat.overlap,
-  s.chunkSize = strat.chunkSize,
+  s.chunk_size = strat.chunk_size,
   s.description = strat.description,
-  s.smartSplitting = strat.smartSplitting,
-  s.initialBytesPerTokenEstimate = strat.initialBytesPerTokenEstimate,
-  s.preserveStructure = strat.preserveStructure,
+  s.smart_splitting = strat.smart_splitting,
+  s.initial_bytes_per_token_estimate = strat.initial_bytes_per_token_estimate,
+  s.preserve_structure = strat.preserve_structure,
   s.quality = strat.quality,
-  s.updated_at = datetime()
+  s.last_modified_date = datetime()
 
 MERGE (libRAG)-[:CONTAINS]->(s)

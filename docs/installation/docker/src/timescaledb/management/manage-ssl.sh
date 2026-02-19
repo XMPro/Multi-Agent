@@ -233,8 +233,8 @@ http {
     server {
         listen 80;
         server_name DOMAIN_PLACEHOLDER;
-        # Use explicit domain and port to preserve in redirect
-        return 301 https://DOMAIN_PLACEHOLDER:5051$request_uri;
+        # Redirect to HTTPS (internal port 443, mapped to external 5051)
+        return 301 https://$host$request_uri;
     }
 
     # HTTPS server

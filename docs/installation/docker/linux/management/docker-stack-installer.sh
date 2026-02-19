@@ -662,8 +662,9 @@ if [ "${CONFIGURED_SERVICES[neo4j]:-false}" = true ]; then
 fi
 
 if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
-    print_color "$GREEN" "Milvus API: localhost:19530"
-    print_color "$GREEN" "Milvus HTTP API: localhost:9091"
+    print_color "$GREEN" "Milvus gRPC API: localhost:19530"
+    print_color "$GREEN" "Milvus HTTP API (CORS-enabled): localhost:19531"
+    print_color "$GRAY" "Milvus HTTP API (Internal): localhost:9091"
     print_color "$GREEN" "MinIO Console: http://localhost:9001"
     print_color "$GRAY" "  (Check Milvus install output above for username/password)"
 fi
@@ -799,10 +800,11 @@ if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
     
     echo "Access URLs:" >> CREDENTIALS.txt
     echo "  - gRPC API: localhost:19530" >> CREDENTIALS.txt
-    echo "  - HTTP API: localhost:9091" >> CREDENTIALS.txt
-    
+    echo "  - HTTP API (Internal): localhost:9091" >> CREDENTIALS.txt
+
     # Check if SSL is enabled
     if grep -q "ENABLE_SSL=true" milvus/.env 2>/dev/null; then
+        echo "  - HTTP API (CORS-enabled for web apps): https://localhost:19531" >> CREDENTIALS.txt
         echo "  - Attu Web UI (HTTPS): https://localhost:8001" >> CREDENTIALS.txt
         echo "  - Attu Web UI (HTTP redirect): http://localhost:8002" >> CREDENTIALS.txt
         echo "" >> CREDENTIALS.txt
@@ -811,6 +813,7 @@ if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
         echo "  - Client Certificate: milvus/tls/client.pem" >> CREDENTIALS.txt
         echo "  - Client Key: milvus/tls/client.key" >> CREDENTIALS.txt
     else
+        echo "  - HTTP API (CORS-enabled for web apps): http://localhost:19531" >> CREDENTIALS.txt
         echo "  - Attu Web UI: http://localhost:8002" >> CREDENTIALS.txt
     fi
     

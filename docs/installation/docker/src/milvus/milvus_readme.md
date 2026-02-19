@@ -348,10 +348,39 @@ Create a scheduled task to run backups automatically:
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Milvus API | `localhost:19530` | Connect your applications here |
+| Milvus gRPC API | `localhost:19530` | Connect gRPC clients here |
+| Milvus HTTP API (CORS) | `https://localhost:19531` | **NEW:** CORS-enabled HTTP API for web applications |
 | Attu Web UI | http://localhost:8001 | Browse/manage data visually |
 | MinIO API | `localhost:9001` | Direct storage access (rarely needed) |
 | Metrics | http://localhost:9091 | Prometheus metrics for monitoring |
+
+### CORS-Enabled HTTP API (Port 19531)
+
+**New Feature:** The installation now includes a CORS-enabled reverse proxy for Milvus's HTTP API, allowing web applications to access Milvus directly from the browser.
+
+**Key Features:**
+- ✅ Dynamic CORS support - accepts requests from any origin
+- ✅ Handles preflight OPTIONS requests automatically
+- ✅ Passes through authentication headers
+- ✅ Available on both HTTP (non-SSL) and HTTPS (SSL) installations
+- ✅ Eliminates duplicate CORS header issues
+
+**Usage Example:**
+```javascript
+// From your web application (e.g., XMPro, React, Angular, etc.)
+fetch('https://your-server:19531/v2/vectordb/collections/list', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer your-milvus-token'
+  }
+})
+```
+
+**Ports:**
+- **19530** - Milvus gRPC API (for backend services, Python/Node/Java clients)
+- **19531** - Milvus HTTP API with CORS (for web browsers, frontend applications)
+- **8080** - Milvus HTTP API without CORS (internal, not exposed)
 
 ---
 

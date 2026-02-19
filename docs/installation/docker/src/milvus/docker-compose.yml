@@ -134,6 +134,7 @@ services:
     ports:
       - "8001:443"
       - "8002:80"
+      - "19531:19531"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./tls:/etc/nginx/ssl:ro

@@ -502,7 +502,7 @@ Write-Host "Created user.yaml configuration file" -ForegroundColor Green
 
 # Create nginx configuration for Attu SSL
 if ($EnableSSL) {
-    Write-Host "Creating nginx configuration for Attu HTTPS..." -ForegroundColor White
+    Write-Host "Creating nginx configuration for Attu HTTPS with CORS proxy..." -ForegroundColor White
     $NginxConfig = @"
 events {
     worker_connections 1024;
@@ -513,6 +513,17 @@ http {
         server attu:3000;
     }
 
+    # Milvus HTTP API upstream for CORS proxy
+    upstream milvus {
+        server standalone:8080;
+    }
+
+    # Map to handle CORS origin dynamically
+    map `$http_origin `$cors_origin {
+        default "";
+        "~^https?://.*" `$http_origin;
+    }
+
     # Redirect HTTP to HTTPS
     server {
         listen 80;
@@ -520,7 +531,7 @@ http {
         return 301 https://`$host`$request_uri;
     }
 
-    # HTTPS server
+    # HTTPS server for Attu
     server {
         listen 443 ssl;
         server_name $Domain;
@@ -542,13 +553,57 @@ http {
             proxy_set_header Connection "upgrade";
         }
     }
+
+    # HTTPS CORS proxy for Milvus HTTP API on port 19531
+    server {
+        listen 19531 ssl;
+        server_name $Domain;
+
+        ssl_certificate /etc/nginx/ssl/server.pem;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            # Hide Milvus's built-in CORS headers to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Max-Age;
+
+            # Add our CORS headers (allows any origin dynamically)
+            add_header 'Access-Control-Allow-Origin' `$cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' '3600' always;
+
+            # Handle preflight OPTIONS requests
+            if (`$request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            # Proxy to Milvus HTTPS HTTP API
+            proxy_pass https://milvus;
+            proxy_ssl_verify off;
+            proxy_ssl_server_name on;
+            proxy_http_version 1.1;
+            proxy_set_header Host `$host;
+            proxy_set_header X-Real-IP `$remote_addr;
+            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_pass_request_headers on;
+        }
+    }
 }
 "@
     $NginxConfig | Out-File -FilePath "nginx.conf" -Encoding ASCII
-    Write-Host "Created nginx.conf for Attu HTTPS" -ForegroundColor Green
+    Write-Host "Created nginx.conf for Attu HTTPS with CORS proxy" -ForegroundColor Green
 } else {
     # Create simple nginx config without SSL
-    Write-Host "Creating nginx configuration for Attu HTTP..." -ForegroundColor White
+    Write-Host "Creating nginx configuration for Attu HTTP with CORS proxy..." -ForegroundColor White
     $NginxConfig = @"
 events {
     worker_connections 1024;
@@ -559,6 +614,18 @@ http {
         server attu:3000;
     }
 
+    # Milvus HTTP API upstream for CORS proxy
+    upstream milvus {
+        server standalone:8080;
+    }
+
+    # Map to handle CORS origin dynamically
+    map `$http_origin `$cors_origin {
+        default "";
+        "~^https?://.*" `$http_origin;
+    }
+
+    # HTTP server for Attu
     server {
         listen 80;
         server_name $Domain;
@@ -574,10 +641,46 @@ http {
             proxy_set_header Connection "upgrade";
         }
     }
+
+    # HTTP CORS proxy for Milvus HTTP API on port 19531
+    server {
+        listen 19531;
+        server_name $Domain;
+
+        location / {
+            # Hide Milvus's built-in CORS headers to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Max-Age;
+
+            # Add our CORS headers (allows any origin dynamically)
+            add_header 'Access-Control-Allow-Origin' `$cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' '3600' always;
+
+            # Handle preflight OPTIONS requests
+            if (`$request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            # Proxy to Milvus HTTP API
+            proxy_pass http://milvus;
+            proxy_http_version 1.1;
+            proxy_set_header Host `$host;
+            proxy_set_header X-Real-IP `$remote_addr;
+            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_pass_request_headers on;
+        }
+    }
 }
 "@
     $NginxConfig | Out-File -FilePath "nginx.conf" -Encoding ASCII
-    Write-Host "Created nginx.conf for Attu HTTP" -ForegroundColor Green
+    Write-Host "Created nginx.conf for Attu HTTP with CORS proxy" -ForegroundColor Green
 }
 
 # Configure GPU in docker-compose.yml if enabled

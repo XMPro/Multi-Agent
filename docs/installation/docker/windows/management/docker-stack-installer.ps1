@@ -723,8 +723,9 @@ if ($FinalStatus["neo4j"] -eq "running") {
 }
 
 if ($FinalStatus["milvus"] -eq "running") {
-    Write-Host "Milvus API: localhost:19530" -ForegroundColor Green
-    Write-Host "Milvus HTTP API: localhost:9091" -ForegroundColor Green
+    Write-Host "Milvus gRPC API: localhost:19530" -ForegroundColor Green
+    Write-Host "Milvus HTTP API (CORS-enabled): localhost:19531" -ForegroundColor Green
+    Write-Host "Milvus HTTP API (Internal): localhost:9091" -ForegroundColor Gray
     Write-Host "MinIO Console: http://localhost:9001" -ForegroundColor Green
     Write-Host "  (Check Milvus install output above for username/password)" -ForegroundColor Gray
 }
@@ -952,7 +953,7 @@ if ($ConfiguredServices["milvus"]) {
     $CredentialsContent += @"
 Access URLs:
   - gRPC API: localhost:19530
-  - HTTP API: localhost:9091
+  - HTTP API (Internal): localhost:9091
 "@
     
     # Check if SSL is actually enabled in Milvus
@@ -967,6 +968,7 @@ Access URLs:
     if ($MilvusSSLEnabled) {
         $CredentialsContent += @"
 
+  - HTTP API (CORS-enabled for web apps): https://localhost:19531
   - Attu Web UI (HTTPS): https://localhost:8001
   - Attu Web UI (HTTP redirect): http://localhost:8002
 
@@ -978,6 +980,7 @@ SSL Certificate:
     } else {
         $CredentialsContent += @"
 
+  - HTTP API (CORS-enabled for web apps): http://localhost:19531
   - Attu Web UI: http://localhost:8002
 "@
     }

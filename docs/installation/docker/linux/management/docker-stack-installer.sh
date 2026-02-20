@@ -757,6 +757,7 @@ CERT_SERVICES=()
 [ -f "milvus/tls/ca.pem" ] && { HAS_CERTS=true; CERT_SERVICES+=("Milvus"); }
 [ -f "mqtt/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("MQTT"); }
 [ -f "timescaledb/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("TimescaleDB"); }
+[ -f "ollama/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("Ollama"); }
 
 if [ "$HAS_CERTS" = true ]; then
     print_color "$YELLOW" "Found self-signed CA certificates for: ${CERT_SERVICES[*]}"
@@ -953,6 +954,43 @@ if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
         echo "  - Server Certificate: timescaledb/certs/server.crt" >> CREDENTIALS.txt
         echo "  - Server Key: timescaledb/certs/server.key" >> CREDENTIALS.txt
     fi
+fi
+
+# Collect Ollama credentials
+if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# Ollama LLM Service" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - HTTP API: http://localhost:11434" >> CREDENTIALS.txt
+    
+    # Check if SSL is actually enabled in Ollama
+    OLLAMA_HTTPS_PORT="11443"
+    if [ -f "ollama/.env" ]; then
+        OLLAMA_HTTPS_PORT=$(grep "OLLAMA_HTTPS_PORT=" ollama/.env | cut -d'=' -f2)
+    fi
+    
+    if grep -q "OLLAMA_ENABLE_SSL=true" ollama/.env 2>/dev/null && [ -f "ollama/certs/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - HTTPS API: https://localhost:$OLLAMA_HTTPS_PORT" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: ollama/certs/ca.crt" >> CREDENTIALS.txt
+        echo "  - Server Certificate: ollama/certs/server.crt" >> CREDENTIALS.txt
+    fi
+    
+    echo "" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Model Management:" >> CREDENTIALS.txt
+    echo "  - Download models: ./ollama/management/pull-models.sh" >> CREDENTIALS.txt
+    echo "  - List models: docker exec ollama ollama list" >> CREDENTIALS.txt
+    echo "  - Test model: docker exec ollama ollama run <model-name> \"test prompt\"" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Note: At least one embedding model is required for XMPro AI Agents" >> CREDENTIALS.txt
+    echo "  Recommended: nomic-embed-text:latest or mxbai-embed-large:latest" >> CREDENTIALS.txt
 fi
 
 print_color "$GREEN" "Credentials file created: CREDENTIALS.txt"

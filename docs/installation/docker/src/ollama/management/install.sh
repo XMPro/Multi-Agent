@@ -77,15 +77,15 @@ if ! docker version &> /dev/null; then
     echo -e "${YELLOW}Please install Docker and ensure it's running.${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ Docker is available${NC}"
+echo -e "${GREEN}[OK] Docker is available${NC}"
 
 # Check if docker-compose is available
 if ! docker-compose version &> /dev/null; then
-    echo -e "${RED}✗ Docker Compose is not available!${NC}"
+    echo -e "${RED}[ERROR] Docker Compose is not available!${NC}"
     echo -e "${YELLOW}Please ensure Docker Compose is installed.${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ Docker Compose is available${NC}"
+echo -e "${GREEN}[OK] Docker Compose is available${NC}"
 
 echo ""
 
@@ -98,7 +98,7 @@ if docker-compose ps 2>/dev/null | grep -q "ollama.*running"; then
         if [[ "$stop_choice" =~ ^[Yy]$ ]]; then
             echo -e "${YELLOW}Stopping existing Ollama container...${NC}"
             docker-compose down
-            echo -e "${GREEN}✓ Container stopped${NC}"
+            echo -e "${GREEN}[OK] Container stopped${NC}"
         else
             echo -e "${YELLOW}Installation cancelled - container still running${NC}"
             exit 0
@@ -108,7 +108,7 @@ if docker-compose ps 2>/dev/null | grep -q "ollama.*running"; then
         docker-compose down
     fi
 else
-    echo -e "${GREEN}✓ No existing Ollama containers found${NC}"
+    echo -e "${GREEN}[OK] No existing Ollama containers found${NC}"
 fi
 
 echo ""
@@ -118,7 +118,7 @@ echo -e "${GRAY}Creating directory structure...${NC}"
 for dir in certs nginx; do
     if [ ! -d "$dir" ]; then
         mkdir -p "$dir"
-        echo -e "${GREEN}✓ Created directory: $dir${NC}"
+        echo -e "${GREEN}[OK] Created directory: $dir${NC}"
     else
         echo -e "${GRAY}  Directory exists: $dir${NC}"
     fi
@@ -140,7 +140,7 @@ if [ "$FREE_SPACE" -lt 20 ]; then
         exit 0
     fi
 else
-    echo -e "${GREEN}✓ Sufficient disk space available${NC}"
+    echo -e "${GREEN}[OK] Sufficient disk space available${NC}"
 fi
 
 echo ""
@@ -153,12 +153,12 @@ if [ "$GPU_DRIVER" = "none" ]; then
     # Try to detect NVIDIA GPU
     if command -v nvidia-smi &> /dev/null; then
         if nvidia-smi &> /dev/null; then
-            echo -e "${GREEN}✓ NVIDIA GPU detected${NC}"
+            echo -e "${GREEN}[OK] NVIDIA GPU detected${NC}"
             DETECTED_GPU="nvidia"
             
             # Check for NVIDIA Docker runtime
             if docker info 2>/dev/null | grep -q nvidia; then
-                echo -e "${GREEN}✓ NVIDIA Docker runtime available${NC}"
+                echo -e "${GREEN}[OK] NVIDIA Docker runtime available${NC}"
             else
                 echo -e "${YELLOW}⚠ NVIDIA Docker runtime not detected${NC}"
                 echo -e "${GRAY}  You may need to install nvidia-docker2${NC}"
@@ -169,7 +169,7 @@ if [ "$GPU_DRIVER" = "none" ]; then
     # If no NVIDIA, check for AMD
     if [ "$DETECTED_GPU" = "none" ]; then
         if lspci 2>/dev/null | grep -iE "VGA|3D" | grep -iq "AMD\|Radeon"; then
-            echo -e "${GREEN}✓ AMD GPU detected${NC}"
+            echo -e "${GREEN}[OK] AMD GPU detected${NC}"
             echo -e "${YELLOW}⚠ AMD GPU support requires ROCm drivers${NC}"
             DETECTED_GPU="amd"
         fi
@@ -225,7 +225,7 @@ read -p "Enable SSL/TLS encryption? (y/n, default: n): " ssl_choice
 GENERATE_SSL=false
 if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
     ENABLE_SSL=true
-    echo -e "${GREEN}✓ SSL/TLS will be enabled${NC}"
+    echo -e "${GREEN}[OK] SSL/TLS will be enabled${NC}"
     
     # Ask for HTTPS port
     read -p "HTTPS API port (default: 11443): " https_port_choice
@@ -255,29 +255,74 @@ if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
             DOMAIN="$domain_choice"
         fi
         echo -e "${GRAY}SSL certificates will be generated for domain: $DOMAIN${NC}"
+        
+        # Detect machine IP addresses for SSL certificate SAN
+        echo ""
+        echo -e "${GRAY}Detecting machine IP addresses...${NC}"
+        MACHINE_IPS=()
+        if command -v hostname &> /dev/null; then
+            IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
+            if [ -n "$IPS" ]; then
+                echo -e "${GREEN}Detected IP addresses:${NC}"
+                i=0
+                declare -a ALL_IPS_ARRAY
+                while IFS= read -r ip; do
+                    echo -e "${GRAY}  [$i] $ip${NC}"
+                    ALL_IPS_ARRAY+=("$ip")
+                    ((i++))
+                done <<< "$IPS"
+                
+                echo ""
+                read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+                
+                if [ -n "$ip_choice" ]; then
+                    IFS=',' read -ra SELECTED_INDICES <<< "$ip_choice"
+                    for index in "${SELECTED_INDICES[@]}"; do
+                        index=$(echo "$index" | xargs) # Trim whitespace
+                        if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#ALL_IPS_ARRAY[@]}" ]; then
+                            MACHINE_IPS+=("${ALL_IPS_ARRAY[$index]}")
+                        fi
+                    done
+                    
+                    if [ ${#MACHINE_IPS[@]} -gt 0 ]; then
+                        echo -e "${CYAN}Selected IPs: ${MACHINE_IPS[*]}${NC}"
+                    else
+                        echo -e "${GRAY}No valid IPs selected${NC}"
+                    fi
+                else
+                    echo -e "${GRAY}IP addresses not included (localhost/domain only)${NC}"
+                fi
+            else
+                echo -e "${GRAY}Could not detect IP addresses, skipping${NC}"
+            fi
+        else
+            echo -e "${GRAY}Could not detect IP addresses${NC}"
+        fi
     fi
 else
     echo -e "${GRAY}SSL/TLS will be disabled (HTTP only)${NC}"
+    MACHINE_IPS=()
 fi
 
 echo ""
 
-# Detect machine IP addresses
-echo -e "${GRAY}Detecting network configuration...${NC}"
-MACHINE_IPS=()
-if command -v hostname &> /dev/null; then
-    IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
-    if [ -n "$IPS" ]; then
-        echo -e "${GREEN}✓ Detected IP addresses:${NC}"
-        while IFS= read -r ip; do
-            echo -e "${GRAY}  • $ip${NC}"
-            MACHINE_IPS+=("$ip")
-        done <<< "$IPS"
+# If SSL not enabled, still detect IPs for display purposes
+if [ "$ENABLE_SSL" = false ]; then
+    echo -e "${GRAY}Detecting network configuration...${NC}"
+    if command -v hostname &> /dev/null; then
+        IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
+        if [ -n "$IPS" ]; then
+            echo -e "${GREEN}[OK] Detected IP addresses:${NC}"
+            while IFS= read -r ip; do
+                echo -e "${GRAY}  • $ip${NC}"
+                MACHINE_IPS+=("$ip")
+            done <<< "$IPS"
+        else
+            echo -e "${GRAY}Could not detect IP addresses${NC}"
+        fi
     else
         echo -e "${GRAY}Could not detect IP addresses${NC}"
     fi
-else
-    echo -e "${GRAY}Could not detect IP addresses${NC}"
 fi
 
 echo ""
@@ -286,14 +331,14 @@ echo ""
 echo -e "${GRAY}Creating configuration files...${NC}"
 
 if [ ! -f ".env.template" ]; then
-    echo -e "${RED}✗ Error: .env.template not found!${NC}"
+    echo -e "${RED}[ERROR] .env.template not found!${NC}"
     echo -e "${YELLOW}Please ensure you're running this script from the ollama directory${NC}"
     exit 1
 fi
 
 # Copy template to .env
 cp .env.template .env
-echo -e "${GREEN}✓ Created .env file from template${NC}"
+echo -e "${GREEN}[OK] Created .env file from template${NC}"
 
 # Update .env file with configuration
 sed -i "s/OLLAMA_PORT=.*/OLLAMA_PORT=$PORT/" .env
@@ -307,21 +352,24 @@ if [ "$ENABLE_SSL" = true ]; then
     echo "COMPOSE_PROFILES=ssl" >> .env
 fi
 
-echo -e "${GREEN}✓ Updated .env with configuration${NC}"
+echo -e "${GREEN}[OK] Updated .env with configuration${NC}"
 
 # Update docker-compose.yml if GPU is enabled
 if [ "$GPU_DRIVER" != "none" ]; then
     echo -e "${GRAY}Configuring GPU support in docker-compose.yml...${NC}"
     
-    # Uncomment the deploy section
-    sed -i '/^[[:space:]]*#[[:space:]]*deploy:/,/^[[:space:]]*#[[:space:]]*capabilities:/ s/^[[:space:]]*#[[:space:]]*/    /' docker-compose.yml
+    # Insert GPU devices into existing deploy section (following Milvus pattern)
+    # Build GPU devices configuration with proper indentation
+    GPU_DEVICES="
+          devices:
+            - driver: $GPU_DRIVER
+              count: all
+              capabilities: [gpu]"
     
-    # Update driver if AMD
-    if [ "$GPU_DRIVER" = "amd" ]; then
-        sed -i 's/driver: nvidia/driver: amd/' docker-compose.yml
-    fi
+    # Use perl to insert GPU devices after reservations section
+    perl -i -0pe "s/(deploy:.*?reservations:\s+cpus:.*?memory:.*?)/\$1$GPU_DEVICES/s" docker-compose.yml
     
-    echo -e "${GREEN}✓ GPU support enabled in docker-compose.yml${NC}"
+    echo -e "${GREEN}[OK] GPU support enabled in docker-compose.yml${NC}"
 fi
 
 echo ""
@@ -370,9 +418,9 @@ EOF
     rm -f certs/server.csr certs/ca.srl certs/openssl.cnf
     
     if [ -f "certs/server.crt" ] && [ -f "certs/server.key" ]; then
-        echo -e "${GREEN}✓ SSL certificates generated successfully${NC}"
+        echo -e "${GREEN}[OK] SSL certificates generated successfully${NC}"
     else
-        echo -e "${RED}✗ Certificate generation failed${NC}"
+        echo -e "${RED}[ERROR] Certificate generation failed${NC}"
         ENABLE_SSL=false
     fi
 fi
@@ -383,7 +431,7 @@ echo ""
 echo -e "${GRAY}Starting Ollama service...${NC}"
 echo -e "${GRAY}This may take a minute...${NC}"
 
-docker-compose up -d 2>&1 > /dev/null
+docker-compose up -d
 
 # Wait for health check
 echo -e "${GRAY}Waiting for Ollama to become healthy...${NC}"
@@ -406,10 +454,21 @@ done
 echo ""
 
 if [ "$HEALTHY" = true ]; then
-    echo -e "${GREEN}✓ Ollama service is running and healthy${NC}"
+    echo -e "${GREEN}[OK] Ollama service is running and healthy${NC}"
+    
+    # Start nginx-ssl if SSL is enabled
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}Starting nginx-ssl service...${NC}"
+        docker-compose up -d nginx-ssl 2>&1 > /dev/null
+        sleep 3
+        echo -e "${GREEN}[OK] nginx-ssl service started${NC}"
+    fi
 else
     echo -e "${YELLOW}⚠ Ollama service started but health check timed out${NC}"
     echo -e "${GRAY}  Check logs with: docker-compose logs ollama${NC}"
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}  nginx-ssl will start once ollama becomes healthy${NC}"
+    fi
 fi
 
 echo ""
@@ -418,26 +477,23 @@ echo ""
 echo -e "${CYAN}Service Status:${NC}"
 docker-compose ps 2>/dev/null | tail -n +2 | while read line; do
     if echo "$line" | grep -q "running"; then
-        echo -e "${GREEN}  ✓ $line${NC}"
+        echo -e "${GREEN}  [OK] $line${NC}"
     else
-        echo -e "${RED}  ✗ $line${NC}"
+        echo -e "${RED}  [STOPPED] $line${NC}"
     fi
 done
 
 echo ""
 
-# Ask about model downloads
+echo ""
 echo -e "${CYAN}Model Downloads:${NC}"
 echo -e "${GRAY}Ollama requires at least one embedding model to function properly${NC}"
-read -p "Download required models now? (y/n, default: y): " download_choice
-
-if [[ ! "$download_choice" =~ ^[Nn]$ ]]; then
-    echo ""
-    echo -e "${GRAY}Launching model download wizard...${NC}"
-    sleep 1
-    ./management/pull-models.sh
-fi
-
+echo ""
+echo -e "${GRAY}Download models using:${NC}"
+echo -e "${GRAY}  docker exec ollama ollama pull nomic-embed-text:latest${NC}"
+echo -e "${GRAY}  docker exec ollama ollama pull llama3.2:3b${NC}"
+echo ""
+echo -e "${GRAY}List available models: https://ollama.com/library${NC}"
 echo ""
 echo -e "${CYAN}==================================================================${NC}"
 echo -e "${GREEN}Installation Complete!${NC}"
@@ -499,125 +555,5 @@ echo -e "${GRAY}  Models:  ./management/pull-models.sh${NC}"
 if [ "$ENABLE_SSL" = true ]; then
     echo -e "${GRAY}  SSL:     ./management/manage-ssl.sh status${NC}"
 fi
-echo ""
-
-# Create CREDENTIALS.txt
-TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-cat > CREDENTIALS.txt <<EOF
-Ollama Service Configuration
-=============================
-Installation Date: $TIMESTAMP
-
-Connection Information:
------------------------
-HTTP API:  http://localhost:$PORT
-EOF
-
-for ip in "${MACHINE_IPS[@]}"; do
-    echo "           http://$ip:$PORT" >> CREDENTIALS.txt
-done
-
-if [ "$ENABLE_SSL" = true ]; then
-    echo "" >> CREDENTIALS.txt
-    echo "HTTPS API: https://localhost:$HTTPS_PORT" >> CREDENTIALS.txt
-    for ip in "${MACHINE_IPS[@]}"; do
-        echo "           https://$ip:$HTTPS_PORT" >> CREDENTIALS.txt
-    done
-fi
-
-cat >> CREDENTIALS.txt <<EOF
-
-
-Service Configuration:
-----------------------
-Container:   ollama (Running)
-GPU Support: $GPU_DRIVER
-Network:     Accessible from other machines (configure firewall)
-
-EOF
-
-if [ "$ENABLE_SSL" = true ]; then
-    cat >> CREDENTIALS.txt <<EOF
-SSL Configuration:
-------------------
-Enabled:     Yes
-CA Cert:     certs/ca.crt (distribute to clients)
-Server Cert: certs/server.crt
-Domain:      $DOMAIN
-
-EOF
-else
-    cat >> CREDENTIALS.txt <<EOF
-SSL Configuration:
-------------------
-Enabled:     No (HTTP only)
-
-EOF
-fi
-
-cat >> CREDENTIALS.txt <<EOF
-Firewall Configuration:
------------------------
-For ufw:
-  sudo ufw allow $PORT/tcp
-EOF
-
-if [ "$ENABLE_SSL" = true ]; then
-    echo "  sudo ufw allow $HTTPS_PORT/tcp" >> CREDENTIALS.txt
-fi
-
-cat >> CREDENTIALS.txt <<EOF
-  sudo ufw reload
-
-For firewalld:
-  sudo firewall-cmd --permanent --add-port=$PORT/tcp
-EOF
-
-if [ "$ENABLE_SSL" = true ]; then
-    echo "  sudo firewall-cmd --permanent --add-port=$HTTPS_PORT/tcp" >> CREDENTIALS.txt
-fi
-
-cat >> CREDENTIALS.txt <<EOF
-  sudo firewall-cmd --reload
-
-Test Connection:
-----------------
-curl http://localhost:$PORT/api/version
-EOF
-
-if [ "$ENABLE_SSL" = true ]; then
-    echo "curl -k https://localhost:$HTTPS_PORT/api/version" >> CREDENTIALS.txt
-fi
-
-cat >> CREDENTIALS.txt <<EOF
-
-
-Management Commands:
---------------------
-Status:  ./management/manage-ollama.sh status
-Logs:    ./management/manage-ollama.sh logs
-Models:  ./management/pull-models.sh
-EOF
-
-if [ "$ENABLE_SSL" = true ]; then
-    echo "SSL:     ./management/manage-ssl.sh status" >> CREDENTIALS.txt
-fi
-
-cat >> CREDENTIALS.txt <<EOF
-
-Downloaded Models:
-------------------
-Run: docker exec ollama ollama list
-
-Next Steps:
------------
-1. Configure firewall rules (see above)
-2. Download required models: ./management/pull-models.sh
-3. Test API connectivity from another machine
-4. Distribute CA certificate to clients (if using SSL)
-
-EOF
-
-echo -e "${GREEN}✓ Configuration saved to CREDENTIALS.txt${NC}"
 echo ""
 echo -e "${CYAN}==================================================================${NC}"

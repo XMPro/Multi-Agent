@@ -862,7 +862,8 @@ $CertPaths = @(
     @{Service="Neo4j"; Path="neo4j\certs\bolt\trusted\ca.crt"},
     @{Service="Milvus"; Path="milvus\certs\milvus\trusted\ca.crt"},
     @{Service="MQTT"; Path="mqtt\certs\ca.crt"},
-    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"}
+    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"},
+    @{Service="Ollama"; Path="ollama\certs\ca.crt"}
 )
 
 foreach ($CertPath in $CertPaths) {
@@ -1236,6 +1237,59 @@ pgAdmin Web UI:
 "@
 }
 
+# Collect Ollama credentials
+if ($ConfiguredServices["ollama"]) {
+    $CredentialsContent += @"
+
+
+# =================================================================
+# Ollama LLM Service
+# =================================================================
+
+"@
+    
+    $CredentialsContent += @"
+Access URLs:
+  - HTTP API: http://localhost:11434
+"@
+    
+    # Check if SSL is actually enabled in Ollama
+    $OllamaSSLEnabled = $false
+    $OllamaHttpsPort = "11443"
+    if (Test-Path "ollama\.env") {
+        $OllamaEnvContent = Get-Content "ollama\.env" -Raw
+        if ($OllamaEnvContent -match 'OLLAMA_ENABLE_SSL=true') {
+            $OllamaSSLEnabled = $true
+        }
+        if ($OllamaEnvContent -match 'OLLAMA_HTTPS_PORT=(.+)') {
+            $OllamaHttpsPort = $Matches[1].Trim()
+        }
+    }
+    
+    if ($OllamaSSLEnabled -and (Test-Path "ollama\certs\ca.crt")) {
+        $CredentialsContent += @"
+
+  - HTTPS API: https://localhost:$OllamaHttpsPort
+
+SSL Certificate:
+  - CA Certificate: ollama\certs\ca.crt
+  - Server Certificate: ollama\certs\server.crt
+"@
+    }
+    
+    $CredentialsContent += @"
+
+
+Model Management:
+  - Download models: .\ollama\management\pull-models.ps1
+  - List models: docker exec ollama ollama list
+  - Test model: docker exec ollama ollama run <model-name> "test prompt"
+
+Note: At least one embedding model is required for XMPro AI Agents
+  Recommended: nomic-embed-text:latest or mxbai-embed-large:latest
+"@
+}
+
 # Add management information
 $CredentialsContent += @"
 
@@ -1267,6 +1321,10 @@ Service-Specific Management:
   - TimescaleDB Backup: .\timescaledb\management\backup.ps1
   - TimescaleDB Restore: .\timescaledb\management\restore.ps1
   - TimescaleDB SSL: .\timescaledb\management\manage-ssl.ps1
+  
+  - Ollama Models: .\ollama\management\pull-models.ps1
+  - Ollama Service: .\ollama\management\manage-ollama.ps1
+  - Ollama SSL: .\ollama\management\manage-ssl.ps1
 
 # =================================================================
 # Security Notes

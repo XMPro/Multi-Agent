@@ -30,26 +30,26 @@ services:
       # Timezone
       - TZ=${TZ:-UTC}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/version || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - ollama-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
     logging:
       driver: "json-file"
       options:
         max-size: "100m"
         max-file: "3"
-    # GPU support configuration (uncommented during install if GPU detected)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
 
   # Nginx reverse proxy for HTTPS support (optional - enabled during install)
   nginx-ssl:

@@ -1,441 +1,226 @@
 # XMPro Multi-Agent Generative Systems (MAGS)
 
-> **An agentic business process runtime** where **independent AI agents work collaboratively in teams** to execute operational decisions and **optimize objectives** through **mathematical utility and objective functions** 24/7 **within bounded autonomy**.
+Teams of specialised AI agents for continuous operational decision-making — within boundaries you define, with every decision explained and audited.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 🚀 What is MAGS?
+## What is MAGS?
 
-XMPro MAGS deploys teams of AI agents that function as virtual workers, collaborating on operational tasks in industrial settings. Unlike LLM wrappers, MAGS is **~90% business process intelligence** (decision-making, planning, memory, optimization) and only **~10% LLM utility** (communication and explanation).
+XMPro MAGS deploys structured teams of AI agents to handle operational decision-making in industrial environments. Unlike a single AI assistant, each agent on the team has a specific role, specific rules, and a single objective — a process monitor, an economist, a safety validator — working together continuously, 24/7.
 
-### 💡 What Makes MAGS Different?
+**What makes it different:**
 
-> **Mathematical Optimization**: Agents optimize objectives through configurable utility and objective functions across business, technical, operational, quality, and safety domains
->
-> **Bounded Autonomy**: 24/7 operation within policy constraints, governance frameworks, and escalation protocols
->
-> **Hybrid Intelligence**: ~90% business process intelligence (decision-making, planning, memory) + ~10% LLM utility (communication)
->
-> **Production Runtime**: Self-healing, 99.9% uptime, comprehensive observability, and tamper-resistant architecture
->
-> → [Learn more about the architecture](docs/architecture/two-layer-framework.md)
+- **Separation of duties** — The agent that proposes an action is never the one that approves it. Safety validation is structurally independent from economic optimisation, by design.
+- **Explainability** — Every decision includes documented reasoning. Operators can agree or challenge the logic; they are not accepting a black-box output.
+- **Bounded autonomy** — Agents act only within limits your engineers approve. Anything outside those limits is escalated to a human immediately.
+- **No rip-and-replace** — MAGS sits above your existing historians, SCADA, digital twins, and ERP systems, adding the decision-making layer those systems lack.
 
-**Research Foundation**: MAGS Cognitive Agents build on Stanford's "Generative Agents: Interactive Simulacra of Human Behavior" (Park et al., 2023), extending the observe-reflect-plan-act architecture for industrial applications. [[2304.03442] Generative Agents](https://arxiv.org/abs/2304.03442)
+Unlike ML-based systems, MAGS agents reason from domain knowledge — engineering logic, economic rules, safety constraints — rather than patterns in historical data. There is no model to train or retrain when the process changes.
 
-![XMPro ORPA Memory Cycle](docs/concepts/images/XMProORPAMemoryCycle.png)
+MAGS is **~90% business process intelligence** (decision-making, planning, memory, optimisation) and only **~10% LLM utility** (communication and explanation).
+
+**Research foundation**: MAGS Cognitive Agents build on Stanford's [Generative Agents](https://arxiv.org/abs/2304.03442) (Park et al., 2023), extending the observe-reflect-plan-act (ORPA) architecture for industrial applications.
+
+→ [Why MAGS](docs/concepts/whymags.md) · [Architecture](docs/architecture/two-layer-framework.md) · [When NOT to use MAGS](docs/decision-guides/when-not-to-use-mags.md)
 
 ---
 
-## 👥 Choose Your Path
+## Choose Your Path
 
-### 🎯 I am a Business Executive
+### 🎯 Business Executive
 **Focus**: Business value, ROI, strategic fit
 
-→ [Business Value & Use Cases](docs/use-cases/README.md) | [Case Studies](case-studies/README.md) | [When to Use MAGS](docs/decision-guides/README.md) | [ROI & Adoption](docs/adoption-guidance/README.md) | [Business FAQ](docs/faq/business.md)
+→ [Use Cases](docs/use-cases/README.md) | [Case Studies](case-studies/README.md) | [When to Use MAGS](docs/decision-guides/README.md) | [Adoption & ROI](docs/adoption-guidance/README.md) | [Business FAQ](docs/faq/business.md)
 
-### 🏗️ I am a Solution Architect
+### 🏗️ Solution Architect
 **Focus**: Architecture, integration, design decisions
 
 → [Architecture Overview](docs/architecture/README.md) | [Integration Patterns](docs/integration/README.md) | [Decision Guides](docs/decision-guides/README.md) | [Framework Positioning](docs/strategic-positioning/README.md) | [Architecture FAQ](docs/faq/architecture.md)
 
-### 💻 I am a Developer
-**Focus**: Implementation, APIs, code examples
+### 💻 Developer
+**Focus**: Implementation, configuration, code examples
 
-→ [Getting Started](docs/getting-started/README.md) | [Design Patterns](docs/design-patterns/README.md) | [Technical Details](docs/technical-details/README.md) | [Agent Profiles](src/agent_profiles/README.md)
+→ [Getting Started](docs/getting-started/README.md) | [Design Patterns](docs/design-patterns/README.md) | [Implementation Guides](docs/implementation-guides/README.md) | [Agent Profiles](src/agent_profiles/README.md)
 
-### 🔧 I am an Operations Engineer
+### 🔧 Operations Engineer
 **Focus**: Deployment, monitoring, troubleshooting
 
 → [Installation Guide](docs/installation.md) | [Performance Monitoring](docs/performance-optimization/README.md) | [Troubleshooting FAQ](docs/faq/technical.md) | [Observability](docs/integration-execution/telemetry-observability.md)
 
 ---
 
-## 🧭 Documentation Journey
+## Quick Reference
 
-**New to MAGS?** Follow this path:
-1. **Understand** → [What is MAGS?](docs/getting-started/understanding-mags.md) (15 min)
-2. **Explore** → [Core Concepts](docs/concepts/README.md) (1-2 hours)
-3. **Evaluate** → [Use Cases](docs/use-cases/README.md) + [When to Use MAGS](docs/decision-guides/README.md) (1 hour)
-4. **Learn** → [Architecture](docs/architecture/README.md) (2 hours)
-
-**Ready to implement?** Follow this path:
-1. **Design** → [Best Practices](docs/best-practices/README.md) (strategic guidance)
-2. **Configure** → [Implementation Guides](docs/implementation-guides/README.md) ⭐ (tactical procedures)
-3. **Build** → [Design Patterns](docs/design-patterns/README.md) (proven solutions)
-4. **Deploy** → [Installation Guide](docs/installation.md)
-
-**Operating MAGS?** Go here:
-- **Monitor** → [Performance Optimization](docs/performance-optimization/README.md)
-- **Troubleshoot** → [Technical Details](docs/technical-details/README.md)
-- **Comply** → [Responsible AI](docs/responsible-ai/README.md)
-
----
-
-## 📋 Quick Reference
-
-| I want to... | Go here | Time |
-|-------------|---------|------|
-| **Understand what MAGS is** | [Understanding MAGS](docs/getting-started/understanding-mags.md) | 15 min |
-| **Evaluate if MAGS fits my needs** | [Evaluation Guide](docs/getting-started/evaluation-guide.md) | 30 min |
-| **Learn core concepts** | [Concepts](docs/concepts/README.md) | 1-2 hours |
-| **See real-world examples** | [Use Cases](docs/use-cases/README.md) | 45 min |
-| **Understand the architecture** | [Architecture](docs/architecture/README.md) | 2 hours |
-| **Design a MAGS solution** | [Best Practices](docs/best-practices/README.md) → [Design Patterns](docs/design-patterns/README.md) | 3-4 hours |
-| **Size and compose a team** | [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md) | 1-2 hours |
-| **Configure and implement** | [Implementation Guides](docs/implementation-guides/README.md) ⭐ | 3 hours |
-| **Install and deploy** | [Installation Guide](docs/installation.md) | 1-2 hours |
-| **Optimize performance** | [Performance Optimization](docs/performance-optimization/README.md) | 2 hours |
-| **Ensure compliance** | [Responsible AI](docs/responsible-ai/README.md) | 1 hour |
-| **Look up terminology** | [Glossary](docs/Glossary.md) | As needed |
+| I want to... | Go here |
+|---|---|
+| Understand what MAGS is | [Understanding MAGS](docs/getting-started/understanding-mags.md) |
+| Evaluate if MAGS fits my needs | [Evaluation Guide](docs/getting-started/evaluation-guide.md) · [When NOT to Use MAGS](docs/decision-guides/when-not-to-use-mags.md) |
+| Get quick answers to common questions | [FAQ Index](docs/faq/README.md) |
+| Learn core concepts | [Core Concepts](docs/concepts/README.md) |
+| See real-world examples | [Use Cases](docs/use-cases/README.md) · [Case Studies](case-studies/README.md) |
+| Understand the architecture | [Architecture](docs/architecture/README.md) |
+| Design a MAGS solution | [Best Practices](docs/best-practices/README.md) · [Design Patterns](docs/design-patterns/README.md) |
+| Size and compose a team | [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md) |
+| Configure agents and teams | [Implementation Guides](docs/implementation-guides/README.md) |
+| Install and deploy | [Installation Guide](docs/installation.md) |
+| Optimise performance | [Performance Optimization](docs/performance-optimization/README.md) |
+| Ensure compliance | [Responsible AI](docs/responsible-ai/README.md) |
+| Look up a term | [Glossary](docs/Glossary.md) |
 
 ---
 
-## 🗺️ Content Navigator
+## Documentation
 
-```mermaid
-graph TB
-    subgraph "🎯 Getting Started"
-        GS[Getting Started Guide]
-        Eval[Evaluation Guide]
-        Understand[Understanding MAGS]
-    end
-    
-    subgraph "🧠 Core Knowledge"
-        Concepts[Core Concepts]
-        Arch[Architecture]
-        Types[Agent Types]
-        ORPA[ORPA Cycle]
-    end
-    
-    subgraph "🔨 Implementation"
-        Patterns[Design Patterns]
-        Best[Best Practices]
-        IG[Implementation Guides]
-        Install[Installation]
-    end
-    
-    subgraph "🚀 Advanced Topics"
-        Research[Research Foundations]
-        Cognitive[Cognitive Intelligence]
-        Perf[Performance Optimization]
-    end
-    
-    subgraph "⚖️ Governance"
-        RAI[Responsible AI]
-        Decision[Decision Guides]
-        Adoption[Adoption Guidance]
-    end
-    
-    GS --> Concepts
-    Eval --> Concepts
-    Understand --> Concepts
-    
-    Concepts --> Arch
-    Concepts --> Types
-    Concepts --> ORPA
-    
-    Arch --> Patterns
-    Types --> Patterns
-    ORPA --> Patterns
-    
-    Patterns --> Best
-    Best --> IG
-    IG --> Install
-    
-    Arch --> Research
-    Concepts --> Cognitive
-    Best --> Perf
-    
-    Patterns --> RAI
-    Best --> Decision
-    Decision --> Adoption
-    
-    style GS fill:#e1f5e1
-    style Concepts fill:#e3f2fd
-    style Patterns fill:#fff3e0
-    style Research fill:#f3e5f5
-    style RAI fill:#fce4ec
-```
+### Foundation
+*Start here if you're new to MAGS.*
 
----
+- **[Getting Started](docs/getting-started)** — onboarding for all roles
+  - [Understanding MAGS](docs/getting-started/understanding-mags.md) — core concepts in plain language
+  - [Evaluation Guide](docs/getting-started/evaluation-guide.md) — is MAGS the right fit?
+  - [First Steps](docs/getting-started/first-steps.md) — role-based next actions
 
-## 🎓 Learning Paths
+- **[Core Concepts](docs/concepts)** — the ideas that underpin MAGS
+  - [Agent Types](docs/concepts/agent_types.md) — Content, Cognitive, and Hybrid Cognitive
+  - [ORPA Cycle](docs/concepts/orpa-cycle.md) — how agents observe, reflect, plan, and act
+  - [Memory Systems](docs/concepts/memory-systems.md) — how agents learn and remember
+  - [Decision Making](docs/concepts/decision-making.md) — how agents choose actions
+  - [Consensus Mechanisms](docs/concepts/consensus-mechanisms.md) — how agents coordinate
+  - [Profiles vs Instances](docs/concepts/profiles-vs-instances.md) — a critical architectural distinction
+  - [Decision Traces](docs/concepts/decision-traces.md) — how decisions are recorded and reused
+  - [AgentOps & APEX](docs/concepts/agentopsapex.md) — agent lifecycle management
+  - [Prompt Injection](docs/concepts/prompt-injection.md) — risks and architectural safeguards
 
-### 🌱 Beginner Path (2-4 hours)
-**Goal**: Understand MAGS fundamentals and evaluate fit
+- **[Architecture](docs/architecture)** — system design
+  - [Two-Layer Framework](docs/architecture/two-layer-framework.md) — business intelligence + LLM utility
+  - [Business Process Intelligence](docs/architecture/business-process-intelligence.md) — 15 core capabilities
+  - [System Components](docs/architecture/system-components.md) — technical architecture
+  - [Agent Architecture](docs/architecture/agent_architecture.md) — agent design patterns
 
-1. [What is MAGS?](docs/getting-started/understanding-mags.md) → 15 min
-2. [Agent Types](docs/concepts/agent_types.md) → 20 min
-3. [ORPA Cycle](docs/concepts/orpa-cycle.md) → 30 min
-4. [Use Cases](docs/use-cases/README.md) → 45 min
-5. [Evaluation Guide](docs/getting-started/evaluation-guide.md) → 30 min
-6. [First Steps](docs/getting-started/first-steps.md) → 30 min
+### Design & Build
 
-### 🌿 Intermediate Path (1-2 days)
-**Goal**: Design and implement MAGS solutions
-
-1. [Architecture Overview](docs/architecture/README.md) → 2 hours
-2. [Business Process Intelligence](docs/architecture/business-process-intelligence.md) → 1 hour
-3. [Design Patterns](docs/design-patterns/README.md) → 3 hours
-4. [Memory Systems](docs/concepts/memory-systems.md) → 1 hour
-5. [Consensus Mechanisms](docs/concepts/consensus-mechanisms.md) → 1 hour
-6. [Best Practices](docs/best-practices/README.md) → 2 hours
-7. [Implementation Guides](docs/implementation-guides/README.md) → 3 hours ⭐ NEW
-8. [Installation](docs/installation.md) → 2 hours
-
-### 🌳 Advanced Path (1 week+)
-**Goal**: Master MAGS architecture and optimization
-
-1. [Research Foundations](docs/research-foundations/README.md) → 1 day
-2. [Cognitive Intelligence](docs/cognitive-intelligence/README.md) → 2 days
-3. [Decision Orchestration](docs/decision-orchestration/README.md) → 1 day
-4. [Performance Optimization](docs/performance-optimization/README.md) → 1 day
-5. [Integration Patterns](docs/integration/README.md) → 2 days
-6. [Responsible AI](docs/responsible-ai/README.md) → 1 day
-
----
-
-## 📚 Documentation Hub
-
-### 🎯 Start Here (Foundation)
-Essential reading for all users
-
-- **[Getting Started](docs/getting-started)** - Onboarding paths for all roles (30 min - 2 hours)
-  - [Evaluation Prompt](docs/getting-started/evaluation-prompt.md) - Interactive LLM assessment
-  - [Understanding MAGS](docs/getting-started/understanding-mags.md) - Core concepts in plain language
-  - [First Steps](docs/getting-started/first-steps.md) - Role-based learning paths
-
-- **[Core Concepts](docs/concepts)** - Key MAGS concepts explained (1-3 hours)
-  - [Agent Types](docs/concepts/agent_types.md) - Content, Cognitive, and Hybrid Cognitive agents
-  - [ORPA Cycle](docs/concepts/orpa-cycle.md) - How agents think and act
-  - [Memory Systems](docs/concepts/memory-systems.md) - How agents learn and remember
-  - [Decision Making](docs/concepts/decision-making.md) - How agents make choices
-  - [Consensus Mechanisms](docs/concepts/consensus-mechanisms.md) - How agents coordinate
-
-- **[Architecture](docs/architecture)** - System design and framework (2-4 hours)
-  - [Two-Layer Framework](docs/architecture/two-layer-framework.md) - Intelligence platform architecture
-  - [Business Process Intelligence](docs/architecture/business-process-intelligence.md) - 15 core capabilities
-  - [System Components](docs/architecture/system-components.md) - Technical architecture
-  - [Agent Architecture](docs/architecture/agent_architecture.md) - Agent design patterns
-
-### 🔨 Build & Deploy (Implementation)
-Practical guidance for building MAGS solutions
-
-- **[Design Patterns](docs/design-patterns)** - Proven implementation patterns
+- **[Design Patterns](docs/design-patterns)** — proven solutions for common problems
   - [Agent Team Patterns](docs/design-patterns/agent-team-patterns.md)
   - [Communication Patterns](docs/design-patterns/communication-patterns.md)
   - [Decision Patterns](docs/design-patterns/decision-patterns.md)
   - [Memory Patterns](docs/design-patterns/memory-patterns.md)
 
-- **[Best Practices](docs/best-practices)** - Strategic guidance
+- **[Best Practices](docs/best-practices)** — strategic guidance for agent design
   - [Agent Design Principles](docs/best-practices/agent-design-principles.md)
   - [Team Composition](docs/best-practices/team-composition.md)
   - [Objective Function Design](docs/best-practices/objective-function-design.md)
   - [Testing Strategies](docs/best-practices/testing-strategies.md)
 
-- **[Implementation Guides](docs/implementation-guides)** - Tactical implementation ⭐ NEW
+- **[Implementation Guides](docs/implementation-guides)** — tactical configuration
   - [Behavioural Rules](docs/implementation-guides/behavioural-rules.md)
   - [Model Selection](docs/implementation-guides/model-selection.md)
-  - [Data Architecture](docs/implementation-guides/data-architecture.md)
   - [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md)
-  - [Complete Guide](docs/implementation-guides/README.md)
+  - [Constraint Configuration](docs/implementation-guides/constraint-configuration.md)
+  - [Full index](docs/implementation-guides/README.md)
 
-- **[Installation](docs/installation.md)** - Setup and deployment guide
+- **[Installation](docs/installation.md)** — setup and deployment
   - [Docker Deployment](docs/installation/docker/README.md)
-  - [Database Configuration](docs/installation.md)
-  - [System Requirements](docs/installation.md)
 
-- **[Agent Profiles](src/agent_profiles)** - Pre-built agent templates
-  - Example profiles for various industrial scenarios
-  - JSON configuration files
+- **[Agent Profiles](src/agent_profiles)** — pre-built templates for industrial scenarios
 
-### 🧠 Advanced Topics (Deep Dive)
-For architects and researchers
+### Business & Strategy
 
-- **[Cognitive Intelligence](docs/cognitive-intelligence)** - Memory and learning systems
-  - [Memory Management](docs/cognitive-intelligence/memory-management.md)
-  - [Confidence Scoring](docs/cognitive-intelligence/confidence-scoring.md)
-  - [Plan Adaptation](docs/cognitive-intelligence/plan-adaptation.md)
-  - [Synthetic Memory](docs/cognitive-intelligence/synthetic-memory.md)
-
-- **[Research Foundations](docs/research-foundations)** - Academic foundations (10 domains)
-  - [Multi-Agent Systems](docs/research-foundations/multi-agent-systems.md)
-  - [Decision Theory](docs/research-foundations/decision-theory.md)
-  - [Cognitive Science](docs/research-foundations/cognitive-science.md)
-  - [Automated Planning](docs/research-foundations/automated-planning.md)
-  - [Distributed Systems](docs/research-foundations/distributed-systems.md)
-
-- **[Performance Optimization](docs/performance-optimization)** - Tuning and optimization
-  - [Goal Optimization](docs/performance-optimization/goal-optimization.md)
-  - [Plan Optimization](docs/performance-optimization/plan-optimization.md)
-  - [Performance Monitoring](docs/performance-optimization/performance-monitoring.md)
-
-- **[Decision Orchestration](docs/decision-orchestration)** - Coordination and consensus
-  - [Communication Framework](docs/decision-orchestration/communication-framework.md)
-  - [Consensus Management](docs/decision-orchestration/consensus-management.md)
-  - [Agent Lifecycle Governance](docs/decision-orchestration/agent-lifecycle-governance.md)
-
-### 💼 Business & Strategy (Decision Support)
-For executives and decision-makers
-
-- **[Use Cases](docs/use-cases)** - Real-world applications with business outcomes
+- **[Use Cases](docs/use-cases)** — real-world applications with business outcomes
   - [Predictive Maintenance](docs/use-cases/predictive-maintenance.md)
-  - [Process Optimization](docs/use-cases/process-optimization.md)
+  - [Process Optimisation](docs/use-cases/process-optimization.md)
   - [Quality Management](docs/use-cases/quality-management.md)
-  - [Root Cause Analysis](docs/use-cases/root-cause-analysis.md)
   - [Safety-Critical Operations](docs/use-cases/safety-critical-operations.md)
+  - [Root Cause Analysis](docs/use-cases/root-cause-analysis.md)
+  - [Compliance Management](docs/use-cases/compliance-management.md)
 
-- **[Case Studies](case-studies)** - Detailed implementation examples
-  - [Manufacturing Optimization](case-studies/manufacturing-optimization.md)
+- **[Case Studies](case-studies)** — detailed implementation examples
+  - [Manufacturing Optimisation](case-studies/manufacturing-optimization.md)
 
-- **[Decision Guides](docs/decision-guides)** - When and how to use MAGS
+- **[Decision Guides](docs/decision-guides)** — when and how to use MAGS
   - [When NOT to Use MAGS](docs/decision-guides/when-not-to-use-mags.md)
   - [Migration Playbook](docs/decision-guides/migration-playbook.md)
 
-- **[Adoption Guidance](docs/adoption-guidance)** - Implementation strategies
+- **[Adoption Guidance](docs/adoption-guidance)** — implementation strategies
   - [Incremental Adoption](docs/adoption-guidance/incremental-adoption.md)
-  - [Risk Mitigation Strategies](docs/adoption-guidance/risk-mitigation-strategies.md)
+  - [Risk Mitigation](docs/adoption-guidance/risk-mitigation-strategies.md)
 
-### ⚖️ Governance & Compliance (Responsible AI)
-For compliance and governance teams
+### Governance & Compliance
 
-- **[Responsible AI](docs/responsible-ai)** - Policies, explainability, and oversight
-  - [Policies](docs/responsible-ai/policies.md) - Deontic principles and rules of engagement
-  - [Explainability](docs/responsible-ai/explainability.md) - Decision transparency
-  - [Human-in-the-Loop](docs/responsible-ai/human-in-the-loop.md) - Human oversight patterns
-  - [Compliance Mapping](docs/responsible-ai/compliance-mapping.md) - Regulatory alignment
-  - [Regulatory Compliance Audit Trail](docs/responsible-ai/regulatory-compliance-audit-trail.md)
+- **[Responsible AI](docs/responsible-ai)** — policies, explainability, and oversight
+  - [Policies](docs/responsible-ai/policies.md) — deontic principles and rules of engagement
+  - [Explainability](docs/responsible-ai/explainability.md) — decision transparency
+  - [Human-in-the-Loop](docs/responsible-ai/human-in-the-loop.md) — human oversight patterns
+  - [Compliance Mapping](docs/responsible-ai/compliance-mapping.md) — regulatory alignment
+  - [Audit Trail](docs/responsible-ai/regulatory-compliance-audit-trail.md)
+  - [Prompt Injection Protection](docs/technical-details/prompt-injection-protection.md)
 
-### 🔧 Technical Reference (Integration & Execution)
-For developers and integrators
+### Technical Reference
 
-- **[Integration & Execution](docs/integration-execution)** - External interfaces
-  - [DataStream Integration](docs/integration-execution/datastream-integration.md)
-  - [Tool Orchestration](docs/integration-execution/tool-orchestration.md)
-  - [Telemetry & Observability](docs/integration-execution/telemetry-observability.md)
-
-- **[Integration Patterns](docs/integration)** - Integration approaches
-
-- **[Technical Details](docs/technical-details)** - Technical explanations
+- **[Technical Details](docs/technical-details)** — in-depth specifications
   - [Memory Cycle](docs/technical-details/memory_cycle.md)
   - [Vector Database](docs/technical-details/vector_database.md)
   - [Agent Status Monitoring](docs/technical-details/agent_status_monitoring.md)
   - [OpenTelemetry Tracing](docs/technical-details/open_telemetry_tracing_guide.md)
-  - [Prompt Injection Protection](docs/technical-details/prompt-injection-protection.md)
 
-### 📖 Supporting Resources
-Reference materials and standards
+- **[Integration & Execution](docs/integration-execution)** — external interfaces
+  - [DataStream Integration](docs/integration-execution/datastream-integration.md)
+  - [Tool Orchestration](docs/integration-execution/tool-orchestration.md)
+  - [Telemetry & Observability](docs/integration-execution/telemetry-observability.md)
 
-- **[Glossary](docs/Glossary.md)** - Comprehensive terminology reference (200+ terms)
-- **[FAQ](docs/faq/)** - Frequently Asked Questions
+- **[Performance Optimisation](docs/performance-optimization)** — tuning and monitoring
+- **[Cognitive Intelligence](docs/cognitive-intelligence)** — advanced memory and learning systems
+- **[Decision Orchestration](docs/decision-orchestration)** — coordination and consensus
+- **[Research Foundations](docs/research-foundations)** — academic basis across 10 domains
+
+### Reference
+
+- **[FAQ](docs/faq/)** — frequently asked questions
   - [Business FAQ](docs/faq/business.md) — what MAGS is, comparisons, trust & safety, value timelines
-  - [Architecture FAQ](docs/faq/architecture.md) — team design, agent roles, capabilities & limits, core concepts
+  - [Architecture FAQ](docs/faq/architecture.md) — team design, agent roles, capabilities & limits
   - [Technical FAQ](docs/faq/technical.md) — setup, databases, monitoring, troubleshooting
-- **[Accessibility](docs/accessibility.md)** - Web accessibility guidelines
-- **[Naming Conventions](docs/naming-conventions)** - Project naming standards
+- **[Glossary](docs/Glossary.md)** — 200+ terms defined
+- **[Framework Relationships](docs/FRAMEWORK-RELATIONSHIPS.md)** — positioning relative to other AI frameworks
+- **[Azure CAF Alignment](docs/strategic-positioning/azure-caf-overview.md)** — enterprise governance alignment
+- **[Naming Conventions](docs/naming-conventions)**
+- **[Accessibility](docs/accessibility.md)**
 
 ---
 
-## 🌟 Key Features
+## Repository Structure
 
-- **APEX AgentOps**: [AgentOps](docs/concepts/agentopsapex.md) for scaling Multi-Agent Generative Systems in complex industrial environments
-- **Decision Intelligence**: MAGS agents create [decision traces](docs/concepts/decision-traces.md) during ORPA cycles, feeding the DecisionGraph in XMPro AO Platform for precedent search, pattern discovery, and decision simulation
-- **Adaptive Decision Making**: Agents create and modify plans to achieve goals, adapting to changing circumstances
-- **Built-in Prompt Injection Protection**: Comprehensive safeguards through controlled UIs and architectural security. [Learn more](docs/concepts/prompt-injection.md)
-- **Generative AI Agents**: Autonomous entities capable of recognizing patterns, generating predictions, and performing complex tasks
-- **Real-time Integration**: Seamless connection with sensors, business applications, and data sources through XMPro Data Streams
-- **Multi-Agent Collaboration**: AI agents functioning as virtual workers performing various operational roles
-- **Scalable Architecture**: Deploy multiple agent teams based on operational needs and complexities
+```
+/docs          — all documentation (28 topic areas)
+/src           — agent profile templates and configuration examples
+/case-studies  — real-world implementation case studies
+/research      — research papers and academic references
+```
 
 ---
 
-## 🏗️ Agent Types
-
-MAGS supports three types of agents, each optimized for different tasks:
-
-1. **[Content Agents](docs/concepts/agent_types.md)** - LLM-based information generation (~80-90% LLM)
-   - Document creation, report generation, knowledge curation
-   - Supervised operation with human review
-
-2. **[Cognitive Agents](docs/concepts/agent_types.md)** - ORPA-based autonomous reasoning (~90% business intelligence, ~10% LLM)
-   - Complex decision-making, planning, optimization
-   - Continuous learning through memory systems
-   - Production-grade autonomous operation
-
-3. **[Hybrid Cognitive Agents](docs/concepts/agent_types.md)** - Combined capabilities
-   - End-to-end workflows from analysis to documentation
-   - Full ORPA cycle with enhanced content generation
-
-See [Agent Types](docs/concepts/agent_types.md) for detailed comparison and use cases.
-
----
-
-## 🔗 Related Frameworks
-
-**Azure Cloud Adoption Framework**:
-MAGS aligns with Microsoft's Azure CAF for AI Agents:
-- See [Azure CAF Overview](docs/strategic-positioning/azure-caf-overview.md) for alignment details
-- Enterprise-grade governance, security, and compliance
-- For Azure-specific implementation, see separate Azure Integration Guide
-
-**Framework Relationships**:
-- See [Framework Relationships](docs/FRAMEWORK-RELATIONSHIPS.md) for positioning relative to other AI frameworks
-
----
-
-## 📦 Repository Structure
-
-- **[`/docs`](docs)** - Comprehensive documentation (see Documentation Hub above)
-- **[`/src`](src)** - Source code and agent profile templates
-- **[`/case-studies`](case-studies)** - Real-world implementation examples
-- **[`/research`](research)** - Research papers and academic foundations
-
----
-
-## 📧 Stay Updated
-
-**The Digital Engineer Newsletter**
+## Stay Updated
 
 Pieter van Schalkwyk writes regularly about Multi-Agent Systems, Industrial AI, and Digital Transformation.
 
-📧 Subscribe: [The Digital Engineer on LinkedIn](https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7107692183964585984)
+📧 [The Digital Engineer — subscribe on LinkedIn](https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7107692183964585984)
+
+For support or questions: [support@xmpro.com](mailto:support@xmpro.com)
 
 ---
 
-## 📞 Contact & Support
+## References
 
-For support, questions, or inquiries about the XMPro AI Agents project:
-
-**Email**: support@xmpro.com
-
-We value your feedback and are here to assist you with any issues or questions regarding our AI Agents and Multi-Agent systems.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-> The MIT License is a permissive license that allows you to do anything you want with the code as long as you provide attribution back to XMPro and don't hold us liable.
-
-**Important Legal Notice**: This repository contains open-source components licensed under the MIT License. However, the core XMPro AI agent technology, including its proprietary algorithms and implementations, remains the exclusive intellectual property of XMPro. The open-source materials provided herein serve as a framework and reference implementation, and do not grant any rights to XMPro's commercially protected, proprietary agent technology. Any use, reproduction, or distribution of XMPro's proprietary components is strictly prohibited without express written permission from XMPro.
+- [Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442) — Park et al., 2023 (Stanford)
+- [Part 1: From Railroads to AI — The Evolution of Game-Changing Utilities](https://xmpro.com/part-1-from-railroads-to-ai-the-evolution-of-game-changing-utilities/)
+- [Part 2: The Future of Work — Harnessing Generative Agents in Manufacturing](https://xmpro.com/part2-the-future-of-work-harnessing-generative-agents-in-manufacturing/)
+- [Part 3: AI at the Core — LLMs and Data Pipelines for Industrial Multi-Agent Generative Systems](https://xmpro.com/part-3-ai-at-the-core-llms-and-data-pipelines-for-industrial-multi-agent-generative-systems/)
+- [Part 4: Pioneering Progress — Real-World Applications of Multi-Agent Generative Systems](https://xmpro.com/part-4-pioneering-progress-real-world-applications-of-multi-agent-generative-systems/)
+- [Part 5: Rules of Engagement — Establishing Governance for Multi-Agent Generative Systems](https://xmpro.com/part-5-rules-of-engagement-establishing-governance-for-multi-agent-generative-systems/)
 
 ---
 
-## 📚 References
+## Licence
 
-### Academic Research
-- [[2304.03442] Generative Agents - Interactive Simulacra of Human Behavior (arxiv.org)](https://arxiv.org/abs/2304.03442)
+Documentation and reference materials in this repository are licensed under the [MIT Licence](LICENSE).
 
-### XMPro Blog Series
-- [Part 1: From Railroads to AI - The Evolution of Game-Changing Utilities](https://xmpro.com/part-1-from-railroads-to-ai-the-evolution-of-game-changing-utilities/)
-- [Part 2: The Future of Work - Harnessing Generative Agents in Manufacturing](https://xmpro.com/part2-the-future-of-work-harnessing-generative-agents-in-manufacturing/)
-- [Part 3: AI at the Core - LLMs and Data Pipelines for Industrial Multi-Agent Generative Systems](https://xmpro.com/part-3-ai-at-the-core-llms-and-data-pipelines-for-industrial-multi-agent-generative-systems/)
-- [Part 4: Pioneering Progress - Real-World Applications of Multi-Agent Generative Systems](https://xmpro.com/part-4-pioneering-progress-real-world-applications-of-multi-agent-generative-systems/)
-- [Part 5: Rules of Engagement - Establishing Governance for Multi-Agent Generative Systems](https://xmpro.com/part-5-rules-of-engagement-establishing-governance-for-multi-agent-generative-systems/)
-
----
-
-**We're excited to have you explore and contribute to the XMPro AI Agents project. Together, we're shaping the future of industrial AI!**
+The XMPro MAGS platform itself is commercial software. This repository provides documentation, frameworks, and reference implementation examples — not the proprietary runtime. Contact [support@xmpro.com](mailto:support@xmpro.com) for platform licensing.

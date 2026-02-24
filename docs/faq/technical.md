@@ -1,8 +1,14 @@
-# XMPro MAGS Frequently Asked Questions (FAQ)
+# MAGS FAQ — Technical Implementation
 
-## Table of Contents
+*Questions about setup, configuration, agent types, databases, monitoring, security, and troubleshooting.*
 
-1. [General Questions](#general-questions)
+*For business and positioning questions, see [business.md](./business.md). For design and capability questions, see [architecture.md](./architecture.md).*
+
+---
+
+## Contents
+
+1. [General](#general)
 2. [Multi-Agent Framework](#multi-agent-framework)
 3. [Agent Types and Capabilities](#agent-types-and-capabilities)
 4. [Technical Implementation](#technical-implementation)
@@ -11,24 +17,25 @@
 7. [Training and Learning](#training-and-learning)
 8. [Troubleshooting](#troubleshooting)
 
-*For business and conceptual questions — positioning, safety, comparisons, and architecture — see the [Business FAQ](./faq-business.md).*
-
 ---
 
-## General Questions
+## General
 
 ### What is XMPro MAGS?
-[XMPro's Multi-Agent Generative Systems (MAGS)](docs/Glossary.md#x) is an advanced integration of computational software agents and large language models (LLMs), designed to simulate and optimize complex industrial processes and interactions. MAGS leverages generative AI to create dynamic, adaptive systems that enhance productivity, efficiency, and decision-making across various operational aspects.
+
+[XMPro's Multi-Agent Generative Systems (MAGS)](../Glossary.md#x) is an advanced integration of computational software agents and large language models (LLMs), designed to simulate and optimize complex industrial processes and interactions. MAGS leverages generative AI to create dynamic, adaptive systems that enhance productivity, efficiency, and decision-making across various operational aspects.
 
 ### What makes XMPro MAGS different from other AI solutions?
+
 XMPro MAGS distinguishes itself through:
 - Industrial-grade messaging infrastructure using MQTT and DDS
 - Advanced cognitive architecture with sophisticated memory cycles
 - Comprehensive integration capabilities with OT/IT systems
-- [Robust governance framework](docs/concepts/deontic-principles.md) ensuring responsible AI deployment
+- [Robust governance framework](../concepts/deontic-principles.md) ensuring responsible AI deployment
 - Scalability for complex industrial environments
 
 ### What are the main components of XMPro MAGS?
+
 The main components include:
 - Agent Profile (Template)
 - Agent (Instance of a profile)
@@ -40,9 +47,12 @@ The main components include:
 - Collaboration Framework
 - Reasoning Styles
 
+---
+
 ## Multi-Agent Framework
 
 ### How do agents communicate with each other?
+
 Agents communicate through a robust messaging infrastructure using:
 - MQTT and DDS protocols for reliable data exchange
 - Structured topic naming conventions
@@ -50,19 +60,24 @@ Agents communicate through a robust messaging infrastructure using:
 - Event-driven message patterns
 
 ### What is the APEX platform?
-[APEX (Agent Platform EXperience)](docs/concepts/agentopsapex.md) is XMPro's internal, proprietary AgentOps platform that manages the lifecycle, integration, and optimization of MAGS-based AI agents. It provides tools for deployment, monitoring, and governance of agent operations. APEX is not publicly available.
 
-### How are agent teams organized?
-Teams are organized following a structured hierarchy:
-- Clear team identifiers (e.g., DALLAS-PROD-OPS-TEAM-001)
+[APEX (Agent Platform EXperience)](../concepts/agentopsapex.md) is XMPro's internal, proprietary AgentOps platform that manages the lifecycle, integration, and optimization of MAGS-based AI agents. It provides tools for deployment, monitoring, and governance of agent operations. APEX is not publicly available.
+
+### How are agent teams organised?
+
+Teams are organised following a structured hierarchy:
+- Clear team identifiers
 - Defined roles and responsibilities
 - Collaborative workflows
 - Shared objectives and performance metrics
 
+---
+
 ## Agent Types and Capabilities
 
 ### What types of agents are available in MAGS?
-MAGS includes two main [types of agents](docs/concepts/agent_types.md) (with a hybrid variant):
+
+MAGS includes two main [types of agents](../concepts/agent_types.md) (with a hybrid variant):
 
 1. **Content Agents**
    - LLM-based information generation and curation
@@ -72,7 +87,7 @@ MAGS includes two main [types of agents](docs/concepts/agent_types.md) (with a h
 
 2. **Cognitive Agents**
    - ORPA-based autonomous reasoning and decision-making
-   - Handle complex process optimization with full cognitive architecture
+   - Handle complex process optimisation with full cognitive architecture
    - Implement ~90% business process intelligence + ~10% LLM utility
    - High autonomy with continuous learning and adaptation
 
@@ -83,39 +98,39 @@ MAGS includes two main [types of agents](docs/concepts/agent_types.md) (with a h
    - Maintain cognitive foundation while adding sophisticated content generation
 
 ### How do agents learn and adapt?
+
 Agents learn through:
-- [Continuous memory cycles](docs/technical-details/memory_cycle_instantiation.md) (Observation, Reflection, Planning, Action)
+- [Continuous memory cycles](../technical-details/memory_cycle_instantiation.md) (Observation, Reflection, Planning, Action)
 - Experience accumulation in vector and graph databases
 - Feedback loops from outcomes and interactions
 - Integration of new information into their knowledge base
 
+---
+
 ## Technical Implementation
 
 ### What databases does MAGS use?
+
 MAGS employs a dual-database approach:
-- [Vector Database](docs/technical-details/vector_database.md) for semantic similarity searches
-- [Graph Database](docs/technical-details/graph_database.md) (Neo4j) for complex relationship mapping
+- [Vector Database](../technical-details/vector_database.md) for semantic similarity searches
+- Graph Database (Neo4j) for complex relationship mapping
 - Combined approach for enhanced cognitive capabilities
 
-### How does the prompt management system work?
-The [prompt management system](docs/technical-details/prompt_manager.md) includes:
-- Centralized prompt library
-- Version control for prompts
-- Access level controls
-- Audit logging capabilities
-- Categorization and tagging system
-
 ### What monitoring capabilities are available?
+
 Monitoring is implemented through:
-- [OpenTelemetry integration](docs/technical-details/open_telemetry_tracing_guide.md)
+- [OpenTelemetry integration](../technical-details/open_telemetry_tracing_guide.md)
 - Real-time agent status tracking
 - Performance metrics collection
 - Error handling and logging
 - Comprehensive audit trails
 
+---
+
 ## Integration and Deployment
 
 ### What are the prerequisites for installing MAGS?
+
 Key prerequisites include:
 - Licensed XMPro installation
 - Neo4j Graph Database
@@ -124,9 +139,10 @@ Key prerequisites include:
 - LLM Provider for embedding
 - LLM Provider for inference
 
-For detailed requirements, see our [Installation Guide](docs/installation.md).
+For detailed requirements, see the [Installation Guide](../installation.md).
 
 ### How does MAGS integrate with existing systems?
+
 Integration is achieved through:
 - Standard industrial protocols
 - RESTful APIs
@@ -134,17 +150,23 @@ Integration is achieved through:
 - Data stream connectors
 - Custom integration adapters
 
+**See also:** [DataStream Integration](../integration-execution/datastream-integration.md) · [Tool Orchestration](../integration-execution/tool-orchestration.md)
+
+---
+
 ## Security and Compliance
 
 ### How does MAGS ensure secure operations?
+
 Security is maintained through:
 - Robust access control systems
 - Encrypted communications
 - Audit logging
-- [Deontic principles](docs/concepts/deontic-principles.md) implementation
+- [Deontic principles](../concepts/deontic-principles.md) implementation
 - Compliance with industry standards
 
 ### What governance framework does MAGS use?
+
 MAGS implements:
 - Comprehensive Rules of Engagement
 - Deontic principles (obligations, permissions, prohibitions)
@@ -152,34 +174,44 @@ MAGS implements:
 - Performance monitoring and reporting
 - Compliance verification systems
 
+**See also:** [Responsible AI Policies](../responsible-ai/policies.md) · [Regulatory Compliance and Audit Trail](../responsible-ai/regulatory-compliance-audit-trail.md) · [Prompt Injection Protection](../technical-details/prompt-injection-protection.md)
+
+---
+
 ## Training and Learning
 
 ### How are MAGS agents trained?
+
 Unlike traditional AI systems, MAGS agents don't require historical training data. Instead, they acquire capabilities through:
-- [Agent Profile](docs/concepts/agent_training.md#agent-profiles) configuration
+- [Agent Profile](../concepts/agent_training.md#agent-profiles) configuration
 - Retrieval-Augmented Generation (RAG) for specialist knowledge
-- Real-time learning through the [Memory Cycle](docs/technical-details/memory_cycle_instantiation.md)
+- Real-time learning through the [Memory Cycle](../technical-details/memory_cycle_instantiation.md)
 - Operational experience and adaptation
 
-For a detailed explanation of the training approach, see our [Agent Training documentation](docs/concepts/agent_training.md).
+For a detailed explanation of the training approach, see [Agent Training](../concepts/agent_training.md).
 
 ### How do agents learn from experience?
-Agents learn through a sophisticated [Memory Cycle](docs/technical-details/memory_cycle_instantiation.md) that includes:
-- Observation: Gathering information about current situations
-- Reflection: Analyzing observations and implications
-- Planning: Developing strategies based on insights
-- Action: Executing plans and monitoring outcomes
+
+Agents learn through a sophisticated [Memory Cycle](../technical-details/memory_cycle_instantiation.md) that includes:
+- **Observation**: Gathering information about current situations
+- **Reflection**: Analysing observations and their implications
+- **Planning**: Developing strategies based on insights
+- **Action**: Executing plans and monitoring outcomes
 
 ### Do MAGS agents require pre-training?
-No, MAGS agents don't require pre-training. Their capabilities come from:
-- Well-defined [Agent Profiles](docs/concepts/agent_architecture.md#agent-profile)
+
+No. Capabilities come from:
+- Well-defined [Agent Profiles](../architecture/agent_architecture.md#agent-profile)
 - Access to specialist knowledge through RAG
 - Continuous learning through operation
 - Team-based collaboration and knowledge sharing
 
+---
+
 ## Troubleshooting
 
 ### How can I monitor agent performance?
+
 Monitor agents through:
 - Real-time status updates
 - Performance metrics dashboard
@@ -187,18 +219,18 @@ Monitor agents through:
 - Error logs and alerts
 - Activity counters
 
-For detailed monitoring information, see our [Agent Status Monitoring documentation](docs/technical-details/agent_status_monitoring.md).
+For detailed monitoring information, see [Agent Status Monitoring](../technical-details/agent_status_monitoring.md).
 
 ### What should I do if an agent stops responding?
-Follow these steps:
+
 1. Check agent status in the monitoring dashboard
 2. Review error logs for any exceptions
 3. Verify message broker connectivity
 4. Ensure database connections are active
 5. Contact support if issues persist
 
-For more detailed information about specific terms and concepts, please refer to our comprehensive [Glossary](docs/Glossary.md).
+---
 
-For technical details about specific components, please refer to our [Technical Documentation](docs/technical-details).
+*See also: [Glossary](../Glossary.md) · [Technical Details](../technical-details/) · [Installation Guide](../installation.md)*
 
-For installation and setup instructions, please see our [Installation Guide](docs/installation.md).
+*Add questions here as they arise during implementation and operation. See [README.md](./README.md) for the full FAQ index.*

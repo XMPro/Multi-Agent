@@ -251,7 +251,7 @@ Review:
 ## Support
 
 **Questions?**
-- [FAQ](../faq.md) - Common questions
+- [FAQ](../faq/README.md) - Common questions
 - [Glossary](../Glossary.md) - Terminology
 - Email: support@xmpro.com
 

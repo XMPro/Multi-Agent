@@ -178,7 +178,7 @@ docs/
 ## Support
 
 **Questions?** 
-- Check the [FAQ](../faq.md)
+- Check the [FAQ](../faq/README.md)
 - Review the [Glossary](../Glossary.md)
 - Contact: support@xmpro.com
 

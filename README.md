@@ -48,7 +48,7 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 ### 🔧 I am an Operations Engineer
 **Focus**: Deployment, monitoring, troubleshooting
 
-→ [Installation Guide](docs/installation.md) | [Performance Monitoring](docs/performance-optimization/README.md) | [Troubleshooting FAQ](docs/faq.md) | [Observability](docs/integration-execution/telemetry-observability.md)
+→ [Installation Guide](docs/installation.md) | [Performance Monitoring](docs/performance-optimization/README.md) | [Troubleshooting FAQ](docs/faq/technical.md) | [Observability](docs/integration-execution/telemetry-observability.md)
 
 ---
 
@@ -329,7 +329,7 @@ For developers and integrators
 Reference materials and standards
 
 - **[Glossary](docs/Glossary.md)** - Comprehensive terminology reference (200+ terms)
-- **[FAQ](docs/faq.md)** - Frequently Asked Questions
+- **[FAQ](docs/faq/)** - Frequently Asked Questions (business, architecture, technical)
 - **[Accessibility](docs/accessibility.md)** - Web accessibility guidelines
 - **[Naming Conventions](docs/naming-conventions)** - Project naming standards
 

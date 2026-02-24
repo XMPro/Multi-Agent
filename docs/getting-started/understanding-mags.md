@@ -313,7 +313,7 @@ Follow the [Installation Guide](../installation.md) to set up MAGS in your envir
 ## Support
 
 **Questions?**
-- [FAQ](../faq.md) - Common questions
+- [FAQ](../faq/README.md) - Common questions
 - [Glossary](../Glossary.md) - Terminology reference
 - Email: support@xmpro.com
 

@@ -11,6 +11,10 @@
 7. [Training and Learning](#training-and-learning)
 8. [Troubleshooting](#troubleshooting)
 
+*For business and conceptual questions — positioning, safety, comparisons, and architecture — see the [Business FAQ](./faq-business.md).*
+
+---
+
 ## General Questions
 
 ### What is XMPro MAGS?

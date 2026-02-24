@@ -83,6 +83,7 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 | **See real-world examples** | [Use Cases](docs/use-cases/README.md) | 45 min |
 | **Understand the architecture** | [Architecture](docs/architecture/README.md) | 2 hours |
 | **Design a MAGS solution** | [Best Practices](docs/best-practices/README.md) → [Design Patterns](docs/design-patterns/README.md) | 3-4 hours |
+| **Size and compose a team** | [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md) | 1-2 hours |
 | **Configure and implement** | [Implementation Guides](docs/implementation-guides/README.md) ⭐ | 3 hours |
 | **Install and deploy** | [Installation Guide](docs/installation.md) | 1-2 hours |
 | **Optimize performance** | [Performance Optimization](docs/performance-optimization/README.md) | 2 hours |

@@ -21,6 +21,46 @@ Effective team composition is critical for MAGS success. The right team structur
 3. **Coordination mechanisms must match team structure**: Different sizes and structures require different coordination approaches
 4. **Clear roles prevent confusion**: Every agent must know its responsibilities and boundaries
 5. **Teams must evolve**: Static teams become ineffective as problems and contexts change
+6. **Agent count must emerge from use case characteristics** — not intuition or arbitrary limits. Without a structured process, different designers produce teams that vary by 50% in size for the same problem.
+
+---
+
+## Practical Implementation
+
+> **For tactical, step-by-step team sizing**, see [Team Size & Role Separation](../implementation-guides/team-size-role-separation.md) in the Implementation Guides. It provides the full 7-dimension scoring worksheet, the AND Test, Single Expert Test, Data Domain Rule, and hardened combination rules.
+
+### The Three Tests for Role Splitting
+
+When deciding whether to split a role into two agents, apply these tests in order:
+
+**1. The AND Test** (primary test)
+Write the system prompt for the proposed combined agent. If it requires the word "AND" to connect two fundamentally different disciplines, split them.
+- ❌ "Analyse separation thermodynamics AND calculate market price economics" → split
+- ✅ "Analyse batch performance AND compare to golden batch" → same domain, combine
+
+**2. The Single Expert Test**
+Ask: "Would a single human expert be expected to have both of these skills?" A process engineer and an economist are different people. If the answer is no, split.
+
+**3. The Data Domain Rule**
+If the two roles evaluate fundamentally different data schemas (e.g., thermodynamic sensor readings vs. financial market price feeds), they must be separate agents. Different domain knowledge + different data sources + different reasoning = different agents.
+
+### Mandatory Separations (Non-Negotiable)
+
+These separations cannot be overridden by any efficiency or cost argument:
+
+| Separation | Reason |
+|-----------|--------|
+| Guardian/Validator must be independent from any economic/optimisation role | The Guardian's value comes entirely from having no incentive to relax constraints for profit |
+| Executor must not have decision-making authority | Creates auditable chain of custody: propose → approve → execute |
+| Monitor must not have write access to control systems | Prevents a data collection error from accidentally triggering a control action |
+
+### Cross-LLM Validation
+
+The team sizing process has been validated across multiple AI systems (Claude, ChatGPT, Gemini, Grok). Without a structured process, the same use case produced teams of 4, 5, 5, and 6 agents — a 50% variance. After applying the hardened scoring rules and combination tests, all four systems converged to consistent team designs.
+
+**The implication**: Team composition decisions must be documented with explicit reasoning, not just a final count. The reasoning is as important as the number.
+
+The MAGS Configuration Wizard includes a structured scoring worksheet that applies these rules step-by-step. Contact XMPro for access to the Configuration Wizard.
 
 ---
 

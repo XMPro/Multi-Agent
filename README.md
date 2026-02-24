@@ -33,12 +33,12 @@ XMPro MAGS deploys teams of AI agents that function as virtual workers, collabor
 ### 🎯 I am a Business Executive
 **Focus**: Business value, ROI, strategic fit
 
-→ [Business Value & Use Cases](docs/use-cases/README.md) | [Case Studies](case-studies/README.md) | [When to Use MAGS](docs/decision-guides/README.md) | [ROI & Adoption](docs/adoption-guidance/README.md)
+→ [Business Value & Use Cases](docs/use-cases/README.md) | [Case Studies](case-studies/README.md) | [When to Use MAGS](docs/decision-guides/README.md) | [ROI & Adoption](docs/adoption-guidance/README.md) | [Business FAQ](docs/faq/business.md)
 
 ### 🏗️ I am a Solution Architect
 **Focus**: Architecture, integration, design decisions
 
-→ [Architecture Overview](docs/architecture/README.md) | [Integration Patterns](docs/integration/README.md) | [Decision Guides](docs/decision-guides/README.md) | [Framework Positioning](docs/strategic-positioning/README.md)
+→ [Architecture Overview](docs/architecture/README.md) | [Integration Patterns](docs/integration/README.md) | [Decision Guides](docs/decision-guides/README.md) | [Framework Positioning](docs/strategic-positioning/README.md) | [Architecture FAQ](docs/faq/architecture.md)
 
 ### 💻 I am a Developer
 **Focus**: Implementation, APIs, code examples
@@ -329,7 +329,10 @@ For developers and integrators
 Reference materials and standards
 
 - **[Glossary](docs/Glossary.md)** - Comprehensive terminology reference (200+ terms)
-- **[FAQ](docs/faq/)** - Frequently Asked Questions (business, architecture, technical)
+- **[FAQ](docs/faq/)** - Frequently Asked Questions
+  - [Business FAQ](docs/faq/business.md) — what MAGS is, comparisons, trust & safety, value timelines
+  - [Architecture FAQ](docs/faq/architecture.md) — team design, agent roles, capabilities & limits, core concepts
+  - [Technical FAQ](docs/faq/technical.md) — setup, databases, monitoring, troubleshooting
 - **[Accessibility](docs/accessibility.md)** - Web accessibility guidelines
 - **[Naming Conventions](docs/naming-conventions)** - Project naming standards
 

@@ -8,7 +8,7 @@ This document outlines how to interact with XMPro MAGS agents through messaging.
 
 Before you can start chatting with an agent, you MUST initialize a conversation:
 
-**Topic**: `XMAGS/{teamId}/CMD/chat_new/{agentId}`
+**Topic**: `XMAGS/{teamId}/CMD/chat/new/{agentId}`
 
 **Payload**:
 ```json
@@ -69,7 +69,7 @@ After initialization, you can send messages using the conversation Id received:
 
 To cancel a chat thats in progress:
 
-**Topic**: `XMAGS/{teamId}/CMD/chat_cancel/{agentId}/{conversationId}`
+**Topic**: `XMAGS/{teamId}/CMD/chat/cancel/{agentId}/{conversationId}`
 
 **Payload**:
 ```json
@@ -87,7 +87,7 @@ The agent sends two types of responses:
 
 1. **Progress Updates** (Multiple, Optional)
    
-   **Topic**: `XMAGS/{teamId}/EVT/chat_progress/{agentId}/{conversationId}`
+   **Topic**: `XMAGS/{teamId}/EVT/chat/progress/{agentId}/{conversationId}`
    
    **Standard Progress Update**:
    ```json
@@ -119,7 +119,7 @@ The agent sends two types of responses:
 
 2. **Final Response**
    
-   **Topic**: `XMAGS/{teamId}/EVT/chat_response/{agentId}/{conversationId}`
+   **Topic**: `XMAGS/{teamId}/EVT/chat/response/{agentId}/{conversationId}`
    
    **Payload**:
    ```json
@@ -170,7 +170,7 @@ sequenceDiagram
     participant DB as Graph Database
     
     Note over C,A: Step 1: Initialize Conversation
-    C->>A: chat_new (with new conversation_id)
+    C->>A: chat/new (with new conversation_id)
     A->>C: initialization confirmation
     
     Note over C,A: Step 2: Send First Message
@@ -221,7 +221,7 @@ For the complete topic naming convention, see [Message Broker Topic Naming Conve
 
 When an observation is triggered, you'll receive a metadata message:
 
-**Topic**: `XMAGS/{teamId}/EVT/observation_result/{agentId}`
+**Topic**: `XMAGS/{teamId}/EVT/observation/result/{agentId}`
 
 **Payload**:
 ```json
@@ -244,7 +244,7 @@ RETURN m
 
 When a reflection is triggered, you'll receive a metadata message:
 
-**Topic**: `XMAGS/{teamId}/EVT/reflection_result/{agentId}`
+**Topic**: `XMAGS/{teamId}/EVT/reflection/result/{agentId}`
 
 **Payload**:
 ```json
@@ -269,7 +269,7 @@ The agent sends several types of plan-related messages:
 
 ### New Plan Creation
 
-**Topic**: `XMAGS/{teamId}/EVT/plan_new/{agentId}`
+**Topic**: `XMAGS/{teamId}/EVT/plan/new/{agentId}`
 
 **Payload**:
 ```json
@@ -284,7 +284,7 @@ The agent sends several types of plan-related messages:
 
 ### Plan Updates
 
-**Topic**: `XMAGS/{teamId}/EVT/plan_update/{agentId}`
+**Topic**: `XMAGS/{teamId}/EVT/plan/update/{agentId}`
 
 **Payload**:
 ```json
@@ -299,7 +299,7 @@ The agent sends several types of plan-related messages:
 
 ### Plan Tasks Distribution
 
-**Topic**: `XMAGS/{teamId}/CMD/plan_task`
+**Topic**: `XMAGS/{teamId}/CMD/plan/task`
 
 **Payload**:
 ```json
@@ -315,7 +315,7 @@ The agent sends several types of plan-related messages:
 
 ### Plan Actions Distribution
 
-**Topic**: `XMAGS/{teamId}/CMD/plan_action`
+**Topic**: `XMAGS/{teamId}/CMD/plan/action`
 
 **Payload**:
 ```json

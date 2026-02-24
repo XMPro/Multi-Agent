@@ -195,7 +195,7 @@ MAGS is **~90% business process intelligence** (decision-making, planning, memor
 /docs          — all documentation (28 topic areas)
 /src           — agent profile templates and configuration examples
 /case-studies  — real-world implementation case studies
-/research      — research papers and academic references
+/research      — [XMPro research papers](research/README.md) (cognitive architecture, utility functions, IP protection, executive guide)
 ```
 
 ---
@@ -212,7 +212,18 @@ For support or questions: [support@xmpro.com](mailto:support@xmpro.com)
 
 ## References
 
+### XMPro Research Papers
+- [Neuroscience-Inspired Cognitive Architecture for Multi-Agent Systems](research/2025.9.9_Neuroscience-Inspired%20Cognitive%20Architecture%20for%20Multi-Agent%20Systems.pdf) — September 2025
+- [Utility Functions for Industrial Multi-Agent Systems](research/Utility_Function_Paper_Nov25.pdf) — November 2025
+- [Senior Manager's Guide to MAGS](research/2025.10.22_Senior%20Managers%20Guide%20to%20MAGS.pdf) — October 2025
+- [IP Protection for Industrial Agentic Systems](research/2026.02.02_IP_Protection_for_Industrial_Agentic_Systems.pdf) — February 2026
+
+→ [Full research index with descriptions](research/README.md)
+
+### Academic Research
 - [Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442) — Park et al., 2023 (Stanford)
+
+### XMPro Blog Series
 - [Part 1: From Railroads to AI — The Evolution of Game-Changing Utilities](https://xmpro.com/part-1-from-railroads-to-ai-the-evolution-of-game-changing-utilities/)
 - [Part 2: The Future of Work — Harnessing Generative Agents in Manufacturing](https://xmpro.com/part2-the-future-of-work-harnessing-generative-agents-in-manufacturing/)
 - [Part 3: AI at the Core — LLMs and Data Pipelines for Industrial Multi-Agent Generative Systems](https://xmpro.com/part-3-ai-at-the-core-llms-and-data-pipelines-for-industrial-multi-agent-generative-systems/)

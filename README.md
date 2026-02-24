@@ -23,6 +23,8 @@ MAGS is **~90% business process intelligence** (decision-making, planning, memor
 
 **Research foundation**: MAGS Cognitive Agents build on Stanford's [Generative Agents](https://arxiv.org/abs/2304.03442) (Park et al., 2023), extending the observe-reflect-plan-act (ORPA) architecture for industrial applications.
 
+![XMPro ORPA Memory Cycle](docs/concepts/images/XMProORPAMemoryCycle.png)
+
 → [Why MAGS](docs/concepts/whymags.md) · [Architecture](docs/architecture/two-layer-framework.md) · [When NOT to use MAGS](docs/decision-guides/when-not-to-use-mags.md)
 
 ---

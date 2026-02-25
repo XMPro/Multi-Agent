@@ -119,6 +119,7 @@ ON MATCH SET
   m.last_modified_date = datetime()
 
 MERGE (m)-[:USES]->(pOpenAI)
+MERGE (libRAG)-[:CONTAINS]->(m)
 
 WITH libRAG
 
@@ -165,6 +166,7 @@ ON MATCH SET
   m.last_modified_date = datetime()
 
 MERGE (m)-[:USES]->(pOllama)
+MERGE (libRAG)-[:CONTAINS]->(m)
 
 WITH libRAG
 

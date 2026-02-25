@@ -223,45 +223,57 @@ ollama --version
 
 ## Pulling Models
 
-### Required Embedding Models
+### Docker Deployment - Using docker exec
 
-**Pull both embedding models (or at least one):**
+When running Ollama in Docker, use `docker exec` to pull models into the container:
 
 ```bash
-# Nomic Embed Text (768 dimensions)
-ollama pull nomic-embed-text:latest
+# Required Embedding Models (pull at least one)
+docker exec ollama ollama pull nomic-embed-text:latest    # 768 dimensions
+docker exec ollama ollama pull mxbai-embed-large:latest   # 1024 dimensions
 
-# MxBai Embed Large (1024 dimensions)
-ollama pull mxbai-embed-large:latest
+# Recommended Inference Models - Choose based on hardware
+docker exec ollama ollama pull llama3.2:3b                # Small/Fast (~2GB)
+docker exec ollama ollama pull llama3.1:8b                # Medium (~5GB)
+docker exec ollama ollama pull mistral:7b                 # Medium (~4GB)
+docker exec ollama ollama pull qwen2.5:7b                 # Medium (~5GB)
+docker exec ollama ollama pull deepseek-r1:8b             # Medium (~5GB)
+
+# Coding-Optimized Models (GPT-4o-mini alternative)
+docker exec ollama ollama pull qwen2.5-coder:7b           # Best for code (~5GB)
+
+# Large Models (requires 24GB+ VRAM)
+docker exec ollama ollama pull llama3.1:70b               # Large (~40GB)
+docker exec ollama ollama pull qwen2.5:72b                # Large (~40GB)
+
+# Verify models are loaded
+docker exec ollama ollama list
+
+# Test a model
+docker exec ollama ollama run llama3.2:3b "Hello, how are you?"
 ```
 
-### Recommended Inference Models
+### Native Installation - Direct Commands
 
-**Choose based on your hardware capabilities:**
+For native Ollama installations (non-Docker):
 
 ```bash
-# Small/Fast - Good for low-end hardware (3B parameters, ~2GB)
-ollama pull llama3.2:3b
+# Required Embedding Models
+ollama pull nomic-embed-text:latest
+ollama pull mxbai-embed-large:latest
 
-# Medium - Balanced quality and speed (7-8B parameters, ~4-5GB each)
+# Recommended Inference Models
+ollama pull llama3.2:3b
 ollama pull llama3.1:8b
 ollama pull mistral:7b
 ollama pull qwen2.5:7b
 ollama pull deepseek-r1:8b
+ollama pull qwen2.5-coder:7b
 
-# Large - Best quality, requires more resources (70B+ parameters, ~40GB+)
+# Large Models
 ollama pull llama3.1:70b
 ollama pull qwen2.5:72b
 ```
-
-### Model Selection Guide
-
-| Hardware Profile | Recommended Models | Total Disk Space |
-|-----------------|-------------------|------------------|
-| **Minimal** (8GB RAM, CPU) | nomic-embed-text + llama3.2:3b | ~3GB |
-| **Standard** (16GB RAM, GPU 8GB) | Both embeddings + llama3.1:8b + mistral:7b | ~12GB |
-| **Performance** (32GB RAM, GPU 16GB) | Both embeddings + qwen2.5:7b + deepseek-r1:8b | ~15GB |
-| **High-End** (64GB+ RAM, GPU 24GB+) | Both embeddings + llama3.1:70b | ~45GB |
 
 ---
 
@@ -444,19 +456,100 @@ curl http://localhost:11434/api/generate -d '{
 # Should return a JSON response with generated text
 ```
 
-### Integration Test with XMPro
+## Ubuntu NVIDIA GPU Setup for Ollama
 
-**From your XMPro AI Agents system:**
+### Complete Setup Steps
 
-1. Configure Ollama as an AI Provider
-2. Test embedding generation:
-   - Select Ollama as embedding provider
-   - Use `nomic-embed-text:latest` model
-   - Generate embeddings for sample text
-3. Test inference:
-   - Create a test agent profile using Ollama
-   - Select one of your pulled models (e.g., `llama3.2:3b`)
-   - Send a test query and verify response
+#### 1. Detect GPUs
+```bash
+lspci | grep -i -E "vga|3d|display"
+```
+Expected output: NVIDIA GPU listed (e.g., `NVIDIA Corporation AD104GL [L4]`)
+
+#### 2. Check Active Drivers
+```bash
+lspci -k | grep -A 3 -i "vga\|3d\|display"
+```
+If using `nouveau` driver, you need to switch to the official NVIDIA driver.
+
+#### 3. Identify Available NVIDIA Drivers
+```bash
+ubuntu-drivers devices
+```
+Note the recommended driver (e.g., `nvidia-driver-590-open`)
+
+#### 4. Install NVIDIA Driver
+```bash
+sudo apt install nvidia-driver-590-open
+sudo reboot
+```
+
+After reboot, verify:
+```bash
+nvidia-smi
+```
+Should show your GPU, driver version, and CUDA version.
+
+#### 5. Add NVIDIA Container Toolkit Repository
+```bash
+# Add GPG key
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+  sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+# Add repository
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Update and install
+sudo apt update
+sudo apt install nvidia-container-toolkit
+```
+
+#### 6. Configure Docker NVIDIA Runtime
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+#### 7. Verify GPU Works Inside Docker
+```bash
+docker run --rm --gpus all ubuntu nvidia-smi
+```
+✅ Should show your NVIDIA GPU with VRAM, driver version, and CUDA version.
+
+#### 8. Run Ollama Installation
+```bash
+cd ~/containers/ollama
+bash management/install.sh
+```
+- The script will auto-detect the NVIDIA GPU via `nvidia-smi`
+- Confirm GPU with `y` when prompted
+- GPU configuration will be automatically added to docker-compose.yml
+
+### Verification Checklist
+
+| Component | Command | Expected Result |
+|-----------|---------|-----------------|
+| NVIDIA Driver | `nvidia-smi` | Shows GPU, driver version, CUDA |
+| Docker NVIDIA Runtime | `docker info \| grep -i nvidia` | Shows nvidia runtime |
+| GPU in Docker | `docker run --rm --gpus all ubuntu nvidia-smi` | Shows GPU inside container |
+| Ollama GPU | `docker exec ollama nvidia-smi` | Shows GPU usage by Ollama |
+
+### Troubleshooting
+
+**Issue: "nouveau" driver in use**
+- Solution: Install official NVIDIA driver as shown in step 4
+
+**Issue: "nvidia-container-toolkit not found"**
+- Solution: Add NVIDIA repository as shown in step 5
+
+**Issue: Docker can't access GPU**
+- Solution: Configure runtime and restart Docker (step 6)
+
+**Issue: Ollama not using GPU**
+- Check docker-compose.yml has GPU devices configuration
+- Verify with: `docker exec ollama nvidia-smi`
 
 ---
 
@@ -466,7 +559,7 @@ curl http://localhost:11434/api/generate -d '{
 
 **NVIDIA GPU (CUDA):**
 
-Docker:
+Docker (automatically configured by install.sh):
 ```yaml
 services:
   ollama:
@@ -543,22 +636,6 @@ Interactive installation wizard with:
 ./management/install.sh
 ```
 
-### pull-models.ps1 / pull-models.sh
-Model download wizard with:
-- Predefined profiles (Minimal, Standard, Performance, High-End)
-- Custom model selection
-- Disk space checking
-- Progress tracking
-
-**Usage:**
-```powershell
-# Windows
-.\management\pull-models.ps1
-
-# Linux
-./management/pull-models.sh
-```
-
 ### manage-ssl.ps1 / manage-ssl.sh
 SSL certificate management:
 - Generate self-signed certificates
@@ -578,30 +655,6 @@ SSL certificate management:
 ./management/manage-ssl.sh generate --domain ollama.company.com
 ./management/manage-ssl.sh enable
 ./management/manage-ssl.sh status
-```
-
-### manage-ollama.ps1 / manage-ollama.sh
-Service operations:
-- Start/stop/restart
-- Status monitoring
-- Log viewing
-- Model management
-- Resource statistics
-- Service updates
-
-**Usage:**
-```powershell
-# Windows
-.\management\manage-ollama.ps1 status
-.\management\manage-ollama.ps1 logs --follow
-.\management\manage-ollama.ps1 models
-.\management\manage-ollama.ps1 stats
-
-# Linux
-./management/manage-ollama.sh status
-./management/manage-ollama.sh logs --follow
-./management/manage-ollama.sh models
-./management/manage-ollama.sh stats
 ```
 
 ---
@@ -1039,29 +1092,3 @@ Before deploying Ollama for production use with XMPro AI Agents:
 - [ ] Documentation updated with your specific configuration
 
 ---
-
-## Resources
-
-**Official Documentation:**
-- Ollama Website: https://ollama.ai
-- Ollama GitHub: https://github.com/ollama/ollama
-- Model Library: https://ollama.ai/library
-
-**XMPro Integration:**
-- XMPro AI Agents Documentation: [Link to your docs]
-- AI Provider Configuration Guide: [Link to your docs]
-
-**Community:**
-- Ollama Discord: https://discord.gg/ollama
-- Ollama Reddit: https://reddit.com/r/ollama
-
----
-
-## Support
-
-For issues specific to:
-- **Ollama setup**: Create issue at https://github.com/ollama/ollama/issues
-- **XMPro integration**: Contact XMPro support
-- **Docker deployment**: Check Docker logs and configuration
-
-For general LLM and embedding questions, consult the model documentation at https://ollama.ai/library

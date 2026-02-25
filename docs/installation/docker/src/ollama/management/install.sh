@@ -358,16 +358,28 @@ echo -e "${GREEN}[OK] Updated .env with configuration${NC}"
 if [ "$GPU_DRIVER" != "none" ]; then
     echo -e "${GRAY}Configuring GPU support in docker-compose.yml...${NC}"
     
-    # Insert GPU devices into existing deploy section (following Milvus pattern)
-    # Build GPU devices configuration with proper indentation
-    GPU_DEVICES="
+    # Create a temporary file with GPU configuration
+    cat > /tmp/gpu_config.txt <<EOF
           devices:
             - driver: $GPU_DRIVER
               count: all
-              capabilities: [gpu]"
+              capabilities: [gpu]
+EOF
     
-    # Use perl to insert GPU devices after reservations section
-    perl -i -0pe "s/(deploy:.*?reservations:\s+cpus:.*?memory:.*?)/\$1$GPU_DEVICES/s" docker-compose.yml
+    # Use awk to insert GPU devices after the memory line in reservations section
+    awk '
+    /reservations:/ { in_reservations=1 }
+    in_reservations && /memory:/ {
+        print
+        system("cat /tmp/gpu_config.txt")
+        in_reservations=0
+        next
+    }
+    { print }
+    ' docker-compose.yml > docker-compose.yml.tmp
+    
+    mv docker-compose.yml.tmp docker-compose.yml
+    rm -f /tmp/gpu_config.txt
     
     echo -e "${GREEN}[OK] GPU support enabled in docker-compose.yml${NC}"
 fi

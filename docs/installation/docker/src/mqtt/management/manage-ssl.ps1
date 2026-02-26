@@ -123,7 +123,7 @@ function Enable-SSL {
     # Add SSL configuration to mosquitto.conf
     $ConfigContent = Get-Content "config\mosquitto.conf" -Raw
     if ($ConfigContent -notmatch "listener 8883") {
-        $ConfigContent += "`n`n# SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
+        $ConfigContent += "`n`n# MQTT SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false`n`n# WebSocket SSL Configuration`nlistener 9002`nprotocol websockets`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
         Set-Content -Path "config\mosquitto.conf" -Value $ConfigContent
     }
     

@@ -216,7 +216,7 @@ persistence true
 persistence_location /mosquitto/data/
 log_dest file /mosquitto/log/mosquitto.log
 
-# Listener Configuration
+# MQTT Listener (non-SSL)
 listener 1883
 protocol mqtt
 
@@ -233,9 +233,13 @@ log_type information
 # Persistence Configuration
 autosave_interval 1800
 autosave_on_changes true
+
+# WebSocket Listener (non-SSL)
+listener 9001
+protocol websockets
 "@
     $MosquittoConf | Out-File -FilePath "config\mosquitto.conf" -Encoding ASCII
-    Write-Host "Created mosquitto.conf" -ForegroundColor Green
+    Write-Host "Created mosquitto.conf with WebSocket support" -ForegroundColor Green
 } else {
     Write-Host "mosquitto.conf already exists" -ForegroundColor Gray
 }
@@ -370,7 +374,7 @@ if ($EnableSSL) {
             
             # Update mosquitto.conf to enable SSL
             $ConfigContent = Get-Content "config\mosquitto.conf" -Raw
-            $ConfigContent += "`n`n# SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
+            $ConfigContent += "`n`n# MQTT SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false`n`n# WebSocket SSL Configuration`nlistener 9002`nprotocol websockets`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
             Set-Content -Path "config\mosquitto.conf" -Value $ConfigContent
             
             # Create or update .env file for SSL

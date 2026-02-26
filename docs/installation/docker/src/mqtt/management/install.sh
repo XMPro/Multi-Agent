@@ -272,7 +272,7 @@ persistence true
 persistence_location /mosquitto/data/
 log_dest file /mosquitto/log/mosquitto.log
 
-# Listener Configuration
+# MQTT Listener (non-SSL)
 listener 1883
 protocol mqtt
 
@@ -289,9 +289,13 @@ log_type information
 # Persistence
 autosave_interval 1800
 autosave_on_changes true
+
+# WebSocket Listener (non-SSL)
+listener 9001
+protocol websockets
 EOF
 
-print_color "$GREEN" "Created mosquitto.conf"
+print_color "$GREEN" "Created mosquitto.conf with WebSocket support"
 
 # Create ACL
 cat > config/acl.txt << EOF
@@ -389,9 +393,18 @@ if [ "$ENABLE_SSL" = true ]; then
         if [ "$ENABLE_SSL" = true ]; then
             cat >> config/mosquitto.conf << EOF
 
-# SSL Configuration
+# MQTT SSL Configuration
 listener 8883
 protocol mqtt
+cafile /mosquitto/certs/ca.crt
+certfile /mosquitto/certs/server.crt
+keyfile /mosquitto/certs/server.key
+tls_version tlsv1.2
+require_certificate false
+
+# WebSocket SSL Configuration
+listener 9002
+protocol websockets
 cafile /mosquitto/certs/ca.crt
 certfile /mosquitto/certs/server.crt
 keyfile /mosquitto/certs/server.key
@@ -401,7 +414,7 @@ EOF
             
             # Update .env
             sed -i 's/ENABLE_SSL=false/ENABLE_SSL=true/' .env
-            print_color "$GREEN" "SSL configuration enabled"
+            print_color "$GREEN" "SSL configuration enabled (MQTT + WebSocket)"
         fi
     fi
 fi

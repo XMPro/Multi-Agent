@@ -380,7 +380,7 @@ if ($GPUDriver -ne "none") {
 "@
     
     # Insert GPU devices after the reservations section in deploy
-    $composeContent = $composeContent -replace '(deploy:[\s\S]*?reservations:\s+cpus:.*?memory:.*?)', "`$1$gpuDevicesConfig"
+    $composeContent = $composeContent -replace '(deploy:[\s\S]*?reservations:)', "`$1$gpuDevicesConfig"
     
     $composeContent | Set-Content "docker-compose.yml"
     Write-Host "[OK] GPU support enabled in docker-compose.yml" -ForegroundColor Green

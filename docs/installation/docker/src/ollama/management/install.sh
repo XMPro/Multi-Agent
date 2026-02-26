@@ -355,32 +355,25 @@ fi
 echo -e "${GREEN}[OK] Updated .env with configuration${NC}"
 
 # Update docker-compose.yml if GPU is enabled
+# The docker-compose.yml has a bare "reservations:" key with no cpu/memory limits.
+# We insert the devices block directly after that line.
 if [ "$GPU_DRIVER" != "none" ]; then
     echo -e "${GRAY}Configuring GPU support in docker-compose.yml...${NC}"
-    
-    # Create a temporary file with GPU configuration
-    cat > /tmp/gpu_config.txt <<EOF
-          devices:
-            - driver: $GPU_DRIVER
-              count: all
-              capabilities: [gpu]
-EOF
-    
-    # Use awk to insert GPU devices after the memory line in reservations section
-    awk '
-    /reservations:/ { in_reservations=1 }
-    in_reservations && /memory:/ {
+
+    awk -v driver="$GPU_DRIVER" '
+    /reservations:/ {
         print
-        system("cat /tmp/gpu_config.txt")
-        in_reservations=0
+        print "          devices:"
+        print "            - driver: " driver
+        print "              count: all"
+        print "              capabilities: [gpu]"
         next
     }
     { print }
     ' docker-compose.yml > docker-compose.yml.tmp
-    
+
     mv docker-compose.yml.tmp docker-compose.yml
-    rm -f /tmp/gpu_config.txt
-    
+
     echo -e "${GREEN}[OK] GPU support enabled in docker-compose.yml${NC}"
 fi
 

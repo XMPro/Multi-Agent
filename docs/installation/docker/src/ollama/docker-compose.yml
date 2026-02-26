@@ -39,12 +39,7 @@ services:
       - ollama-network
     deploy:
       resources:
-        limits:
-          cpus: '4'
-          memory: 8G
         reservations:
-          cpus: '2'
-          memory: 4G
     logging:
       driver: "json-file"
       options:

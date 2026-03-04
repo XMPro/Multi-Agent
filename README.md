@@ -66,6 +66,8 @@ MAGS is **~90% business process intelligence** (decision-making, planning, memor
 | Design a MAGS solution | [Best Practices](docs/best-practices/README.md) · [Design Patterns](docs/design-patterns/README.md) |
 | Size and compose a team | [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md) |
 | Configure agents and teams | [Implementation Guides](docs/implementation-guides/README.md) |
+| Write effective system prompts | [System Prompts](docs/implementation-guides/system-prompts.md) · [Providing Context to Agents](docs/implementation-guides/agent-context.md) |
+| Avoid agent data interpretation errors | [Providing Context to Agents](docs/implementation-guides/agent-context.md) |
 | Install and deploy | [Installation Guide](docs/installation.md) |
 | Optimise performance | [Performance Optimization](docs/performance-optimization/README.md) |
 | Ensure compliance | [Responsible AI](docs/responsible-ai/README.md) |
@@ -115,6 +117,9 @@ MAGS is **~90% business process intelligence** (decision-making, planning, memor
   - [Testing Strategies](docs/best-practices/testing-strategies.md)
 
 - **[Implementation Guides](docs/implementation-guides)** — tactical configuration
+  - [System Prompts](docs/implementation-guides/system-prompts.md) — writing effective agent identity prompts
+  - [Providing Context to Agents](docs/implementation-guides/agent-context.md) ⭐ — system prompt vs RAG, tag naming conventions, lessons from production
+  - [Data Inventory](docs/implementation-guides/data-inventory.md) — inventory data before designing agents
   - [Behavioural Rules](docs/implementation-guides/behavioural-rules.md)
   - [Model Selection](docs/implementation-guides/model-selection.md)
   - [Team Size & Role Separation](docs/implementation-guides/team-size-role-separation.md)

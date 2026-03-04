@@ -14,7 +14,10 @@ Best Practices provide **strategic guidance** for designing, deploying, and oper
 - What makes good agents
 - Capability selection
 - Parameter tuning
+- Context design — what goes in the system prompt vs RAG
 - → See also: [Model Selection](../implementation-guides/model-selection.md) (Implementation Guide)
+- → See also: [Providing Context to Agents](../implementation-guides/agent-context.md) (Implementation Guide) — system prompt vs RAG, tag naming conventions, lessons from production
+- → See also: [System Prompts](../implementation-guides/system-prompts.md) (Implementation Guide)
 
 ### Team Composition
 - Building effective teams

@@ -49,6 +49,12 @@ These documents clarify common points of confusion and explain key distinctions:
 22. [Concurrent Data Handling](concurrent-data-handling.md): How agents process real-time data streams
 23. [Assistant Agent Type](assistant-agent-type.md): Specialized capabilities of Assistant agents
 
+### Production Lessons ⭐ NEW
+
+Patterns observed in real MAGS deployments — what goes wrong and how to prevent it:
+
+- **[Providing Context to Agents](../implementation-guides/agent-context.md)**: The most common cause of agent reasoning errors is context in the wrong place. Grammar rules (tag naming conventions, unit rules) belong in the system prompt — not in RAG. RAG cannot fix what the agent doesn't know it doesn't know. Includes lessons learned from production deployments.
+
 **For tactical implementation guidance**, see [Implementation Guides](../implementation-guides/README.md).
 
 ## Document Structure

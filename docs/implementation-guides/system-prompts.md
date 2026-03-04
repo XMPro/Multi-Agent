@@ -15,11 +15,20 @@ The system prompt defines **WHO the agent is** — its identity, expertise, and 
 | Include | Don't Include |
 |---------|--------------|
 | Agent's role and identity | Step-by-step procedures |
-| Domain expertise and background | Specific data tag names |
+| Domain expertise and background | Specific data tag names (e.g. FI3101, TC3106) |
 | Communication style and tone | Tool usage instructions |
 | Scope and boundaries (what it covers) | Timing parameters |
 | Relationship to other agents | Specific threshold values |
 | High-level decision philosophy | Detailed calculation methods |
+| **Data interpretation rules** (tag naming conventions, unit rules, comparison prohibitions) | — |
+
+> **Important distinction — tag names vs tag naming conventions:**
+>
+> - **Tag names** (e.g. `FI3101`, `TC3106`, `FC3103_SV`) are deployment-specific. They change between plants, units, and systems. They do NOT belong in the system prompt — put them in tool configuration and the data inventory.
+>
+> - **Tag naming conventions** (e.g. "tags ending in `_MV` are valve positions in %, never in engineering units; tags ending in `_SV` are setpoints in engineering units; direct measurement tags have no suffix") are grammar rules that apply to every tag the agent will ever see. They DO belong in the system prompt — in a **Data Interpretation Rules** section — because they must be active at reasoning time, not retrieved on demand from RAG.
+>
+> RAG is the wrong tool for naming conventions. An agent only retrieves what it knows to query for. If the agent doesn't know that `_MV` means something different from `_SV`, it won't query for the distinction — it will just compare the numbers. The rule must be in the system prompt so it is always present.
 
 ---
 
@@ -105,3 +114,14 @@ After writing the prompt, ask: "If I gave this prompt to a new employee on their
 - [ ] No step-by-step procedures or calculation formulas
 - [ ] Boundaries explicitly state what the agent does NOT do
 - [ ] Prompt is stable — wouldn't need to change for a different deployment
+- [ ] **For any agent that reads process data**: Data Interpretation Rules section included, covering tag naming conventions, unit rules, and the correct method to assess control loop performance
+- [ ] **Tag naming conventions** (grammar rules applying to all tags) are in the system prompt — NOT left to RAG retrieval
+- [ ] **Specific tag names** (deployment-specific identifiers) are NOT in the system prompt — they belong in tool configuration
+
+---
+
+## Related Guides
+
+- **[Providing Context to Agents](agent-context.md)** — Full guide on system prompt vs RAG, what RAG does and doesn't do, tag names vs naming conventions, and lessons learned from production deployments
+- **[Behavioural Rules](behavioural-rules.md)** — Where operational instructions and conditional duties belong
+- **[Data Inventory](data-inventory.md)** — How to establish what data is available before designing agent profiles

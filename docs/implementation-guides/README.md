@@ -92,6 +92,16 @@ The most common architectural mistake is creating one profile per instance. Unde
 **Practice**: Set the planning cycle interval based on the process dynamics, not the LLM speed. If the process takes 15 minutes to respond to a change, a 15-minute planning cycle is appropriate. Shorter intervals waste LLM calls; longer intervals miss changes.
 → **[Full guide: Planning Cycle Interval](planning-cycle-interval.md)**
 
+### 3.6 Providing Context to Agents — System Prompt vs RAG
+**Practice**: Context has two forms that must be handled differently. Grammar rules (tag naming conventions, unit rules, comparison prohibitions) belong in the system prompt — they must be active at all times and cannot be retrieved on demand. Reference knowledge (operating procedures, alarm setpoints, process descriptions) belongs in the RAG collection — it is retrieved when needed. Confusing these two categories is the most common cause of agent data interpretation errors.
+
+Key rules:
+- **Tag naming conventions** (e.g. "_MV = valve position in %, never comparable to _SV") → **system prompt**
+- **Specific tag names** (e.g. FI3101, TC3106) → **tool configuration, not system prompt**
+- **Tag Reference document** → **RAG collection of every agent that reads process data** (most commonly omitted, most critical)
+- RAG cannot fix unknown unknowns — if the agent doesn't know it doesn't know something, it won't query for it
+→ **[Full guide: Providing Context to Agents](agent-context.md)**
+
 ---
 
 ## 4. Measures, Utilities, and Objectives
@@ -233,6 +243,9 @@ The most common architectural mistake is creating one profile per instance. Unde
 | 8 | **Consensus for routine decisions** | Heavyweight process suspends planning; slows everything down | Use communication for routine; consensus only for binding agreements |
 | 9 | **No data inventory before design** | Agents designed around data that doesn't exist | Inventory available data first (use the Configuration Wizard's Data Inventory step) |
 | 10 | **Double-counting in objectives** | Distorts the decision score; over-weights certain factors | Each real-world factor appears once in the objective |
+| 11 | **Tag naming conventions in RAG only** | Agent compares `_MV` (%) to `_SV` (t/hr) and draws false conclusions — it never queries for the convention because it doesn't know it needs to | Put tag naming conventions in the system prompt (Data Interpretation Rules section), not just in RAG |
+| 12 | **Specific tag names in system prompt** | Profile becomes deployment-specific and must be rewritten when tag names change | Tag names in tool configuration; naming conventions in system prompt |
+| 13 | **Tag Reference missing from RAG** | Agent cannot look up what a tag means, its units, or its role in a control loop | Include Tag Reference in every agent that reads process data |
 
 ---
 
@@ -258,7 +271,8 @@ The most common architectural mistake is creating one profile per instance. Unde
 |----------|---------------|
 | [Team Size & Role Separation](team-size-role-separation.md) | Scoring method, functional roles, when to split/combine, safety-critical minimum |
 | [Decision Authority](decision-authority.md) | Four authority levels, decision trees, authority matrix template |
-| [System Prompts](system-prompts.md) | Prompt structure, what belongs where, good vs bad examples |
+| [System Prompts](system-prompts.md) | Prompt structure, what belongs where, good vs bad examples, data interpretation rules |
+| [Agent Context](agent-context.md) | System prompt vs RAG, what RAG does and doesn't do, tag names vs naming conventions, lessons learned |
 | [Behavioural Rules](behavioural-rules.md) | Four rule types, writing patterns, rules by agent role |
 | [Model Selection](model-selection.md) | Three tiers, decision tree, cost-performance trade-offs, token limits |
 | [Planning Cycle Interval](planning-cycle-interval.md) | Formula, by-domain guidance, Goldilocks zone, dual spacing |

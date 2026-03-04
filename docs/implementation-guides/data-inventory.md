@@ -67,6 +67,21 @@ For each system that provides live data:
 | How current? | Stale documents lead to stale agent knowledge |
 | How large? | Affects RAG chunking and retrieval strategy |
 
+#### RAG Collection Design: Document Types by Agent Role
+
+Not all documents are equally important for all agent roles. Use the table below to assign the right documents to each agent's RAG collection. The **Tag Reference** (or equivalent) is the most commonly omitted document and the most common source of data interpretation errors — it should be in every agent that reads process data.
+
+| Document Type | What It Contains | Essential For |
+|---------------|-----------------|---------------|
+| **Tag Reference** | All tag names, descriptions, units, ranges, and control loop relationships | Monitor, Analyst (process), Guardian, Executor — any agent that reads or interprets process data |
+| **Process Description** | How the process works, equipment, normal operating conditions | All agents — provides the domain context for all reasoning |
+| **Control Philosophy** | Control loop design, setpoint limits, rate-of-change rules, authority limits | Decision-Maker, Guardian, Executor, Separation Analyst |
+| **Operating Procedures** | Step-by-step procedures for normal and abnormal operations | Decision-Maker, Executor |
+| **Safety Analysis** | SIF trip setpoints, safety limits, hazard scenarios | Guardian — essential for independent safety validation |
+| **Alarm Summary** | Alarm setpoints, priorities, and response guidance | Monitor, Guardian |
+
+> ⚠️ **Critical gap to avoid**: If the Tag Reference is not in an agent's RAG collection, the agent cannot reliably look up what a tag means, what units it is in, or how it relates to other tags in the same control loop. This is the most common cause of data interpretation errors in agent reasoning. If your system does not have a formal Tag Reference document, create a concise one as part of this inventory and include it in every data-reading agent's RAG collection.
+
 ### 4. Historical Data
 
 | Question | Why It Matters |

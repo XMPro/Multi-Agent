@@ -198,10 +198,6 @@ CREATE INDEX artifact_type_created_date_idx IF NOT EXISTS FOR (a:Artifact) ON (a
 CREATE INDEX artifact_type_id_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type, a.id);
 CREATE INDEX artifact_type_status_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type, a.status);
 
-// -------------------- Conversation --------------------
-CREATE CONSTRAINT conversation_id_unique IF NOT EXISTS FOR (c:Conversation) REQUIRE c.conversation_id IS UNIQUE;
-CREATE INDEX conversation_id_idx IF NOT EXISTS FOR (c:Conversation) ON (c.conversation_id);
-
 // -------------------- Decision --------------------
 CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (d:Decision) REQUIRE d.decision_id IS UNIQUE;
 CREATE INDEX decision_communication_type_idx IF NOT EXISTS FOR (d:Decision) ON (d.communication_type);
@@ -268,11 +264,6 @@ CREATE CONSTRAINT objective_function_id_unique IF NOT EXISTS FOR (of:ObjectiveFu
 CREATE INDEX objective_function_active_idx IF NOT EXISTS FOR (of:ObjectiveFunction) ON (of.active);
 CREATE INDEX objective_function_created_date_idx IF NOT EXISTS FOR (of:ObjectiveFunction) ON (of.created_date);
 CREATE INDEX objective_function_type_idx IF NOT EXISTS FOR (of:ObjectiveFunction) ON (of.type);
-
-// -------------------- Plan --------------------
-CREATE CONSTRAINT plan_id_unique IF NOT EXISTS FOR (p:Plan) REQUIRE p.plan_id IS UNIQUE;
-CREATE INDEX plan_active_idx IF NOT EXISTS FOR (p:Plan) ON (p.active);
-CREATE INDEX plan_status_idx IF NOT EXISTS FOR (p:Plan) ON (p.status);
 
 // -------------------- Prompt --------------------
 CREATE CONSTRAINT prompt_name_unique IF NOT EXISTS FOR (p:Prompt) REQUIRE p.name IS UNIQUE;

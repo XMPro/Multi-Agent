@@ -6,6 +6,8 @@ REMOVE n.confidence_scoring
 REMOVE n.timing_config
 REMOVE n.importance_scoring
 REMOVE n.surprise_scoring
+REMOVE n.reserved_field_user_prompt
+REMOVE n.models_providers
 
 MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
@@ -143,6 +145,10 @@ ON CREATE SET
         "default_weight": 0.5
     },
     "min_similarity_threshold": 0.3,
+    "conversation_summary_similarity_threshold": 0.65,
+    "observation_similarity_threshold": 0.75,
+    "conversation_memory_retention_days": 30,
+    "conversation_inactivity_timeout_hours": 1,
     "conversation_context": {
       "enable_adaptive_querying": true,
       "topic_shift_similarity_threshold": 0.85,
@@ -317,6 +323,10 @@ ON MATCH SET
         "default_weight": 0.5
     },
     "min_similarity_threshold": 0.3,
+    "conversation_summary_similarity_threshold": 0.65,
+    "observation_similarity_threshold": 0.75,
+    "conversation_memory_retention_days": 30,
+    "conversation_inactivity_timeout_hours": 1,
     "conversation_context": {
       "enable_adaptive_querying": true,
       "topic_shift_similarity_threshold": 0.85,

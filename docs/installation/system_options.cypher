@@ -84,11 +84,25 @@ ON CREATE SET
         "linear_scale": 0.5,
         "linear_factor": 0.01
     },
-    "agent_weights": {
-        "assistant_frequency_weight": 0.7,
-        "assistant_duration_weight": 0.3,
-        "content_frequency_weight": 0.3,
-        "content_duration_weight": 0.7
+    "component_weights": {
+      "frequency_weight": 0.5,
+      "average_weight": 0.3,
+      "consistency_weight": 0.2,
+      "assistant_frequency_weight": 0.6,
+      "assistant_average_weight": 0.3,
+      "assistant_consistency_weight": 0.1,
+      "content_frequency_weight": 0.3,
+      "content_average_weight": 0.3,
+      "content_consistency_weight": 0.4,
+      "guardian_frequency_weight": 0.2,
+      "guardian_average_weight": 0.3,
+      "guardian_consistency_weight": 0.5,
+      "expert_frequency_weight": 0.3,
+      "expert_average_weight": 0.6,
+      "expert_consistency_weight": 0.1,
+      "orchestrator_frequency_weight": 0.6,
+      "orchestrator_average_weight": 0.3,
+      "orchestrator_consistency_weight": 0.1
     }
   }',
   so.config_surprise_scoring = '{
@@ -186,6 +200,21 @@ ON CREATE SET
     "circuit_breaker_failure_threshold": 5,
     "circuit_breaker_timeout_minutes": 5,
     "health_assessment_interval_minutes": 10
+  }',
+  so.config_communication_routing = '{
+    "significance_thresholds": {
+      "guardian_always_report": 0.75,
+      "expert_always_report": 0.80,
+      "orchestrator_always_report": 0.70
+    },
+    "validation_rules": {
+      "Guardian": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Expert": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Orchestrator": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] },
+      "None": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] }
+    },
+    "approval_timeout_minutes": 15,
+    "max_pending_approvals": 10
   }',
   so.created_date = datetime(),
   so.last_modified_date = datetime()
@@ -262,12 +291,26 @@ ON MATCH SET
           "linear_scale": 0.5,
           "linear_factor": 0.01
       },
-      "agent_weights": {
-          "assistant_frequency_weight": 0.7,
-          "assistant_duration_weight": 0.3,
-          "content_frequency_weight": 0.3,
-          "content_duration_weight": 0.7
-      }
+    "component_weights": {
+      "frequency_weight": 0.5,
+      "average_weight": 0.3,
+      "consistency_weight": 0.2,
+      "assistant_frequency_weight": 0.6,
+      "assistant_average_weight": 0.3,
+      "assistant_consistency_weight": 0.1,
+      "content_frequency_weight": 0.3,
+      "content_average_weight": 0.3,
+      "content_consistency_weight": 0.4,
+      "guardian_frequency_weight": 0.2,
+      "guardian_average_weight": 0.3,
+      "guardian_consistency_weight": 0.5,
+      "expert_frequency_weight": 0.3,
+      "expert_average_weight": 0.6,
+      "expert_consistency_weight": 0.1,
+      "orchestrator_frequency_weight": 0.6,
+      "orchestrator_average_weight": 0.3,
+      "orchestrator_consistency_weight": 0.1
+    }
   }',
   so.config_surprise_scoring = '{
     "novelty_threshold": 0.7,
@@ -364,6 +407,21 @@ ON MATCH SET
     "circuit_breaker_failure_threshold": 5,
     "circuit_breaker_timeout_minutes": 5,
     "health_assessment_interval_minutes": 10
+  }',
+  so.config_communication_routing = '{
+    "significance_thresholds": {
+      "guardian_always_report": 0.75,
+      "expert_always_report": 0.80,
+      "orchestrator_always_report": 0.70
+    },
+    "validation_rules": {
+      "Guardian": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Expert": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Orchestrator": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] },
+      "None": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] }
+    },
+    "approval_timeout_minutes": 15,
+    "max_pending_approvals": 10
   }',
   so.last_modified_date = datetime()
 RETURN so

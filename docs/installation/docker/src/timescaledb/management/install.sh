@@ -320,7 +320,13 @@ cat >> .env << EOF
 PGADMIN_EMAIL=$PGADMIN_EMAIL
 PGADMIN_PASSWORD=$PGADMIN_PASSWORD
 PGADMIN_PORT=5050
+PGADMIN_HTTPS_PORT=5051
 EOF
+
+# Activate ssl profile for nginx reverse proxy when SSL is enabled
+if [ "$ENABLE_SSL" = true ]; then
+    echo "COMPOSE_PROFILES=ssl" >> .env
+fi
 
 print_color "$GREEN" "Created .env file with configuration"
 
@@ -344,7 +350,7 @@ cat > pgadmin/servers.json << EOF
 EOF
 print_color "$GREEN" "Created pgAdmin configuration"
 
-# Create nginx configuration for pgAdmin
+# Create nginx configuration for pgAdmin (only used when ssl profile is active)
 if [ "$ENABLE_SSL" = true ]; then
     echo "Creating nginx configuration for pgAdmin HTTPS..."
     cat > pgadmin/nginx.conf << 'EOF'
@@ -357,26 +363,7 @@ http {
         server pgadmin:80;
     }
 
-    # HTTP server (port 5050)
-    server {
-        listen 80;
-        server_name DOMAIN_PLACEHOLDER;
-
-        location / {
-            proxy_pass http://pgadmin;
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto http;
-            proxy_set_header X-Script-Name /;
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-        }
-    }
-
-    # HTTPS server (port 5051)
+    # HTTPS server - nginx handles SSL termination, proxies to pgAdmin HTTP
     server {
         listen 443 ssl;
         server_name DOMAIN_PLACEHOLDER;
@@ -389,20 +376,17 @@ http {
 
         location / {
             proxy_pass http://pgadmin;
-            # Send external-facing host with port to pgAdmin
-            proxy_set_header Host DOMAIN_PLACEHOLDER:5051;
+            proxy_set_header Host $http_host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             # Tell pgAdmin it's being accessed via HTTPS
             proxy_set_header X-Forwarded-Proto https;
-            proxy_set_header X-Forwarded-Host DOMAIN_PLACEHOLDER:5051;
-            proxy_set_header X-Forwarded-Port 5051;
             proxy_set_header X-Script-Name /;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
-            
+
             # Increase timeouts for long-running queries
             proxy_connect_timeout 600;
             proxy_send_timeout 600;
@@ -413,42 +397,7 @@ http {
 }
 EOF
     sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" pgadmin/nginx.conf
-    print_color "$GREEN" "Created nginx.conf for pgAdmin (HTTP on 5050, HTTPS on 5051)"
-else
-    echo "Creating nginx configuration for pgAdmin HTTP..."
-    cat > pgadmin/nginx.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
-
-http {
-    upstream pgadmin {
-        server pgadmin:80;
-    }
-
-    server {
-        listen 80;
-        server_name DOMAIN_PLACEHOLDER;
-
-        location / {
-            proxy_pass http://pgadmin;
-            # Use $http_host to preserve port in Host header
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Script-Name /;
-            # Disable proxy redirect rewriting
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-        }
-    }
-}
-EOF
-    sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" pgadmin/nginx.conf
-    print_color "$GREEN" "Created nginx.conf for pgAdmin HTTP"
+    print_color "$GREEN" "Created nginx.conf for pgAdmin HTTPS (port 5051)"
 fi
 
 # Create backup script

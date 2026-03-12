@@ -56,19 +56,14 @@ services:
     restart: unless-stopped
     ports:
       - "${PGADMIN_PORT:-5050}:80"
-      - "${PGADMIN_HTTPS_PORT:-5051}:443"
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?pgAdmin password must be set}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      # Enable HTTPS support
-      PGADMIN_ENABLE_TLS: ${ENABLE_SSL:-false}
     volumes:
       - ./timescaledb-data/pgadmin:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
-      - ./certs/server.crt:/certs/server.cert:ro
-      - ./certs/server.key:/certs/server.key:ro
     depends_on:
       - timescaledb
     networks:
@@ -78,6 +73,37 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy for pgAdmin HTTPS (only active with ssl profile)
+  pgadmin-nginx:
+    image: nginx:alpine
+    container_name: timescaledb-pgadmin-nginx
+    restart: unless-stopped
+    profiles:
+      - ssl
+    ports:
+      - "${PGADMIN_HTTPS_PORT:-5051}:443"
+    volumes:
+      - ./pgadmin/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/server.crt:/etc/nginx/ssl/server.crt:ro
+      - ./certs/server.key:/etc/nginx/ssl/server.key:ro
+    depends_on:
+      pgadmin:
+        condition: service_healthy
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider https://localhost:443/misc/ping --no-check-certificate || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     logging:
       driver: "json-file"
       options:

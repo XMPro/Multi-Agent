@@ -201,6 +201,12 @@ if [ "$ENABLE" = true ]; then
     if [ -f ".env" ]; then
         sed -i 's/ENABLE_SSL=false/ENABLE_SSL=true/g' .env
         sed -i "s/SSL_DOMAIN=.*/SSL_DOMAIN=$DOMAIN/g" .env
+        # Activate ssl profile so pgadmin-nginx service starts
+        if ! grep -q "COMPOSE_PROFILES" .env; then
+            echo "COMPOSE_PROFILES=ssl" >> .env
+        else
+            sed -i 's/COMPOSE_PROFILES=.*/COMPOSE_PROFILES=ssl/g' .env
+        fi
         echo ""
         print_color "$GREEN" "Updated .env file with SSL settings"
     fi
@@ -229,15 +235,7 @@ http {
         server pgadmin:80;
     }
 
-    # Redirect HTTP to HTTPS
-    server {
-        listen 80;
-        server_name DOMAIN_PLACEHOLDER;
-        # Redirect to HTTPS (internal port 443, mapped to external 5051)
-        return 301 https://$host$request_uri;
-    }
-
-    # HTTPS server
+    # HTTPS server - nginx handles SSL termination, proxies to pgAdmin HTTP
     server {
         listen 443 ssl;
         server_name DOMAIN_PLACEHOLDER;
@@ -250,14 +248,11 @@ http {
 
         location / {
             proxy_pass http://pgadmin;
-            # Use $http_host to preserve port in Host header
             proxy_set_header Host $http_host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            # Force https scheme for pgAdmin redirects
             proxy_set_header X-Forwarded-Proto https;
             proxy_set_header X-Script-Name /;
-            # Disable proxy redirect rewriting
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -285,6 +280,8 @@ elif [ "$DISABLE" = true ]; then
     # Update .env file
     if [ -f ".env" ]; then
         sed -i 's/ENABLE_SSL=true/ENABLE_SSL=false/g' .env
+        # Remove ssl profile so pgadmin-nginx service stops
+        sed -i '/COMPOSE_PROFILES=ssl/d' .env
         print_color "$GREEN" "Updated .env file"
     fi
     

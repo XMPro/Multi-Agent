@@ -257,7 +257,13 @@ $EnvContent += @"
 PGADMIN_EMAIL=$PgAdminEmail
 PGADMIN_PASSWORD=$PgAdminPassword
 PGADMIN_PORT=5050
+PGADMIN_HTTPS_PORT=5051
 "@
+
+# Activate ssl profile for nginx reverse proxy when SSL is enabled
+if ($EnableSSL) {
+    $EnvContent += "`nCOMPOSE_PROFILES=ssl"
+}
 
 $EnvContent | Out-File -FilePath ".env" -Encoding ASCII
 Write-Host "Created .env file with configuration" -ForegroundColor Green
@@ -286,7 +292,7 @@ $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText("$PWD\pgadmin\servers.json", $ServersJson, $utf8NoBom)
 Write-Host "Created pgAdmin configuration" -ForegroundColor Green
 
-# Create nginx configuration for pgAdmin SSL
+# Create nginx configuration for pgAdmin (only used when ssl profile is active)
 if ($EnableSSL) {
     Write-Host "Creating nginx configuration for pgAdmin HTTPS..." -ForegroundColor White
     $NginxConfig = @"
@@ -299,26 +305,7 @@ http {
         server pgadmin:80;
     }
 
-    # HTTP server (port 5050)
-    server {
-        listen 80;
-        server_name $Domain;
-
-        location / {
-            proxy_pass http://pgadmin;
-            proxy_set_header Host `$http_host;
-            proxy_set_header X-Real-IP `$remote_addr;
-            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto http;
-            proxy_set_header X-Script-Name /;
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade `$http_upgrade;
-            proxy_set_header Connection "upgrade";
-        }
-    }
-
-    # HTTPS server (port 5051)
+    # HTTPS server - nginx handles SSL termination, proxies to pgAdmin HTTP
     server {
         listen 443 ssl;
         server_name $Domain;
@@ -331,20 +318,17 @@ http {
 
         location / {
             proxy_pass http://pgadmin;
-            # Send external-facing host with port to pgAdmin
-            proxy_set_header Host $Domain`:5051;
+            proxy_set_header Host `$http_host;
             proxy_set_header X-Real-IP `$remote_addr;
             proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
             # Tell pgAdmin it's being accessed via HTTPS
             proxy_set_header X-Forwarded-Proto https;
-            proxy_set_header X-Forwarded-Host $Domain`:5051;
-            proxy_set_header X-Forwarded-Port 5051;
             proxy_set_header X-Script-Name /;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Upgrade `$http_upgrade;
             proxy_set_header Connection "upgrade";
-            
+
             # Increase timeouts for long-running queries
             proxy_connect_timeout 600;
             proxy_send_timeout 600;
@@ -355,43 +339,7 @@ http {
 }
 "@
     $NginxConfig | Out-File -FilePath "pgadmin\nginx.conf" -Encoding ASCII
-    Write-Host "Created nginx.conf for pgAdmin (HTTP on 5050, HTTPS on 5051)" -ForegroundColor Green
-} else {
-    # Create simple nginx config without SSL
-    Write-Host "Creating nginx configuration for pgAdmin HTTP..." -ForegroundColor White
-    $NginxConfig = @"
-events {
-    worker_connections 1024;
-}
-
-http {
-    upstream pgadmin {
-        server pgadmin:80;
-    }
-
-    server {
-        listen 80;
-        server_name $Domain;
-
-        location / {
-            proxy_pass http://pgadmin;
-            # Use `$http_host to preserve port in Host header
-            proxy_set_header Host `$http_host;
-            proxy_set_header X-Real-IP `$remote_addr;
-            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto `$scheme;
-            proxy_set_header X-Script-Name /;
-            # Disable proxy redirect rewriting
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade `$http_upgrade;
-            proxy_set_header Connection "upgrade";
-        }
-    }
-}
-"@
-    $NginxConfig | Out-File -FilePath "pgadmin\nginx.conf" -Encoding ASCII
-    Write-Host "Created nginx.conf for pgAdmin HTTP" -ForegroundColor Green
+    Write-Host "Created nginx.conf for pgAdmin HTTPS (port 5051)" -ForegroundColor Green
 }
 
 # Create backup script

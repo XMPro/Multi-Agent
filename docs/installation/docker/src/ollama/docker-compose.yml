@@ -1,6 +1,6 @@
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
     container_name: ollama
     restart: unless-stopped
     ports:
@@ -18,6 +18,8 @@ services:
       # GPU Configuration (set during install)
       # - OLLAMA_GPU_DRIVER=${OLLAMA_GPU_DRIVER:-}
       # - OLLAMA_GPU_LAYERS=${OLLAMA_GPU_LAYERS:-999}
+      # AMD ROCm: GFX version override (configured by install script)
+      - HSA_OVERRIDE_GFX_VERSION=${HSA_OVERRIDE_GFX_VERSION:-}
       
       # Performance tuning
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-4}

@@ -11,6 +11,7 @@ param(
     [string]$Domain = "localhost",
     [ValidateSet("nvidia", "amd", "none")]
     [string]$GPUDriver = "none",
+    [string]$HsaGfxOverride = "",
     [switch]$AutoStart = $false,
     [switch]$Force = $false
 )
@@ -128,7 +129,7 @@ $DetectedGPU = "none"
 if ($GPUDriver -eq "none") {
     # Try to detect NVIDIA GPU
     try {
-        $NvidiaSmi = nvidia-smi 2>$null
+        nvidia-smi 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[OK] NVIDIA GPU detected" -ForegroundColor Green
             $DetectedGPU = "nvidia"
@@ -174,6 +175,21 @@ if ($GPUDriver -eq "none") {
             Write-Host "GPU support disabled by user" -ForegroundColor Gray
         } else {
             $GPUDriver = $DetectedGPU
+
+            # For AMD, prompt for optional GFX version override
+            if ($GPUDriver -eq "amd") {
+                Write-Host ""
+                Write-Host "Some older AMD GPUs require a GFX version override to work with ROCm." -ForegroundColor Gray
+                Write-Host "If unsure, press Enter to skip (most modern GPUs don't need this)." -ForegroundColor Gray
+                Write-Host "To check your GPU's GFX version, run: rocminfo | grep gfx" -ForegroundColor Gray
+                $GfxChoice = Read-Host "HSA_OVERRIDE_GFX_VERSION (e.g. 10.3.0, or press Enter to skip)"
+                if ($GfxChoice) {
+                    $HsaGfxOverride = $GfxChoice
+                    Write-Host "[OK] GFX version override set to: $HsaGfxOverride" -ForegroundColor Green
+                } else {
+                    Write-Host "GFX version override not set" -ForegroundColor Gray
+                }
+            }
         }
     }
 } else {
@@ -355,6 +371,15 @@ $envContent = $envContent -replace "OLLAMA_ENABLE_SSL=.*", "OLLAMA_ENABLE_SSL=$(
 $envContent = $envContent -replace "OLLAMA_DOMAIN=.*", "OLLAMA_DOMAIN=$Domain"
 $envContent = $envContent -replace "OLLAMA_GPU_DRIVER=.*", "OLLAMA_GPU_DRIVER=$GPUDriver"
 
+# Set Docker image based on GPU type
+if ($GPUDriver -eq "amd") {
+    $envContent = $envContent -replace "OLLAMA_IMAGE=.*", "OLLAMA_IMAGE=ollama/ollama:rocm"
+    Write-Host "[OK] Configured to use ROCm image (ollama/ollama:rocm)" -ForegroundColor Green
+    $envContent = $envContent -replace "HSA_OVERRIDE_GFX_VERSION=.*", "HSA_OVERRIDE_GFX_VERSION=$HsaGfxOverride"
+} else {
+    $envContent = $envContent -replace "OLLAMA_IMAGE=.*", "OLLAMA_IMAGE=ollama/ollama:latest"
+}
+
 # Add COMPOSE_PROFILES if SSL is enabled
 if ($EnableSSL) {
     $envContent += "`nCOMPOSE_PROFILES=ssl"
@@ -363,27 +388,25 @@ if ($EnableSSL) {
 $envContent | Set-Content ".env"
 Write-Host "[OK] Updated .env with configuration" -ForegroundColor Green
 
-# Update docker-compose.yml if GPU is enabled
-if ($GPUDriver -ne "none") {
-    Write-Host "Configuring GPU support in docker-compose.yml..." -ForegroundColor White
-    
-    # Insert GPU devices into existing deploy section (following Milvus pattern)
-    $composeContent = Get-Content "docker-compose.yml" -Raw
-    
-    # Build GPU devices configuration
-    $gpuDevicesConfig = @"
+# Update docker-compose.yml based on GPU type
+if ($GPUDriver -eq "amd") {
+    Write-Host "Configuring AMD ROCm support in docker-compose.yml..." -ForegroundColor White
 
-          devices:
-            - driver: $GPUDriver
-              count: all
-              capabilities: [gpu]
-"@
-    
-    # Insert GPU devices after the reservations section in deploy
-    $composeContent = $composeContent -replace '(deploy:[\s\S]*?reservations:)', "`$1$gpuDevicesConfig"
-    
+    # AMD requires service-level device passthrough, not deploy.resources syntax
+    $composeContent = Get-Content "docker-compose.yml" -Raw
+    $amdDevicesConfig = "`n    devices:`n      - /dev/kfd:/dev/kfd`n      - /dev/dri:/dev/dri`n    group_add:`n      - video`n      - render"
+    $composeContent = $composeContent -replace '(container_name: ollama)', "`$1$amdDevicesConfig"
     $composeContent | Set-Content "docker-compose.yml"
-    Write-Host "[OK] GPU support enabled in docker-compose.yml" -ForegroundColor Green
+    Write-Host "[OK] AMD ROCm device passthrough configured in docker-compose.yml" -ForegroundColor Green
+
+} elseif ($GPUDriver -eq "nvidia") {
+    Write-Host "Configuring NVIDIA GPU support in docker-compose.yml..." -ForegroundColor White
+
+    $composeContent = Get-Content "docker-compose.yml" -Raw
+    $gpuDevicesConfig = "`n          devices:`n            - driver: nvidia`n              count: all`n              capabilities: [gpu]"
+    $composeContent = $composeContent -replace '(deploy:[\s\S]*?reservations:)', "`$1$gpuDevicesConfig"
+    $composeContent | Set-Content "docker-compose.yml"
+    Write-Host "[OK] NVIDIA GPU support enabled in docker-compose.yml" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -484,7 +507,33 @@ try {
     
     if ($healthy) {
         Write-Host "[OK] Ollama service is running and healthy" -ForegroundColor Green
-        
+
+        # Verify GPU access if GPU is enabled
+        if ($GPUDriver -eq "amd") {
+            Write-Host ""
+            Write-Host "Verifying AMD GPU access..." -ForegroundColor Cyan
+            Start-Sleep -Seconds 3
+            docker exec ollama rocm-smi 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "[OK] AMD GPU accessible via ROCm in container" -ForegroundColor Green
+            } else {
+                Write-Host "⚠ AMD GPU not accessible in container" -ForegroundColor Yellow
+                Write-Host "  AMD ROCm on Windows requires WSL2 with ROCm drivers installed" -ForegroundColor Gray
+                Write-Host "  See: https://rocm.docs.amd.com/en/latest/deploy/windows/quick_start.html" -ForegroundColor Gray
+            }
+        } elseif ($GPUDriver -eq "nvidia") {
+            Write-Host ""
+            Write-Host "Verifying NVIDIA GPU access..." -ForegroundColor Cyan
+            Start-Sleep -Seconds 3
+            docker exec ollama nvidia-smi 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "[OK] NVIDIA GPU accessible in container" -ForegroundColor Green
+            } else {
+                Write-Host "⚠ NVIDIA GPU not accessible in container" -ForegroundColor Yellow
+                Write-Host "  Verify nvidia-container-toolkit is installed" -ForegroundColor Gray
+            }
+        }
+
         # Start nginx-ssl if SSL is enabled
         if ($EnableSSL) {
             Write-Host "Starting nginx-ssl service..." -ForegroundColor Gray

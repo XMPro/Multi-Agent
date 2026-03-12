@@ -19,6 +19,7 @@ HTTPS_PORT="11443"
 ENABLE_SSL=false
 DOMAIN="localhost"
 GPU_DRIVER="none"
+HSA_GFX_OVERRIDE=""
 AUTO_START=false
 FORCE=false
 
@@ -170,8 +171,21 @@ if [ "$GPU_DRIVER" = "none" ]; then
     if [ "$DETECTED_GPU" = "none" ]; then
         if lspci 2>/dev/null | grep -iE "VGA|3D" | grep -iq "AMD\|Radeon"; then
             echo -e "${GREEN}[OK] AMD GPU detected${NC}"
-            echo -e "${YELLOW}⚠ AMD GPU support requires ROCm drivers${NC}"
             DETECTED_GPU="amd"
+
+            # Check for ROCm installation
+            if command -v rocm-smi &> /dev/null && rocm-smi &> /dev/null 2>&1; then
+                echo -e "${GREEN}[OK] ROCm drivers detected${NC}"
+            else
+                echo -e "${YELLOW}⚠ AMD GPU found but ROCm drivers not installed${NC}"
+                echo -e "${GRAY}  Install ROCm: https://rocm.docs.amd.com/en/latest/deploy/linux/quick_start.html${NC}"
+                echo -e "${GRAY}  Or continue with CPU-only mode${NC}"
+                read -p "Continue with GPU mode anyway? (y/n, default: n): " rocm_choice
+                if [[ ! "$rocm_choice" =~ ^[Yy]$ ]]; then
+                    DETECTED_GPU="none"
+                    echo -e "${GRAY}Falling back to CPU-only mode${NC}"
+                fi
+            fi
         fi
     fi
     
@@ -189,6 +203,21 @@ if [ "$GPU_DRIVER" = "none" ]; then
             echo -e "${GRAY}GPU support disabled by user${NC}"
         else
             GPU_DRIVER="$DETECTED_GPU"
+
+            # For AMD, prompt for optional GFX version override
+            if [ "$GPU_DRIVER" = "amd" ]; then
+                echo ""
+                echo -e "${GRAY}Some older AMD GPUs require a GFX version override to work with ROCm.${NC}"
+                echo -e "${GRAY}If unsure, press Enter to skip (most modern GPUs don't need this).${NC}"
+                echo -e "${GRAY}To check your GPU's GFX version, run: rocminfo | grep gfx${NC}"
+                read -p "HSA_OVERRIDE_GFX_VERSION (e.g. 10.3.0, or press Enter to skip): " gfx_choice
+                if [ -n "$gfx_choice" ]; then
+                    HSA_GFX_OVERRIDE="$gfx_choice"
+                    echo -e "${GREEN}[OK] GFX version override set to: $HSA_GFX_OVERRIDE${NC}"
+                else
+                    echo -e "${GRAY}GFX version override not set${NC}"
+                fi
+            fi
         fi
     fi
 else
@@ -347,6 +376,15 @@ sed -i "s/OLLAMA_ENABLE_SSL=.*/OLLAMA_ENABLE_SSL=$ENABLE_SSL/" .env
 sed -i "s/OLLAMA_DOMAIN=.*/OLLAMA_DOMAIN=$DOMAIN/" .env
 sed -i "s/OLLAMA_GPU_DRIVER=.*/OLLAMA_GPU_DRIVER=$GPU_DRIVER/" .env
 
+# Set Docker image based on GPU type
+if [ "$GPU_DRIVER" = "amd" ]; then
+    sed -i "s|OLLAMA_IMAGE=.*|OLLAMA_IMAGE=ollama/ollama:rocm|" .env
+    echo -e "${GREEN}[OK] Configured to use ROCm image (ollama/ollama:rocm)${NC}"
+    sed -i "s|HSA_OVERRIDE_GFX_VERSION=.*|HSA_OVERRIDE_GFX_VERSION=$HSA_GFX_OVERRIDE|" .env
+else
+    sed -i "s|OLLAMA_IMAGE=.*|OLLAMA_IMAGE=ollama/ollama:latest|" .env
+fi
+
 # Add COMPOSE_PROFILES if SSL is enabled
 if [ "$ENABLE_SSL" = true ]; then
     echo "COMPOSE_PROFILES=ssl" >> .env
@@ -354,17 +392,36 @@ fi
 
 echo -e "${GREEN}[OK] Updated .env with configuration${NC}"
 
-# Update docker-compose.yml if GPU is enabled
-# The docker-compose.yml has a bare "reservations:" key with no cpu/memory limits.
-# We insert the devices block directly after that line.
-if [ "$GPU_DRIVER" != "none" ]; then
-    echo -e "${GRAY}Configuring GPU support in docker-compose.yml...${NC}"
+# Update docker-compose.yml based on GPU type
+if [ "$GPU_DRIVER" = "amd" ]; then
+    echo -e "${GRAY}Configuring AMD ROCm support in docker-compose.yml...${NC}"
 
-    awk -v driver="$GPU_DRIVER" '
+    # AMD requires service-level device passthrough, not deploy.resources syntax
+    awk '
+    /container_name: ollama/ {
+        print
+        print "    devices:"
+        print "      - /dev/kfd:/dev/kfd"
+        print "      - /dev/dri:/dev/dri"
+        print "    group_add:"
+        print "      - video"
+        print "      - render"
+        next
+    }
+    { print }
+    ' docker-compose.yml > docker-compose.yml.tmp
+
+    mv docker-compose.yml.tmp docker-compose.yml
+    echo -e "${GREEN}[OK] AMD ROCm device passthrough configured in docker-compose.yml${NC}"
+
+elif [ "$GPU_DRIVER" = "nvidia" ]; then
+    echo -e "${GRAY}Configuring NVIDIA GPU support in docker-compose.yml...${NC}"
+
+    awk '
     /reservations:/ {
         print
         print "          devices:"
-        print "            - driver: " driver
+        print "            - driver: nvidia"
         print "              count: all"
         print "              capabilities: [gpu]"
         next
@@ -373,8 +430,7 @@ if [ "$GPU_DRIVER" != "none" ]; then
     ' docker-compose.yml > docker-compose.yml.tmp
 
     mv docker-compose.yml.tmp docker-compose.yml
-
-    echo -e "${GREEN}[OK] GPU support enabled in docker-compose.yml${NC}"
+    echo -e "${GREEN}[OK] NVIDIA GPU support enabled in docker-compose.yml${NC}"
 fi
 
 echo ""
@@ -460,7 +516,31 @@ echo ""
 
 if [ "$HEALTHY" = true ]; then
     echo -e "${GREEN}[OK] Ollama service is running and healthy${NC}"
-    
+
+    # Verify GPU access if GPU is enabled
+    if [ "$GPU_DRIVER" = "amd" ]; then
+        echo ""
+        echo -e "${CYAN}Verifying AMD GPU access...${NC}"
+        sleep 3
+        if docker exec ollama rocm-smi &> /dev/null 2>&1; then
+            echo -e "${GREEN}[OK] AMD GPU accessible via ROCm in container${NC}"
+        else
+            echo -e "${YELLOW}⚠ AMD GPU not accessible in container${NC}"
+            echo -e "${GRAY}  Verify ROCm drivers are installed and user is in render/video groups${NC}"
+            echo -e "${GRAY}  Run: sudo usermod -a -G render,video \$USER && sudo reboot${NC}"
+        fi
+    elif [ "$GPU_DRIVER" = "nvidia" ]; then
+        echo ""
+        echo -e "${CYAN}Verifying NVIDIA GPU access...${NC}"
+        sleep 3
+        if docker exec ollama nvidia-smi &> /dev/null 2>&1; then
+            echo -e "${GREEN}[OK] NVIDIA GPU accessible in container${NC}"
+        else
+            echo -e "${YELLOW}⚠ NVIDIA GPU not accessible in container${NC}"
+            echo -e "${GRAY}  Verify nvidia-container-toolkit is installed${NC}"
+        fi
+    fi
+
     # Start nginx-ssl if SSL is enabled
     if [ "$ENABLE_SSL" = true ]; then
         echo -e "${GRAY}Starting nginx-ssl service...${NC}"

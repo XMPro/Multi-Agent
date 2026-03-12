@@ -216,6 +216,12 @@ ON CREATE SET
     "approval_timeout_minutes": 15,
     "max_pending_approvals": 10
   }',
+  so.config_objective_function_switching = '{
+    "enabled": true,
+    "evaluation_interval_minutes": 5,
+    "default_aggregation_strategy": "AllCriticalMet",
+    "supported_condition_types": ["ObjectiveValue", "ComplianceRate", "ExcursionCount", "TrendDirection"]
+  }',
   so.created_date = datetime(),
   so.last_modified_date = datetime()
 ON MATCH SET
@@ -422,6 +428,12 @@ ON MATCH SET
     },
     "approval_timeout_minutes": 15,
     "max_pending_approvals": 10
+  }',
+  so.config_objective_function_switching = '{
+    "enabled": true,
+    "evaluation_interval_minutes": 5,
+    "default_aggregation_strategy": "AllCriticalMet",
+    "supported_condition_types": ["ObjectiveValue", "ComplianceRate", "ExcursionCount", "TrendDirection"]
   }',
   so.last_modified_date = datetime()
 RETURN so

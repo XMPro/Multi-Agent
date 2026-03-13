@@ -39,6 +39,7 @@ services:
       start_period: 30s
     networks:
       - ollama-network
+      - observability
     deploy:
       resources:
         reservations:
@@ -81,6 +82,9 @@ networks:
   ollama-network:
     driver: bridge
     name: ollama-network
+  observability:
+    external: true
+    name: observability
 
 volumes:
   ollama-data:

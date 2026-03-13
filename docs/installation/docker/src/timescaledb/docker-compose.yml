@@ -49,6 +49,7 @@ services:
       
     networks:
       - timescaledb_network
+      - observability
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -146,3 +147,6 @@ networks:
   timescaledb_network:
     driver: bridge
     name: timescaledb_network
+  observability:
+    external: true
+    name: observability

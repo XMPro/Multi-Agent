@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:grafana.com)",
+      "WebFetch(domain:neo4j.com)",
+      "WebFetch(domain:docs.timescale.com)",
+      "WebFetch(domain:mosquitto.org)",
+      "WebFetch(domain:milvus.io)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

@@ -54,7 +54,13 @@ services:
       # Disable telemetry
       - NEO4J_dbms_usage__report_enabled=false
 
+      # Prometheus metrics (for OTEL LGTM observability stack)
+      - NEO4J_server_metrics_prometheus_enabled=${NEO4J_METRICS_PROMETHEUS_ENABLED:-true}
+      - NEO4J_server_metrics_prometheus_endpoint=0.0.0.0:2004
+
     restart: unless-stopped
+    networks:
+      - observability
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || wget --no-verbose --tries=1 --spider localhost:7473 || exit 1"]
       interval: 30s
@@ -92,3 +98,8 @@ services:
       neo4j:
         condition: service_healthy
     restart: unless-stopped
+
+networks:
+  observability:
+    external: true
+    name: observability

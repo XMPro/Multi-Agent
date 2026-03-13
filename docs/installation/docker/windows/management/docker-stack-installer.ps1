@@ -1,6 +1,6 @@
 # =================================================================
 # Docker Stack One-Click Installer
-# Neo4j, Milvus, MQTT, TimescaleDB, and Ollama Services
+# Neo4j, Milvus, MQTT, TimescaleDB, Ollama, and OTEL LGTM Services
 # =================================================================
 
 param(
@@ -37,7 +37,7 @@ function Test-Command {
 
 # Check if service folders already exist (rerun scenario)
 $ExistingServices = @()
-$ExpectedServices = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
+$ExpectedServices = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")
 foreach ($service in $ExpectedServices) {
     if (Test-Path $service) {
         $ExistingServices += $service
@@ -312,6 +312,12 @@ if (Test-Path "ollama") {
     $ServicesToInstall["ollama"] = ($InstallOllama -eq "Y" -or $InstallOllama -eq "y")
 }
 
+# Ask about OTEL LGTM
+if (Test-Path "otel-lgtm") {
+    $InstallOtelLgtm = Read-Host "Do you want to install OTEL LGTM Observability Stack (Grafana/Loki/Tempo/Mimir)? (y/n)"
+    $ServicesToInstall["otel-lgtm"] = ($InstallOtelLgtm -eq "Y" -or $InstallOtelLgtm -eq "y")
+}
+
 # Show installation summary
 Write-Host ""
 Write-Host "Installation Summary:" -ForegroundColor Cyan
@@ -353,6 +359,9 @@ $TimescaleDBParams = @{
 $OllamaParams = @{
     Force = $true
 }
+$OtelLgtmParams = @{
+    Force = $true
+}
 
 if ($EnableSSL) {
     $Neo4jParams.EnableSSL = $true
@@ -360,12 +369,14 @@ if ($EnableSSL) {
     $MqttParams.EnableSSL = $true
     $TimescaleDBParams.EnableSSL = $true
     $OllamaParams.EnableSSL = $true
-    
+    $OtelLgtmParams.EnableSSL = $true
+
     if ($Domain -ne "localhost") {
         $Neo4jParams.Domain = $Domain
         $MilvusParams.Domain = $Domain
         $TimescaleDBParams.Domain = $Domain
         $OllamaParams.Domain = $Domain
+        $OtelLgtmParams.Domain = $Domain
     }
 }
 
@@ -570,6 +581,42 @@ if ($ServicesToInstall["ollama"]) {
     Write-Host "Skipping Ollama (not selected)" -ForegroundColor Gray
 }
 
+# Configure OTEL LGTM using the install script (if selected) - must be AFTER other services
+if ($ServicesToInstall["otel-lgtm"]) {
+    Write-Host ""
+    Write-Host "OTEL LGTM Configuration:" -ForegroundColor Cyan
+    Write-Host "========================" -ForegroundColor Gray
+    Write-Host "Running OTEL LGTM installation script..." -ForegroundColor White
+
+    # Create the observability network before starting
+    docker network create observability 2>$null
+
+    Set-Location "otel-lgtm"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for OTEL LGTM" -ForegroundColor Gray
+        }
+
+        & ".\management\install.ps1" @OtelLgtmParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "OTEL LGTM configured successfully" -ForegroundColor Green
+            $ConfiguredServices["otel-lgtm"] = $true
+        } else {
+            Write-Host "OTEL LGTM installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["otel-lgtm"] = $true
+        }
+    } catch {
+        Write-Host "OTEL LGTM installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "OTEL LGTM will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["otel-lgtm"] = $false
+    }
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping OTEL LGTM (not selected)" -ForegroundColor Gray
+}
+
 # Start only successfully configured services
 Write-Host ""
 Write-Host "Starting Configured Services..." -ForegroundColor White
@@ -748,6 +795,38 @@ if ($ConfiguredServices["ollama"]) {
     Write-Host "Skipping Ollama startup (not selected)" -ForegroundColor Yellow
 }
 
+# Check and start OTEL LGTM if configured successfully
+if ($ConfiguredServices["otel-lgtm"]) {
+    Write-Host ""
+    Write-Host "Starting OTEL LGTM..." -ForegroundColor White
+    Write-Host "===================" -ForegroundColor Gray
+
+    Set-Location "otel-lgtm"
+    try {
+        $OtelStatus = docker-compose ps --format json | ConvertFrom-Json
+        $OtelRunning = $OtelStatus | Where-Object { $_.Service -eq "otel-lgtm" -and $_.State -eq "running" }
+
+        if ($OtelRunning) {
+            Write-Host "OTEL LGTM is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting OTEL LGTM services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "OTEL LGTM started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start OTEL LGTM" -ForegroundColor Red
+            }
+        }
+    } catch {
+        Write-Host "Starting OTEL LGTM..." -ForegroundColor Yellow
+        docker-compose up -d
+    }
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping OTEL LGTM startup (not selected)" -ForegroundColor Yellow
+}
+
 # Wait for services to initialize
 Write-Host ""
 Write-Host "Waiting for services to initialize..." -ForegroundColor White
@@ -760,7 +839,7 @@ Write-Host "Final Service Status:" -ForegroundColor White
 Write-Host "====================" -ForegroundColor Gray
 
 $FinalStatus = @{}
-foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")) {
+foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")) {
     if (-not (Test-Path $service)) {
         continue
     }
@@ -816,6 +895,18 @@ if ($FinalStatus["mqtt"] -eq "running") {
 if ($FinalStatus["timescaledb"] -eq "running") {
     Write-Host "TimescaleDB: localhost:5432" -ForegroundColor Green
     Write-Host "  (Check TimescaleDB install output above for username/password)" -ForegroundColor Gray
+}
+
+if ($FinalStatus["otel-lgtm"] -eq "running") {
+    $GrafanaPort = "3000"
+    if (Test-Path "otel-lgtm\.env") {
+        $otelEnv = Get-Content "otel-lgtm\.env"
+        $portLine = $otelEnv | Where-Object { $_ -match "^GRAFANA_PORT=" }
+        if ($portLine) { $GrafanaPort = $portLine -replace "GRAFANA_PORT=", "" }
+    }
+    Write-Host "Grafana Dashboard: http://localhost:$GrafanaPort" -ForegroundColor Green
+    Write-Host "OTLP gRPC: localhost:4317" -ForegroundColor Green
+    Write-Host "OTLP HTTP: http://localhost:4318" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -1287,6 +1378,68 @@ Model Management:
 
 Note: At least one embedding model is required for XMPro AI Agents
   Recommended: nomic-embed-text:latest or mxbai-embed-large:latest
+"@
+}
+
+# Collect OTEL LGTM credentials
+if ($ConfiguredServices["otel-lgtm"]) {
+    $GrafanaPort = "3000"
+    $GrafanaPass = "admin"
+    $OtelLgtmHttpsPort = "3443"
+    if (Test-Path "otel-lgtm\.env") {
+        $otelEnvContent = Get-Content "otel-lgtm\.env"
+        $gpLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_PORT=" }
+        if ($gpLine) { $GrafanaPort = $gpLine -replace "GRAFANA_PORT=", "" }
+        $gpassLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_ADMIN_PASSWORD=" }
+        if ($gpassLine) { $GrafanaPass = $gpassLine -replace "GRAFANA_ADMIN_PASSWORD=", "" }
+        $ghpLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_HTTPS_PORT=" }
+        if ($ghpLine) { $OtelLgtmHttpsPort = $ghpLine -replace "GRAFANA_HTTPS_PORT=", "" }
+    }
+
+    $CredentialsContent += @"
+
+
+# =================================================================
+# OpenTelemetry LGTM Observability Stack
+# =================================================================
+
+Access URLs:
+  - Grafana Dashboard: http://localhost:$GrafanaPort
+  - OTLP gRPC: localhost:4317
+  - OTLP HTTP: http://localhost:4318
+
+Grafana Credentials:
+  - Username: admin
+  - Password: $GrafanaPass
+"@
+
+    $OtelLgtmSSLEnabled = $false
+    if (Test-Path "otel-lgtm\.env") {
+        $otelEnvRaw = Get-Content "otel-lgtm\.env" -Raw
+        if ($otelEnvRaw -match 'OTEL_LGTM_ENABLE_SSL=true') {
+            $OtelLgtmSSLEnabled = $true
+        }
+    }
+
+    if ($OtelLgtmSSLEnabled -and (Test-Path "otel-lgtm\certs\ca.crt")) {
+        $CredentialsContent += @"
+
+  - Grafana HTTPS: https://localhost:$OtelLgtmHttpsPort
+
+SSL Certificate:
+  - CA Certificate: otel-lgtm\certs\ca.crt
+"@
+    }
+
+    $CredentialsContent += @"
+
+
+OpenTelemetry SDK Configuration:
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+
+Components: Grafana (dashboards), Loki (logs), Tempo (traces), Mimir (metrics)
+Prometheus scrape targets: Neo4j, TimescaleDB, MQTT, Milvus
 "@
 }
 

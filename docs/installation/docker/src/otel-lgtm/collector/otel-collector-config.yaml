@@ -1,0 +1,81 @@
+# =================================================================
+# OpenTelemetry Collector Configuration
+# Receives OTLP data from agents and scrapes Prometheus metrics
+# from infrastructure services (Neo4j, TimescaleDB, MQTT, Milvus)
+# =================================================================
+
+receivers:
+  # OTLP receiver for agent traces, metrics, and logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus receiver to scrape infrastructure service metrics
+  prometheus:
+    config:
+      scrape_configs:
+        # Neo4j metrics (requires NEO4J_server_metrics_prometheus_enabled=true)
+        - job_name: 'neo4j'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['neo4j-graph:2004']
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: 'neo4j_.*'
+              action: keep
+
+        # TimescaleDB/PostgreSQL metrics via postgres-exporter
+        - job_name: 'timescaledb'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['otel-postgres-exporter:9187']
+
+        # Mosquitto MQTT metrics via mosquitto-exporter
+        - job_name: 'mosquitto'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['otel-mosquitto-exporter:9234']
+
+        # Milvus built-in Prometheus metrics
+        - job_name: 'milvus'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['milvus-standalone:9091']
+
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+
+  # Add resource attributes for better identification
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "docker"
+        action: upsert
+
+exporters:
+  otlphttp/metrics:
+    endpoint: http://localhost:9009/otlp
+  otlphttp/traces:
+    endpoint: http://localhost:4418
+  otlphttp/logs:
+    endpoint: http://localhost:3100/otlp
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [batch, resource]
+      exporters: [otlphttp/metrics]
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/traces]
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/logs]

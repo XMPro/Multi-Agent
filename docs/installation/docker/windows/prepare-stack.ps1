@@ -63,7 +63,7 @@ try {
     # Copy source directories
     Write-Host "Copying services..." -ForegroundColor White
     
-    $Services = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
+    $Services = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")
     foreach ($Service in $Services) {
         $SourcePath = Join-Path "$ParentDir\src" $Service
         $DestPath = Join-Path $TempDir $Service
@@ -418,6 +418,21 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Primary = "ollama/ollama:latest"
                 Fallbacks = @("ollama/ollama:0.5.7", "ollama/ollama:0.5.6")
                 Description = "Ollama"
+            },
+            @{
+                Primary = "grafana/otel-lgtm:latest"
+                Fallbacks = @()
+                Description = "OTEL LGTM (Grafana/Loki/Tempo/Mimir)"
+            },
+            @{
+                Primary = "prometheuscommunity/postgres-exporter:latest"
+                Fallbacks = @()
+                Description = "PostgreSQL Exporter"
+            },
+            @{
+                Primary = "sapcc/mosquitto-exporter:latest"
+                Fallbacks = @()
+                Description = "Mosquitto Exporter"
             }
         )
         

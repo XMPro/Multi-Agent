@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================
 # Docker Stack One-Click Installer (Linux)
-# Neo4j, Milvus, MQTT, TimescaleDB, and Ollama Services
+# Neo4j, Milvus, MQTT, TimescaleDB, Ollama, and OTEL LGTM Services
 # =================================================================
 
 set -euo pipefail
@@ -109,7 +109,7 @@ command_exists() {
 
 # Check if service folders already exist (rerun scenario)
 EXISTING_SERVICES=()
-EXPECTED_SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
+EXPECTED_SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
 for service in "${EXPECTED_SERVICES[@]}"; do
     if [ -d "$service" ]; then
         EXISTING_SERVICES+=("$service")
@@ -296,7 +296,7 @@ else
 fi
 
 # Verify extracted structure
-EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
 AVAILABLE_FOLDERS=()
 
 for folder in "${EXPECTED_FOLDERS[@]}"; do
@@ -351,6 +351,12 @@ fi
 if [ -d "ollama" ]; then
     read -p "Do you want to install Ollama LLM Service? (y/n): " install_ollama
     [[ "$install_ollama" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[ollama]=true || SERVICES_TO_INSTALL[ollama]=false
+fi
+
+# Ask about OTEL LGTM
+if [ -d "otel-lgtm" ]; then
+    read -p "Do you want to install OTEL LGTM Observability Stack (Grafana/Loki/Tempo/Mimir)? (y/n): " install_otel_lgtm
+    [[ "$install_otel_lgtm" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[otel-lgtm]=true || SERVICES_TO_INSTALL[otel-lgtm]=false
 fi
 
 # Show installation summary
@@ -566,6 +572,40 @@ else
     print_color "$GRAY" "Skipping Ollama (not selected)"
 fi
 
+# Configure OTEL LGTM (if selected) - must be configured AFTER other services so it can read their .env files
+if [ "${SERVICES_TO_INSTALL[otel-lgtm]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "OTEL LGTM Configuration:"
+    print_color "$GRAY" "========================"
+    echo "Running OTEL LGTM installation script..."
+
+    # Create the observability network before starting
+    docker network create observability 2>/dev/null || true
+
+    cd otel-lgtm
+    OTEL_LGTM_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --domain $DOMAIN"
+
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $OTEL_LGTM_ARGS; then
+            print_color "$GREEN" "OTEL LGTM configured successfully"
+            CONFIGURED_SERVICES[otel-lgtm]=true
+        else
+            print_color "$RED" "OTEL LGTM installation failed"
+            CONFIGURED_SERVICES[otel-lgtm]=false
+        fi
+    else
+        print_color "$YELLOW" "OTEL LGTM install script not found"
+        CONFIGURED_SERVICES[otel-lgtm]=false
+    fi
+    cd "$INSTALL_PATH"
+else
+    echo ""
+    print_color "$GRAY" "Skipping OTEL LGTM (not selected)"
+fi
+
 # Start services
 echo ""
 echo "Starting Configured Services..."
@@ -677,6 +717,23 @@ if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
     cd ..
 fi
 
+# Start OTEL LGTM
+if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
+    echo ""
+    echo "Starting OTEL LGTM..."
+    print_color "$GRAY" "==================="
+
+    cd otel-lgtm
+    if docker-compose ps 2>/dev/null | grep -q "otel-lgtm.*Up"; then
+        print_color "$GREEN" "OTEL LGTM is already running"
+    else
+        echo "Starting OTEL LGTM services..."
+        docker-compose up -d
+        print_color "$GREEN" "OTEL LGTM started successfully"
+    fi
+    cd ..
+fi
+
 # Wait for services to initialize
 echo ""
 echo "Waiting for services to initialize..."
@@ -688,7 +745,7 @@ echo ""
 echo "Final Service Status:"
 print_color "$GRAY" "===================="
 
-for service in neo4j milvus mqtt timescaledb ollama; do
+for service in neo4j milvus mqtt timescaledb ollama otel-lgtm; do
     if [ -d "$service" ]; then
         cd "$service"
         if docker-compose ps 2>/dev/null | grep -q "Up"; then
@@ -737,6 +794,14 @@ fi
 if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
     print_color "$GREEN" "Ollama HTTP API: http://localhost:11434"
     print_color "$GRAY" "  (Check Ollama install output above for SSL/model information)"
+fi
+
+if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
+    GRAFANA_PORT="3000"
+    [ -f "otel-lgtm/.env" ] && GRAFANA_PORT=$(grep "GRAFANA_PORT=" otel-lgtm/.env | cut -d'=' -f2)
+    print_color "$GREEN" "Grafana Dashboard: http://localhost:$GRAFANA_PORT"
+    print_color "$GREEN" "OTLP gRPC Endpoint: localhost:4317"
+    print_color "$GREEN" "OTLP HTTP Endpoint: http://localhost:4318"
 fi
 
 echo ""
@@ -991,6 +1056,52 @@ if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
     echo "" >> CREDENTIALS.txt
     echo "Note: At least one embedding model is required for XMPro AI Agents" >> CREDENTIALS.txt
     echo "  Recommended: nomic-embed-text:latest or mxbai-embed-large:latest" >> CREDENTIALS.txt
+fi
+
+# Collect OTEL LGTM credentials
+if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# OpenTelemetry LGTM Observability Stack" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+
+    GRAFANA_PORT="3000"
+    GRAFANA_PASS="admin"
+    if [ -f "otel-lgtm/.env" ]; then
+        GRAFANA_PORT=$(grep "GRAFANA_PORT=" otel-lgtm/.env | cut -d'=' -f2)
+        GRAFANA_PASS=$(grep "GRAFANA_ADMIN_PASSWORD=" otel-lgtm/.env | cut -d'=' -f2)
+    fi
+
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - Grafana Dashboard: http://localhost:$GRAFANA_PORT" >> CREDENTIALS.txt
+    echo "  - OTLP gRPC: localhost:4317" >> CREDENTIALS.txt
+    echo "  - OTLP HTTP: http://localhost:4318" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Grafana Credentials:" >> CREDENTIALS.txt
+    echo "  - Username: admin" >> CREDENTIALS.txt
+    echo "  - Password: $GRAFANA_PASS" >> CREDENTIALS.txt
+
+    OTEL_LGTM_HTTPS_PORT="3443"
+    if [ -f "otel-lgtm/.env" ]; then
+        OTEL_LGTM_HTTPS_PORT=$(grep "GRAFANA_HTTPS_PORT=" otel-lgtm/.env | cut -d'=' -f2)
+    fi
+
+    if grep -q "OTEL_LGTM_ENABLE_SSL=true" otel-lgtm/.env 2>/dev/null && [ -f "otel-lgtm/certs/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - Grafana HTTPS: https://localhost:$OTEL_LGTM_HTTPS_PORT" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: otel-lgtm/certs/ca.crt" >> CREDENTIALS.txt
+    fi
+
+    echo "" >> CREDENTIALS.txt
+    echo "OpenTelemetry SDK Configuration:" >> CREDENTIALS.txt
+    echo "  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318" >> CREDENTIALS.txt
+    echo "  OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Components: Grafana (dashboards), Loki (logs), Tempo (traces), Mimir (metrics)" >> CREDENTIALS.txt
+    echo "Prometheus scrape targets: Neo4j, TimescaleDB, MQTT, Milvus" >> CREDENTIALS.txt
 fi
 
 print_color "$GREEN" "Credentials file created: CREDENTIALS.txt"

@@ -14,7 +14,7 @@ ON CREATE SET
   so.author = 'XMPro',
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
-  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
+  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history', 'constraints_context'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
   so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
@@ -227,7 +227,7 @@ ON CREATE SET
 ON MATCH SET
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
-  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
+  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history', 'constraints_context'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
   so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},

@@ -56,7 +56,8 @@ timescaledb/
 │   ├── postgresql.conf.template # PostgreSQL config template
 │   └── postgresql.conf         # PostgreSQL configuration (generated)
 ├── init/
-│   └── 01-init-timescaledb.sql # Initialization SQL scripts
+│   ├── 01-init-timescaledb.sql # TimescaleDB extension setup
+│   └── 02-init-postgrest.sql   # PostgREST roles and api schema
 ├── certs/                      # SSL certificates (if SSL enabled)
 │   ├── ca.crt                  # Certificate Authority
 │   ├── server.crt              # Server certificate
@@ -66,7 +67,9 @@ timescaledb/
 │   └── backup.sh               # Automated backup script
 ├── pgadmin/
 │   ├── servers.json            # pgAdmin server configuration
-│   └── nginx.conf              # nginx configuration for SSL
+│   └── nginx.conf              # nginx configuration for pgAdmin SSL
+├── postgrest/
+│   └── nginx.conf              # nginx configuration for PostgREST SSL (ssl profile)
 └── management/                 # Management scripts
     ├── install.ps1/sh          # Installation scripts
     └── manage-ssl.ps1/sh       # SSL management scripts
@@ -84,6 +87,13 @@ timescaledb/
 - **Port**: 5050 (HTTP), 5051 (HTTPS when SSL enabled)
 - **Purpose**: Web-based database administration interface
 - **Pre-configured**: TimescaleDB server connection ready to use
+
+### PostgREST
+- **Container**: `timescaledb-postgrest`
+- **Port**: 3000 (HTTP), 3443 (HTTPS when SSL enabled)
+- **Purpose**: Lightweight REST API layer over the `api` schema in TimescaleDB
+- **OpenAPI**: `GET http://localhost:3000/` returns the live OpenAPI schema
+- **Auth**: JWT-based; unsigned requests use the `anon` role, JWT-authenticated requests use `webuser`
 
 ### Automated Backup
 - **Container**: `timescaledb-backup`
@@ -126,6 +136,68 @@ postgresql://postgres:your_password@localhost:5432/timescaledb?sslmode=require
 ```
 postgresql://postgres:your_password@YOUR_MACHINE_IP:5432/timescaledb
 ```
+
+## PostgREST REST API
+
+PostgREST provides a zero-code REST API directly over the `api` schema in TimescaleDB.
+
+### Accessing PostgREST
+
+| | URL |
+|---|---|
+| HTTP | `http://localhost:3000` |
+| HTTPS (SSL profile) | `https://localhost:3443` |
+| OpenAPI schema | `GET http://localhost:3000/` |
+
+### Role Model
+
+| Role | Type | Used for |
+|---|---|---|
+| `anon` | NOLOGIN | Unauthenticated requests (no JWT) |
+| `webuser` | NOLOGIN | JWT-authenticated requests |
+| `authenticator` | LOGIN NOINHERIT | PostgREST connects as this role, then switches per request |
+
+### Exposing Data via PostgREST
+
+Create tables or views in the `api` schema and grant SELECT (or other privileges) to the desired role:
+
+```sql
+-- Example: expose a time-series view to anonymous users
+CREATE VIEW api.sensor_data AS
+    SELECT * FROM timeseries.sensor_data;
+
+GRANT SELECT ON api.sensor_data TO anon;
+```
+
+PostgREST immediately exposes it at `GET /sensor_data`.
+
+### Authentication
+
+Pass a signed JWT in the `Authorization: Bearer <token>` header. The JWT payload must include a `role` claim matching `anon` or `webuser`. The shared secret (`PGRST_JWT_SECRET` in `.env`) must be used to sign the token (HS256).
+
+### Tiger Cloud Deployments
+
+To point PostgREST at a Timescale Cloud (Tiger Cloud) database instead of the local container, update `PGRST_DB_URI` in `.env`:
+
+```env
+PGRST_DB_URI=postgres://tsdbadmin:<password>@<host>.tsdb.cloud.timescale.com:<port>/tsdb?sslmode=require
+```
+
+The `api` schema and roles must exist in the Timescale Cloud database. Run `init/02-init-postgrest.sql` against that database manually (substituting the actual authenticator password).
+
+### Environment Variables Reference
+
+| Variable | Default | Description |
+|---|---|---|
+| `PGRST_DB_URI` | *(set by install)* | Full PostgreSQL connection URI |
+| `PGRST_DB_SCHEMAS` | `api` | Comma-separated schemas to expose |
+| `PGRST_DB_ANON_ROLE` | `anon` | Role for unauthenticated requests |
+| `PGRST_JWT_SECRET` | *(generated)* | HS256 secret for JWT verification (≥32 chars) |
+| `PGRST_DB_MAX_ROWS` | `1000` | Maximum rows returned per request |
+| `PGRST_SERVER_CORS_ALLOWED_ORIGINS` | `*` | Allowed browser origins |
+| `PGRST_DB_POOL` | `10` | Database connection pool size |
+| `POSTGREST_PORT` | `3000` | Host port for HTTP |
+| `POSTGREST_HTTPS_PORT` | `3443` | Host port for HTTPS (ssl profile) |
 
 ## Performance Tuning
 

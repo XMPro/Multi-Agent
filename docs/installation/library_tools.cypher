@@ -14,6 +14,19 @@ CREATE (duckduckgo:Tool {
 })
 CREATE (tl)-[:CONTAINS]->(duckduckgo)
 
+CREATE (ncalc:Tool {
+    id: 'NCALC-EXPR-TOOL-001',
+    name: 'NCalcTool',
+    active: true,
+    author: "XMPro",
+    description: 'An internal mathematical and logical expression evaluation tool that accepts natural language queries and evaluates them at runtime. The tool uses an internal LLM call to translate the user query into a valid NCalc expression, then evaluates it using the NCalc engine. Supports arithmetic operators (+, -, *, /, %), comparisons (=, !=, <, >, <=, >=), logical operators (and, or, not), and a comprehensive set of mathematical functions including Abs, Ceiling, Floor, Max, Min, Pow, Round, Sign, Sqrt, Truncate, trigonometric functions (Sin, Cos, Tan, Asin, Acos, Atan), conditionals (if), and constants (Pi, e). Returns both the generated expression and its computed result. The internal LLM prompt can be overridden via the Prompt Manager using the identifier ncalc_expression_prompt. This is an internal tool hardcoded into the agent system; no external configuration is required.',
+    class_name: 'NCalcTool',
+    created_date: datetime(),
+    last_modified_date: datetime(),
+    options: '{}'
+})
+CREATE (tl)-[:CONTAINS]->(ncalc)
+
 // Create metrics for all tools
 WITH tl
 MATCH (t:Tool)
@@ -36,5 +49,6 @@ CREATE (t)-[:HAS_METRICS]->(m:Entry {
     successful_calls: 0,
     total_calls: 0,
     total_data_processed: 0,
-    total_response_time: 0
+    total_response_time: 0,
+    output_reasoning_tokens: 0,
 })

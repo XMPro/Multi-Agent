@@ -42,4 +42,13 @@ Examines intellectual property considerations specific to industrial agentic sys
 
 ---
 
+### The 3-Layer Industrial World Model Stack
+**Date**: March 2026 · [PDF](2026.03.19_Three_Layer_World_Model_for_Industrial_Operations.pdf)
+
+Proposes a three-layer world model stack required for industrial autonomy. AI labs (AMI Labs, Meta V-JEPA 2, World Labs) are building the Physical Dynamics layer that predicts how materials and equipment behave under control actions — but industrial autonomy requires two additional layers: an Operational KPI Dynamics layer that translates physical state changes into production value metrics (throughput, grade, recovery, energy), and a Socio-Technical Dynamics layer that evaluates whether a proposed strategy is acceptable given safety constraints, alarm behaviour, maintenance risk, contractual obligations, and human workload. The paper formally specifies all three layers with clean API boundaries, defines the cognitive agent requirements for reasoning over the prediction stack using the observe–reflect–plan–act cycle, and introduces operator co-evolution as a mechanism for continuous constraint learning from operational feedback. Includes end-to-end demonstrations on a copper grinding-flotation circuit and an upstream oil and gas separation train, a progressive autonomy framework with formal gate criteria for each phase transition (shadow, advisory, bounded autonomous, collaborative autonomous), and alignment with LeCun's AMI architecture through a vendor-agnostic world model provider interface.
+
+**Related docs**: [ORPA Cycle](../docs/concepts/orpa-cycle.md) · [Planning Approaches](../docs/concepts/planning-approaches.md) · [Objective Functions](../docs/concepts/objective-functions.md) · [Constraints vs Utilities](../docs/concepts/constraints-vs-utilities.md) · [Human-in-the-Loop](../docs/responsible-ai/human-in-the-loop.md) · [Deontic Principles](../docs/concepts/deontic-principles.md)
+
+---
+
 *For academic research foundations that inform the MAGS architecture, see [docs/research-foundations/](../docs/research-foundations/README.md).*

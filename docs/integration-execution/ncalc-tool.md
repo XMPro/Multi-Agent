@@ -189,9 +189,6 @@ The NCalc Tool participates fully in the MAGS telemetry and audit framework:
 ### Technical Details
 - [OpenTelemetry Tracing Guide](../technical-details/open_telemetry_tracing_guide.md) — Tracing conventions
 
-### Installation
-- [Prompt Library](../installation/library_prompts.cypher) — `ncalc_expression_prompt` definition
-
 ---
 
 **Document Version**: 1.0

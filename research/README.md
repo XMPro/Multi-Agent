@@ -51,17 +51,4 @@ Proposes a three-layer world model stack required for industrial autonomy. AI la
 
 ---
 
----
-
-## Technical Reference Documents
-
-### NCalc Tool — Mathematical Expression Evaluation for MAGS Agents
-**Date**: March 2026 · [Markdown](ncalc-tool-documentation.md)
-
-Documents the NCalc Tool built-in capability available to all MAGS agents. Covers how the tool translates natural language queries into deterministic NCalc expressions, supported operations and functions, observability event IDs, prompt customisation via the Prompt Manager, and troubleshooting guidance.
-
-**Related docs**: [NCalc Tool](../docs/integration-execution/ncalc-tool.md) · [Tool Orchestration](../docs/integration-execution/tool-orchestration.md) · [Tools, Actions, and Data Streams](../docs/concepts/tools-actions-datastreams.md) · [OpenTelemetry Tracing Guide](../docs/technical-details/open_telemetry_tracing_guide.md)
-
----
-
 *For academic research foundations that inform the MAGS architecture, see [docs/research-foundations/](../docs/research-foundations/README.md).*

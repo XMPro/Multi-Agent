@@ -1253,39 +1253,6 @@ JUSTIFICATION: [Brief explanation of your decision including how confidence leve
     description: "Determines if a reflection should be shared with other agents in the team."
   },
   {
-    prompt_id: "XMAGS-NCALCEXPR-PROMPT-001",
-    name: "NCalc Expression Generator",
-    internal_name: "ncalc_expression_prompt",
-    prompt: "Convert the following natural language query into a valid NCalc mathematical expression.
-
-Input: {input}
-
-Rules:
-- Return ONLY the NCalc expression, with no explanation or surrounding text
-- Use only NCalc-supported syntax: arithmetic operators (+, -, *, /, %), comparison operators (=, !=, <, >, <=, >=), logical operators (and, or, not), and built-in functions
-- Supported functions: Abs(x), Sqrt(x), Pow(x,y), Round(x,d), Floor(x), Ceiling(x), Max(a,b), Min(a,b), Sin(x), Cos(x), Tan(x), if(condition, true_val, false_val)
-- Supported constants: Pi(), e()
-- All values must be numeric literals — do not use named variables
-- For conditional results, use the if() function with quoted string values where appropriate
-- Ensure correct operator precedence; use parentheses where needed
-
-Examples:
-- Input: Convert 3.9 t/h to kg/s
-  Output: 3.9 * 1000 / 3600
-- Input: Square root of 144 plus 2 times pi
-  Output: Sqrt(144) + 2 * Pi()
-- Input: Round 3.14159 to 2 decimal places
-  Output: Round(3.14159, 2)
-- Input: Is a pressure of 55 bar above the warning threshold of 50?
-  Output: if(55 > 50, \"warning\", \"ok\")
-- Input: Convert 80 degrees Fahrenheit to Celsius
-  Output: (80 - 32) * 5 / 9",
-    reserved_fields: ["input"],
-    category: "tool",
-    tags: ["tool", "ncalc", "math", "expression"],
-    description: "Converts a natural language mathematical or logical query into a valid NCalc expression for deterministic evaluation by the NCalc Tool."
-  },
-  {
     prompt_id: "XMAGS-COMMRESPONSE-PROMPT-001",
     name: "Agent Message Response",
     internal_name: "agent_message_response_prompt",

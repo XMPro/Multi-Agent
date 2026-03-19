@@ -34,6 +34,7 @@ MAGS-[ComponentType]-[Operation]
     - MEMORY_CYCLE
     - MILVUS_VECTOR_DATABASE
     - MQTT
+    - NCALC_TOOL
     - NEO4j_CONNECTION_POOL
     - PROMPT_MANAGER
 - `[Operation]`: Specific operation being performed.
@@ -169,6 +170,45 @@ public class PlanAndSolveStrategy
     }
 }
 ```
+
+## NCalc Tool Event Reference
+
+The NCalc Tool emits structured log events that integrate with the MAGS telemetry framework. These events use fixed Event IDs for reliable filtering and alerting.
+
+| Event Name | Log Level | Event ID | Description |
+|------------|-----------|----------|-------------|
+| `NCalcExpressionGenerated` | Information | 2200 | Logs the NCalc expression generated from the natural language input, before evaluation |
+| `NCalcEvaluationError` | Error | 2201 | Logs evaluation failures, including the offending expression and error details |
+| `NCalcExpressionResult` | Information | 2202 | Logs the final expression and its computed result after successful evaluation |
+
+**Activity naming for NCalc Tool tracing:**
+
+```
+MAGS-NCALC_TOOL-EVALUATE_EXPRESSION
+```
+
+Tags:
+- `mags.component_type`: `ncalc_tool`
+- `mags.operation`: `evaluate_expression`
+- `mags.agent_id`: agent identifier (original format)
+
+**Metrics tracked:**
+- Tool call count, response time, success/failure rate
+- LLM token usage from the internal expression generation call (tracked as `InternalLLMCall`)
+
+**Example usage:**
+```C#
+using var activity = _otelSetup.StartActivity("ncalc_tool", "evaluate_expression", agentId);
+```
+
+This results in:
+- Activity name: `MAGS-NCALC_TOOL-EVALUATE_EXPRESSION`
+- Tags:
+  - `mags.component_type`: `ncalc_tool`
+  - `mags.operation`: `evaluate_expression`
+  - `mags.agent_id`: `<agent-id>`
+
+---
 
 ## Conclusion
 

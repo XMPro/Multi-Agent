@@ -47,6 +47,9 @@ A tool is a **reusable capability** that an agent can invoke. It's the mechanism
 |-----------|-----------|---------|
 | **Streaming** (receive) | Data flows TO the agent | Listen to sensor readings |
 | **Request** (send/receive) | Agent sends request, gets response | Query a database, write a setpoint |
+| **Built-in internal** (compute) | Agent invokes, result returned immediately | NCalc mathematical expression evaluation |
+
+> **Built-in internal tools** are hardcoded into the MAGS agent framework and require no database entry, external API, or agent profile configuration. The [NCalc Tool](../integration-execution/ncalc-tool.md) is the primary example: it accepts a natural language query, translates it to a deterministic mathematical expression, evaluates it, and returns both the expression and the result. This guarantees accurate arithmetic without relying on the LLM to perform calculations.
 
 **Tool properties:**
 - Name and description

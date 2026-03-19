@@ -336,6 +336,46 @@ Final Status: SUCCESS (after retries)
 
 ## Tool Categories
 
+### Category 0: Built-In Internal Tools
+
+**Purpose**: Provide deterministic computation and utility capabilities that are hardcoded into the MAGS agent framework — no database entry, external API, or agent profile configuration required.
+
+**Tools**:
+```
+NCalc Mathematical Expression Tool:
+  Capabilities:
+    - Evaluate arithmetic expressions (add, subtract, multiply, divide, modulo)
+    - Apply mathematical functions (Sqrt, Pow, Round, Floor, Ceiling, Abs, Min, Max)
+    - Evaluate logical and comparison expressions
+    - Perform unit conversions via natural language input
+    - Conditional expressions using if(condition, true_val, false_val)
+
+  How It Works:
+    1. Agent passes a natural language query (e.g., "Convert 3.9 t/h to kg/s")
+    2. Internal LLM call translates query to NCalc expression (e.g., 3.9 * 1000 / 3600)
+    3. NCalc engine evaluates the expression deterministically
+    4. Agent receives both the expression and the result
+
+  Example:
+    Query: "Is a pressure of 55 bar above the warning threshold of 50 bar?"
+    Expression: if(55 > 50, "warning", "ok")
+    Result: "warning"
+
+  Observability:
+    Event ID 2200: NCalcExpressionGenerated — logs expression before evaluation
+    Event ID 2201: NCalcEvaluationError — logs failures with offending expression
+    Event ID 2202: NCalcExpressionResult — logs expression and computed result
+
+  Configuration:
+    - Prompt override: Prompt Manager key "ncalc_expression_prompt"
+    - Model override: configurable via Prompt Manager for lighter/faster model
+    - No database entry required — registered as hardcoded internal tool
+
+  See: NCalc Tool documentation for full reference
+```
+
+---
+
 ### Category 1: Data Access Tools
 
 **Purpose**: Read and write data from databases and data stores
@@ -827,6 +867,7 @@ Error Rate:
 - [Agent Lifecycle & Governance](../decision-orchestration/agent-lifecycle-governance.md) - Execution governance
 
 ### Integration & Execution
+- [NCalc Tool](ncalc-tool.md) - Built-in mathematical expression evaluation
 - [DataStream Integration](datastream-integration.md) - Data access
 - [Telemetry & Observability](telemetry-observability.md) - Execution monitoring
 - [Integration & Execution Overview](README.md) - Category overview

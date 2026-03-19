@@ -62,9 +62,10 @@ Result:
 ### 2. [Tool Orchestration](tool-orchestration.md)
 **External System Coordination and Action Execution**
 
-Coordinates execution of external tools and systems, enabling agents to interact with databases, APIs, equipment control systems, and enterprise applications.
+Coordinates execution of external tools and systems, enabling agents to interact with databases, APIs, equipment control systems, and enterprise applications. Also includes **built-in internal tools** such as the [NCalc Tool](ncalc-tool.md) that are available to all agents without configuration.
 
 **Key Features**:
+- Built-in internal tools (e.g., NCalc mathematical expression evaluation)
 - Tool selection and invocation
 - Parameter management and transformation
 - Error handling and retry logic
@@ -505,6 +506,7 @@ Result: Complete transparency and accountability
 ### Core Capabilities
 - [DataStream Integration](datastream-integration.md) - Real-time data processing
 - [Tool Orchestration](tool-orchestration.md) - External system coordination
+- [NCalc Tool](ncalc-tool.md) - Built-in mathematical expression evaluation
 - [Telemetry & Observability](telemetry-observability.md) - System visibility
 
 ### Research Foundations

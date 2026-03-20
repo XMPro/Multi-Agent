@@ -6,7 +6,14 @@
       "WebFetch(domain:docs.timescale.com)",
       "WebFetch(domain:mosquitto.org)",
       "WebFetch(domain:milvus.io)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(pwsh -NoProfile -Command \"try { [System.Management.Automation.Language.Parser]::ParseFile\\(''c:\\\\Development\\\\Github\\\\Multi-Agent\\\\docs\\\\installation\\\\docker\\\\windows\\\\management\\\\docker-stack-installer.ps1'', [ref]$null, [ref]$null\\) | Out-Null; Write-Host ''PARSE OK'' } catch { Write-Host \"\"PARSE ERROR: $_\"\" }\")",
+      "Bash(pip --version)",
+      "Bash(where pip:*)",
+      "Bash(where pip3:*)",
+      "Bash(docker manifest:*)",
+      "Bash(pip download:*)"
     ]
   }
 }

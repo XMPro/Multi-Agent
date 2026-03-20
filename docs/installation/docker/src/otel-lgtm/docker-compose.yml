@@ -4,7 +4,7 @@ services:
     container_name: otel-lgtm
     restart: unless-stopped
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"       # Grafana UI
+      - "${GRAFANA_PORT:-3001}:3000"       # Grafana UI
       - "${OTEL_GRPC_PORT:-4317}:4317"     # OTLP gRPC
       - "${OTEL_HTTP_PORT:-4318}:4318"     # OTLP HTTP
     volumes:
@@ -113,5 +113,5 @@ services:
 
 networks:
   observability:
-    driver: bridge
+    external: true
     name: observability

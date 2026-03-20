@@ -22,6 +22,8 @@ GPU_DRIVER="none"
 HSA_GFX_OVERRIDE=""
 AUTO_START=false
 FORCE=false
+CERT_TYPE=""
+MACHINE_IPS_PARAM=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -53,6 +55,14 @@ while [[ $# -gt 0 ]]; do
         --force)
             FORCE=true
             shift
+            ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IPS_PARAM="$2"
+            shift 2
             ;;
         *)
             echo "Unknown option: $1"
@@ -263,69 +273,85 @@ if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
     fi
     echo -e "${GRAY}HTTPS API will be accessible on port: $HTTPS_PORT${NC}"
     
-    # Ask for certificate type
-    echo ""
-    echo -e "${GRAY}Certificate Options:${NC}"
-    echo -e "${GRAY}1. Generate self-signed certificates (for development/testing)${NC}"
-    echo -e "${GRAY}2. Use CA-provided certificates (install later)${NC}"
-    read -p "Select certificate type (1 or 2, default: 1): " cert_choice
-    
-    if [ "$cert_choice" = "2" ]; then
-        echo -e "${GREEN}CA-provided certificates selected${NC}"
-        echo -e "${CYAN}You can install them after setup using: ./management/manage-ssl.sh install-ca${NC}"
-        GENERATE_SSL=false
-    else
-        echo -e "${GREEN}Self-signed certificates selected${NC}"
-        GENERATE_SSL=true
-        
-        # Ask for domain name
-        read -p "Enter domain name for SSL certificate (default: localhost): " domain_choice
-        if [ -n "$domain_choice" ]; then
-            DOMAIN="$domain_choice"
+    if [ -n "$CERT_TYPE" ]; then
+        # Cert type provided by stack installer
+        if [ "$CERT_TYPE" = "ca-provided" ]; then
+            echo -e "${GREEN}CA-provided certificates selected (from stack installer)${NC}"
+            GENERATE_SSL=false
+        else
+            echo -e "${GREEN}Self-signed certificates selected (from stack installer)${NC}"
+            GENERATE_SSL=true
         fi
-        echo -e "${GRAY}SSL certificates will be generated for domain: $DOMAIN${NC}"
-        
-        # Detect machine IP addresses for SSL certificate SAN
-        echo ""
-        echo -e "${GRAY}Detecting machine IP addresses...${NC}"
         MACHINE_IPS=()
-        if command -v hostname &> /dev/null; then
-            IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
-            if [ -n "$IPS" ]; then
-                echo -e "${GREEN}Detected IP addresses:${NC}"
-                i=0
-                declare -a ALL_IPS_ARRAY
-                while IFS= read -r ip; do
-                    echo -e "${GRAY}  [$i] $ip${NC}"
-                    ALL_IPS_ARRAY+=("$ip")
-                    ((i++))
-                done <<< "$IPS"
-                
-                echo ""
-                read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
-                
-                if [ -n "$ip_choice" ]; then
-                    IFS=',' read -ra SELECTED_INDICES <<< "$ip_choice"
-                    for index in "${SELECTED_INDICES[@]}"; do
-                        index=$(echo "$index" | xargs) # Trim whitespace
-                        if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#ALL_IPS_ARRAY[@]}" ]; then
-                            MACHINE_IPS+=("${ALL_IPS_ARRAY[$index]}")
+        if [ -n "$MACHINE_IPS_PARAM" ]; then
+            IFS=',' read -ra MACHINE_IPS <<< "$MACHINE_IPS_PARAM"
+        fi
+    else
+        # Interactive prompts
+        # Ask for certificate type
+        echo ""
+        echo -e "${GRAY}Certificate Options:${NC}"
+        echo -e "${GRAY}1. Generate self-signed certificates (for development/testing)${NC}"
+        echo -e "${GRAY}2. Use CA-provided certificates (install later)${NC}"
+        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+
+        if [ "$cert_choice" = "2" ]; then
+            echo -e "${GREEN}CA-provided certificates selected${NC}"
+            echo -e "${CYAN}You can install them after setup using: ./management/manage-ssl.sh install-ca${NC}"
+            GENERATE_SSL=false
+        else
+            echo -e "${GREEN}Self-signed certificates selected${NC}"
+            GENERATE_SSL=true
+
+            # Ask for domain name
+            read -p "Enter domain name for SSL certificate (default: localhost): " domain_choice
+            if [ -n "$domain_choice" ]; then
+                DOMAIN="$domain_choice"
+            fi
+            echo -e "${GRAY}SSL certificates will be generated for domain: $DOMAIN${NC}"
+
+            # Detect machine IP addresses for SSL certificate SAN
+            echo ""
+            echo -e "${GRAY}Detecting machine IP addresses...${NC}"
+            MACHINE_IPS=()
+            if command -v hostname &> /dev/null; then
+                IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
+                if [ -n "$IPS" ]; then
+                    echo -e "${GREEN}Detected IP addresses:${NC}"
+                    i=0
+                    declare -a ALL_IPS_ARRAY
+                    while IFS= read -r ip; do
+                        echo -e "${GRAY}  [$i] $ip${NC}"
+                        ALL_IPS_ARRAY+=("$ip")
+                        ((i++))
+                    done <<< "$IPS"
+
+                    echo ""
+                    read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+
+                    if [ -n "$ip_choice" ]; then
+                        IFS=',' read -ra SELECTED_INDICES <<< "$ip_choice"
+                        for index in "${SELECTED_INDICES[@]}"; do
+                            index=$(echo "$index" | xargs) # Trim whitespace
+                            if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#ALL_IPS_ARRAY[@]}" ]; then
+                                MACHINE_IPS+=("${ALL_IPS_ARRAY[$index]}")
+                            fi
+                        done
+
+                        if [ ${#MACHINE_IPS[@]} -gt 0 ]; then
+                            echo -e "${CYAN}Selected IPs: ${MACHINE_IPS[*]}${NC}"
+                        else
+                            echo -e "${GRAY}No valid IPs selected${NC}"
                         fi
-                    done
-                    
-                    if [ ${#MACHINE_IPS[@]} -gt 0 ]; then
-                        echo -e "${CYAN}Selected IPs: ${MACHINE_IPS[*]}${NC}"
                     else
-                        echo -e "${GRAY}No valid IPs selected${NC}"
+                        echo -e "${GRAY}IP addresses not included (localhost/domain only)${NC}"
                     fi
                 else
-                    echo -e "${GRAY}IP addresses not included (localhost/domain only)${NC}"
+                    echo -e "${GRAY}Could not detect IP addresses, skipping${NC}"
                 fi
             else
-                echo -e "${GRAY}Could not detect IP addresses, skipping${NC}"
+                echo -e "${GRAY}Could not detect IP addresses${NC}"
             fi
-        else
-            echo -e "${GRAY}Could not detect IP addresses${NC}"
         fi
     fi
 else
@@ -398,7 +424,7 @@ if [ "$GPU_DRIVER" = "amd" ]; then
 
     # AMD requires service-level device passthrough, not deploy.resources syntax
     awk '
-    /container_name: ollama/ {
+    /container_name: ollama$/ {
         print
         print "    devices:"
         print "      - /dev/kfd:/dev/kfd"
@@ -417,14 +443,17 @@ if [ "$GPU_DRIVER" = "amd" ]; then
 elif [ "$GPU_DRIVER" = "nvidia" ]; then
     echo -e "${GRAY}Configuring NVIDIA GPU support in docker-compose.yml...${NC}"
 
+    # Insert deploy block with GPU reservations before the logging section of the ollama service
     awk '
-    /reservations:/ {
-        print
+    /^    logging:/ && !done {
+        print "    deploy:"
+        print "      resources:"
+        print "        reservations:"
         print "          devices:"
         print "            - driver: nvidia"
         print "              count: all"
         print "              capabilities: [gpu]"
-        next
+        done=1
     }
     { print }
     ' docker-compose.yml > docker-compose.yml.tmp
@@ -487,6 +516,28 @@ EOF
 fi
 
 echo ""
+
+# When called from stack installer (--force), only configure - don't start services
+if [ "$FORCE" = true ]; then
+    echo ""
+    echo -e "${GREEN}[OK] Ollama configuration complete (services will be started by stack installer)${NC}"
+    exit 0
+fi
+
+# Ask if user wants to start Ollama now
+echo ""
+read -p "Start Ollama service now? (y/n, default: y): " start_choice
+if [[ "$start_choice" =~ ^[Nn]$ ]]; then
+    echo ""
+    echo -e "${CYAN}==================================================================${NC}"
+    echo -e "${GREEN}Configuration Complete!${NC}"
+    echo -e "${CYAN}==================================================================${NC}"
+    echo ""
+    echo -e "${GRAY}To start Ollama later, run:${NC}"
+    echo -e "${GRAY}  docker-compose up -d${NC}"
+    echo ""
+    exit 0
+fi
 
 # Start Docker containers
 echo -e "${GRAY}Starting Ollama service...${NC}"

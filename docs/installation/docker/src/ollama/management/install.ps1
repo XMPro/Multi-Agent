@@ -9,6 +9,9 @@ param(
     [string]$HttpsPort = "11443",
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
+    [ValidateSet("self-signed", "ca-provided", "")]
+    [string]$CertType = "",
+    [string]$MachineIPsParam = "",
     [ValidateSet("nvidia", "amd", "none")]
     [string]$GPUDriver = "none",
     [string]$HsaGfxOverride = "",
@@ -236,9 +239,11 @@ if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
 }
 
 $GenerateSSL = $false
+$MachineIPs = @()
+
 if ($EnableSSL) {
     Write-Host "[OK] SSL/TLS will be enabled" -ForegroundColor Green
-    
+
     # Ask for HTTPS port
     if (-not $PSBoundParameters.ContainsKey('HttpsPort')) {
         $HttpsPortChoice = Read-Host "HTTPS API port (default: 11443)"
@@ -247,77 +252,85 @@ if ($EnableSSL) {
         }
     }
     Write-Host "HTTPS API will be accessible on port: $HttpsPort" -ForegroundColor White
-    
-    # Ask for certificate type
-    Write-Host ""
-    Write-Host "Certificate Options:" -ForegroundColor White
-    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
-    Write-Host "2. Use CA-provided certificates (install later)" -ForegroundColor Gray
-    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
-    
-    if ($CertChoice -eq "2") {
-        Write-Host "CA-provided certificates selected" -ForegroundColor Green
-        Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
-        $GenerateSSL = $false
-    } else {
-        Write-Host "Self-signed certificates selected" -ForegroundColor Green
-        $GenerateSSL = $true
-        
-        # Ask for domain name
-        if (-not $PSBoundParameters.ContainsKey('Domain')) {
-            $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
-            if ($DomainChoice) {
-                $Domain = $DomainChoice
-            }
+
+    if ($CertType) {
+        if ($CertType -eq "ca-provided") {
+            Write-Host "CA-provided certificates selected (from stack installer)" -ForegroundColor Green
+            $GenerateSSL = $false
+        } else {
+            Write-Host "Self-signed certificates selected (from stack installer)" -ForegroundColor Green
+            $GenerateSSL = $true
         }
-        Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
-        
-        # Detect machine IP addresses for SSL certificate SAN
+        if ($MachineIPsParam) {
+            $MachineIPs = $MachineIPsParam -split ','
+        }
+    } else {
         Write-Host ""
-        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
-        $MachineIPs = @()
-        try {
-            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
-                $_.IPAddress -notmatch '^127\.' -and
-                ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual')
-            }
-            
-            if ($AllIPs.Count -gt 0) {
-                Write-Host "Detected IP addresses:" -ForegroundColor Green
-                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
-                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
-                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
+        Write-Host "Certificate Options:" -ForegroundColor White
+        Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+        Write-Host "2. Use CA-provided certificates (install later)" -ForegroundColor Gray
+        $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+
+        if ($CertChoice -eq "2") {
+            Write-Host "CA-provided certificates selected" -ForegroundColor Green
+            Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
+            $GenerateSSL = $false
+        } else {
+            Write-Host "Self-signed certificates selected" -ForegroundColor Green
+            $GenerateSSL = $true
+
+            if (-not $PSBoundParameters.ContainsKey('Domain')) {
+                $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
+                if ($DomainChoice) {
+                    $Domain = $DomainChoice
                 }
-                
-                Write-Host ""
-                $IPChoice = Read-Host "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip"
-                
-                if ($IPChoice) {
-                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
-                    foreach ($index in $SelectedIndices) {
-                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
-                            $MachineIPs += $AllIPs[[int]$index].IPAddress
-                        }
+            }
+            Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+
+            Write-Host ""
+            Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+            try {
+                $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+                    $_.IPAddress -notmatch '^127\.' -and
+                    ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual')
+                }
+
+                if ($AllIPs.Count -gt 0) {
+                    Write-Host "Detected IP addresses:" -ForegroundColor Green
+                    for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                        $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
+                        Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
                     }
-                    
-                    if ($MachineIPs.Count -gt 0) {
-                        Write-Host "Selected IPs: $($MachineIPs -join ', ')" -ForegroundColor Cyan
+
+                    Write-Host ""
+                    $IPChoice = Read-Host "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip"
+
+                    if ($IPChoice) {
+                        $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                        foreach ($index in $SelectedIndices) {
+                            if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                                $MachineIPs += $AllIPs[[int]$index].IPAddress
+                            }
+                        }
+
+                        if ($MachineIPs.Count -gt 0) {
+                            Write-Host "Selected IPs: $($MachineIPs -join ', ')" -ForegroundColor Cyan
+                        } else {
+                            Write-Host "No valid IPs selected" -ForegroundColor Gray
+                        }
                     } else {
-                        Write-Host "No valid IPs selected" -ForegroundColor Gray
+                        Write-Host "IP addresses not included (localhost/domain only)" -ForegroundColor Gray
                     }
                 } else {
-                    Write-Host "IP addresses not included (localhost/domain only)" -ForegroundColor Gray
+                    Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
                 }
-            } else {
-                Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
+            } catch {
+                Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
             }
-        } catch {
-            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
         }
     }
 } else {
     Write-Host "SSL/TLS will be disabled (HTTP only)" -ForegroundColor Gray
-    $MachineIPs = @()
 }
 
 Write-Host ""
@@ -392,20 +405,44 @@ Write-Host "[OK] Updated .env with configuration" -ForegroundColor Green
 if ($GPUDriver -eq "amd") {
     Write-Host "Configuring AMD ROCm support in docker-compose.yml..." -ForegroundColor White
 
-    # AMD requires service-level device passthrough, not deploy.resources syntax
-    $composeContent = Get-Content "docker-compose.yml" -Raw
-    $amdDevicesConfig = "`n    devices:`n      - /dev/kfd:/dev/kfd`n      - /dev/dri:/dev/dri`n    group_add:`n      - video`n      - render"
-    $composeContent = $composeContent -replace '(container_name: ollama)', "`$1$amdDevicesConfig"
-    $composeContent | Set-Content "docker-compose.yml"
-    Write-Host "[OK] AMD ROCm device passthrough configured in docker-compose.yml" -ForegroundColor Green
+    # AMD ROCm device passthrough (/dev/kfd, /dev/dri) only works on Linux
+    # On Windows, Docker Desktop runs containers in WSL2 - AMD GPU passthrough is not supported
+    if ($env:OS -eq "Windows_NT") {
+        Write-Host "[WARN] AMD ROCm GPU passthrough is not supported on Windows Docker Desktop" -ForegroundColor Yellow
+        Write-Host "  The ROCm image will be used but GPU acceleration may not be available" -ForegroundColor Gray
+        Write-Host "  For GPU support, run on Linux with native Docker and ROCm drivers" -ForegroundColor Gray
+    } else {
+        # Linux: inject device passthrough
+        $composeContent = Get-Content "docker-compose.yml" -Raw
+        $amdDevicesConfig = "`n    devices:`n      - /dev/kfd:/dev/kfd`n      - /dev/dri:/dev/dri`n    group_add:`n      - video`n      - render"
+        $composeContent = $composeContent -replace '(container_name: ollama)(?![\w-])', "`$1$amdDevicesConfig"
+        $composeContent | Set-Content "docker-compose.yml"
+        Write-Host "[OK] AMD ROCm device passthrough configured in docker-compose.yml" -ForegroundColor Green
+    }
 
 } elseif ($GPUDriver -eq "nvidia") {
     Write-Host "Configuring NVIDIA GPU support in docker-compose.yml..." -ForegroundColor White
 
+    # Insert deploy block with GPU reservations before the logging section of the ollama service
     $composeContent = Get-Content "docker-compose.yml" -Raw
-    $gpuDevicesConfig = "`n          devices:`n            - driver: nvidia`n              count: all`n              capabilities: [gpu]"
-    $composeContent = $composeContent -replace '(deploy:[\s\S]*?reservations:)', "`$1$gpuDevicesConfig"
-    $composeContent | Set-Content "docker-compose.yml"
+    # Insert deploy block before the first "    logging:" line (ollama service)
+    $lines = $composeContent -split "`n"
+    $result = @()
+    $inserted = $false
+    foreach ($line in $lines) {
+        if (-not $inserted -and $line -match '^    logging:$') {
+            $result += "    deploy:"
+            $result += "      resources:"
+            $result += "        reservations:"
+            $result += "          devices:"
+            $result += "            - driver: nvidia"
+            $result += "              count: all"
+            $result += "              capabilities: [gpu]"
+            $inserted = $true
+        }
+        $result += $line
+    }
+    ($result -join "`n") | Set-Content "docker-compose.yml" -NoNewline
     Write-Host "[OK] NVIDIA GPU support enabled in docker-compose.yml" -ForegroundColor Green
 }
 
@@ -472,6 +509,28 @@ subjectAltName = $SANString
 }
 
 Write-Host ""
+
+# When called from stack installer (-Force), only configure - don't start services
+if ($Force) {
+    Write-Host ""
+    Write-Host "[OK] Ollama configuration complete (services will be started by stack installer)" -ForegroundColor Green
+    exit 0
+}
+
+# Ask if user wants to start Ollama now
+Write-Host ""
+$StartChoice = Read-Host "Start Ollama service now? (y/n, default: y)"
+if ($StartChoice -eq "n" -or $StartChoice -eq "N") {
+    Write-Host ""
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host "Configuration Complete!" -ForegroundColor Green
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "To start Ollama later, run:" -ForegroundColor Gray
+    Write-Host "  docker-compose up -d" -ForegroundColor Gray
+    Write-Host ""
+    exit 0
+}
 
 # Start Docker containers
 Write-Host "Starting Ollama service..." -ForegroundColor White

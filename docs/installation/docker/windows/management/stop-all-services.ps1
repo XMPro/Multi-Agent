@@ -1,6 +1,6 @@
 # =================================================================
 # Stop All Docker Services Script
-# Stops Neo4j, Milvus, MQTT, TimescaleDB, and Ollama services
+# Stops Neo4j, Milvus, MQTT, TimescaleDB, Ollama, and OTEL LGTM services
 # =================================================================
 
 param(
@@ -35,7 +35,7 @@ if (-not (Test-Path $InstallPath)) {
 Set-Location $InstallPath
 
 # Verify expected folders exist
-$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
+$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")
 $MissingFolders = @()
 
 foreach ($folder in $ExpectedFolders) {
@@ -44,9 +44,9 @@ foreach ($folder in $ExpectedFolders) {
     }
 }
 
-if ($MissingFolders.Count -eq 5) {
+if ($MissingFolders.Count -eq $ExpectedFolders.Count) {
     Write-Host "No service folders found in: $InstallPath" -ForegroundColor Red
-    Write-Host "Expected folders: neo4j, milvus, mqtt, timescaledb, ollama" -ForegroundColor Yellow
+    Write-Host "Expected folders: $($ExpectedFolders -join ', ')" -ForegroundColor Yellow
     exit 1
 }
 
@@ -85,9 +85,9 @@ if (Test-Path "neo4j") {
     Set-Location "neo4j"
     try {
         if ($RemoveVolumes) {
-            docker-compose down -v
+            docker-compose --profile ssl down -v
         } else {
-            docker-compose down
+            docker-compose --profile ssl down
         }
         
         if ($LASTEXITCODE -eq 0) {
@@ -111,9 +111,9 @@ if (Test-Path "milvus") {
     Set-Location "milvus"
     try {
         if ($RemoveVolumes) {
-            docker-compose down -v
+            docker-compose --profile ssl down -v
         } else {
-            docker-compose down
+            docker-compose --profile ssl down
         }
         
         if ($LASTEXITCODE -eq 0) {
@@ -137,9 +137,9 @@ if (Test-Path "mqtt") {
     Set-Location "mqtt"
     try {
         if ($RemoveVolumes) {
-            docker-compose down -v
+            docker-compose --profile ssl down -v
         } else {
-            docker-compose down
+            docker-compose --profile ssl down
         }
         
         if ($LASTEXITCODE -eq 0) {
@@ -163,9 +163,9 @@ if (Test-Path "timescaledb") {
     Set-Location "timescaledb"
     try {
         if ($RemoveVolumes) {
-            docker-compose down -v
+            docker-compose --profile ssl down -v
         } else {
-            docker-compose down
+            docker-compose --profile ssl down
         }
         
         if ($LASTEXITCODE -eq 0) {
@@ -189,9 +189,9 @@ if (Test-Path "ollama") {
     Set-Location "ollama"
     try {
         if ($RemoveVolumes) {
-            docker-compose down -v
+            docker-compose --profile ssl down -v
         } else {
-            docker-compose down
+            docker-compose --profile ssl down
         }
         
         if ($LASTEXITCODE -eq 0) {
@@ -204,6 +204,32 @@ if (Test-Path "ollama") {
     } catch {
         Write-Host "Error stopping Ollama: $($_.Exception.Message)" -ForegroundColor Red
         $FailedServices += "Ollama"
+    }
+    Set-Location ..
+}
+
+# Stop OTEL LGTM
+if (Test-Path "otel-lgtm") {
+    Write-Host ""
+    Write-Host "Stopping OTEL LGTM..." -ForegroundColor White
+    Set-Location "otel-lgtm"
+    try {
+        if ($RemoveVolumes) {
+            docker-compose --profile ssl down -v
+        } else {
+            docker-compose --profile ssl down
+        }
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "OTEL LGTM stopped successfully" -ForegroundColor Green
+            $StoppedServices += "OTEL LGTM"
+        } else {
+            Write-Host "Failed to stop OTEL LGTM (exit code: $LASTEXITCODE)" -ForegroundColor Red
+            $FailedServices += "OTEL LGTM"
+        }
+    } catch {
+        Write-Host "Error stopping OTEL LGTM: $($_.Exception.Message)" -ForegroundColor Red
+        $FailedServices += "OTEL LGTM"
     }
     Set-Location ..
 }

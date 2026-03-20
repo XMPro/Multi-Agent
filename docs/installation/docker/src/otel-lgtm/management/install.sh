@@ -15,7 +15,7 @@ GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
 # Default parameters
-GRAFANA_PORT="3000"
+GRAFANA_PORT="3001"
 GRAFANA_HTTPS_PORT="3443"
 OTEL_GRPC_PORT="4317"
 OTEL_HTTP_PORT="4318"
@@ -24,6 +24,8 @@ DOMAIN="localhost"
 GRAFANA_PASSWORD=""
 AUTO_START=false
 FORCE=false
+CERT_TYPE=""
+MACHINE_IPS_PARAM=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -55,6 +57,14 @@ while [[ $# -gt 0 ]]; do
         --force)
             FORCE=true
             shift
+            ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IPS_PARAM="$2"
+            shift 2
             ;;
         *)
             echo "Unknown option: $1"
@@ -132,7 +142,7 @@ echo ""
 
 # Port configuration
 if [ "$FORCE" = false ]; then
-    read -p "Grafana UI port (default: 3000): " port_choice
+    read -p "Grafana UI port (default: 3001): " port_choice
     if [ -n "$port_choice" ]; then
         GRAFANA_PORT="$port_choice"
     fi
@@ -189,69 +199,85 @@ if [ "$FORCE" = false ]; then
         fi
         echo -e "${GRAY}Grafana HTTPS will be accessible on port: $GRAFANA_HTTPS_PORT${NC}"
 
-        # Ask for certificate type
-        echo ""
-        echo -e "${GRAY}Certificate Options:${NC}"
-        echo -e "${GRAY}1. Generate self-signed certificates (for development/testing)${NC}"
-        echo -e "${GRAY}2. Use CA-provided certificates (install later)${NC}"
-        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
-
-        if [ "$cert_choice" = "2" ]; then
-            echo -e "${GREEN}CA-provided certificates selected${NC}"
-            echo -e "${CYAN}You can install them after setup using: ./management/manage-ssl.sh install-ca${NC}"
-            GENERATE_SSL=false
-        else
-            echo -e "${GREEN}Self-signed certificates selected${NC}"
-            GENERATE_SSL=true
-
-            # Ask for domain name
-            read -p "Enter domain name for SSL certificate (default: localhost): " domain_choice
-            if [ -n "$domain_choice" ]; then
-                DOMAIN="$domain_choice"
+        if [ -n "$CERT_TYPE" ]; then
+            # Cert type provided by stack installer
+            if [ "$CERT_TYPE" = "ca-provided" ]; then
+                echo -e "${GREEN}CA-provided certificates selected (from stack installer)${NC}"
+                GENERATE_SSL=false
+            else
+                echo -e "${GREEN}Self-signed certificates selected (from stack installer)${NC}"
+                GENERATE_SSL=true
             fi
-            echo -e "${GRAY}SSL certificates will be generated for domain: $DOMAIN${NC}"
-
-            # Detect machine IP addresses for SSL certificate SAN
-            echo ""
-            echo -e "${GRAY}Detecting machine IP addresses...${NC}"
             MACHINE_IPS=()
-            if command -v hostname &> /dev/null; then
-                IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
-                if [ -n "$IPS" ]; then
-                    echo -e "${GREEN}Detected IP addresses:${NC}"
-                    i=0
-                    declare -a ALL_IPS_ARRAY
-                    while IFS= read -r ip; do
-                        echo -e "${GRAY}  [$i] $ip${NC}"
-                        ALL_IPS_ARRAY+=("$ip")
-                        ((i++))
-                    done <<< "$IPS"
+            if [ -n "$MACHINE_IPS_PARAM" ]; then
+                IFS=',' read -ra MACHINE_IPS <<< "$MACHINE_IPS_PARAM"
+            fi
+        else
+            # Interactive prompts
+            # Ask for certificate type
+            echo ""
+            echo -e "${GRAY}Certificate Options:${NC}"
+            echo -e "${GRAY}1. Generate self-signed certificates (for development/testing)${NC}"
+            echo -e "${GRAY}2. Use CA-provided certificates (install later)${NC}"
+            read -p "Select certificate type (1 or 2, default: 1): " cert_choice
 
-                    echo ""
-                    read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+            if [ "$cert_choice" = "2" ]; then
+                echo -e "${GREEN}CA-provided certificates selected${NC}"
+                echo -e "${CYAN}You can install them after setup using: ./management/manage-ssl.sh install-ca${NC}"
+                GENERATE_SSL=false
+            else
+                echo -e "${GREEN}Self-signed certificates selected${NC}"
+                GENERATE_SSL=true
 
-                    if [ -n "$ip_choice" ]; then
-                        IFS=',' read -ra SELECTED_INDICES <<< "$ip_choice"
-                        for index in "${SELECTED_INDICES[@]}"; do
-                            index=$(echo "$index" | xargs)
-                            if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#ALL_IPS_ARRAY[@]}" ]; then
-                                MACHINE_IPS+=("${ALL_IPS_ARRAY[$index]}")
+                # Ask for domain name
+                read -p "Enter domain name for SSL certificate (default: localhost): " domain_choice
+                if [ -n "$domain_choice" ]; then
+                    DOMAIN="$domain_choice"
+                fi
+                echo -e "${GRAY}SSL certificates will be generated for domain: $DOMAIN${NC}"
+
+                # Detect machine IP addresses for SSL certificate SAN
+                echo ""
+                echo -e "${GRAY}Detecting machine IP addresses...${NC}"
+                MACHINE_IPS=()
+                if command -v hostname &> /dev/null; then
+                    IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | grep -v '^::')
+                    if [ -n "$IPS" ]; then
+                        echo -e "${GREEN}Detected IP addresses:${NC}"
+                        i=0
+                        declare -a ALL_IPS_ARRAY
+                        while IFS= read -r ip; do
+                            echo -e "${GRAY}  [$i] $ip${NC}"
+                            ALL_IPS_ARRAY+=("$ip")
+                            ((i++))
+                        done <<< "$IPS"
+
+                        echo ""
+                        read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+
+                        if [ -n "$ip_choice" ]; then
+                            IFS=',' read -ra SELECTED_INDICES <<< "$ip_choice"
+                            for index in "${SELECTED_INDICES[@]}"; do
+                                index=$(echo "$index" | xargs)
+                                if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#ALL_IPS_ARRAY[@]}" ]; then
+                                    MACHINE_IPS+=("${ALL_IPS_ARRAY[$index]}")
+                                fi
+                            done
+
+                            if [ ${#MACHINE_IPS[@]} -gt 0 ]; then
+                                echo -e "${CYAN}Selected IPs: ${MACHINE_IPS[*]}${NC}"
+                            else
+                                echo -e "${GRAY}No valid IPs selected${NC}"
                             fi
-                        done
-
-                        if [ ${#MACHINE_IPS[@]} -gt 0 ]; then
-                            echo -e "${CYAN}Selected IPs: ${MACHINE_IPS[*]}${NC}"
                         else
-                            echo -e "${GRAY}No valid IPs selected${NC}"
+                            echo -e "${GRAY}IP addresses not included (localhost/domain only)${NC}"
                         fi
                     else
-                        echo -e "${GRAY}IP addresses not included (localhost/domain only)${NC}"
+                        echo -e "${GRAY}Could not detect IP addresses, skipping${NC}"
                     fi
                 else
-                    echo -e "${GRAY}Could not detect IP addresses, skipping${NC}"
+                    echo -e "${GRAY}Could not detect IP addresses${NC}"
                 fi
-            else
-                echo -e "${GRAY}Could not detect IP addresses${NC}"
             fi
         fi
     else
@@ -262,7 +288,21 @@ else
     GENERATE_SSL=false
     MACHINE_IPS=()
     if [ "$ENABLE_SSL" = true ]; then
-        GENERATE_SSL=true
+        if [ -n "$CERT_TYPE" ]; then
+            # Cert type provided by stack installer
+            if [ "$CERT_TYPE" = "ca-provided" ]; then
+                echo -e "${GREEN}CA-provided certificates selected (from stack installer)${NC}"
+                GENERATE_SSL=false
+            else
+                echo -e "${GREEN}Self-signed certificates selected (from stack installer)${NC}"
+                GENERATE_SSL=true
+            fi
+            if [ -n "$MACHINE_IPS_PARAM" ]; then
+                IFS=',' read -ra MACHINE_IPS <<< "$MACHINE_IPS_PARAM"
+            fi
+        else
+            GENERATE_SSL=true
+        fi
     fi
 fi
 
@@ -390,6 +430,28 @@ EOF
 fi
 
 echo ""
+
+# When called from stack installer (--force), only configure - don't start services
+if [ "$FORCE" = true ]; then
+    echo ""
+    echo -e "${GREEN}[OK] OTEL LGTM configuration complete (services will be started by stack installer)${NC}"
+    exit 0
+fi
+
+# Ask if user wants to start LGTM stack now
+echo ""
+read -p "Start LGTM stack now? (y/n, default: y): " start_choice
+if [[ "$start_choice" =~ ^[Nn]$ ]]; then
+    echo ""
+    echo -e "${CYAN}==================================================================${NC}"
+    echo -e "${GREEN}Configuration Complete!${NC}"
+    echo -e "${CYAN}==================================================================${NC}"
+    echo ""
+    echo -e "${GRAY}To start the LGTM stack later, run:${NC}"
+    echo -e "${GRAY}  docker-compose up -d${NC}"
+    echo ""
+    exit 0
+fi
 
 # Start Docker containers
 echo -e "${GRAY}Starting LGTM stack...${NC}"

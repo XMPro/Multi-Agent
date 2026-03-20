@@ -20,6 +20,8 @@ DATABASE_NAME="timescaledb"
 ENABLE_SSL=false
 DOMAIN="localhost"
 FORCE=false
+CERT_TYPE=""
+MACHINE_IPS_PARAM=""
 
 # Function to print colored output
 print_color() {
@@ -70,6 +72,14 @@ while [[ $# -gt 0 ]]; do
         --force)
             FORCE=true
             shift
+            ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IPS_PARAM="$2"
+            shift 2
             ;;
         -h|--help)
             show_usage
@@ -182,69 +192,84 @@ MACHINE_IP=""
 
 if [ "$ENABLE_SSL" = true ]; then
     print_color "$GREEN" "SSL will be enabled for PostgreSQL connections"
-    
-    # Ask for certificate type
-    echo ""
-    print_color "$CYAN" "Certificate Options:"
-    print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
-    print_color "$GRAY" "2. Use CA-provided certificates (for production)"
-    read -p "Select certificate type (1 or 2, default: 1): " cert_choice
-    
-    if [ "$cert_choice" = "2" ]; then
-        print_color "$GREEN" "CA-provided certificates selected"
-        print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh --enable"
-        print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
-        ENABLE_SSL=false
-        USE_CA_PROVIDED=true
-    else
-        print_color "$GREEN" "Self-signed certificates selected"
-        
-        # Ask for domain name
-        read -p "Enter domain name for SSL certificate (default: localhost): " domain_choice
-        if [ -n "$domain_choice" ]; then
-            DOMAIN="$domain_choice"
+
+    if [ -n "$CERT_TYPE" ]; then
+        # Cert type provided by stack installer
+        if [ "$CERT_TYPE" = "ca-provided" ]; then
+            print_color "$GREEN" "CA-provided certificates selected (from stack installer)"
+            print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh --enable"
+            print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+            ENABLE_SSL=false
+            USE_CA_PROVIDED=true
+        else
+            print_color "$GREEN" "Self-signed certificates selected (from stack installer)"
         fi
-        print_color "$CYAN" "SSL certificates will be generated for domain: $DOMAIN"
-        
-        # Detect machine IP addresses
+        MACHINE_IP="$MACHINE_IPS_PARAM"
+    else
+        # Interactive prompts
+        # Ask for certificate type
         echo ""
-        echo "Detecting machine IP addresses..."
-        MACHINE_IP=""
-        if command -v ip &> /dev/null; then
-            IPS=($(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.'))
-            if [ ${#IPS[@]} -gt 0 ]; then
-                print_color "$GREEN" "Detected IP addresses:"
-                for i in "${!IPS[@]}"; do
-                    echo "  [$i] ${IPS[$i]}"
-                done
-                
-                echo ""
-                read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
-                
-                if [ -n "$ip_choice" ]; then
-                    IFS=',' read -ra INDICES <<< "$ip_choice"
-                    SELECTED_IPS=()
-                    for idx in "${INDICES[@]}"; do
-                        idx=$(echo "$idx" | xargs)
-                        if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -lt "${#IPS[@]}" ]; then
-                            SELECTED_IPS+=("${IPS[$idx]}")
-                        fi
+        print_color "$CYAN" "Certificate Options:"
+        print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+        print_color "$GRAY" "2. Use CA-provided certificates (for production)"
+        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+
+        if [ "$cert_choice" = "2" ]; then
+            print_color "$GREEN" "CA-provided certificates selected"
+            print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh --enable"
+            print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+            ENABLE_SSL=false
+            USE_CA_PROVIDED=true
+        else
+            print_color "$GREEN" "Self-signed certificates selected"
+
+            # Ask for domain name
+            read -p "Enter domain name for SSL certificate (default: localhost): " domain_choice
+            if [ -n "$domain_choice" ]; then
+                DOMAIN="$domain_choice"
+            fi
+            print_color "$CYAN" "SSL certificates will be generated for domain: $DOMAIN"
+
+            # Detect machine IP addresses
+            echo ""
+            echo "Detecting machine IP addresses..."
+            MACHINE_IP=""
+            if command -v ip &> /dev/null; then
+                IPS=($(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.'))
+                if [ ${#IPS[@]} -gt 0 ]; then
+                    print_color "$GREEN" "Detected IP addresses:"
+                    for i in "${!IPS[@]}"; do
+                        echo "  [$i] ${IPS[$i]}"
                     done
-                    
-                    if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
-                        MACHINE_IP=$(IFS=,; echo "${SELECTED_IPS[*]}")
-                        print_color "$CYAN" "Selected IPs: $MACHINE_IP"
+
+                    echo ""
+                    read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+
+                    if [ -n "$ip_choice" ]; then
+                        IFS=',' read -ra INDICES <<< "$ip_choice"
+                        SELECTED_IPS=()
+                        for idx in "${INDICES[@]}"; do
+                            idx=$(echo "$idx" | xargs)
+                            if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -lt "${#IPS[@]}" ]; then
+                                SELECTED_IPS+=("${IPS[$idx]}")
+                            fi
+                        done
+
+                        if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                            MACHINE_IP=$(IFS=,; echo "${SELECTED_IPS[*]}")
+                            print_color "$CYAN" "Selected IPs: $MACHINE_IP"
+                        else
+                            print_color "$GRAY" "No valid IPs selected"
+                        fi
                     else
-                        print_color "$GRAY" "No valid IPs selected"
+                        print_color "$GRAY" "IP addresses not included (localhost/domain only)"
                     fi
                 else
-                    print_color "$GRAY" "IP addresses not included (localhost/domain only)"
+                    print_color "$GRAY" "Could not detect IP addresses, skipping"
                 fi
             else
-                print_color "$GRAY" "Could not detect IP addresses, skipping"
+                print_color "$GRAY" "Could not detect IP addresses (ip command not found)"
             fi
-        else
-            print_color "$GRAY" "Could not detect IP addresses (ip command not found)"
         fi
     fi
 else

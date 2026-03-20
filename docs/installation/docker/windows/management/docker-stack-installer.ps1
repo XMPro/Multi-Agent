@@ -343,6 +343,105 @@ if ($ContinueInstall -ne "Y" -and $ContinueInstall -ne "y") {
     exit 0
 }
 
+# Ask about SSL if not already specified via parameter
+if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+    Write-Host ""
+    Write-Host "SSL/TLS Configuration:" -ForegroundColor Cyan
+    Write-Host "Enable HTTPS for all services using Nginx reverse proxy" -ForegroundColor Gray
+    $SSLChoice = Read-Host "Enable SSL/TLS encryption for all services? (y/n, default: n)"
+    if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+        $EnableSSL = $true
+        Write-Host "[OK] SSL/TLS will be enabled for all services" -ForegroundColor Green
+
+        # Ask for domain
+        $DomainChoice = Read-Host "Enter domain name for SSL certificates (default: localhost)"
+        if ($DomainChoice) {
+            $Domain = $DomainChoice
+        }
+        Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+    } else {
+        Write-Host "SSL/TLS will be disabled (HTTP only)" -ForegroundColor Gray
+    }
+}
+
+# SSL certificate type and IP selection (asked once, passed to all services)
+$CertType = "self-signed"
+$MachineIPList = ""
+
+if ($EnableSSL) {
+    Write-Host ""
+    Write-Host "Certificate Options:" -ForegroundColor White
+    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+    Write-Host "2. Use CA-provided certificates (install later)" -ForegroundColor Gray
+    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+
+    if ($CertChoice -eq "2") {
+        $CertType = "ca-provided"
+        Write-Host "CA-provided certificates selected" -ForegroundColor Green
+        Write-Host "You can install them after setup using each service's manage-ssl.ps1 script" -ForegroundColor Cyan
+    } else {
+        $CertType = "self-signed"
+        Write-Host "Self-signed certificates selected" -ForegroundColor Green
+
+        # Detect machine IP addresses for SSL certificate SAN
+        Write-Host ""
+        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+        try {
+            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+                $_.IPAddress -notmatch '^127\.' -and
+                ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual')
+            }
+
+            if ($AllIPs.Count -gt 0) {
+                Write-Host "Detected IP addresses:" -ForegroundColor Green
+                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex -ErrorAction SilentlyContinue
+                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
+                }
+
+                Write-Host ""
+                $IPChoice = Read-Host "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip"
+
+                if ($IPChoice) {
+                    $SelectedIPs = @()
+                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                    foreach ($index in $SelectedIndices) {
+                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                            $SelectedIPs += $AllIPs[[int]$index].IPAddress
+                        }
+                    }
+
+                    if ($SelectedIPs.Count -gt 0) {
+                        $MachineIPList = $SelectedIPs -join ','
+                        Write-Host "Selected IPs: $MachineIPList" -ForegroundColor Cyan
+                    } else {
+                        Write-Host "No valid IPs selected" -ForegroundColor Gray
+                    }
+                } else {
+                    Write-Host "IP addresses not included (localhost/domain only)" -ForegroundColor Gray
+                }
+            } else {
+                Write-Host "Could not detect IP addresses" -ForegroundColor Gray
+            }
+        } catch {
+            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
+        }
+    }
+}
+
+# Ask about auto-start if not already specified via parameter
+$StartServices = $true
+if (-not $PSBoundParameters.ContainsKey('AutoStart')) {
+    Write-Host ""
+    $StartChoice = Read-Host "Start services after configuration? (y/n, default: y)"
+    if ($StartChoice -eq "n" -or $StartChoice -eq "N") {
+        $StartServices = $false
+        Write-Host "Services will be configured but not started" -ForegroundColor Gray
+    }
+}
+
+Write-Host ""
+
 # Build parameters for service install scripts
 $Neo4jParams = @{
     Force = $true
@@ -374,9 +473,27 @@ if ($EnableSSL) {
     if ($Domain -ne "localhost") {
         $Neo4jParams.Domain = $Domain
         $MilvusParams.Domain = $Domain
+        $MqttParams.Domain = $Domain
         $TimescaleDBParams.Domain = $Domain
         $OllamaParams.Domain = $Domain
         $OtelLgtmParams.Domain = $Domain
+    }
+
+    # Pass cert type and IPs to all services
+    $Neo4jParams.CertType = $CertType
+    $MilvusParams.CertType = $CertType
+    $MqttParams.CertType = $CertType
+    $TimescaleDBParams.CertType = $CertType
+    $OllamaParams.CertType = $CertType
+    $OtelLgtmParams.CertType = $CertType
+
+    if ($MachineIPList) {
+        $Neo4jParams.MachineIPs = $MachineIPList
+        $MilvusParams.MachineIPs = $MachineIPList
+        $MqttParams.MachineIPs = $MachineIPList
+        $TimescaleDBParams.MachineIPs = $MachineIPList
+        $OllamaParams.MachineIPsParam = $MachineIPList
+        $OtelLgtmParams.MachineIPsParam = $MachineIPList
     }
 }
 
@@ -588,9 +705,6 @@ if ($ServicesToInstall["otel-lgtm"]) {
     Write-Host "========================" -ForegroundColor Gray
     Write-Host "Running OTEL LGTM installation script..." -ForegroundColor White
 
-    # Create the observability network before starting
-    docker network create observability 2>$null
-
     Set-Location "otel-lgtm"
     try {
         if ($EnableSSL) {
@@ -617,10 +731,40 @@ if ($ServicesToInstall["otel-lgtm"]) {
     Write-Host "Skipping OTEL LGTM (not selected)" -ForegroundColor Gray
 }
 
-# Start only successfully configured services
+# Start only successfully configured services (if user opted to start)
+if (-not $StartServices) {
+    Write-Host ""
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host "Configuration Complete!" -ForegroundColor Green
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Services were configured but not started." -ForegroundColor Gray
+    Write-Host "To start services individually, navigate to each service folder and run:" -ForegroundColor Gray
+    Write-Host "  docker-compose up -d" -ForegroundColor Gray
+    Write-Host ""
+} else {
+
 Write-Host ""
 Write-Host "Starting Configured Services..." -ForegroundColor White
 Write-Host "===============================" -ForegroundColor Gray
+
+# Ensure the observability network exists before starting any service
+# (needed by all services which reference it as external)
+$networkExists = docker network ls --filter "name=^observability$" --format "{{.Name}}" 2>$null
+if ($networkExists) {
+    # Remove and recreate to ensure correct labels (avoids compose label mismatch errors)
+    $networkInUse = docker network inspect observability --format "{{len .Containers}}" 2>$null
+    if ($networkInUse -eq "0" -or -not $networkInUse) {
+        docker network rm observability 2>$null | Out-Null
+        docker network create observability 2>$null | Out-Null
+        Write-Host "[OK] Recreated observability network (clean labels)" -ForegroundColor Green
+    } else {
+        Write-Host "[OK] Observability network exists (in use, keeping)" -ForegroundColor Green
+    }
+} else {
+    docker network create observability 2>$null | Out-Null
+    Write-Host "[OK] Created observability network" -ForegroundColor Green
+}
 
 $SuccessfullyConfigured = $ConfiguredServices.Keys | Where-Object { $ConfiguredServices[$_] -eq $true }
 $FailedConfiguration = $ConfiguredServices.Keys | Where-Object { $ConfiguredServices[$_] -eq $false }
@@ -827,40 +971,46 @@ if ($ConfiguredServices["otel-lgtm"]) {
     Write-Host "Skipping OTEL LGTM startup (not selected)" -ForegroundColor Yellow
 }
 
-# Wait for services to initialize
-Write-Host ""
-Write-Host "Waiting for services to initialize..." -ForegroundColor White
-Write-Host "=====================================" -ForegroundColor Gray
-Start-Sleep -Seconds 15
+} # End of StartServices else block
 
-# Final status check
-Write-Host ""
-Write-Host "Final Service Status:" -ForegroundColor White
-Write-Host "====================" -ForegroundColor Gray
+if ($StartServices) {
+    # Wait for services to initialize
+    Write-Host ""
+    Write-Host "Waiting for services to initialize..." -ForegroundColor White
+    Write-Host "=====================================" -ForegroundColor Gray
+    Start-Sleep -Seconds 15
+
+    # Final status check
+    Write-Host ""
+    Write-Host "Final Service Status:" -ForegroundColor White
+    Write-Host "====================" -ForegroundColor Gray
+}
 
 $FinalStatus = @{}
-foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")) {
-    if (-not (Test-Path $service)) {
-        continue
-    }
-    Set-Location $service
-    try {
-        $Status = docker-compose ps --format json | ConvertFrom-Json
-        if ($Status) {
-            foreach ($container in $Status) {
-                $statusColor = switch ($container.State) {
-                    "running" { "Green" }
-                    "exited" { "Red" }
-                    default { "Yellow" }
-                }
-                Write-Host "  $service/$($container.Service): $($container.State)" -ForegroundColor $statusColor
-                $FinalStatus["$service"] = $container.State
-            }
+if ($StartServices) {
+    foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")) {
+        if (-not (Test-Path $service)) {
+            continue
         }
-    } catch {
-        Write-Host "  ${service}: Not available" -ForegroundColor Gray
+        Set-Location $service
+        try {
+            $Status = docker-compose ps --format json | ConvertFrom-Json
+            if ($Status) {
+                foreach ($container in $Status) {
+                    $statusColor = switch ($container.State) {
+                        "running" { "Green" }
+                        "exited" { "Red" }
+                        default { "Yellow" }
+                    }
+                    Write-Host "  $service/$($container.Service): $($container.State)" -ForegroundColor $statusColor
+                    $FinalStatus["$service"] = $container.State
+                }
+            }
+        } catch {
+            Write-Host "  ${service}: Not available" -ForegroundColor Gray
+        }
+        Set-Location ..
     }
-    Set-Location ..
 }
 
 # Installation summary
@@ -898,7 +1048,7 @@ if ($FinalStatus["timescaledb"] -eq "running") {
 }
 
 if ($FinalStatus["otel-lgtm"] -eq "running") {
-    $GrafanaPort = "3000"
+    $GrafanaPort = "3001"
     if (Test-Path "otel-lgtm\.env") {
         $otelEnv = Get-Content "otel-lgtm\.env"
         $portLine = $otelEnv | Where-Object { $_ -match "^GRAFANA_PORT=" }
@@ -1383,7 +1533,7 @@ Note: At least one embedding model is required for XMPro AI Agents
 
 # Collect OTEL LGTM credentials
 if ($ConfiguredServices["otel-lgtm"]) {
-    $GrafanaPort = "3000"
+    $GrafanaPort = "3001"
     $GrafanaPass = "admin"
     $OtelLgtmHttpsPort = "3443"
     if (Test-Path "otel-lgtm\.env") {

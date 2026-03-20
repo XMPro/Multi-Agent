@@ -98,6 +98,8 @@ services:
       neo4j:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - observability
 
 networks:
   observability:

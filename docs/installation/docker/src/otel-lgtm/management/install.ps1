@@ -6,10 +6,13 @@
 # =================================================================
 
 param(
-    [string]$Port = "3000",
+    [string]$Port = "3001",
     [string]$HttpsPort = "3443",
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
+    [ValidateSet("self-signed", "ca-provided", "")]
+    [string]$CertType = "",
+    [string]$MachineIPsParam = "",
     [string]$Password = "",
     [switch]$AutoStart = $false,
     [switch]$Force = $false
@@ -98,7 +101,7 @@ Write-Host ""
 
 # Port configuration
 if (-not $PSBoundParameters.ContainsKey('Port') -and -not $Force) {
-    $PortChoice = Read-Host "Grafana UI port (default: 3000)"
+    $PortChoice = Read-Host "Grafana UI port (default: 3001)"
     if ($PortChoice) {
         $Port = $PortChoice
     }
@@ -165,7 +168,19 @@ if ($EnableSSL) {
     }
     Write-Host "Grafana HTTPS will be accessible on port: $HttpsPort" -ForegroundColor White
 
-    if (-not $Force) {
+    if ($CertType) {
+        # Cert type provided by stack installer
+        if ($CertType -eq "ca-provided") {
+            Write-Host "CA-provided certificates selected (from stack installer)" -ForegroundColor Green
+            $GenerateSSL = $false
+        } else {
+            Write-Host "Self-signed certificates selected (from stack installer)" -ForegroundColor Green
+            $GenerateSSL = $true
+        }
+        if ($MachineIPsParam) {
+            $MachineIPs = $MachineIPsParam -split ','
+        }
+    } elseif (-not $Force) {
         Write-Host ""
         Write-Host "Certificate Options:" -ForegroundColor White
         Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
@@ -187,7 +202,6 @@ if ($EnableSSL) {
             }
             Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
 
-            # Detect machine IP addresses
             Write-Host ""
             Write-Host "Detecting machine IP addresses..." -ForegroundColor White
             try {
@@ -223,6 +237,7 @@ if ($EnableSSL) {
             }
         }
     } else {
+        # Force mode without CertType - default to self-signed
         $GenerateSSL = $true
     }
 } else {
@@ -353,6 +368,28 @@ subjectAltName = $SANString
 }
 
 Write-Host ""
+
+# When called from stack installer (-Force), only configure - don't start services
+if ($Force) {
+    Write-Host ""
+    Write-Host "[OK] OTEL LGTM configuration complete (services will be started by stack installer)" -ForegroundColor Green
+    exit 0
+}
+
+# Ask if user wants to start LGTM stack now
+Write-Host ""
+$StartChoice = Read-Host "Start LGTM stack now? (y/n, default: y)"
+if ($StartChoice -eq "n" -or $StartChoice -eq "N") {
+    Write-Host ""
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host "Configuration Complete!" -ForegroundColor Green
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "To start the LGTM stack later, run:" -ForegroundColor Gray
+    Write-Host "  docker-compose up -d" -ForegroundColor Gray
+    Write-Host ""
+    exit 0
+}
 
 # Start Docker containers
 Write-Host "Starting LGTM stack..." -ForegroundColor White

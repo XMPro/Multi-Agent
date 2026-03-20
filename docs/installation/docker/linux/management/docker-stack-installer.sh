@@ -20,6 +20,8 @@ INSTALL_PATH=""
 SKIP_CHECKS=false
 ENABLE_SSL=false
 DOMAIN="localhost"
+CERT_TYPE=""
+MACHINE_IP_LIST=""
 AUTO_START=false
 INSTALL_CERTIFICATES=false
 
@@ -40,6 +42,8 @@ show_usage() {
     echo "  --skip-checks            Skip prerequisite checks"
     echo "  --enable-ssl             Enable SSL/TLS for all services"
     echo "  --domain DOMAIN          Domain for SSL certificates (default: localhost)"
+    echo "  --cert-type TYPE         Certificate type: self-signed or ca-provided"
+    echo "  --machine-ips IPS        Comma-separated IP addresses for certificates"
     echo "  --auto-start             Run in automation mode (no interactive prompts)"
     echo "  --install-certificates   Automatically install CA certificates"
     echo "  -h, --help               Show this help message"
@@ -82,6 +86,14 @@ while [[ $# -gt 0 ]]; do
         --auto-start)
             AUTO_START=true
             shift
+            ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IP_LIST="$2"
+            shift 2
             ;;
         --install-certificates)
             INSTALL_CERTIFICATES=true
@@ -313,6 +325,90 @@ fi
 
 print_color "$GREEN" "Found service folders: ${AVAILABLE_FOLDERS[*]}"
 
+# SSL Configuration
+echo ""
+print_color "$CYAN" "SSL/TLS Configuration"
+print_color "$GRAY" "====================="
+if [ "$ENABLE_SSL" = false ]; then
+    read -p "Enable SSL/TLS encryption for all services? (y/n): " ssl_choice
+    if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
+        ENABLE_SSL=true
+    fi
+fi
+
+if [ "$ENABLE_SSL" = true ]; then
+    print_color "$GREEN" "SSL/TLS will be enabled for all services"
+
+    # Ask for domain
+    if [ "$DOMAIN" = "localhost" ]; then
+        read -p "Enter domain name for SSL certificates (default: localhost): " domain_input
+        if [ -n "$domain_input" ]; then
+            DOMAIN="$domain_input"
+        fi
+    fi
+    print_color "$CYAN" "Domain: $DOMAIN"
+
+    # Certificate type selection
+    if [ -z "$CERT_TYPE" ]; then
+        echo ""
+        print_color "$CYAN" "Certificate Options:"
+        print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+        print_color "$GRAY" "2. Use CA-provided certificates (install later)"
+        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+
+        if [ "$cert_choice" = "2" ]; then
+            CERT_TYPE="ca-provided"
+            print_color "$GREEN" "CA-provided certificates selected"
+        else
+            CERT_TYPE="self-signed"
+            print_color "$GREEN" "Self-signed certificates selected"
+        fi
+    fi
+
+    # IP detection for self-signed certificates
+    if [ "$CERT_TYPE" = "self-signed" ] && [ -z "$MACHINE_IP_LIST" ]; then
+        echo ""
+        print_color "$CYAN" "Detecting machine IP addresses..."
+        DETECTED_IPS=()
+        if command -v ip &> /dev/null; then
+            while IFS= read -r line; do
+                DETECTED_IPS+=("$line")
+            done < <(ip -4 addr show | grep -oP 'inet \K[\d.]+' | grep -v '^127\.')
+        elif command -v ifconfig &> /dev/null; then
+            while IFS= read -r line; do
+                DETECTED_IPS+=("$line")
+            done < <(ifconfig | grep -oP 'inet (addr:)?[\d.]+' | grep -oP '[\d.]+' | grep -v '^127\.')
+        fi
+
+        if [ ${#DETECTED_IPS[@]} -gt 0 ]; then
+            print_color "$GREEN" "Detected IP addresses:"
+            for i in "${!DETECTED_IPS[@]}"; do
+                echo "  [$i] ${DETECTED_IPS[$i]}"
+            done
+            echo ""
+            read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+            if [ -n "$ip_choice" ]; then
+                SELECTED_IPS=()
+                IFS=',' read -ra INDICES <<< "$ip_choice"
+                for index in "${INDICES[@]}"; do
+                    index=$(echo "$index" | tr -d ' ')
+                    if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt ${#DETECTED_IPS[@]} ]; then
+                        SELECTED_IPS+=("${DETECTED_IPS[$index]}")
+                    fi
+                done
+                if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                    MACHINE_IP_LIST=$(IFS=','; echo "${SELECTED_IPS[*]}")
+                    print_color "$CYAN" "Selected IPs: $MACHINE_IP_LIST"
+                fi
+            fi
+        else
+            print_color "$GRAY" "Could not detect IP addresses, skipping"
+        fi
+    fi
+else
+    print_color "$YELLOW" "SSL/TLS will be disabled"
+fi
+
 # Ask user which services to install
 echo ""
 print_color "$CYAN" "Service Installation Selection"
@@ -425,6 +521,8 @@ if [ "${SERVICES_TO_INSTALL[neo4j]:-false}" = true ]; then
     [ "$ENABLE_SSL" = true ] && NEO4J_ARGS="$NEO4J_ARGS --enable-ssl"
     [ "$DOMAIN" != "localhost" ] && NEO4J_ARGS="$NEO4J_ARGS --domain $DOMAIN"
     [ -n "$NEO4J_PASSWORD" ] && NEO4J_ARGS="$NEO4J_ARGS --password $NEO4J_PASSWORD"
+    [ -n "$CERT_TYPE" ] && NEO4J_ARGS="$NEO4J_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && NEO4J_ARGS="$NEO4J_ARGS --machine-ips $MACHINE_IP_LIST"
 
     if [ -f "management/install.sh" ]; then
         chmod +x management/install.sh
@@ -457,6 +555,8 @@ if [ "${SERVICES_TO_INSTALL[milvus]:-false}" = true ]; then
     [ "$ENABLE_SSL" = true ] && MILVUS_ARGS="$MILVUS_ARGS --enable-ssl"
     [ "$DOMAIN" != "localhost" ] && MILVUS_ARGS="$MILVUS_ARGS --domain $DOMAIN"
     [ -n "$MILVUS_PASSWORD" ] && MILVUS_ARGS="$MILVUS_ARGS --password $MILVUS_PASSWORD"
+    [ -n "$CERT_TYPE" ] && MILVUS_ARGS="$MILVUS_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && MILVUS_ARGS="$MILVUS_ARGS --machine-ips $MACHINE_IP_LIST"
 
     if [ -f "management/install.sh" ]; then
         chmod +x management/install.sh
@@ -489,6 +589,8 @@ if [ "${SERVICES_TO_INSTALL[mqtt]:-false}" = true ]; then
     [ "$ENABLE_SSL" = true ] && MQTT_ARGS="$MQTT_ARGS --enable-ssl"
     [ "$DOMAIN" != "localhost" ] && MQTT_ARGS="$MQTT_ARGS --domain $DOMAIN"
     [ -n "$MQTT_PASSWORD" ] && MQTT_ARGS="$MQTT_ARGS --password $MQTT_PASSWORD"
+    [ -n "$CERT_TYPE" ] && MQTT_ARGS="$MQTT_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && MQTT_ARGS="$MQTT_ARGS --machine-ips $MACHINE_IP_LIST"
 
     if [ -f "management/install.sh" ]; then
         chmod +x management/install.sh
@@ -521,6 +623,8 @@ if [ "${SERVICES_TO_INSTALL[timescaledb]:-false}" = true ]; then
     [ "$ENABLE_SSL" = true ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --enable-ssl"
     [ "$DOMAIN" != "localhost" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --domain $DOMAIN"
     [ -n "$TIMESCALEDB_PASSWORD" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --password $TIMESCALEDB_PASSWORD"
+    [ -n "$CERT_TYPE" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --machine-ips $MACHINE_IP_LIST"
 
     if [ -f "management/install.sh" ]; then
         chmod +x management/install.sh
@@ -552,6 +656,8 @@ if [ "${SERVICES_TO_INSTALL[ollama]:-false}" = true ]; then
     OLLAMA_ARGS="--force"
     [ "$ENABLE_SSL" = true ] && OLLAMA_ARGS="$OLLAMA_ARGS --enable-ssl"
     [ "$DOMAIN" != "localhost" ] && OLLAMA_ARGS="$OLLAMA_ARGS --domain $DOMAIN"
+    [ -n "$CERT_TYPE" ] && OLLAMA_ARGS="$OLLAMA_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && OLLAMA_ARGS="$OLLAMA_ARGS --machine-ips $MACHINE_IP_LIST"
 
     if [ -f "management/install.sh" ]; then
         chmod +x management/install.sh
@@ -579,13 +685,12 @@ if [ "${SERVICES_TO_INSTALL[otel-lgtm]:-false}" = true ]; then
     print_color "$GRAY" "========================"
     echo "Running OTEL LGTM installation script..."
 
-    # Create the observability network before starting
-    docker network create observability 2>/dev/null || true
-
     cd otel-lgtm
     OTEL_LGTM_ARGS="--force"
     [ "$ENABLE_SSL" = true ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --enable-ssl"
     [ "$DOMAIN" != "localhost" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --domain $DOMAIN"
+    [ -n "$CERT_TYPE" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --machine-ips $MACHINE_IP_LIST"
 
     if [ -f "management/install.sh" ]; then
         chmod +x management/install.sh
@@ -610,6 +715,24 @@ fi
 echo ""
 echo "Starting Configured Services..."
 print_color "$GRAY" "==============================="
+
+# Ensure the observability network exists before starting any service
+# (needed by all services which reference it as external)
+NETWORK_EXISTS=$(docker network ls --filter "name=^observability$" --format "{{.Name}}" 2>/dev/null)
+if [ -n "$NETWORK_EXISTS" ]; then
+    # Remove and recreate to ensure correct labels (avoids compose label mismatch errors)
+    NETWORK_CONTAINERS=$(docker network inspect observability --format "{{len .Containers}}" 2>/dev/null || echo "0")
+    if [ "$NETWORK_CONTAINERS" = "0" ] || [ -z "$NETWORK_CONTAINERS" ]; then
+        docker network rm observability 2>/dev/null || true
+        docker network create observability 2>/dev/null || true
+        print_color "$GREEN" "[OK] Recreated observability network (clean labels)"
+    else
+        print_color "$GREEN" "[OK] Observability network exists (in use, keeping)"
+    fi
+else
+    docker network create observability 2>/dev/null || true
+    print_color "$GREEN" "[OK] Created observability network"
+fi
 
 SUCCESSFUL_SERVICES=()
 FAILED_SERVICES=()
@@ -797,7 +920,7 @@ if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
 fi
 
 if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
-    GRAFANA_PORT="3000"
+    GRAFANA_PORT="3001"
     [ -f "otel-lgtm/.env" ] && GRAFANA_PORT=$(grep "GRAFANA_PORT=" otel-lgtm/.env | cut -d'=' -f2)
     print_color "$GREEN" "Grafana Dashboard: http://localhost:$GRAFANA_PORT"
     print_color "$GREEN" "OTLP gRPC Endpoint: localhost:4317"
@@ -1066,7 +1189,7 @@ if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
     echo "# =================================================================" >> CREDENTIALS.txt
     echo "" >> CREDENTIALS.txt
 
-    GRAFANA_PORT="3000"
+    GRAFANA_PORT="3001"
     GRAFANA_PASS="admin"
     if [ -f "otel-lgtm/.env" ]; then
         GRAFANA_PORT=$(grep "GRAFANA_PORT=" otel-lgtm/.env | cut -d'=' -f2)

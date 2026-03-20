@@ -40,9 +40,6 @@ services:
     networks:
       - ollama-network
       - observability
-    deploy:
-      resources:
-        reservations:
     logging:
       driver: "json-file"
       options:

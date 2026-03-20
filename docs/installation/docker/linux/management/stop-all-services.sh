@@ -72,7 +72,7 @@ else
 fi
 
 # Verify expected folders exist
-EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
 MISSING_FOLDERS=()
 
 for folder in "${EXPECTED_FOLDERS[@]}"; do
@@ -81,9 +81,9 @@ for folder in "${EXPECTED_FOLDERS[@]}"; do
     fi
 done
 
-if [ ${#MISSING_FOLDERS[@]} -eq 4 ]; then
+if [ ${#MISSING_FOLDERS[@]} -eq ${#EXPECTED_FOLDERS[@]} ]; then
     print_color "$RED" "No service folders found in: $(pwd)"
-    print_color "$YELLOW" "Expected folders: neo4j, milvus, mqtt, timescaledb, ollama"
+    print_color "$YELLOW" "Expected folders: ${EXPECTED_FOLDERS[*]}"
     exit 1
 fi
 
@@ -108,7 +108,7 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
 fi
 
 # Services to stop
-SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama")
+SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
 STOPPED_SERVICES=()
 FAILED_SERVICES=()
 
@@ -132,11 +132,12 @@ for SERVICE in "${SERVICES[@]}"; do
             continue
         fi
         
-        # Stop the service
+        # Stop the service (use --profile ssl to also stop SSL nginx containers)
+        COMPOSE_CMD="docker-compose --profile ssl"
         if [ "$REMOVE_VOLUMES" = true ]; then
-            docker-compose down -v 2>&1
+            $COMPOSE_CMD down -v 2>&1
         else
-            docker-compose down 2>&1
+            $COMPOSE_CMD down 2>&1
         fi
         
         if [ $? -eq 0 ]; then

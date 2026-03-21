@@ -1,6 +1,6 @@
 # Docker Stack Installation
 
-This directory contains scripts for creating and deploying a complete Docker stack with Neo4j, Milvus, MQTT, TimescaleDB, and Ollama services.
+This directory contains scripts for creating and deploying a complete Docker stack with Neo4j, Milvus, MQTT, TimescaleDB, Ollama, and OTEL LGTM services.
 
 ## Platform Selection
 
@@ -8,8 +8,9 @@ Both platforms deploy the same services with identical functionality:
 - **Neo4j** - Graph database for knowledge graphs and relationships
 - **Milvus** - Vector database for embeddings and similarity search
 - **MQTT** - Message broker for real-time communication
-- **TimescaleDB** - Time-series database for temporal data and metrics
+- **TimescaleDB** - Time-series database for temporal data and metrics (with pgAdmin and PostgREST)
 - **Ollama** - Local LLM provider for AI inference and embeddings
+- **OTEL LGTM** - Observability stack (Grafana + Loki + Tempo + Mimir + Prometheus) for metrics, logs, and traces
 
 ## Quick Start
 
@@ -61,8 +62,25 @@ docs/installation/docker/
     │   ├── docker-compose.yml
     │   └── management/
     │       └── (similar scripts)
-    └── mqtt/
+    ├── mqtt/
+    │   ├── docker-compose.yml
+    │   └── management/
+    │       └── (similar scripts)
+    ├── timescaledb/
+    │   ├── docker-compose.yml
+    │   └── management/
+    │       └── (similar scripts)
+    ├── ollama/
+    │   ├── docker-compose.yml
+    │   └── management/
+    │       └── (similar scripts)
+    └── otel-lgtm/
         ├── docker-compose.yml
+        ├── collector/
+        │   ├── otel-collector-config.yaml
+        │   └── prometheus.yml
+        ├── nginx/
+        │   └── nginx.conf
         └── management/
             └── (similar scripts)
 ```
@@ -292,14 +310,21 @@ chmod +x docker-stack-installer.sh
 - **Default User**: xmpro (password set during installation)
 
 ### TimescaleDB Time-Series Database
-- **Ports**: 5432 (PostgreSQL), 5050/5051 (pgAdmin)
-- **Features**: SSL/TLS support, automated backups, hypertables, continuous aggregates
+- **Ports**: 5432 (PostgreSQL), 5050/5051 (pgAdmin HTTP/HTTPS), 3000/3443 (PostgREST HTTP/HTTPS)
+- **Features**: SSL/TLS support, automated backups, hypertables, continuous aggregates, REST API via PostgREST
 - **Default User**: postgres (password set during installation)
+- **Web UI**: pgAdmin (pre-configured with TimescaleDB connection)
 
 ### Ollama Local LLM Provider
 - **Ports**: 11434 (HTTP API), 11443 (HTTPS with reverse proxy)
-- **Features**: Local LLM inference, embedding generation, GPU acceleration, offline operation
+- **Features**: Local LLM inference, embedding generation, GPU acceleration (NVIDIA + AMD ROCm), offline operation
 - **Models**: User-selected (not included in offline package due to size)
+
+### OTEL LGTM Observability Stack
+- **Ports**: 3001 (Grafana HTTP), 3444 (Grafana HTTPS), 4317 (OTLP gRPC), 4318 (OTLP HTTP)
+- **Features**: Metrics (Prometheus), Logs (Loki), Traces (Tempo), Dashboards (Grafana)
+- **Auto-configured**: Scrapes metrics from Neo4j, TimescaleDB, MQTT, and Milvus
+- **Default User**: admin/admin (Grafana)
 
 ## SSL/TLS Support
 
@@ -317,6 +342,9 @@ When using self-signed SSL certificates, client machines need the CA certificate
 - **Neo4j**: `neo4j/certs/bolt/trusted/ca.crt`
 - **Milvus**: `milvus/tls/ca.pem`
 - **MQTT**: `mqtt/certs/ca.crt`
+- **TimescaleDB**: `timescaledb/certs/ca.crt`
+- **Ollama**: `ollama/certs/ca.crt`
+- **OTEL LGTM**: `otel-lgtm/certs/ca.crt`
 
 **Client Machine Installation:**
 
@@ -440,6 +468,9 @@ sudo ./install-ca-certificates.sh
 docker-compose logs -f neo4j
 docker-compose logs -f milvus
 docker-compose logs -f mosquitto
+docker-compose logs -f timescaledb
+docker-compose logs -f ollama
+docker-compose logs -f otel-lgtm
 
 # Check service status
 docker-compose ps
@@ -499,3 +530,4 @@ For service-specific documentation:
 - **MQTT**: See `src/mqtt/mqtt_readme.md`
 - **TimescaleDB**: See `src/timescaledb/timescaledb_readme.md`
 - **Ollama**: See `src/ollama/ollama_readme.md`
+- **OTEL LGTM**: See `src/otel-lgtm/` directory

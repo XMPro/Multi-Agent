@@ -51,7 +51,7 @@ Response Requirements:
    - Maintain chronological organization of information
    - Preserve all asset identifiers when referencing historical data
 11. IMPORTANT: Suggests available tools when necessary to provide accurate and helpful information:
-   - Always use the syntax 'SUGGEST_TOOL: ToolName: ""user's original question""'
+   - Always use the syntax 'SUGGEST_TOOL: ToolName: \"user's original question\"'
    - Do not modify queries yourself
    - Pass the user's question directly to the tool
    - Suggest tools specifically for missing asset information
@@ -412,7 +412,7 @@ For general topics (processes, parts, procedures, asset groups), respond natural
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
-- Do not rename actions to be ""domain-specific""
+- Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
 
@@ -512,7 +512,7 @@ Provide your decision as 'Yes' for a plan adjustment is needed or 'No' if the cu
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
-- Do not rename actions to be ""domain-specific""
+- Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
 
@@ -623,7 +623,7 @@ Provide your analysis in a clear, structured format.",
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
-- Do not rename actions to be ""domain-specific""
+- Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
 
@@ -700,11 +700,11 @@ IMPORTANT:
 
 IMPORTANT FORMAT REQUIREMENTS:
 1. Start each major section with a specific header format:
-   - Use exactly "";; Domain Definition"" for the domain section
-   - Use exactly "";; Problem Definition"" for the problem section
-   - Use exactly "";; Plan"" for the plan section
-   - Use exactly ""### Plan Validation:"" for the validation section
-   - Use exactly ""### Efficiency Analysis:"" for the efficiency analysis section
+   - Use exactly \";; Domain Definition\" for the domain section
+   - Use exactly \";; Problem Definition\" for the problem section
+   - Use exactly \";; Plan\" for the plan section
+   - Use exactly \"### Plan Validation:\" for the validation section
+   - Use exactly \"### Efficiency Analysis:\" for the efficiency analysis section
 
 2. For the PDDL code:
    - Enclose all PDDL code blocks within triple backticks with the pddl language specifier: ```pddl
@@ -713,12 +713,12 @@ IMPORTANT FORMAT REQUIREMENTS:
 
 3. For the Plan section:
    - Format each action as a comment line starting with semicolon (;)
-   - Include agent assignment in the format: ""; Assigned to: [Agent Name]""
-   - Ensure numeric effects are specified for each action (e.g., ""reduces load-forecast-error by 0.05"")
+   - Include agent assignment in the format: \"; Assigned to: [Agent Name]\"
+   - Ensure numeric effects are specified for each action (e.g., \"; reduces load-forecast-error by 0.05\")
    - Include measure impacts for each action in the format:
-     ""; Measure Impacts:""
-     "";   - measure1: increases from 82.5 to 83.0""
-     "";   - measure2: decreases from 94.0 to 92.5""
+     \"; Measure Impacts:\"
+     \";   - measure1: increases from 82.5 to 83.0\"
+     \";   - measure2: decreases from 94.0 to 92.5\"
 
 4. For Validation and Efficiency sections:
    - Use bullet points for clarity
@@ -870,7 +870,7 @@ Reasoning: {decision_reasoning}
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
-- Do not rename actions to be ""domain-specific""
+- Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
 
@@ -932,12 +932,12 @@ IMPORTANT:
 
 IMPORTANT FORMAT REQUIREMENTS:
 1. Start each major section with a specific header format:
-   - Use exactly "";; Domain Definition"" for the domain section
-   - Use exactly "";; Problem Definition"" for the problem section
-   - Use exactly "";; Plan"" for the plan section
-   - Use exactly ""### Plan Validation:"" for the validation section
-   - Use exactly ""### Efficiency Analysis:"" for the efficiency analysis section
-   - Use exactly ""### Objective Function Impact:"" for the impact section
+   - Use exactly \";; Domain Definition\" for the domain section
+   - Use exactly \";; Problem Definition\" for the problem section
+   - Use exactly \";; Plan\" for the plan section
+   - Use exactly \";### Plan Validation:\" for the validation section
+   - Use exactly \";### Efficiency Analysis:\" for the efficiency analysis section
+   - Use exactly \";### Objective Function Impact:\" for the impact section
 
 2. For the PDDL code:
    - Enclose all PDDL code blocks within triple backticks with the pddl language specifier: ```pddl
@@ -946,12 +946,12 @@ IMPORTANT FORMAT REQUIREMENTS:
 
 3. For the Plan section:
    - Format each action as a comment line starting with semicolon (;)
-   - Include agent assignment in the format: ""; Assigned to: [Agent Name]""
-   - Ensure numeric effects are specified for each action (e.g., ""reduces load-forecast-error by 0.05"")
+   - Include agent assignment in the format: \"; Assigned to: [Agent Name]\"
+   - Ensure numeric effects are specified for each action (e.g., \"; reduces load-forecast-error by 0.05\")
    - Include measure impacts for each action in the format:
-     ""; Measure Impacts:""
-     "";   - measure1: increases from 82.5 to 83.0""
-     "";   - measure2: decreases from 94.0 to 92.5""
+     \"; Measure Impacts:\"
+     \";   - measure1: increases from 82.5 to 83.0\"
+     \";   - measure2: decreases from 94.0 to 92.5\"
    - Mark each action as New, Modified, or Unchanged
 
 4. For Validation and Efficiency sections:
@@ -1062,7 +1062,7 @@ Your complete response should follow this exact structure:
   - Component2 (weight: W.WW): from X.XX to Y.YY
 - Overall improvement: Z.ZZ (P.PP%)
 
-Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision."],
+Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision.",
     category: "plan",
     tags: ["plan"],
     description: "Adjust a plan based on the planning decision."

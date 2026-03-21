@@ -1,0 +1,119 @@
+services:
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: otel-lgtm
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"       # Grafana UI
+      - "${OTEL_GRPC_PORT:-4317}:4317"     # OTLP gRPC
+      - "${OTEL_HTTP_PORT:-4318}:4318"     # OTLP HTTP
+    volumes:
+      # Data persistence
+      - ./otel-lgtm-data:/data
+      # Custom OTEL Collector configuration
+      - ./collector/otel-collector-config.yaml:/otel-lgtm/otelcol-config.yaml:ro
+      # Custom Prometheus scrape configuration for infrastructure metrics
+      - ./collector/prometheus.yml:/otel-lgtm/prometheus.yaml:ro
+    environment:
+      # Grafana admin credentials
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Enable logging for components (set to true for verbose)
+      - ENABLE_LOGS_ALL=${ENABLE_LOGS_ALL:-false}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+    networks:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # PostgreSQL/TimescaleDB metrics exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: otel-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: ${TIMESCALEDB_HOST:-timescaledb}:5432/${TIMESCALEDB_DB:-timescaledb}?sslmode=disable
+      DATA_SOURCE_USER: ${TIMESCALEDB_USER:-postgres}
+      DATA_SOURCE_PASS: ${TIMESCALEDB_PASSWORD:-}
+    depends_on:
+      otel-lgtm:
+        condition: service_healthy
+    networks:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Mosquitto MQTT metrics exporter
+  mosquitto-exporter:
+    image: sapcc/mosquitto-exporter:latest
+    container_name: otel-mosquitto-exporter
+    restart: unless-stopped
+    command:
+      - "--endpoint=tcp://${MQTT_HOST:-mosquitto}:1883"
+      - "--user=${MQTT_USER:-}"
+      - "--pass=${MQTT_PASSWORD:-}"
+    depends_on:
+      otel-lgtm:
+        condition: service_healthy
+    networks:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy for Grafana HTTPS (optional - enabled with ssl profile)
+  grafana-nginx-ssl:
+    image: nginx:alpine
+    container_name: otel-grafana-nginx-ssl
+    restart: unless-stopped
+    profiles:
+      - ssl
+    ports:
+      - "${GRAFANA_HTTPS_PORT:-3444}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/server.crt:/etc/nginx/certs/server.crt:ro
+      - ./certs/server.key:/etc/nginx/certs/server.key:ro
+      - ./certs/ca.crt:/etc/nginx/certs/ca.crt:ro
+    depends_on:
+      otel-lgtm:
+        condition: service_healthy
+    networks:
+      - observability
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  observability:
+    external: true
+    name: observability

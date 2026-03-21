@@ -6,15 +6,16 @@ REMOVE n.confidence_scoring
 REMOVE n.timing_config
 REMOVE n.importance_scoring
 REMOVE n.surprise_scoring
+REMOVE n.reserved_field_user_prompt
+REMOVE n.models_providers
 
 MERGE (so:SystemOptions {id: 'SYSTEM-OPTIONS'})
 ON CREATE SET
   so.author = 'XMPro',
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
-  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
+  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history', 'constraints_context'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
-  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
@@ -83,11 +84,25 @@ ON CREATE SET
         "linear_scale": 0.5,
         "linear_factor": 0.01
     },
-    "agent_weights": {
-        "assistant_frequency_weight": 0.7,
-        "assistant_duration_weight": 0.3,
-        "content_frequency_weight": 0.3,
-        "content_duration_weight": 0.7
+    "component_weights": {
+      "frequency_weight": 0.5,
+      "average_weight": 0.3,
+      "consistency_weight": 0.2,
+      "assistant_frequency_weight": 0.6,
+      "assistant_average_weight": 0.3,
+      "assistant_consistency_weight": 0.1,
+      "content_frequency_weight": 0.3,
+      "content_average_weight": 0.3,
+      "content_consistency_weight": 0.4,
+      "guardian_frequency_weight": 0.2,
+      "guardian_average_weight": 0.3,
+      "guardian_consistency_weight": 0.5,
+      "expert_frequency_weight": 0.3,
+      "expert_average_weight": 0.6,
+      "expert_consistency_weight": 0.1,
+      "orchestrator_frequency_weight": 0.6,
+      "orchestrator_average_weight": 0.3,
+      "orchestrator_consistency_weight": 0.1
     }
   }',
   so.config_surprise_scoring = '{
@@ -143,7 +158,18 @@ ON CREATE SET
         "synthetic_weight": 1.1,
         "default_weight": 0.5
     },
-    "min_similarity_threshold": 0.3
+    "min_similarity_threshold": 0.3,
+    "conversation_summary_similarity_threshold": 0.65,
+    "observation_similarity_threshold": 0.75,
+    "conversation_memory_retention_days": 30,
+    "conversation_inactivity_timeout_hours": 1,
+    "conversation_context": {
+      "enable_adaptive_querying": true,
+      "topic_shift_similarity_threshold": 0.85,
+      "refresh_interval_turns": 5,
+      "cache_max_age_minutes": 10,
+      "enable_topic_shift_detection": true
+    }
   }',
   so.config_agent_communication = '{
     "trust_factor": 0.8
@@ -158,13 +184,51 @@ ON CREATE SET
     "max_ci_rounds": 3,
     "timeout_minutes": 60
   }',
-so.created_date = datetime()
+  so.config_saga_retry = '{
+    "max_retries": 3,
+    "initial_delay_ms": 100,
+    "max_delay_ms": 30000,
+    "backoff_multiplier": 2.0,
+    "use_jitter": true
+  }',
+  so.config_agent_repair = '{
+    "enabled": true,
+    "repair_cycle_interval_minutes": 5,
+    "max_repair_attempts": 3,
+    "repair_batch_size": 50,
+    "repair_timeout_seconds": 30,
+    "circuit_breaker_failure_threshold": 5,
+    "circuit_breaker_timeout_minutes": 5,
+    "health_assessment_interval_minutes": 10
+  }',
+  so.config_communication_routing = '{
+    "significance_thresholds": {
+      "guardian_always_report": 0.75,
+      "expert_always_report": 0.80,
+      "orchestrator_always_report": 0.70
+    },
+    "validation_rules": {
+      "Guardian": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Expert": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Orchestrator": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] },
+      "None": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] }
+    },
+    "approval_timeout_minutes": 15,
+    "max_pending_approvals": 10
+  }',
+  so.config_objective_function_switching = '{
+    "enabled": true,
+    "evaluation_interval_minutes": 5,
+    "default_aggregation_strategy": "AllCriticalMet",
+    "supported_condition_types": ["ObjectiveValue", "ComplianceRate", "ExcursionCount", "TrendDirection"]
+  }',
+  so.created_date = datetime(),
+  so.last_modified_date = datetime()
 ON MATCH SET
   so.reserved_fields_observation = ['name', 'user_query', 'knowledge_context'],
   so.reserved_fields_reflection = ['name', 'team_context', 'objectives_context', 'knowledge_context', 'recent_observations', 'past_reflections', 'available_tools', 'synthetic_memories'],
-  so.reserved_field_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history'],
+  so.reserved_fields_user_prompt = ['current_timestamp', 'user_query', 'knowledge_context', 'available_tools', 'history', 'constraints_context'],
   so.reserved_fields_task_prompt = ['goal', 'plan_details', 'team_capabilities', 'objective_function'],
-  so.models_providers = ['Anthropic', 'AWSBedrock', 'AzureOpenAI', 'Google', 'Lemonade', 'Ollama', 'OpenAI'],
   so.prompt_access_levels = '[{"value": "admin", "description": "For system administrators with full access to all prompts"},
   {"value": "user", "description": "For regular users of the system"},
   {"value": "restricted", "description": "For sensitive prompts that require special permission to access"},
@@ -233,12 +297,26 @@ ON MATCH SET
           "linear_scale": 0.5,
           "linear_factor": 0.01
       },
-      "agent_weights": {
-          "assistant_frequency_weight": 0.7,
-          "assistant_duration_weight": 0.3,
-          "content_frequency_weight": 0.3,
-          "content_duration_weight": 0.7
-      }
+    "component_weights": {
+      "frequency_weight": 0.5,
+      "average_weight": 0.3,
+      "consistency_weight": 0.2,
+      "assistant_frequency_weight": 0.6,
+      "assistant_average_weight": 0.3,
+      "assistant_consistency_weight": 0.1,
+      "content_frequency_weight": 0.3,
+      "content_average_weight": 0.3,
+      "content_consistency_weight": 0.4,
+      "guardian_frequency_weight": 0.2,
+      "guardian_average_weight": 0.3,
+      "guardian_consistency_weight": 0.5,
+      "expert_frequency_weight": 0.3,
+      "expert_average_weight": 0.6,
+      "expert_consistency_weight": 0.1,
+      "orchestrator_frequency_weight": 0.6,
+      "orchestrator_average_weight": 0.3,
+      "orchestrator_consistency_weight": 0.1
+    }
   }',
   so.config_surprise_scoring = '{
     "novelty_threshold": 0.7,
@@ -293,7 +371,18 @@ ON MATCH SET
         "synthetic_weight": 1.1,
         "default_weight": 0.5
     },
-    "min_similarity_threshold": 0.3
+    "min_similarity_threshold": 0.3,
+    "conversation_summary_similarity_threshold": 0.65,
+    "observation_similarity_threshold": 0.75,
+    "conversation_memory_retention_days": 30,
+    "conversation_inactivity_timeout_hours": 1,
+    "conversation_context": {
+      "enable_adaptive_querying": true,
+      "topic_shift_similarity_threshold": 0.85,
+      "refresh_interval_turns": 5,
+      "cache_max_age_minutes": 10,
+      "enable_topic_shift_detection": true
+    }
   }',
   so.config_agent_communication = '{
     "trust_factor": 0.8
@@ -307,6 +396,44 @@ ON MATCH SET
     "objective_function_conflict_threshold": 0.2,
     "max_ci_rounds": 3,
     "timeout_minutes": 60
+  }',
+  so.config_saga_retry = '{
+    "max_retries": 3,
+    "initial_delay_ms": 100,
+    "max_delay_ms": 30000,
+    "backoff_multiplier": 2.0,
+    "use_jitter": true
+  }',
+  so.config_agent_repair = '{
+    "enabled": true,
+    "repair_cycle_interval_minutes": 5,
+    "max_repair_attempts": 3,
+    "repair_batch_size": 50,
+    "repair_timeout_seconds": 30,
+    "circuit_breaker_failure_threshold": 5,
+    "circuit_breaker_timeout_minutes": 5,
+    "health_assessment_interval_minutes": 10
+  }',
+  so.config_communication_routing = '{
+    "significance_thresholds": {
+      "guardian_always_report": 0.75,
+      "expert_always_report": 0.80,
+      "orchestrator_always_report": 0.70
+    },
+    "validation_rules": {
+      "Guardian": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Expert": { "allowed": ["alwaysReport", "thresholdReport"], "forbidden": ["approvalRequired"] },
+      "Orchestrator": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] },
+      "None": { "allowed": ["alwaysReport", "thresholdReport", "approvalRequired"] }
+    },
+    "approval_timeout_minutes": 15,
+    "max_pending_approvals": 10
+  }',
+  so.config_objective_function_switching = '{
+    "enabled": true,
+    "evaluation_interval_minutes": 5,
+    "default_aggregation_strategy": "AllCriticalMet",
+    "supported_condition_types": ["ObjectiveValue", "ComplianceRate", "ExcursionCount", "TrendDirection"]
   }',
   so.last_modified_date = datetime()
 RETURN so

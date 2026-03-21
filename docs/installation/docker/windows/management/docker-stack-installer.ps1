@@ -1,6 +1,6 @@
 # =================================================================
 # Docker Stack One-Click Installer
-# Neo4j, Milvus, and MQTT Services
+# Neo4j, Milvus, MQTT, TimescaleDB, Ollama, and OTEL LGTM Services
 # =================================================================
 
 param(
@@ -21,7 +21,7 @@ param(
 
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host "Docker Stack One-Click Installer" -ForegroundColor Cyan
-Write-Host "Neo4j, Milvus, and MQTT Services" -ForegroundColor Cyan
+Write-Host "Neo4j, Milvus, MQTT, TimescaleDB, and Ollama Services" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 
 # Function to check if a command exists
@@ -35,10 +35,30 @@ function Test-Command {
     }
 }
 
+# Check if service folders already exist (rerun scenario)
+$ExistingServices = @()
+$ExpectedServices = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")
+foreach ($service in $ExpectedServices) {
+    if (Test-Path $service) {
+        $ExistingServices += $service
+    }
+}
+
 # Get zip file path if not provided
 if (-not $ZipPath) {
-    # First, look for ZIP files in the current directory
-    $LocalZipFiles = Get-ChildItem -Path "." -Filter "*.zip" | Sort-Object Name
+    # If service folders already exist, skip ZIP extraction
+    if ($ExistingServices.Count -gt 0) {
+        Write-Host "Detected existing service folders: $($ExistingServices -join ', ')" -ForegroundColor Yellow
+        Write-Host "Skipping ZIP extraction - using existing installation" -ForegroundColor Green
+        Write-Host ""
+        
+        # Set a flag to skip extraction
+        $SkipExtraction = $true
+    } else {
+        $SkipExtraction = $false
+        
+        # First, look for ZIP files in the current directory
+        $LocalZipFiles = Get-ChildItem -Path "." -Filter "*.zip" | Sort-Object Name
     
     if ($LocalZipFiles.Count -eq 1) {
         # If exactly one ZIP file found, use it automatically
@@ -73,15 +93,18 @@ if (-not $ZipPath) {
             exit 1
         }
     }
+    }
 }
 
-# Validate zip file exists
-if (-not (Test-Path $ZipPath)) {
-    Write-Host "ZIP file not found: $ZipPath" -ForegroundColor Red
-    exit 1
+# Validate zip file exists (only if we need to extract)
+if (-not $SkipExtraction) {
+    if (-not (Test-Path $ZipPath)) {
+        Write-Host "ZIP file not found: $ZipPath" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "Selected ZIP file: $ZipPath" -ForegroundColor White
 }
-
-Write-Host "Selected ZIP file: $ZipPath" -ForegroundColor White
 
 # Set installation path to current directory if not provided
 if (-not $InstallPath) {
@@ -131,12 +154,13 @@ if (-not $SkipChecks) {
     }
 }
 
-# Extract ZIP file
-Write-Host ""
-Write-Host "Extracting ZIP file..." -ForegroundColor White
-Write-Host "=====================" -ForegroundColor Gray
+# Extract ZIP file (only if needed)
+if (-not $SkipExtraction) {
+    Write-Host ""
+    Write-Host "Extracting ZIP file..." -ForegroundColor White
+    Write-Host "=====================" -ForegroundColor Gray
 
-try {
+    try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     
     # Check if extraction directory has conflicting files
@@ -182,15 +206,15 @@ try {
         [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $InstallPath)
         Write-Host "ZIP file extracted successfully" -ForegroundColor Green
     }
-} catch {
-    Write-Host "Failed to extract ZIP file: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
-}
+    } catch {
+        Write-Host "Failed to extract ZIP file: $($_.Exception.Message)" -ForegroundColor Red
+        exit 1
+    }
 
-# Change to installation directory
-Set-Location $InstallPath
+    # Change to installation directory
+    Set-Location $InstallPath
 
-# Move the ZIP file and tar file (if present) to an archive folder
+    # Move the ZIP file and tar file (if present) to an archive folder
 Write-Host ""
 Write-Host "Archiving deployment files..." -ForegroundColor White
 $ArchiveDir = Join-Path $InstallPath "archive"
@@ -224,25 +248,199 @@ if (Test-Path $TarPath) {
         Write-Host "Could not move tar file to archive: $($_.Exception.Message)" -ForegroundColor Yellow
         Write-Host "Tar file remains at: $TarPath" -ForegroundColor Gray
     }
+    }
+} else {
+    Write-Host ""
+    Write-Host "Using existing installation (ZIP extraction skipped)" -ForegroundColor Green
 }
 
 # Verify extracted structure
-$ExpectedFolders = @("neo4j", "milvus", "mqtt")
-$MissingFolders = @()
+$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama")
+$AvailableFolders = @()
 
 foreach ($folder in $ExpectedFolders) {
-    if (-not (Test-Path $folder)) {
-        $MissingFolders += $folder
+    if (Test-Path $folder) {
+        $AvailableFolders += $folder
     }
 }
 
-if ($MissingFolders.Count -gt 0) {
-    Write-Host "Missing expected folders: $($MissingFolders -join ', ')" -ForegroundColor Red
+if ($AvailableFolders.Count -eq 0) {
+    Write-Host "No service folders found in the ZIP file!" -ForegroundColor Red
     Write-Host "Please ensure the ZIP file contains the correct Docker stack structure." -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "All expected service folders found" -ForegroundColor Green
+Write-Host "Found service folders: $($AvailableFolders -join ', ')" -ForegroundColor Green
+
+# Ask user which services to install
+Write-Host ""
+Write-Host "Service Installation Selection" -ForegroundColor Cyan
+Write-Host "=============================" -ForegroundColor Gray
+Write-Host "You can choose which services to install. Services will only be" -ForegroundColor White
+Write-Host "configured and started if you select them." -ForegroundColor White
+Write-Host ""
+
+$ServicesToInstall = @{}
+
+# Ask about Neo4j
+if (Test-Path "neo4j") {
+    $InstallNeo4j = Read-Host "Do you want to install Neo4j Graph Database? (y/n)"
+    $ServicesToInstall["neo4j"] = ($InstallNeo4j -eq "Y" -or $InstallNeo4j -eq "y")
+}
+
+# Ask about Milvus
+if (Test-Path "milvus") {
+    $InstallMilvus = Read-Host "Do you want to install Milvus Vector Database? (y/n)"
+    $ServicesToInstall["milvus"] = ($InstallMilvus -eq "Y" -or $InstallMilvus -eq "y")
+}
+
+# Ask about MQTT
+if (Test-Path "mqtt") {
+    $InstallMqtt = Read-Host "Do you want to install MQTT Message Broker? (y/n)"
+    $ServicesToInstall["mqtt"] = ($InstallMqtt -eq "Y" -or $InstallMqtt -eq "y")
+}
+
+# Ask about TimescaleDB
+if (Test-Path "timescaledb") {
+    $InstallTimescaleDB = Read-Host "Do you want to install TimescaleDB Time-Series Database? (y/n)"
+    $ServicesToInstall["timescaledb"] = ($InstallTimescaleDB -eq "Y" -or $InstallTimescaleDB -eq "y")
+}
+
+# Ask about Ollama
+if (Test-Path "ollama") {
+    $InstallOllama = Read-Host "Do you want to install Ollama LLM Service? (y/n)"
+    $ServicesToInstall["ollama"] = ($InstallOllama -eq "Y" -or $InstallOllama -eq "y")
+}
+
+# Ask about OTEL LGTM
+if (Test-Path "otel-lgtm") {
+    $InstallOtelLgtm = Read-Host "Do you want to install OTEL LGTM Observability Stack (Grafana/Loki/Tempo/Mimir)? (y/n)"
+    $ServicesToInstall["otel-lgtm"] = ($InstallOtelLgtm -eq "Y" -or $InstallOtelLgtm -eq "y")
+}
+
+# Show installation summary
+Write-Host ""
+Write-Host "Installation Summary:" -ForegroundColor Cyan
+$SelectedServices = $ServicesToInstall.Keys | Where-Object { $ServicesToInstall[$_] -eq $true }
+$SkippedServices = $ServicesToInstall.Keys | Where-Object { $ServicesToInstall[$_] -eq $false }
+
+if ($SelectedServices.Count -gt 0) {
+    Write-Host "  Services to install: $($SelectedServices -join ', ')" -ForegroundColor Green
+} else {
+    Write-Host "  No services selected for installation!" -ForegroundColor Red
+    Write-Host "Exiting installer." -ForegroundColor Yellow
+    exit 0
+}
+
+if ($SkippedServices.Count -gt 0) {
+    Write-Host "  Services to skip: $($SkippedServices -join ', ')" -ForegroundColor Yellow
+}
+
+Write-Host ""
+$ContinueInstall = Read-Host "Continue with installation? (y/n)"
+if ($ContinueInstall -ne "Y" -and $ContinueInstall -ne "y") {
+    Write-Host "Installation cancelled by user" -ForegroundColor Yellow
+    exit 0
+}
+
+# Ask about SSL if not already specified via parameter
+if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+    Write-Host ""
+    Write-Host "SSL/TLS Configuration:" -ForegroundColor Cyan
+    Write-Host "Enable HTTPS for all services using Nginx reverse proxy" -ForegroundColor Gray
+    $SSLChoice = Read-Host "Enable SSL/TLS encryption for all services? (y/n, default: n)"
+    if ($SSLChoice -eq "Y" -or $SSLChoice -eq "y") {
+        $EnableSSL = $true
+        Write-Host "[OK] SSL/TLS will be enabled for all services" -ForegroundColor Green
+
+        # Ask for domain
+        $DomainChoice = Read-Host "Enter domain name for SSL certificates (default: localhost)"
+        if ($DomainChoice) {
+            $Domain = $DomainChoice
+        }
+        Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+    } else {
+        Write-Host "SSL/TLS will be disabled (HTTP only)" -ForegroundColor Gray
+    }
+}
+
+# SSL certificate type and IP selection (asked once, passed to all services)
+$CertType = "self-signed"
+$MachineIPList = ""
+
+if ($EnableSSL) {
+    Write-Host ""
+    Write-Host "Certificate Options:" -ForegroundColor White
+    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+    Write-Host "2. Use CA-provided certificates (install later)" -ForegroundColor Gray
+    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+
+    if ($CertChoice -eq "2") {
+        $CertType = "ca-provided"
+        Write-Host "CA-provided certificates selected" -ForegroundColor Green
+        Write-Host "You can install them after setup using each service's manage-ssl.ps1 script" -ForegroundColor Cyan
+    } else {
+        $CertType = "self-signed"
+        Write-Host "Self-signed certificates selected" -ForegroundColor Green
+
+        # Detect machine IP addresses for SSL certificate SAN
+        Write-Host ""
+        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+        try {
+            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+                $_.IPAddress -notmatch '^127\.' -and
+                ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual')
+            }
+
+            if ($AllIPs.Count -gt 0) {
+                Write-Host "Detected IP addresses:" -ForegroundColor Green
+                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex -ErrorAction SilentlyContinue
+                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
+                }
+
+                Write-Host ""
+                $IPChoice = Read-Host "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip"
+
+                if ($IPChoice) {
+                    $SelectedIPs = @()
+                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                    foreach ($index in $SelectedIndices) {
+                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                            $SelectedIPs += $AllIPs[[int]$index].IPAddress
+                        }
+                    }
+
+                    if ($SelectedIPs.Count -gt 0) {
+                        $MachineIPList = $SelectedIPs -join ','
+                        Write-Host "Selected IPs: $MachineIPList" -ForegroundColor Cyan
+                    } else {
+                        Write-Host "No valid IPs selected" -ForegroundColor Gray
+                    }
+                } else {
+                    Write-Host "IP addresses not included (localhost/domain only)" -ForegroundColor Gray
+                }
+            } else {
+                Write-Host "Could not detect IP addresses" -ForegroundColor Gray
+            }
+        } catch {
+            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
+        }
+    }
+}
+
+# Ask about auto-start if not already specified via parameter
+$StartServices = $true
+if (-not $PSBoundParameters.ContainsKey('AutoStart')) {
+    Write-Host ""
+    $StartChoice = Read-Host "Start services after configuration? (y/n, default: y)"
+    if ($StartChoice -eq "n" -or $StartChoice -eq "N") {
+        $StartServices = $false
+        Write-Host "Services will be configured but not started" -ForegroundColor Gray
+    }
+}
+
+Write-Host ""
 
 # Build parameters for service install scripts
 $Neo4jParams = @{
@@ -254,15 +452,48 @@ $MilvusParams = @{
 $MqttParams = @{
     Force = $true
 }
+$TimescaleDBParams = @{
+    Force = $true
+}
+$OllamaParams = @{
+    Force = $true
+}
+$OtelLgtmParams = @{
+    Force = $true
+}
 
 if ($EnableSSL) {
     $Neo4jParams.EnableSSL = $true
     $MilvusParams.EnableSSL = $true
     $MqttParams.EnableSSL = $true
-    
+    $TimescaleDBParams.EnableSSL = $true
+    $OllamaParams.EnableSSL = $true
+    $OtelLgtmParams.EnableSSL = $true
+
     if ($Domain -ne "localhost") {
         $Neo4jParams.Domain = $Domain
         $MilvusParams.Domain = $Domain
+        $MqttParams.Domain = $Domain
+        $TimescaleDBParams.Domain = $Domain
+        $OllamaParams.Domain = $Domain
+        $OtelLgtmParams.Domain = $Domain
+    }
+
+    # Pass cert type and IPs to all services
+    $Neo4jParams.CertType = $CertType
+    $MilvusParams.CertType = $CertType
+    $MqttParams.CertType = $CertType
+    $TimescaleDBParams.CertType = $CertType
+    $OllamaParams.CertType = $CertType
+    $OtelLgtmParams.CertType = $CertType
+
+    if ($MachineIPList) {
+        $Neo4jParams.MachineIPs = $MachineIPList
+        $MilvusParams.MachineIPs = $MachineIPList
+        $MqttParams.MachineIPs = $MachineIPList
+        $TimescaleDBParams.MachineIPs = $MachineIPList
+        $OllamaParams.MachineIPsParam = $MachineIPList
+        $OtelLgtmParams.MachineIPsParam = $MachineIPList
     }
 }
 
@@ -271,6 +502,7 @@ if ($EnableSSL) {
 $Neo4jPassword = $env:NEO4J_PASSWORD
 $MilvusPassword = $env:MILVUS_PASSWORD
 $MqttPassword = $env:MQTT_PASSWORD
+$TimescaleDBPassword = $env:TIMESCALEDB_PASSWORD
 
 # Add passwords to params only if provided via environment variables
 if ($Neo4jPassword) {
@@ -288,6 +520,11 @@ if ($MqttPassword) {
     Write-Host "Using MQTT password from environment variable" -ForegroundColor Gray
 }
 
+if ($TimescaleDBPassword) {
+    $TimescaleDBParams.Password = $TimescaleDBPassword
+    Write-Host "Using TimescaleDB password from environment variable" -ForegroundColor Gray
+}
+
 # Configure services
 Write-Host ""
 Write-Host "Configuring Services..." -ForegroundColor White
@@ -296,92 +533,238 @@ Write-Host "======================" -ForegroundColor Gray
 # Track which services configured successfully
 $ConfiguredServices = @{}
 
-# Configure Neo4j using the install script
-Write-Host ""
-Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
-Write-Host "===================" -ForegroundColor Gray
-Write-Host "Running Neo4j installation script..." -ForegroundColor White
+# Configure Neo4j using the install script (if selected)
+if ($ServicesToInstall["neo4j"]) {
+    Write-Host ""
+    Write-Host "Neo4j Configuration:" -ForegroundColor Cyan
+    Write-Host "===================" -ForegroundColor Gray
+    Write-Host "Running Neo4j installation script..." -ForegroundColor White
 
-Set-Location "neo4j"
-try {
-    if ($EnableSSL) {
-        Write-Host "SSL enabled for Neo4j" -ForegroundColor Gray
+    Set-Location "neo4j"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for Neo4j" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @Neo4jParams
+        Write-Host "Neo4j configured successfully" -ForegroundColor Green
+        $ConfiguredServices["neo4j"] = $true
+    } catch {
+        Write-Host "Neo4j installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "Neo4j will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["neo4j"] = $false
     }
-    
-    & ".\management\install.ps1" @Neo4jParams
-    Write-Host "Neo4j configured successfully" -ForegroundColor Green
-    $ConfiguredServices["neo4j"] = $true
-} catch {
-    Write-Host "Neo4j installation failed with error:" -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
-    Write-Host "Neo4j will be skipped during startup..." -ForegroundColor Yellow
-    $ConfiguredServices["neo4j"] = $false
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping Neo4j (not selected)" -ForegroundColor Gray
 }
-Set-Location $InstallPath
 
-# Configure Milvus using the install script
-Write-Host ""
-Write-Host "Milvus Configuration:" -ForegroundColor Cyan
-Write-Host "====================" -ForegroundColor Gray
-Write-Host "Running Milvus installation script..." -ForegroundColor White
+# Configure Milvus using the install script (if selected)
+if ($ServicesToInstall["milvus"]) {
+    Write-Host ""
+    Write-Host "Milvus Configuration:" -ForegroundColor Cyan
+    Write-Host "====================" -ForegroundColor Gray
+    Write-Host "Running Milvus installation script..." -ForegroundColor White
 
-Set-Location "milvus"
-try {
-    if ($EnableSSL) {
-        Write-Host "SSL enabled for Milvus" -ForegroundColor Gray
+    Set-Location "milvus"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for Milvus" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @MilvusParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Milvus configured successfully" -ForegroundColor Green
+            $ConfiguredServices["milvus"] = $true
+        } else {
+            Write-Host "Milvus installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["milvus"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "Milvus installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "Milvus will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["milvus"] = $false
     }
-    
-    & ".\management\install.ps1" @MilvusParams
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Milvus configured successfully" -ForegroundColor Green
-        $ConfiguredServices["milvus"] = $true
-    } else {
-        Write-Host "Milvus installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
-        $ConfiguredServices["milvus"] = $true  # Still try to start if it completed
-    }
-} catch {
-    Write-Host "Milvus installation failed with error:" -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
-    Write-Host "Milvus will be skipped during startup..." -ForegroundColor Yellow
-    $ConfiguredServices["milvus"] = $false
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping Milvus (not selected)" -ForegroundColor Gray
 }
-Set-Location $InstallPath
 
-# Configure MQTT using the install script
-Write-Host ""
-Write-Host "MQTT Configuration:" -ForegroundColor Cyan
-Write-Host "==================" -ForegroundColor Gray
-Write-Host "Running MQTT installation script..." -ForegroundColor White
+# Configure MQTT using the install script (if selected)
+if ($ServicesToInstall["mqtt"]) {
+    Write-Host ""
+    Write-Host "MQTT Configuration:" -ForegroundColor Cyan
+    Write-Host "==================" -ForegroundColor Gray
+    Write-Host "Running MQTT installation script..." -ForegroundColor White
 
-Set-Location "mqtt"
-try {
-    if ($EnableSSL) {
-        Write-Host "SSL enabled for MQTT" -ForegroundColor Gray
+    Set-Location "mqtt"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for MQTT" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @MqttParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "MQTT configured successfully" -ForegroundColor Green
+            $ConfiguredServices["mqtt"] = $true
+        } else {
+            Write-Host "MQTT installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["mqtt"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "MQTT installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "MQTT will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["mqtt"] = $false
     }
-    
-    & ".\management\install.ps1" @MqttParams
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "MQTT configured successfully" -ForegroundColor Green
-        $ConfiguredServices["mqtt"] = $true
-    } else {
-        Write-Host "MQTT installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
-        $ConfiguredServices["mqtt"] = $true  # Still try to start if it completed
-    }
-} catch {
-    Write-Host "MQTT installation failed with error:" -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
-    Write-Host "MQTT will be skipped during startup..." -ForegroundColor Yellow
-    $ConfiguredServices["mqtt"] = $false
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping MQTT (not selected)" -ForegroundColor Gray
 }
-Set-Location $InstallPath
 
-# Start only successfully configured services
+# Configure TimescaleDB using the install script (if selected)
+if ($ServicesToInstall["timescaledb"]) {
+    Write-Host ""
+    Write-Host "TimescaleDB Configuration:" -ForegroundColor Cyan
+    Write-Host "=========================" -ForegroundColor Gray
+    Write-Host "Running TimescaleDB installation script..." -ForegroundColor White
+
+    Set-Location "timescaledb"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for TimescaleDB" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @TimescaleDBParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "TimescaleDB configured successfully" -ForegroundColor Green
+            $ConfiguredServices["timescaledb"] = $true
+        } else {
+            Write-Host "TimescaleDB installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["timescaledb"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "TimescaleDB installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "TimescaleDB will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["timescaledb"] = $false
+    }
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping TimescaleDB (not selected)" -ForegroundColor Gray
+}
+
+# Configure Ollama using the install script (if selected)
+if ($ServicesToInstall["ollama"]) {
+    Write-Host ""
+    Write-Host "Ollama Configuration:" -ForegroundColor Cyan
+    Write-Host "====================" -ForegroundColor Gray
+    Write-Host "Running Ollama installation script..." -ForegroundColor White
+
+    Set-Location "ollama"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for Ollama" -ForegroundColor Gray
+        }
+        
+        & ".\management\install.ps1" @OllamaParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Ollama configured successfully" -ForegroundColor Green
+            $ConfiguredServices["ollama"] = $true
+        } else {
+            Write-Host "Ollama installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["ollama"] = $true  # Still try to start if it completed
+        }
+    } catch {
+        Write-Host "Ollama installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  Line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Gray
+        Write-Host "Ollama will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["ollama"] = $false
+    }
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping Ollama (not selected)" -ForegroundColor Gray
+}
+
+# Configure OTEL LGTM using the install script (if selected) - must be AFTER other services
+if ($ServicesToInstall["otel-lgtm"]) {
+    Write-Host ""
+    Write-Host "OTEL LGTM Configuration:" -ForegroundColor Cyan
+    Write-Host "========================" -ForegroundColor Gray
+    Write-Host "Running OTEL LGTM installation script..." -ForegroundColor White
+
+    Set-Location "otel-lgtm"
+    try {
+        if ($EnableSSL) {
+            Write-Host "SSL enabled for OTEL LGTM" -ForegroundColor Gray
+        }
+
+        & ".\management\install.ps1" @OtelLgtmParams
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "OTEL LGTM configured successfully" -ForegroundColor Green
+            $ConfiguredServices["otel-lgtm"] = $true
+        } else {
+            Write-Host "OTEL LGTM installation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            $ConfiguredServices["otel-lgtm"] = $true
+        }
+    } catch {
+        Write-Host "OTEL LGTM installation failed with error:" -ForegroundColor Red
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "OTEL LGTM will be skipped during startup..." -ForegroundColor Yellow
+        $ConfiguredServices["otel-lgtm"] = $false
+    }
+    Set-Location $InstallPath
+} else {
+    Write-Host ""
+    Write-Host "Skipping OTEL LGTM (not selected)" -ForegroundColor Gray
+}
+
+# Start only successfully configured services (if user opted to start)
+if (-not $StartServices) {
+    Write-Host ""
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host "Configuration Complete!" -ForegroundColor Green
+    Write-Host "==================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Services were configured but not started." -ForegroundColor Gray
+    Write-Host "To start services individually, navigate to each service folder and run:" -ForegroundColor Gray
+    Write-Host "  docker-compose up -d" -ForegroundColor Gray
+    Write-Host ""
+} else {
+
 Write-Host ""
 Write-Host "Starting Configured Services..." -ForegroundColor White
 Write-Host "===============================" -ForegroundColor Gray
+
+# Ensure the observability network exists before starting any service
+# (needed by all services which reference it as external)
+$networkExists = docker network ls --filter "name=^observability$" --format "{{.Name}}" 2>$null
+if ($networkExists) {
+    # Remove and recreate to ensure correct labels (avoids compose label mismatch errors)
+    $networkInUse = docker network inspect observability --format "{{len .Containers}}" 2>$null
+    if ($networkInUse -eq "0" -or -not $networkInUse) {
+        docker network rm observability 2>$null | Out-Null
+        docker network create observability 2>$null | Out-Null
+        Write-Host "[OK] Recreated observability network (clean labels)" -ForegroundColor Green
+    } else {
+        Write-Host "[OK] Observability network exists (in use, keeping)" -ForegroundColor Green
+    }
+} else {
+    docker network create observability 2>$null | Out-Null
+    Write-Host "[OK] Created observability network" -ForegroundColor Green
+}
 
 $SuccessfullyConfigured = $ConfiguredServices.Keys | Where-Object { $ConfiguredServices[$_] -eq $true }
 $FailedConfiguration = $ConfiguredServices.Keys | Where-Object { $ConfiguredServices[$_] -eq $false }
@@ -425,7 +808,7 @@ if ($ConfiguredServices["neo4j"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping Neo4j startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping Neo4j startup (not selected)" -ForegroundColor Yellow
 }
 
 # Check and start Milvus if configured successfully
@@ -457,7 +840,7 @@ if ($ConfiguredServices["milvus"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping Milvus startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping Milvus startup (not selected)" -ForegroundColor Yellow
 }
 
 # Check and start MQTT if configured successfully
@@ -489,40 +872,145 @@ if ($ConfiguredServices["mqtt"]) {
     Set-Location ..
 } else {
     Write-Host ""
-    Write-Host "Skipping MQTT startup (configuration failed)" -ForegroundColor Yellow
+    Write-Host "Skipping MQTT startup (not selected)" -ForegroundColor Yellow
 }
 
-# Wait for services to initialize
-Write-Host ""
-Write-Host "Waiting for services to initialize..." -ForegroundColor White
-Write-Host "=====================================" -ForegroundColor Gray
-Start-Sleep -Seconds 15
+# Check and start TimescaleDB if configured successfully
+if ($ConfiguredServices["timescaledb"]) {
+    Write-Host ""
+    Write-Host "Starting TimescaleDB..." -ForegroundColor White
+    Write-Host "======================" -ForegroundColor Gray
 
-# Final status check
-Write-Host ""
-Write-Host "Final Service Status:" -ForegroundColor White
-Write-Host "====================" -ForegroundColor Gray
-
-$FinalStatus = @{}
-foreach ($service in @("neo4j", "milvus", "mqtt")) {
-    Set-Location $service
+    Set-Location "timescaledb"
     try {
-        $Status = docker-compose ps --format json | ConvertFrom-Json
-        if ($Status) {
-            foreach ($container in $Status) {
-                $statusColor = switch ($container.State) {
-                    "running" { "Green" }
-                    "exited" { "Red" }
-                    default { "Yellow" }
-                }
-                Write-Host "  $service/$($container.Service): $($container.State)" -ForegroundColor $statusColor
-                $FinalStatus["$service"] = $container.State
+        $TimescaleDBStatus = docker-compose ps --format json | ConvertFrom-Json
+        $TimescaleDBRunning = $TimescaleDBStatus | Where-Object { $_.Service -eq "timescaledb" -and $_.State -eq "running" }
+
+        if ($TimescaleDBRunning) {
+            Write-Host "TimescaleDB is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting TimescaleDB services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "TimescaleDB started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start TimescaleDB" -ForegroundColor Red
             }
         }
     } catch {
-        Write-Host "  ${service}: Not available" -ForegroundColor Gray
+        Write-Host "Starting TimescaleDB..." -ForegroundColor Yellow
+        docker-compose up -d
     }
     Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping TimescaleDB startup (not selected)" -ForegroundColor Yellow
+}
+
+# Check and start Ollama if configured successfully
+if ($ConfiguredServices["ollama"]) {
+    Write-Host ""
+    Write-Host "Starting Ollama..." -ForegroundColor White
+    Write-Host "=================" -ForegroundColor Gray
+
+    Set-Location "ollama"
+    try {
+        $OllamaStatus = docker-compose ps --format json | ConvertFrom-Json
+        $OllamaRunning = $OllamaStatus | Where-Object { $_.Service -eq "ollama" -and $_.State -eq "running" }
+
+        if ($OllamaRunning) {
+            Write-Host "Ollama is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting Ollama services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Ollama started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start Ollama" -ForegroundColor Red
+            }
+        }
+    } catch {
+        Write-Host "Starting Ollama..." -ForegroundColor Yellow
+        docker-compose up -d
+    }
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping Ollama startup (not selected)" -ForegroundColor Yellow
+}
+
+# Check and start OTEL LGTM if configured successfully
+if ($ConfiguredServices["otel-lgtm"]) {
+    Write-Host ""
+    Write-Host "Starting OTEL LGTM..." -ForegroundColor White
+    Write-Host "===================" -ForegroundColor Gray
+
+    Set-Location "otel-lgtm"
+    try {
+        $OtelStatus = docker-compose ps --format json | ConvertFrom-Json
+        $OtelRunning = $OtelStatus | Where-Object { $_.Service -eq "otel-lgtm" -and $_.State -eq "running" }
+
+        if ($OtelRunning) {
+            Write-Host "OTEL LGTM is already running" -ForegroundColor Green
+        } else {
+            Write-Host "Starting OTEL LGTM services..." -ForegroundColor Yellow
+            docker-compose up -d
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "OTEL LGTM started successfully" -ForegroundColor Green
+            } else {
+                Write-Host "Failed to start OTEL LGTM" -ForegroundColor Red
+            }
+        }
+    } catch {
+        Write-Host "Starting OTEL LGTM..." -ForegroundColor Yellow
+        docker-compose up -d
+    }
+    Set-Location ..
+} else {
+    Write-Host ""
+    Write-Host "Skipping OTEL LGTM startup (not selected)" -ForegroundColor Yellow
+}
+
+} # End of StartServices else block
+
+if ($StartServices) {
+    # Wait for services to initialize
+    Write-Host ""
+    Write-Host "Waiting for services to initialize..." -ForegroundColor White
+    Write-Host "=====================================" -ForegroundColor Gray
+    Start-Sleep -Seconds 15
+
+    # Final status check
+    Write-Host ""
+    Write-Host "Final Service Status:" -ForegroundColor White
+    Write-Host "====================" -ForegroundColor Gray
+}
+
+$FinalStatus = @{}
+if ($StartServices) {
+    foreach ($service in @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")) {
+        if (-not (Test-Path $service)) {
+            continue
+        }
+        Set-Location $service
+        try {
+            $Status = docker-compose ps --format json | ConvertFrom-Json
+            if ($Status) {
+                foreach ($container in $Status) {
+                    $statusColor = switch ($container.State) {
+                        "running" { "Green" }
+                        "exited" { "Red" }
+                        default { "Yellow" }
+                    }
+                    Write-Host "  $service/$($container.Service): $($container.State)" -ForegroundColor $statusColor
+                    $FinalStatus["$service"] = $container.State
+                }
+            }
+        } catch {
+            Write-Host "  ${service}: Not available" -ForegroundColor Gray
+        }
+        Set-Location ..
+    }
 }
 
 # Installation summary
@@ -541,8 +1029,9 @@ if ($FinalStatus["neo4j"] -eq "running") {
 }
 
 if ($FinalStatus["milvus"] -eq "running") {
-    Write-Host "Milvus API: localhost:19530" -ForegroundColor Green
-    Write-Host "Milvus HTTP API: localhost:9091" -ForegroundColor Green
+    Write-Host "Milvus gRPC API: localhost:19530" -ForegroundColor Green
+    Write-Host "Milvus HTTP API (CORS-enabled): localhost:19531" -ForegroundColor Green
+    Write-Host "Milvus HTTP API (Internal): localhost:9091" -ForegroundColor Gray
     Write-Host "MinIO Console: http://localhost:9001" -ForegroundColor Green
     Write-Host "  (Check Milvus install output above for username/password)" -ForegroundColor Gray
 }
@@ -551,6 +1040,23 @@ if ($FinalStatus["mqtt"] -eq "running") {
     Write-Host "MQTT Broker: localhost:1883" -ForegroundColor Green
     Write-Host "MQTT WebSocket: ws://localhost:9002" -ForegroundColor Green
     Write-Host "  (Check MQTT install output above for username/password)" -ForegroundColor Gray
+}
+
+if ($FinalStatus["timescaledb"] -eq "running") {
+    Write-Host "TimescaleDB: localhost:5432" -ForegroundColor Green
+    Write-Host "  (Check TimescaleDB install output above for username/password)" -ForegroundColor Gray
+}
+
+if ($FinalStatus["otel-lgtm"] -eq "running") {
+    $GrafanaPort = "3001"
+    if (Test-Path "otel-lgtm\.env") {
+        $otelEnv = Get-Content "otel-lgtm\.env"
+        $portLine = $otelEnv | Where-Object { $_ -match "^GRAFANA_PORT=" }
+        if ($portLine) { $GrafanaPort = $portLine -replace "GRAFANA_PORT=", "" }
+    }
+    Write-Host "Grafana Dashboard: http://localhost:$GrafanaPort" -ForegroundColor Green
+    Write-Host "OTLP gRPC: localhost:4317" -ForegroundColor Green
+    Write-Host "OTLP HTTP: http://localhost:4318" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -577,6 +1083,7 @@ Write-Host "CA Certificate Locations:" -ForegroundColor White
 Write-Host "  - Neo4j: neo4j\\certs\\bolt\\trusted\\ca.crt" -ForegroundColor Gray
 Write-Host "  - Milvus: milvus\\certs\\milvus\\trusted\\ca.crt" -ForegroundColor Gray
 Write-Host "  - MQTT: mqtt\\certs\\ca.crt" -ForegroundColor Gray
+Write-Host "  - TimescaleDB: timescaledb\\certs\\ca.crt" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Install on client machines:" -ForegroundColor White
 Write-Host "  Import-Certificate -FilePath 'ca.crt' -CertStoreLocation Cert:\\LocalMachine\\Root" -ForegroundColor Gray
@@ -595,7 +1102,10 @@ $SelfSignedServices = @()
 $CertPaths = @(
     @{Service="Neo4j"; Path="neo4j\certs\bolt\trusted\ca.crt"},
     @{Service="Milvus"; Path="milvus\certs\milvus\trusted\ca.crt"},
-    @{Service="MQTT"; Path="mqtt\certs\ca.crt"}
+    @{Service="MQTT"; Path="mqtt\certs\ca.crt"},
+    @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"},
+    @{Service="Ollama"; Path="ollama\certs\ca.crt"},
+    @{Service="OTEL LGTM"; Path="otel-lgtm\certs\ca.crt"}
 )
 
 foreach ($CertPath in $CertPaths) {
@@ -763,7 +1273,7 @@ if ($ConfiguredServices["milvus"]) {
     $CredentialsContent += @"
 Access URLs:
   - gRPC API: localhost:19530
-  - HTTP API: localhost:9091
+  - HTTP API (Internal): localhost:9091
 "@
     
     # Check if SSL is actually enabled in Milvus
@@ -778,6 +1288,7 @@ Access URLs:
     if ($MilvusSSLEnabled) {
         $CredentialsContent += @"
 
+  - HTTP API (CORS-enabled for web apps): https://localhost:19531
   - Attu Web UI (HTTPS): https://localhost:8001
   - Attu Web UI (HTTP redirect): http://localhost:8002
 
@@ -789,6 +1300,7 @@ SSL Certificate:
     } else {
         $CredentialsContent += @"
 
+  - HTTP API (CORS-enabled for web apps): http://localhost:19531
   - Attu Web UI: http://localhost:8002
 "@
     }
@@ -868,6 +1380,220 @@ SSL Certificate:
     }
 }
 
+# Collect TimescaleDB credentials
+if ($ConfiguredServices["timescaledb"]) {
+    $CredentialsContent += @"
+
+
+# =================================================================
+# TimescaleDB Time-Series Database
+# =================================================================
+
+"@
+    
+    if (Test-Path "timescaledb\.env") {
+        $TimescaleDBEnv = Get-Content "timescaledb\.env" -Raw
+        
+        # Extract database name
+        if ($TimescaleDBEnv -match 'POSTGRES_DB=(.+)') {
+            $TimescaleDBName = $Matches[1].Trim()
+        } else {
+            $TimescaleDBName = "timescaledb"
+        }
+        
+        # Extract username
+        if ($TimescaleDBEnv -match 'POSTGRES_USER=(.+)') {
+            $TimescaleDBUser = $Matches[1].Trim()
+        } else {
+            $TimescaleDBUser = "postgres"
+        }
+        
+        # Extract password
+        if ($TimescaleDBEnv -match 'POSTGRES_PASSWORD=(.+)') {
+            $TimescaleDBPass = $Matches[1].Trim()
+        } else {
+            $TimescaleDBPass = "(check TimescaleDB .env file)"
+        }
+        
+        # Extract pgAdmin credentials
+        if ($TimescaleDBEnv -match 'PGADMIN_EMAIL=(.+)') {
+            $PgAdminEmail = $Matches[1].Trim()
+        } else {
+            $PgAdminEmail = "admin@example.com"
+        }
+        
+        if ($TimescaleDBEnv -match 'PGADMIN_PASSWORD=(.+)') {
+            $PgAdminPass = $Matches[1].Trim()
+        } else {
+            $PgAdminPass = "(check TimescaleDB .env file)"
+        }
+        
+        $CredentialsContent += @"
+Database: $TimescaleDBName
+Username: $TimescaleDBUser
+Password: $TimescaleDBPass
+
+"@
+    }
+    
+    $CredentialsContent += @"
+Access URLs:
+  - PostgreSQL: localhost:5432
+  - Connection String: postgresql://<username>:<password>@localhost:5432/<database>
+"@
+    
+    # Check if SSL is actually enabled in TimescaleDB
+    $TimescaleDBSSLEnabled = $false
+    if (Test-Path "timescaledb\.env") {
+        $TimescaleDBEnvContent = Get-Content "timescaledb\.env" -Raw
+        if ($TimescaleDBEnvContent -match 'ENABLE_SSL=true') {
+            $TimescaleDBSSLEnabled = $true
+        }
+    }
+    
+    if ($TimescaleDBSSLEnabled -and (Test-Path "timescaledb\certs\ca.crt")) {
+        $CredentialsContent += @"
+
+  - pgAdmin Web UI (HTTPS): https://localhost:5051
+  - pgAdmin Web UI (HTTP redirect): http://localhost:5050
+  - SSL Connection String: postgresql://<username>:<password>@localhost:5432/<database>?sslmode=require
+
+SSL Certificate:
+  - CA Certificate: timescaledb\certs\ca.crt
+  - Server Certificate: timescaledb\certs\server.crt
+  - Server Key: timescaledb\certs\server.key
+"@
+    } else {
+        $CredentialsContent += @"
+
+  - pgAdmin Web UI: http://localhost:5050
+"@
+    }
+    
+    $CredentialsContent += @"
+
+
+pgAdmin Web UI:
+  - Email: $PgAdminEmail
+  - Password: $PgAdminPass
+"@
+}
+
+# Collect Ollama credentials
+if ($ConfiguredServices["ollama"]) {
+    $CredentialsContent += @"
+
+
+# =================================================================
+# Ollama LLM Service
+# =================================================================
+
+"@
+    
+    $CredentialsContent += @"
+Access URLs:
+  - HTTP API: http://localhost:11434
+"@
+    
+    # Check if SSL is actually enabled in Ollama
+    $OllamaSSLEnabled = $false
+    $OllamaHttpsPort = "11443"
+    if (Test-Path "ollama\.env") {
+        $OllamaEnvContent = Get-Content "ollama\.env" -Raw
+        if ($OllamaEnvContent -match 'OLLAMA_ENABLE_SSL=true') {
+            $OllamaSSLEnabled = $true
+        }
+        if ($OllamaEnvContent -match 'OLLAMA_HTTPS_PORT=(.+)') {
+            $OllamaHttpsPort = $Matches[1].Trim()
+        }
+    }
+    
+    if ($OllamaSSLEnabled -and (Test-Path "ollama\certs\ca.crt")) {
+        $CredentialsContent += @"
+
+  - HTTPS API: https://localhost:$OllamaHttpsPort
+
+SSL Certificate:
+  - CA Certificate: ollama\certs\ca.crt
+  - Server Certificate: ollama\certs\server.crt
+"@
+    }
+    
+    $CredentialsContent += @"
+
+
+Model Management:
+  - Download models: .\ollama\management\pull-models.ps1
+  - List models: docker exec ollama ollama list
+  - Test model: docker exec ollama ollama run <model-name> "test prompt"
+
+Note: At least one embedding model is required for XMPro AI Agents
+  Recommended: nomic-embed-text:latest or mxbai-embed-large:latest
+"@
+}
+
+# Collect OTEL LGTM credentials
+if ($ConfiguredServices["otel-lgtm"]) {
+    $GrafanaPort = "3001"
+    $GrafanaPass = "admin"
+    $OtelLgtmHttpsPort = "3444"
+    if (Test-Path "otel-lgtm\.env") {
+        $otelEnvContent = Get-Content "otel-lgtm\.env"
+        $gpLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_PORT=" }
+        if ($gpLine) { $GrafanaPort = $gpLine -replace "GRAFANA_PORT=", "" }
+        $gpassLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_ADMIN_PASSWORD=" }
+        if ($gpassLine) { $GrafanaPass = $gpassLine -replace "GRAFANA_ADMIN_PASSWORD=", "" }
+        $ghpLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_HTTPS_PORT=" }
+        if ($ghpLine) { $OtelLgtmHttpsPort = $ghpLine -replace "GRAFANA_HTTPS_PORT=", "" }
+    }
+
+    $CredentialsContent += @"
+
+
+# =================================================================
+# OpenTelemetry LGTM Observability Stack
+# =================================================================
+
+Access URLs:
+  - Grafana Dashboard: http://localhost:$GrafanaPort
+  - OTLP gRPC: localhost:4317
+  - OTLP HTTP: http://localhost:4318
+
+Grafana Credentials:
+  - Username: admin
+  - Password: $GrafanaPass
+"@
+
+    $OtelLgtmSSLEnabled = $false
+    if (Test-Path "otel-lgtm\.env") {
+        $otelEnvRaw = Get-Content "otel-lgtm\.env" -Raw
+        if ($otelEnvRaw -match 'OTEL_LGTM_ENABLE_SSL=true') {
+            $OtelLgtmSSLEnabled = $true
+        }
+    }
+
+    if ($OtelLgtmSSLEnabled -and (Test-Path "otel-lgtm\certs\ca.crt")) {
+        $CredentialsContent += @"
+
+  - Grafana HTTPS: https://localhost:$OtelLgtmHttpsPort
+
+SSL Certificate:
+  - CA Certificate: otel-lgtm\certs\ca.crt
+"@
+    }
+
+    $CredentialsContent += @"
+
+
+OpenTelemetry SDK Configuration:
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+
+Components: Grafana (dashboards), Loki (logs), Tempo (traces), Mimir (metrics)
+Prometheus scrape targets: Neo4j, TimescaleDB, MQTT, Milvus
+"@
+}
+
 # Add management information
 $CredentialsContent += @"
 
@@ -895,6 +1621,14 @@ Service-Specific Management:
   - MQTT Restore: .\mqtt\management\restore.ps1
   - MQTT Users: .\mqtt\management\manage-users.ps1
   - MQTT SSL: .\mqtt\management\manage-ssl.ps1
+  
+  - TimescaleDB Backup: .\timescaledb\management\backup.ps1
+  - TimescaleDB Restore: .\timescaledb\management\restore.ps1
+  - TimescaleDB SSL: .\timescaledb\management\manage-ssl.ps1
+  
+  - Ollama Models: .\ollama\management\pull-models.ps1
+  - Ollama Service: .\ollama\management\manage-ollama.ps1
+  - Ollama SSL: .\ollama\management\manage-ssl.ps1
 
 # =================================================================
 # Security Notes

@@ -1,5 +1,9 @@
-// Create Library once
-MERGE (lib:Library {name: "Main Prompt Library"})
+// First, rename the existing library if it exists
+OPTIONAL MATCH (oldLib:Library {name: "Main Prompt Library"})
+SET oldLib.name = "Prompt Library";
+
+// Then create/match the library with the correct name
+MERGE (lib:Library {name: "Prompt Library"})
 ON CREATE SET lib.type = "Prompt", lib.created_date = datetime();
 
 // Define all prompts as a collection of maps
@@ -14,6 +18,10 @@ Current user input: {user_query}
 
 Context information:
 {knowledge_context}
+
+<guardrails>
+{constraints_context}
+</guardrails>
 
 <tools>
 Available tools:
@@ -67,7 +75,7 @@ Your response can include tool suggestions ONLY IF relevant to answering the que
 <Conversation history>
 {history}
 </Conversation history>",
-    reserved_fields: ["current_timestamp", "history", "knowledge_context", "available_tools", "user_query"],
+    reserved_fields: ["current_timestamp", "history", "knowledge_context", "available_tools", "user_query", "constraints_context"],
     category: "conversation",
     tags: ["conversation"],
     description: "Guides the AI in generating contextual responses during conversations, considering history, available tools, and user input."
@@ -97,19 +105,48 @@ User: How should I handle equipment calibration scheduling for our new productio
 Assistant: [Long detailed response about calibration procedures, scheduling software, compliance requirements, etc.]
 
 Extract:
-â€¢ Recommended monthly calibration schedule for critical equipment, quarterly for secondary
-â€¢ Use CalibrationPro software - integrates with existing ERP system 
-â€¢ Must document per ISO 9001 requirements - keep records minimum 3 years
-â€¢ Schedule during planned maintenance windows to minimize downtime
-â€¢ Critical equipment: pressure sensors, flow meters, temperature controllers
-â€¢ Backup calibration vendor: TechCal Services (contact: 555-0123)
-â€¢ Warning: Never skip pressure sensor calibration - safety compliance issue
+- Recommended monthly calibration schedule for critical equipment, quarterly for secondary
+- Use CalibrationPro software - integrates with existing ERP system 
+- Must document per ISO 9001 requirements - keep records minimum 3 years
+- Schedule during planned maintenance windows to minimize downtime
+- Critical equipment: pressure sensors, flow meters, temperature controllers
+- Backup calibration vendor: TechCal Services (contact: 555-0123)
+- Warning: Never skip pressure sensor calibration - safety compliance issue
 
 [Return ONLY the compact extract]",
     reserved_fields: ["user_query", "agent_response"],
     category: "conversation",
     tags: ["conversation"],
     description: "Instructs the AI to create a concise summary of a conversation for future reference."
+  },
+  {
+    prompt_id: "XMAGS-CONVOPROGSUMMARY-PROMPT-001",
+    name: "Conversation Progressive Summary",
+    internal_name: "conversation_progressive_summary_prompt",
+    prompt: "Update the progressive conversation summary by incorporating the latest turn.
+
+Current Summary (Turn {turn_count}):
+{current_summary}
+
+Latest Turn:
+User: {user_query}
+Assistant: {agent_response}
+
+Create an updated rolling summary that:
+1. Preserves key context from the current summary
+2. Integrates new information from the latest turn
+3. Maintains chronological flow
+4. Highlights important decisions, recommendations, or insights
+5. Keeps the summary concise (max 200 words)
+6. Focuses on actionable information and key facts
+
+Format as a flowing narrative paragraph that captures the conversation's evolution.
+
+[Return ONLY the updated summary]",
+    reserved_fields: ["current_summary", "turn_count", "user_query", "agent_response"],
+    category: "conversation",
+    tags: ["conversation"],
+    description: "Instructs the AI to create progressive conversation summaries of a conversation for future reference."
   },
   {
     prompt_id: "XMAGS-CONVOOBSERVE-PROMPT-001",
@@ -372,6 +409,13 @@ For general topics (processes, parts, procedures, asset groups), respond natural
 ## Available Actions:
 {available_actions}
 
+**AVAILABLE ACTIONS ENFORCEMENT:**
+- Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
+- Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not rename actions to be \"domain-specific\"
+- If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
+- The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
+
 ## Analysis Instructions
 Carefully analyze the information provided to determine if the current plan should be adjusted or maintained:
 
@@ -464,6 +508,13 @@ Provide your decision as 'Yes' for a plan adjustment is needed or 'No' if the cu
 
 ## Available Actions
 {available_actions}
+
+**AVAILABLE ACTIONS ENFORCEMENT:**
+- Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
+- Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not rename actions to be \"domain-specific\"
+- If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
+- The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
 
 ## Instructions
 Your task is to determine if a new goal is needed based on the reflections, while ensuring alignment with the existing objective functions and measures. DO NOT invent new metrics or goals that aren't related to the existing objective functions and measures.
@@ -569,6 +620,13 @@ Provide your analysis in a clear, structured format.",
 ## Available Actions
 {available_actions}
 
+**AVAILABLE ACTIONS ENFORCEMENT:**
+- Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
+- Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not rename actions to be \"domain-specific\"
+- If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
+- The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
+
 ## Instructions
 Create a complete PDDL solution, it should include the following PDDL components, each clearly labeled and properly formatted:
 
@@ -587,7 +645,7 @@ Create a complete PDDL solution, it should include the following PDDL components
      - Numeric effects showing how each action impacts goal metrics (use increase/decrease)
    - **If you include `:durative-actions` in requirements, you MUST define at least one durative action with `:duration`, `:condition`, and `:effect` sections**
    - **If you don't need durative actions, remove `:durative-actions` from requirements**
-   Note: Only include actions from the Available Actions list, but make them specific to the domain.
+   **CRITICAL CONSTRAINT: You MUST use ONLY the exact action names from the Available Actions list. Do not modify, rename, or create new actions. Use the action names VERBATIM as they appear in the Available Actions section.**
 
 2. PDDL Problem Definition:
    - Define specific objects representing actual system components (transformer-1, model-A, etc.)
@@ -656,7 +714,7 @@ IMPORTANT FORMAT REQUIREMENTS:
 3. For the Plan section:
    - Format each action as a comment line starting with semicolon (;)
    - Include agent assignment in the format: \"; Assigned to: [Agent Name]\"
-   - Ensure numeric effects are specified for each action (e.g., \"reduces load-forecast-error by 0.05\")
+   - Ensure numeric effects are specified for each action (e.g., \"; reduces load-forecast-error by 0.05\")
    - Include measure impacts for each action in the format:
      \"; Measure Impacts:\"
      \";   - measure1: increases from 82.5 to 83.0\"
@@ -764,7 +822,7 @@ IMPORTANT FORMAT REQUIREMENTS:
   - Projected impact on measure3: from A.AA to B.BB
 
 ### Efficiency Analysis:
-- Critical path: Action 1 â†’ Action 3 â†’ Action 5
+- Critical path: Action 1 → Action 3 → Action 5
 - Parallel opportunities: Actions 2 and 4 can be executed simultaneously
 - Bottleneck identified: Limited availability of Agent X for both Action 1 and Action 3
 - Optimization recommendation: Prioritize Action 1 to immediately improve metric1 by X.XX
@@ -809,6 +867,13 @@ Reasoning: {decision_reasoning}
 ## Available Actions
 {available_actions}
 
+**AVAILABLE ACTIONS ENFORCEMENT:**
+- Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
+- Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not rename actions to be \"domain-specific\"
+- If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
+- The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
+
 Please provide an adjusted PDDL plan that incorporates the new planning decision. Your response should include:
 
 1. Updated PDDL Domain Definition (if necessary):
@@ -821,7 +886,7 @@ Please provide an adjusted PDDL plan that incorporates the new planning decision
      - Numeric effects showing how each action impacts goal metrics (use increase/decrease)
    - Highlight any new types, predicates, or actions added
    - Explain why these additions are necessary
-   Note: Only include actions from the Available Actions list, but make them specific to the domain.
+   **CRITICAL CONSTRAINT: You MUST use ONLY the exact action names from the Available Actions list. Do not modify, rename, or create new actions. Use the action names VERBATIM as they appear in the Available Actions section.**
 
 2. Updated PDDL Problem Definition:
    - Define specific objects representing actual system components
@@ -870,9 +935,9 @@ IMPORTANT FORMAT REQUIREMENTS:
    - Use exactly \";; Domain Definition\" for the domain section
    - Use exactly \";; Problem Definition\" for the problem section
    - Use exactly \";; Plan\" for the plan section
-   - Use exactly \"### Plan Validation:\" for the validation section
-   - Use exactly \"### Efficiency Analysis:\" for the efficiency analysis section
-   - Use exactly \"### Objective Function Impact:\" for the impact section
+   - Use exactly \";### Plan Validation:\" for the validation section
+   - Use exactly \";### Efficiency Analysis:\" for the efficiency analysis section
+   - Use exactly \";### Objective Function Impact:\" for the impact section
 
 2. For the PDDL code:
    - Enclose all PDDL code blocks within triple backticks with the pddl language specifier: ```pddl
@@ -882,7 +947,7 @@ IMPORTANT FORMAT REQUIREMENTS:
 3. For the Plan section:
    - Format each action as a comment line starting with semicolon (;)
    - Include agent assignment in the format: \"; Assigned to: [Agent Name]\"
-   - Ensure numeric effects are specified for each action (e.g., \"reduces load-forecast-error by 0.05\")
+   - Ensure numeric effects are specified for each action (e.g., \"; reduces load-forecast-error by 0.05\")
    - Include measure impacts for each action in the format:
      \"; Measure Impacts:\"
      \";   - measure1: increases from 82.5 to 83.0\"
@@ -984,7 +1049,7 @@ Your complete response should follow this exact structure:
   - [Explain why these elements were preserved]
 
 ### Efficiency Analysis:
-- Critical path: Action 1 â†’ Action 3 â†’ Action 5
+- Critical path: Action 1 → Action 3 → Action 5
 - Parallel opportunities: Actions 2 and 4 can be executed simultaneously
 - Bottleneck identified: Limited availability of Agent X for both Action 1 and Action 3
 - Optimization recommendation: Prioritize Action 1 to immediately improve metric1 by X.XX
@@ -998,7 +1063,6 @@ Your complete response should follow this exact structure:
 - Overall improvement: Z.ZZ (P.PP%)
 
 Ensure that all PDDL elements are syntactically correct and logically consistent with both the original plan and the new planning decision.",
-    reserved_fields: ["current_goal", "current_pddl_plan", "new_goal", "decision_reasoning", "objective_function", "team_capabilities", "available_actions"],
     category: "plan",
     tags: ["plan"],
     description: "Adjust a plan based on the planning decision."
@@ -1212,10 +1276,36 @@ Expected output format:
         // fields matching expected structure
     }
 ]",
+    prompt_system: "You are a structured data formatter. Your sole task is to convert natural language requests into JSON message payloads that conform exactly to a provided schema. Return only valid JSON with no explanation, formatting, or additional text.",
     reserved_fields: ["input", "structure"],
     category: "tool",
     tags: ["tool", "data stream"],
     description: "Formats the incoming response to fit the structure the datastream needs."
+  },
+  {
+    prompt_id: "XMAGS-NCTOOL-PROMPT-001",
+    name: "NCalc Tool",
+    internal_name: "ncalc_expression_prompt",
+    prompt: "Convert the following user query into a valid NCalc expression.
+Return ONLY the raw NCalc expression, nothing else. No explanation, no markdown, no quotes.
+
+Available NCalc features:
+- Operators: +, -, *, /, %, (, )
+- Comparisons: =, !=, <, >, <=, >=
+- Logic: and, or, not
+- Functions: Abs, Ceiling, Floor, Max, Min, Pow, Round, Sign, Sqrt, Truncate, Acos, Asin, Atan, Cos, Sin, Tan, if(cond, true_val, false_val)
+- Constants: Pi(), e()
+
+User query: {input}
+
+Return ONLY the NCalc expression",
+    prompt_system: "You are a mathematical expression converter. 
+Your sole task is to convert natural language math and logic queries into valid NCalc expressions. 
+Return only the raw expression with no explanation, formatting, or additional text. Be precise with operator precedence and parentheses.",
+    reserved_fields: ["input"],
+    category: "tool",
+    tags: ["tool"],
+    description: "Converts natural language math/logic queries into valid NCalc expressions."
   },
   {
     prompt_id: "XMAGS-COMMDECISION-PROMPT-001",
@@ -1235,18 +1325,51 @@ Expected output format:
 ## Current Team: 
 {team}
 
-## Communication Decision
-Determine if this reflection contains information that should be shared with other agents on your team. Consider:
-1. The importance and confidence level of your insights
-2. Whether to communicate directly with specific agents or with the entire team
-3. Which specific agents would benefit from this information
+## Communication Decision Framework
+
+### DEFAULT POSITION: DO NOT SHARE
+This reflection should remain internal unless you can demonstrate clear operational necessity for team communication.
+
+### STEP 1: Operational Necessity Test
+Can you answer YES to ALL of these questions?
+- Does this reflection contain findings that would change how other agents perform their specific roles?
+- Would other agents make different decisions or take different actions based on this information?
+- Is this information NOT available to other agents through their normal monitoring and reporting procedures?
+- Does this require immediate coordination or input from multiple agents beyond existing protocols?
+- Would withholding this information create a specific operational risk or missed opportunity?
+
+If you cannot answer YES to ALL questions above, DO NOT SHARE.
+
+### STEP 2: Content Significance Assessment
+Evaluate the metadata in context:
+- Do the importance, confidence, and surprise scores collectively indicate this contains exceptional insights?
+- Does the content reveal patterns, risks, or opportunities that are outside normal operational expectations?
+- Is this information actionable by other agents in ways that improve team performance?
+- Does this represent a deviation from standard operations that requires team awareness?
+
+If the metadata indicates routine or expected operational content, DO NOT SHARE.
+
+### STEP 3: Communication Channel Validation
+Before sharing, confirm:
+- Are existing escalation procedures insufficient for handling this information?
+- Would formal communication channels (alerts, notifications, reports) be inappropriate?
+- Do specific agents need this information for their specialized functions?
+- Would team-wide communication be more effective than existing protocols?
+
+If existing channels are adequate, DO NOT SHARE.
+
+### DECISION REQUIREMENT
+To justify sharing, you must demonstrate that:
+1. ALL operational necessity questions are answered YES
+2. Content significance clearly exceeds routine operations
+3. Existing communication channels are insufficient
 
 ## Response Format
 SHARE_DECISION: [Yes/No]
-COMMUNICATION_TYPE: [Direct/Team]
-TARGET_AGENTS: [List specific agent IDs or 'All' if relevant to everyone]
-AGENT_RESPONSES: [AgentID1:Yes, AgentID2:No, ...] - Specify which agents should respond
-JUSTIFICATION: [Brief explanation of your decision including how confidence level influenced the decision]",
+COMMUNICATION_TYPE: [Direct/Team] (only if SHARE_DECISION is Yes)
+TARGET_AGENTS: [List specific agent IDs] (only if SHARE_DECISION is Yes)
+AGENT_RESPONSES: [AgentID1:Yes, AgentID2:No, ...] (only if SHARE_DECISION is Yes)
+JUSTIFICATION: [If No: Explain which necessity test failed or why existing channels are adequate. If Yes: Demonstrate how all three steps justify communication, citing specific operational value and agent actions enabled.]",
     reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence"],
     category: "memory_cycle",
     tags: ["reflection", "communication", "team"],

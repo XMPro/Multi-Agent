@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================
 # Docker Stack One-Click Installer (Linux)
-# Neo4j, Milvus, and MQTT Services
+# Neo4j, Milvus, MQTT, TimescaleDB, Ollama, and OTEL LGTM Services
 # =================================================================
 
 set -euo pipefail
@@ -20,6 +20,8 @@ INSTALL_PATH=""
 SKIP_CHECKS=false
 ENABLE_SSL=false
 DOMAIN="localhost"
+CERT_TYPE=""
+MACHINE_IP_LIST=""
 AUTO_START=false
 INSTALL_CERTIFICATES=false
 
@@ -40,6 +42,8 @@ show_usage() {
     echo "  --skip-checks            Skip prerequisite checks"
     echo "  --enable-ssl             Enable SSL/TLS for all services"
     echo "  --domain DOMAIN          Domain for SSL certificates (default: localhost)"
+    echo "  --cert-type TYPE         Certificate type: self-signed or ca-provided"
+    echo "  --machine-ips IPS        Comma-separated IP addresses for certificates"
     echo "  --auto-start             Run in automation mode (no interactive prompts)"
     echo "  --install-certificates   Automatically install CA certificates"
     echo "  -h, --help               Show this help message"
@@ -83,6 +87,14 @@ while [[ $# -gt 0 ]]; do
             AUTO_START=true
             shift
             ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IP_LIST="$2"
+            shift 2
+            ;;
         --install-certificates)
             INSTALL_CERTIFICATES=true
             shift
@@ -99,7 +111,7 @@ done
 
 print_color "$CYAN" "=================================================================="
 print_color "$CYAN" "Docker Stack One-Click Installer (Linux)"
-print_color "$CYAN" "Neo4j, Milvus, and MQTT Services"
+print_color "$CYAN" "Neo4j, Milvus, MQTT, and TimescaleDB Services"
 print_color "$CYAN" "=================================================================="
 
 # Function to check if a command exists
@@ -107,10 +119,28 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Check if service folders already exist (rerun scenario)
+EXISTING_SERVICES=()
+EXPECTED_SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
+for service in "${EXPECTED_SERVICES[@]}"; do
+    if [ -d "$service" ]; then
+        EXISTING_SERVICES+=("$service")
+    fi
+done
+
 # Get zip file path if not provided
 if [ -z "$ZIP_PATH" ]; then
-    # Look for ZIP files in current directory
-    mapfile -t LOCAL_ZIP_FILES < <(find . -maxdepth 1 -name "*.zip" -type f | sort)
+    # If service folders already exist, skip ZIP extraction
+    if [ ${#EXISTING_SERVICES[@]} -gt 0 ]; then
+        print_color "$YELLOW" "Detected existing service folders: ${EXISTING_SERVICES[*]}"
+        print_color "$GREEN" "Skipping ZIP extraction - using existing installation"
+        echo ""
+        SKIP_EXTRACTION=true
+    else
+        SKIP_EXTRACTION=false
+        
+        # Look for ZIP files in current directory
+        mapfile -t LOCAL_ZIP_FILES < <(find . -maxdepth 1 -name "*.zip" -type f | sort)
     
     if [ ${#LOCAL_ZIP_FILES[@]} -eq 1 ]; then
         ZIP_PATH="${LOCAL_ZIP_FILES[0]}"
@@ -132,15 +162,18 @@ if [ -z "$ZIP_PATH" ]; then
         print_color "$RED" "No ZIP file found in current directory."
         read -p "Enter path to ZIP file: " ZIP_PATH
     fi
+    fi
 fi
 
-# Validate zip file exists
-if [ ! -f "$ZIP_PATH" ]; then
-    print_color "$RED" "ZIP file not found: $ZIP_PATH"
-    exit 1
+# Validate zip file exists (only if we need to extract)
+if [ "$SKIP_EXTRACTION" != true ]; then
+    if [ ! -f "$ZIP_PATH" ]; then
+        print_color "$RED" "ZIP file not found: $ZIP_PATH"
+        exit 1
+    fi
+    
+    echo "Selected ZIP file: $ZIP_PATH"
 fi
-
-echo "Selected ZIP file: $ZIP_PATH"
 
 # Set installation path to current directory if not provided
 if [ -z "$INSTALL_PATH" ]; then
@@ -190,13 +223,14 @@ if [ "$SKIP_CHECKS" = false ]; then
     fi
 fi
 
-# Extract ZIP file
-echo ""
-echo "Extracting ZIP file..."
-print_color "$GRAY" "====================="
+# Extract ZIP file (only if needed)
+if [ "$SKIP_EXTRACTION" != true ]; then
+    echo ""
+    echo "Extracting ZIP file..."
+    print_color "$GRAY" "====================="
 
-# Check if unzip is available
-if ! command_exists unzip; then
+    # Check if unzip is available
+    if ! command_exists unzip; then
     print_color "$RED" "unzip command not found!"
     print_color "$YELLOW" "Install unzip: sudo apt-get install unzip (Ubuntu/Debian)"
     print_color "$YELLOW" "              sudo yum install unzip (RHEL/CentOS)"
@@ -234,12 +268,12 @@ if [ ${#CONFLICTING_FILES[@]} -gt 0 ]; then
 else
     unzip -q "$ZIP_PATH" -d "$INSTALL_PATH"
     print_color "$GREEN" "ZIP file extracted successfully"
-fi
+    fi
 
-# Change to installation directory
-cd "$INSTALL_PATH"
+    # Change to installation directory
+    cd "$INSTALL_PATH"
 
-# Move the ZIP file to an archive folder
+    # Move the ZIP file to an archive folder
 echo ""
 echo "Archiving deployment files..."
 ARCHIVE_DIR="$INSTALL_PATH/archive"
@@ -267,25 +301,192 @@ if [ -f "$TAR_PATH" ]; then
     else
         print_color "$YELLOW" "Could not move tar file to archive"
     fi
+    fi
+else
+    echo ""
+    print_color "$GREEN" "Using existing installation (ZIP extraction skipped)"
 fi
 
 # Verify extracted structure
-EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt")
-MISSING_FOLDERS=()
+EXPECTED_FOLDERS=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
+AVAILABLE_FOLDERS=()
 
 for folder in "${EXPECTED_FOLDERS[@]}"; do
-    if [ ! -d "$folder" ]; then
-        MISSING_FOLDERS+=("$folder")
+    if [ -d "$folder" ]; then
+        AVAILABLE_FOLDERS+=("$folder")
     fi
 done
 
-if [ ${#MISSING_FOLDERS[@]} -gt 0 ]; then
-    print_color "$RED" "Missing expected folders: ${MISSING_FOLDERS[*]}"
+if [ ${#AVAILABLE_FOLDERS[@]} -eq 0 ]; then
+    print_color "$RED" "No service folders found in the ZIP file!"
     print_color "$YELLOW" "Please ensure the ZIP file contains the correct Docker stack structure."
     exit 1
 fi
 
-print_color "$GREEN" "All expected service folders found"
+print_color "$GREEN" "Found service folders: ${AVAILABLE_FOLDERS[*]}"
+
+# SSL Configuration
+echo ""
+print_color "$CYAN" "SSL/TLS Configuration"
+print_color "$GRAY" "====================="
+if [ "$ENABLE_SSL" = false ]; then
+    read -p "Enable SSL/TLS encryption for all services? (y/n): " ssl_choice
+    if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
+        ENABLE_SSL=true
+    fi
+fi
+
+if [ "$ENABLE_SSL" = true ]; then
+    print_color "$GREEN" "SSL/TLS will be enabled for all services"
+
+    # Ask for domain
+    if [ "$DOMAIN" = "localhost" ]; then
+        read -p "Enter domain name for SSL certificates (default: localhost): " domain_input
+        if [ -n "$domain_input" ]; then
+            DOMAIN="$domain_input"
+        fi
+    fi
+    print_color "$CYAN" "Domain: $DOMAIN"
+
+    # Certificate type selection
+    if [ -z "$CERT_TYPE" ]; then
+        echo ""
+        print_color "$CYAN" "Certificate Options:"
+        print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+        print_color "$GRAY" "2. Use CA-provided certificates (install later)"
+        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+
+        if [ "$cert_choice" = "2" ]; then
+            CERT_TYPE="ca-provided"
+            print_color "$GREEN" "CA-provided certificates selected"
+        else
+            CERT_TYPE="self-signed"
+            print_color "$GREEN" "Self-signed certificates selected"
+        fi
+    fi
+
+    # IP detection for self-signed certificates
+    if [ "$CERT_TYPE" = "self-signed" ] && [ -z "$MACHINE_IP_LIST" ]; then
+        echo ""
+        print_color "$CYAN" "Detecting machine IP addresses..."
+        DETECTED_IPS=()
+        if command -v ip &> /dev/null; then
+            while IFS= read -r line; do
+                DETECTED_IPS+=("$line")
+            done < <(ip -4 addr show | grep -oP 'inet \K[\d.]+' | grep -v '^127\.')
+        elif command -v ifconfig &> /dev/null; then
+            while IFS= read -r line; do
+                DETECTED_IPS+=("$line")
+            done < <(ifconfig | grep -oP 'inet (addr:)?[\d.]+' | grep -oP '[\d.]+' | grep -v '^127\.')
+        fi
+
+        if [ ${#DETECTED_IPS[@]} -gt 0 ]; then
+            print_color "$GREEN" "Detected IP addresses:"
+            for i in "${!DETECTED_IPS[@]}"; do
+                echo "  [$i] ${DETECTED_IPS[$i]}"
+            done
+            echo ""
+            read -p "Enter IP numbers to include in certificate (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+            if [ -n "$ip_choice" ]; then
+                SELECTED_IPS=()
+                IFS=',' read -ra INDICES <<< "$ip_choice"
+                for index in "${INDICES[@]}"; do
+                    index=$(echo "$index" | tr -d ' ')
+                    if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt ${#DETECTED_IPS[@]} ]; then
+                        SELECTED_IPS+=("${DETECTED_IPS[$index]}")
+                    fi
+                done
+                if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                    MACHINE_IP_LIST=$(IFS=','; echo "${SELECTED_IPS[*]}")
+                    print_color "$CYAN" "Selected IPs: $MACHINE_IP_LIST"
+                fi
+            fi
+        else
+            print_color "$GRAY" "Could not detect IP addresses, skipping"
+        fi
+    fi
+else
+    print_color "$YELLOW" "SSL/TLS will be disabled"
+fi
+
+# Ask user which services to install
+echo ""
+print_color "$CYAN" "Service Installation Selection"
+print_color "$GRAY" "============================="
+echo "You can choose which services to install. Services will only be"
+echo "configured and started if you select them."
+echo ""
+
+declare -A SERVICES_TO_INSTALL
+
+# Ask about Neo4j
+if [ -d "neo4j" ]; then
+    read -p "Do you want to install Neo4j Graph Database? (y/n): " install_neo4j
+    [[ "$install_neo4j" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[neo4j]=true || SERVICES_TO_INSTALL[neo4j]=false
+fi
+
+# Ask about Milvus
+if [ -d "milvus" ]; then
+    read -p "Do you want to install Milvus Vector Database? (y/n): " install_milvus
+    [[ "$install_milvus" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[milvus]=true || SERVICES_TO_INSTALL[milvus]=false
+fi
+
+# Ask about MQTT
+if [ -d "mqtt" ]; then
+    read -p "Do you want to install MQTT Message Broker? (y/n): " install_mqtt
+    [[ "$install_mqtt" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[mqtt]=true || SERVICES_TO_INSTALL[mqtt]=false
+fi
+
+# Ask about TimescaleDB
+if [ -d "timescaledb" ]; then
+    read -p "Do you want to install TimescaleDB Time-Series Database? (y/n): " install_timescaledb
+    [[ "$install_timescaledb" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[timescaledb]=true || SERVICES_TO_INSTALL[timescaledb]=false
+fi
+
+# Ask about Ollama
+if [ -d "ollama" ]; then
+    read -p "Do you want to install Ollama LLM Service? (y/n): " install_ollama
+    [[ "$install_ollama" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[ollama]=true || SERVICES_TO_INSTALL[ollama]=false
+fi
+
+# Ask about OTEL LGTM
+if [ -d "otel-lgtm" ]; then
+    read -p "Do you want to install OTEL LGTM Observability Stack (Grafana/Loki/Tempo/Mimir)? (y/n): " install_otel_lgtm
+    [[ "$install_otel_lgtm" =~ ^[Yy]$ ]] && SERVICES_TO_INSTALL[otel-lgtm]=true || SERVICES_TO_INSTALL[otel-lgtm]=false
+fi
+
+# Show installation summary
+echo ""
+print_color "$CYAN" "Installation Summary:"
+SELECTED_SERVICES=()
+SKIPPED_SERVICES=()
+
+for service in "${!SERVICES_TO_INSTALL[@]}"; do
+    if [ "${SERVICES_TO_INSTALL[$service]}" = true ]; then
+        SELECTED_SERVICES+=("$service")
+    else
+        SKIPPED_SERVICES+=("$service")
+    fi
+done
+
+if [ ${#SELECTED_SERVICES[@]} -gt 0 ]; then
+    print_color "$GREEN" "  Services to install: ${SELECTED_SERVICES[*]}"
+else
+    print_color "$RED" "  No services selected for installation!"
+    print_color "$YELLOW" "Exiting installer."
+    exit 0
+fi
+
+if [ ${#SKIPPED_SERVICES[@]} -gt 0 ]; then
+    print_color "$YELLOW" "  Services to skip: ${SKIPPED_SERVICES[*]}"
+fi
+
+echo ""
+read -p "Continue with installation? (y/n): " continue_install
+if [[ ! "$continue_install" =~ ^[Yy]$ ]]; then
+    print_color "$YELLOW" "Installation cancelled by user"
+    exit 0
+fi
 
 # Configure services
 echo ""
@@ -300,97 +501,238 @@ declare -A CONFIGURED_SERVICES
 NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
 MILVUS_PASSWORD="${MILVUS_PASSWORD:-}"
 MQTT_PASSWORD="${MQTT_PASSWORD:-}"
+TIMESCALEDB_PASSWORD="${TIMESCALEDB_PASSWORD:-}"
 
 # Show if using environment variables
 [ -n "$NEO4J_PASSWORD" ] && print_color "$GRAY" "Using Neo4j password from environment variable"
 [ -n "$MILVUS_PASSWORD" ] && print_color "$GRAY" "Using Milvus password from environment variable"
 [ -n "$MQTT_PASSWORD" ] && print_color "$GRAY" "Using MQTT password from environment variable"
+[ -n "$TIMESCALEDB_PASSWORD" ] && print_color "$GRAY" "Using TimescaleDB password from environment variable"
 
-# Configure Neo4j
-echo ""
-print_color "$CYAN" "Neo4j Configuration:"
-print_color "$GRAY" "==================="
-echo "Running Neo4j installation script..."
+# Configure Neo4j (if selected)
+if [ "${SERVICES_TO_INSTALL[neo4j]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "Neo4j Configuration:"
+    print_color "$GRAY" "==================="
+    echo "Running Neo4j installation script..."
 
-cd neo4j
-NEO4J_ARGS="--force"
-[ "$ENABLE_SSL" = true ] && NEO4J_ARGS="$NEO4J_ARGS --enable-ssl"
-[ "$DOMAIN" != "localhost" ] && NEO4J_ARGS="$NEO4J_ARGS --domain $DOMAIN"
-[ -n "$NEO4J_PASSWORD" ] && NEO4J_ARGS="$NEO4J_ARGS --password $NEO4J_PASSWORD"
+    cd neo4j
+    NEO4J_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && NEO4J_ARGS="$NEO4J_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && NEO4J_ARGS="$NEO4J_ARGS --domain $DOMAIN"
+    [ -n "$NEO4J_PASSWORD" ] && NEO4J_ARGS="$NEO4J_ARGS --password $NEO4J_PASSWORD"
+    [ -n "$CERT_TYPE" ] && NEO4J_ARGS="$NEO4J_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && NEO4J_ARGS="$NEO4J_ARGS --machine-ips $MACHINE_IP_LIST"
 
-if [ -f "management/install.sh" ]; then
-    chmod +x management/install.sh
-    if ./management/install.sh $NEO4J_ARGS; then
-        print_color "$GREEN" "Neo4j configured successfully"
-        CONFIGURED_SERVICES[neo4j]=true
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $NEO4J_ARGS; then
+            print_color "$GREEN" "Neo4j configured successfully"
+            CONFIGURED_SERVICES[neo4j]=true
+        else
+            print_color "$RED" "Neo4j installation failed"
+            CONFIGURED_SERVICES[neo4j]=false
+        fi
     else
-        print_color "$RED" "Neo4j installation failed"
+        print_color "$YELLOW" "Neo4j install script not found"
         CONFIGURED_SERVICES[neo4j]=false
     fi
+    cd "$INSTALL_PATH"
 else
-    print_color "$YELLOW" "Neo4j install script not found"
-    CONFIGURED_SERVICES[neo4j]=false
+    echo ""
+    print_color "$GRAY" "Skipping Neo4j (not selected)"
 fi
-cd "$INSTALL_PATH"
 
-# Configure Milvus
-echo ""
-print_color "$CYAN" "Milvus Configuration:"
-print_color "$GRAY" "===================="
-echo "Running Milvus installation script..."
+# Configure Milvus (if selected)
+if [ "${SERVICES_TO_INSTALL[milvus]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "Milvus Configuration:"
+    print_color "$GRAY" "===================="
+    echo "Running Milvus installation script..."
 
-cd milvus
-MILVUS_ARGS="--force"
-[ "$ENABLE_SSL" = true ] && MILVUS_ARGS="$MILVUS_ARGS --enable-ssl"
-[ "$DOMAIN" != "localhost" ] && MILVUS_ARGS="$MILVUS_ARGS --domain $DOMAIN"
-[ -n "$MILVUS_PASSWORD" ] && MILVUS_ARGS="$MILVUS_ARGS --password $MILVUS_PASSWORD"
+    cd milvus
+    MILVUS_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && MILVUS_ARGS="$MILVUS_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && MILVUS_ARGS="$MILVUS_ARGS --domain $DOMAIN"
+    [ -n "$MILVUS_PASSWORD" ] && MILVUS_ARGS="$MILVUS_ARGS --password $MILVUS_PASSWORD"
+    [ -n "$CERT_TYPE" ] && MILVUS_ARGS="$MILVUS_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && MILVUS_ARGS="$MILVUS_ARGS --machine-ips $MACHINE_IP_LIST"
 
-if [ -f "management/install.sh" ]; then
-    chmod +x management/install.sh
-    if ./management/install.sh $MILVUS_ARGS; then
-        print_color "$GREEN" "Milvus configured successfully"
-        CONFIGURED_SERVICES[milvus]=true
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $MILVUS_ARGS; then
+            print_color "$GREEN" "Milvus configured successfully"
+            CONFIGURED_SERVICES[milvus]=true
+        else
+            print_color "$RED" "Milvus installation failed"
+            CONFIGURED_SERVICES[milvus]=false
+        fi
     else
-        print_color "$RED" "Milvus installation failed"
+        print_color "$YELLOW" "Milvus install script not found"
         CONFIGURED_SERVICES[milvus]=false
     fi
+    cd "$INSTALL_PATH"
 else
-    print_color "$YELLOW" "Milvus install script not found"
-    CONFIGURED_SERVICES[milvus]=false
+    echo ""
+    print_color "$GRAY" "Skipping Milvus (not selected)"
 fi
-cd "$INSTALL_PATH"
 
-# Configure MQTT
-echo ""
-print_color "$CYAN" "MQTT Configuration:"
-print_color "$GRAY" "=================="
-echo "Running MQTT installation script..."
+# Configure MQTT (if selected)
+if [ "${SERVICES_TO_INSTALL[mqtt]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "MQTT Configuration:"
+    print_color "$GRAY" "=================="
+    echo "Running MQTT installation script..."
 
-cd mqtt
-MQTT_ARGS="--force"
-[ "$ENABLE_SSL" = true ] && MQTT_ARGS="$MQTT_ARGS --enable-ssl"
-[ "$DOMAIN" != "localhost" ] && MQTT_ARGS="$MQTT_ARGS --domain $DOMAIN"
-[ -n "$MQTT_PASSWORD" ] && MQTT_ARGS="$MQTT_ARGS --password $MQTT_PASSWORD"
+    cd mqtt
+    MQTT_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && MQTT_ARGS="$MQTT_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && MQTT_ARGS="$MQTT_ARGS --domain $DOMAIN"
+    [ -n "$MQTT_PASSWORD" ] && MQTT_ARGS="$MQTT_ARGS --password $MQTT_PASSWORD"
+    [ -n "$CERT_TYPE" ] && MQTT_ARGS="$MQTT_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && MQTT_ARGS="$MQTT_ARGS --machine-ips $MACHINE_IP_LIST"
 
-if [ -f "management/install.sh" ]; then
-    chmod +x management/install.sh
-    if ./management/install.sh $MQTT_ARGS; then
-        print_color "$GREEN" "MQTT configured successfully"
-        CONFIGURED_SERVICES[mqtt]=true
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $MQTT_ARGS; then
+            print_color "$GREEN" "MQTT configured successfully"
+            CONFIGURED_SERVICES[mqtt]=true
+        else
+            print_color "$RED" "MQTT installation failed"
+            CONFIGURED_SERVICES[mqtt]=false
+        fi
     else
-        print_color "$RED" "MQTT installation failed"
+        print_color "$YELLOW" "MQTT install script not found"
         CONFIGURED_SERVICES[mqtt]=false
     fi
+    cd "$INSTALL_PATH"
 else
-    print_color "$YELLOW" "MQTT install script not found"
-    CONFIGURED_SERVICES[mqtt]=false
+    echo ""
+    print_color "$GRAY" "Skipping MQTT (not selected)"
 fi
-cd "$INSTALL_PATH"
+
+# Configure TimescaleDB (if selected)
+if [ "${SERVICES_TO_INSTALL[timescaledb]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "TimescaleDB Configuration:"
+    print_color "$GRAY" "========================="
+    echo "Running TimescaleDB installation script..."
+
+    cd timescaledb
+    TIMESCALEDB_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --domain $DOMAIN"
+    [ -n "$TIMESCALEDB_PASSWORD" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --password $TIMESCALEDB_PASSWORD"
+    [ -n "$CERT_TYPE" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && TIMESCALEDB_ARGS="$TIMESCALEDB_ARGS --machine-ips $MACHINE_IP_LIST"
+
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $TIMESCALEDB_ARGS; then
+            print_color "$GREEN" "TimescaleDB configured successfully"
+            CONFIGURED_SERVICES[timescaledb]=true
+        else
+            print_color "$RED" "TimescaleDB installation failed"
+            CONFIGURED_SERVICES[timescaledb]=false
+        fi
+    else
+        print_color "$YELLOW" "TimescaleDB install script not found"
+        CONFIGURED_SERVICES[timescaledb]=false
+    fi
+    cd "$INSTALL_PATH"
+else
+    echo ""
+    print_color "$GRAY" "Skipping TimescaleDB (not selected)"
+fi
+
+# Configure Ollama (if selected)
+if [ "${SERVICES_TO_INSTALL[ollama]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "Ollama Configuration:"
+    print_color "$GRAY" "===================="
+    echo "Running Ollama installation script..."
+
+    cd ollama
+    OLLAMA_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && OLLAMA_ARGS="$OLLAMA_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && OLLAMA_ARGS="$OLLAMA_ARGS --domain $DOMAIN"
+    [ -n "$CERT_TYPE" ] && OLLAMA_ARGS="$OLLAMA_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && OLLAMA_ARGS="$OLLAMA_ARGS --machine-ips $MACHINE_IP_LIST"
+
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $OLLAMA_ARGS; then
+            print_color "$GREEN" "Ollama configured successfully"
+            CONFIGURED_SERVICES[ollama]=true
+        else
+            print_color "$RED" "Ollama installation failed"
+            CONFIGURED_SERVICES[ollama]=false
+        fi
+    else
+        print_color "$YELLOW" "Ollama install script not found"
+        CONFIGURED_SERVICES[ollama]=false
+    fi
+    cd "$INSTALL_PATH"
+else
+    echo ""
+    print_color "$GRAY" "Skipping Ollama (not selected)"
+fi
+
+# Configure OTEL LGTM (if selected) - must be configured AFTER other services so it can read their .env files
+if [ "${SERVICES_TO_INSTALL[otel-lgtm]:-false}" = true ]; then
+    echo ""
+    print_color "$CYAN" "OTEL LGTM Configuration:"
+    print_color "$GRAY" "========================"
+    echo "Running OTEL LGTM installation script..."
+
+    cd otel-lgtm
+    OTEL_LGTM_ARGS="--force"
+    [ "$ENABLE_SSL" = true ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --enable-ssl"
+    [ "$DOMAIN" != "localhost" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --domain $DOMAIN"
+    [ -n "$CERT_TYPE" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --cert-type $CERT_TYPE"
+    [ -n "$MACHINE_IP_LIST" ] && OTEL_LGTM_ARGS="$OTEL_LGTM_ARGS --machine-ips $MACHINE_IP_LIST"
+
+    if [ -f "management/install.sh" ]; then
+        chmod +x management/install.sh
+        if ./management/install.sh $OTEL_LGTM_ARGS; then
+            print_color "$GREEN" "OTEL LGTM configured successfully"
+            CONFIGURED_SERVICES[otel-lgtm]=true
+        else
+            print_color "$RED" "OTEL LGTM installation failed"
+            CONFIGURED_SERVICES[otel-lgtm]=false
+        fi
+    else
+        print_color "$YELLOW" "OTEL LGTM install script not found"
+        CONFIGURED_SERVICES[otel-lgtm]=false
+    fi
+    cd "$INSTALL_PATH"
+else
+    echo ""
+    print_color "$GRAY" "Skipping OTEL LGTM (not selected)"
+fi
 
 # Start services
 echo ""
 echo "Starting Configured Services..."
 print_color "$GRAY" "==============================="
+
+# Ensure the observability network exists before starting any service
+# (needed by all services which reference it as external)
+NETWORK_EXISTS=$(docker network ls --filter "name=^observability$" --format "{{.Name}}" 2>/dev/null)
+if [ -n "$NETWORK_EXISTS" ]; then
+    # Remove and recreate to ensure correct labels (avoids compose label mismatch errors)
+    NETWORK_CONTAINERS=$(docker network inspect observability --format "{{len .Containers}}" 2>/dev/null || echo "0")
+    if [ "$NETWORK_CONTAINERS" = "0" ] || [ -z "$NETWORK_CONTAINERS" ]; then
+        docker network rm observability 2>/dev/null || true
+        docker network create observability 2>/dev/null || true
+        print_color "$GREEN" "[OK] Recreated observability network (clean labels)"
+    else
+        print_color "$GREEN" "[OK] Observability network exists (in use, keeping)"
+    fi
+else
+    docker network create observability 2>/dev/null || true
+    print_color "$GREEN" "[OK] Created observability network"
+fi
 
 SUCCESSFUL_SERVICES=()
 FAILED_SERVICES=()
@@ -464,6 +806,57 @@ if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
     cd ..
 fi
 
+# Start TimescaleDB
+if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
+    echo ""
+    echo "Starting TimescaleDB..."
+    print_color "$GRAY" "======================"
+    
+    cd timescaledb
+    if docker-compose ps 2>/dev/null | grep -q "timescaledb.*Up"; then
+        print_color "$GREEN" "TimescaleDB is already running"
+    else
+        echo "Starting TimescaleDB services..."
+        docker-compose up -d
+        print_color "$GREEN" "TimescaleDB started successfully"
+    fi
+    cd ..
+fi
+
+# Start Ollama
+if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
+    echo ""
+    echo "Starting Ollama..."
+    print_color "$GRAY" "================="
+    
+    cd ollama
+    if docker-compose ps 2>/dev/null | grep -q "ollama.*Up"; then
+        print_color "$GREEN" "Ollama is already running"
+    else
+        echo "Starting Ollama services..."
+        docker-compose up -d
+        print_color "$GREEN" "Ollama started successfully"
+    fi
+    cd ..
+fi
+
+# Start OTEL LGTM
+if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
+    echo ""
+    echo "Starting OTEL LGTM..."
+    print_color "$GRAY" "==================="
+
+    cd otel-lgtm
+    if docker-compose ps 2>/dev/null | grep -q "otel-lgtm.*Up"; then
+        print_color "$GREEN" "OTEL LGTM is already running"
+    else
+        echo "Starting OTEL LGTM services..."
+        docker-compose up -d
+        print_color "$GREEN" "OTEL LGTM started successfully"
+    fi
+    cd ..
+fi
+
 # Wait for services to initialize
 echo ""
 echo "Waiting for services to initialize..."
@@ -475,7 +868,7 @@ echo ""
 echo "Final Service Status:"
 print_color "$GRAY" "===================="
 
-for service in neo4j milvus mqtt; do
+for service in neo4j milvus mqtt timescaledb ollama otel-lgtm; do
     if [ -d "$service" ]; then
         cd "$service"
         if docker-compose ps 2>/dev/null | grep -q "Up"; then
@@ -503,8 +896,9 @@ if [ "${CONFIGURED_SERVICES[neo4j]:-false}" = true ]; then
 fi
 
 if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
-    print_color "$GREEN" "Milvus API: localhost:19530"
-    print_color "$GREEN" "Milvus HTTP API: localhost:9091"
+    print_color "$GREEN" "Milvus gRPC API: localhost:19530"
+    print_color "$GREEN" "Milvus HTTP API (CORS-enabled): localhost:19531"
+    print_color "$GRAY" "Milvus HTTP API (Internal): localhost:9091"
     print_color "$GREEN" "MinIO Console: http://localhost:9001"
     print_color "$GRAY" "  (Check Milvus install output above for username/password)"
 fi
@@ -513,6 +907,24 @@ if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
     print_color "$GREEN" "MQTT Broker: localhost:1883"
     print_color "$GREEN" "MQTT WebSocket: ws://localhost:9002"
     print_color "$GRAY" "  (Check MQTT install output above for username/password)"
+fi
+
+if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
+    print_color "$GREEN" "TimescaleDB: localhost:5432"
+    print_color "$GRAY" "  (Check TimescaleDB install output above for username/password)"
+fi
+
+if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
+    print_color "$GREEN" "Ollama HTTP API: http://localhost:11434"
+    print_color "$GRAY" "  (Check Ollama install output above for SSL/model information)"
+fi
+
+if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
+    GRAFANA_PORT="3001"
+    [ -f "otel-lgtm/.env" ] && GRAFANA_PORT=$(grep "GRAFANA_PORT=" otel-lgtm/.env | cut -d'=' -f2)
+    print_color "$GREEN" "Grafana Dashboard: http://localhost:$GRAFANA_PORT"
+    print_color "$GREEN" "OTLP gRPC Endpoint: localhost:4317"
+    print_color "$GREEN" "OTLP HTTP Endpoint: http://localhost:4318"
 fi
 
 echo ""
@@ -532,6 +944,9 @@ CERT_SERVICES=()
 [ -f "neo4j/certs/bolt/trusted/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("Neo4j"); }
 [ -f "milvus/tls/ca.pem" ] && { HAS_CERTS=true; CERT_SERVICES+=("Milvus"); }
 [ -f "mqtt/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("MQTT"); }
+[ -f "timescaledb/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("TimescaleDB"); }
+[ -f "ollama/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("Ollama"); }
+[ -f "otel-lgtm/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("OTEL LGTM"); }
 
 if [ "$HAS_CERTS" = true ]; then
     print_color "$YELLOW" "Found self-signed CA certificates for: ${CERT_SERVICES[*]}"
@@ -634,10 +1049,11 @@ if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
     
     echo "Access URLs:" >> CREDENTIALS.txt
     echo "  - gRPC API: localhost:19530" >> CREDENTIALS.txt
-    echo "  - HTTP API: localhost:9091" >> CREDENTIALS.txt
-    
+    echo "  - HTTP API (Internal): localhost:9091" >> CREDENTIALS.txt
+
     # Check if SSL is enabled
     if grep -q "ENABLE_SSL=true" milvus/.env 2>/dev/null; then
+        echo "  - HTTP API (CORS-enabled for web apps): https://localhost:19531" >> CREDENTIALS.txt
         echo "  - Attu Web UI (HTTPS): https://localhost:8001" >> CREDENTIALS.txt
         echo "  - Attu Web UI (HTTP redirect): http://localhost:8002" >> CREDENTIALS.txt
         echo "" >> CREDENTIALS.txt
@@ -646,6 +1062,7 @@ if [ "${CONFIGURED_SERVICES[milvus]:-false}" = true ]; then
         echo "  - Client Certificate: milvus/tls/client.pem" >> CREDENTIALS.txt
         echo "  - Client Key: milvus/tls/client.key" >> CREDENTIALS.txt
     else
+        echo "  - HTTP API (CORS-enabled for web apps): http://localhost:19531" >> CREDENTIALS.txt
         echo "  - Attu Web UI: http://localhost:8002" >> CREDENTIALS.txt
     fi
     
@@ -691,6 +1108,124 @@ if [ "${CONFIGURED_SERVICES[mqtt]:-false}" = true ]; then
         echo "  - Client Certificate: mqtt/certs/client.crt" >> CREDENTIALS.txt
         echo "  - Client Key: mqtt/certs/client.key" >> CREDENTIALS.txt
     fi
+fi
+
+if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# TimescaleDB Time-Series Database" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    # Parse TimescaleDB credentials from .env
+    if [ -f "timescaledb/.env" ]; then
+        TIMESCALEDB_DB=$(grep "^POSTGRES_DB=" timescaledb/.env | cut -d= -f2)
+        TIMESCALEDB_USER=$(grep "^POSTGRES_USER=" timescaledb/.env | cut -d= -f2)
+        TIMESCALEDB_PASS=$(grep "^POSTGRES_PASSWORD=" timescaledb/.env | cut -d= -f2)
+        
+        echo "Database: ${TIMESCALEDB_DB:-timescaledb}" >> CREDENTIALS.txt
+        echo "Username: ${TIMESCALEDB_USER:-postgres}" >> CREDENTIALS.txt
+        echo "Password: ${TIMESCALEDB_PASS:-check .env file}" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+    fi
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - PostgreSQL: localhost:5432" >> CREDENTIALS.txt
+    echo "  - Connection String: postgresql://<username>:<password>@localhost:5432/<database>" >> CREDENTIALS.txt
+    
+    # Check if SSL is enabled
+    if grep -q "ENABLE_SSL=true" timescaledb/.env 2>/dev/null && [ -f "timescaledb/certs/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - SSL Connection String: postgresql://<username>:<password>@localhost:5432/<database>?sslmode=require" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: timescaledb/certs/ca.crt" >> CREDENTIALS.txt
+        echo "  - Server Certificate: timescaledb/certs/server.crt" >> CREDENTIALS.txt
+        echo "  - Server Key: timescaledb/certs/server.key" >> CREDENTIALS.txt
+    fi
+fi
+
+# Collect Ollama credentials
+if [ "${CONFIGURED_SERVICES[ollama]:-false}" = true ]; then
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# Ollama LLM Service" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - HTTP API: http://localhost:11434" >> CREDENTIALS.txt
+    
+    # Check if SSL is actually enabled in Ollama
+    OLLAMA_HTTPS_PORT="11443"
+    if [ -f "ollama/.env" ]; then
+        OLLAMA_HTTPS_PORT=$(grep "OLLAMA_HTTPS_PORT=" ollama/.env | cut -d'=' -f2)
+    fi
+    
+    if grep -q "OLLAMA_ENABLE_SSL=true" ollama/.env 2>/dev/null && [ -f "ollama/certs/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - HTTPS API: https://localhost:$OLLAMA_HTTPS_PORT" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: ollama/certs/ca.crt" >> CREDENTIALS.txt
+        echo "  - Server Certificate: ollama/certs/server.crt" >> CREDENTIALS.txt
+    fi
+    
+    echo "" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Model Management:" >> CREDENTIALS.txt
+    echo "  - Download models: ./ollama/management/pull-models.sh" >> CREDENTIALS.txt
+    echo "  - List models: docker exec ollama ollama list" >> CREDENTIALS.txt
+    echo "  - Test model: docker exec ollama ollama run <model-name> \"test prompt\"" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Note: At least one embedding model is required for XMPro AI Agents" >> CREDENTIALS.txt
+    echo "  Recommended: nomic-embed-text:latest or mxbai-embed-large:latest" >> CREDENTIALS.txt
+fi
+
+# Collect OTEL LGTM credentials
+if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
+    echo "" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "# OpenTelemetry LGTM Observability Stack" >> CREDENTIALS.txt
+    echo "# =================================================================" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+
+    GRAFANA_PORT="3001"
+    GRAFANA_PASS="admin"
+    if [ -f "otel-lgtm/.env" ]; then
+        GRAFANA_PORT=$(grep "GRAFANA_PORT=" otel-lgtm/.env | cut -d'=' -f2)
+        GRAFANA_PASS=$(grep "GRAFANA_ADMIN_PASSWORD=" otel-lgtm/.env | cut -d'=' -f2)
+    fi
+
+    echo "Access URLs:" >> CREDENTIALS.txt
+    echo "  - Grafana Dashboard: http://localhost:$GRAFANA_PORT" >> CREDENTIALS.txt
+    echo "  - OTLP gRPC: localhost:4317" >> CREDENTIALS.txt
+    echo "  - OTLP HTTP: http://localhost:4318" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Grafana Credentials:" >> CREDENTIALS.txt
+    echo "  - Username: admin" >> CREDENTIALS.txt
+    echo "  - Password: $GRAFANA_PASS" >> CREDENTIALS.txt
+
+    OTEL_LGTM_HTTPS_PORT="3444"
+    if [ -f "otel-lgtm/.env" ]; then
+        OTEL_LGTM_HTTPS_PORT=$(grep "GRAFANA_HTTPS_PORT=" otel-lgtm/.env | cut -d'=' -f2)
+    fi
+
+    if grep -q "OTEL_LGTM_ENABLE_SSL=true" otel-lgtm/.env 2>/dev/null && [ -f "otel-lgtm/certs/ca.crt" ]; then
+        echo "" >> CREDENTIALS.txt
+        echo "  - Grafana HTTPS: https://localhost:$OTEL_LGTM_HTTPS_PORT" >> CREDENTIALS.txt
+        echo "" >> CREDENTIALS.txt
+        echo "SSL Certificate:" >> CREDENTIALS.txt
+        echo "  - CA Certificate: otel-lgtm/certs/ca.crt" >> CREDENTIALS.txt
+    fi
+
+    echo "" >> CREDENTIALS.txt
+    echo "OpenTelemetry SDK Configuration:" >> CREDENTIALS.txt
+    echo "  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318" >> CREDENTIALS.txt
+    echo "  OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf" >> CREDENTIALS.txt
+    echo "" >> CREDENTIALS.txt
+    echo "Components: Grafana (dashboards), Loki (logs), Tempo (traces), Mimir (metrics)" >> CREDENTIALS.txt
+    echo "Prometheus scrape targets: Neo4j, TimescaleDB, MQTT, Milvus" >> CREDENTIALS.txt
 fi
 
 print_color "$GREEN" "Credentials file created: CREDENTIALS.txt"

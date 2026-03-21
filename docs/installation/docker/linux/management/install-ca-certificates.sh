@@ -135,6 +135,9 @@ declare -A SERVICE_CERTS=(
     ["neo4j_https"]="neo4j/certs/https/trusted/ca.crt|Neo4j HTTPS CA|neo4j-https-ca"
     ["milvus"]="milvus/tls/ca.pem|Milvus CA|milvus-ca"
     ["mqtt"]="mqtt/certs/ca.crt|MQTT CA|mqtt-ca"
+    ["timescaledb"]="timescaledb/certs/ca.crt|TimescaleDB CA|timescaledb-ca"
+    ["ollama"]="ollama/certs/ca.crt|Ollama CA|ollama-ca"
+    ["otel_lgtm"]="otel-lgtm/certs/ca.crt|OTEL LGTM CA|otel-lgtm-ca"
 )
 
 # Arrays to track certificates
@@ -488,6 +491,10 @@ if [ $INSTALLED_COUNT -gt 0 ]; then
     fi
     if [ -n "${SERVICES_SUMMARY[mqtt]}" ]; then
         print_color "$GRAY" "- MQTT SSL: localhost:8883"
+    fi
+    if [ -n "${SERVICES_SUMMARY[timescaledb]}" ]; then
+        print_color "$GRAY" "- TimescaleDB PostgreSQL: postgresql://user:pass@localhost:5432/db?sslmode=require"
+        print_color "$GRAY" "- pgAdmin Web UI: https://localhost:5051"
     fi
 fi
 

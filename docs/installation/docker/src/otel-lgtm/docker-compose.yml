@@ -12,6 +12,8 @@ services:
       - ./otel-lgtm-data:/data
       # Custom OTEL Collector configuration
       - ./collector/otel-collector-config.yaml:/otel-lgtm/otelcol-config.yaml:ro
+      # Custom Prometheus scrape configuration for infrastructure metrics
+      - ./collector/prometheus.yml:/otel-lgtm/prometheus.yaml:ro
     environment:
       # Grafana admin credentials
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}

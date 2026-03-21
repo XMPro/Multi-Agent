@@ -62,7 +62,7 @@ services:
     networks:
       - observability
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || wget --no-verbose --tries=1 --spider localhost:7473 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:7474 || wget -qO /dev/null http://localhost:7473 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

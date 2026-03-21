@@ -19,7 +19,7 @@ services:
       # Enable logging for components (set to true for verbose)
       - ENABLE_LOGS_ALL=${ENABLE_LOGS_ALL:-false}
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/health > /dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -88,7 +88,7 @@ services:
     profiles:
       - ssl
     ports:
-      - "${GRAFANA_HTTPS_PORT:-3443}:443"
+      - "${GRAFANA_HTTPS_PORT:-3444}:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certs/server.crt:/etc/nginx/certs/server.crt:ro
@@ -100,7 +100,7 @@ services:
     networks:
       - observability
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider https://localhost:443/api/health --no-check-certificate || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

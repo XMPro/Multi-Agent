@@ -89,7 +89,8 @@ $ServiceCerts = @(
     @{Service="Milvus"; Path="milvus\tls\ca.pem"; Name="Milvus CA"},
     @{Service="MQTT"; Path="mqtt\certs\ca.crt"; Name="MQTT CA"},
     @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"; Name="TimescaleDB CA"},
-    @{Service="Ollama"; Path="ollama\certs\ca.crt"; Name="Ollama CA"}
+    @{Service="Ollama"; Path="ollama\certs\ca.crt"; Name="Ollama CA"},
+    @{Service="OTEL LGTM"; Path="otel-lgtm\certs\ca.crt"; Name="OTEL LGTM CA"}
 )
 
 $AvailableCerts = @()
@@ -125,7 +126,11 @@ if ($Remove) {
     Write-Host "=============================================================" -ForegroundColor Gray
     
     $InstalledCerts = Get-ChildItem -Path $CertStore | Where-Object {
-        $_.Subject -match "Neo4j-CA|MQTT-CA|Ollama-CA" -or ($_.Subject -match "O=Milvus" -and $_.Issuer -match "O=Milvus") -or ($_.Subject -match "O=Ollama" -and $_.Issuer -match "O=Ollama")
+        $_.Subject -match "Neo4j-CA|MQTT-CA|Ollama-CA|TimescaleDB-CA|OTEL-LGTM-CA" -or
+        ($_.Subject -match "O=Milvus" -and $_.Issuer -match "O=Milvus") -or
+        ($_.Subject -match "O=Ollama" -and $_.Issuer -match "O=Ollama") -or
+        ($_.Subject -match "O=TimescaleDB" -and $_.Issuer -match "O=TimescaleDB") -or
+        ($_.Subject -match "O=OTEL-LGTM" -and $_.Issuer -match "O=OTEL-LGTM")
     }
     
     if ($InstalledCerts.Count -eq 0) {
@@ -296,6 +301,12 @@ if ($InstalledCount -gt 0) {
         Write-Host "- TimescaleDB PostgreSQL: postgresql://user:pass@localhost:5432/db?sslmode=require" -ForegroundColor White
         Write-Host "- pgAdmin Web UI: https://localhost:5051" -ForegroundColor White
     }
+    if ($ServicesSummary.ContainsKey("Ollama")) {
+        Write-Host "- Ollama HTTPS API: https://localhost:11443" -ForegroundColor White
+    }
+    if ($ServicesSummary.ContainsKey("OTEL LGTM")) {
+        Write-Host "- Grafana Dashboard: https://localhost:3444" -ForegroundColor White
+    }
 }
 
 if ($SkippedCount -gt 0) {
@@ -321,7 +332,7 @@ if ($IsAdmin) {
     Write-Host "1. Open Certificate Manager: certmgr.msc" -ForegroundColor Gray
 }
 Write-Host "2. Navigate to: Trusted Root Certification Authorities > Certificates" -ForegroundColor Gray
-Write-Host "3. Find certificates with Subject containing: Neo4j-CA, Milvus-CA, or MQTT-CA" -ForegroundColor Gray
+Write-Host "3. Find certificates with Subject containing: Neo4j-CA, Milvus, MQTT-CA, TimescaleDB-CA, Ollama-CA, or OTEL-LGTM-CA" -ForegroundColor Gray
 Write-Host "4. Right-click > Delete" -ForegroundColor Gray
 
 Write-Host ""

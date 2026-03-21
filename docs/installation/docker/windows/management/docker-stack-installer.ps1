@@ -1104,7 +1104,8 @@ $CertPaths = @(
     @{Service="Milvus"; Path="milvus\certs\milvus\trusted\ca.crt"},
     @{Service="MQTT"; Path="mqtt\certs\ca.crt"},
     @{Service="TimescaleDB"; Path="timescaledb\certs\ca.crt"},
-    @{Service="Ollama"; Path="ollama\certs\ca.crt"}
+    @{Service="Ollama"; Path="ollama\certs\ca.crt"},
+    @{Service="OTEL LGTM"; Path="otel-lgtm\certs\ca.crt"}
 )
 
 foreach ($CertPath in $CertPaths) {
@@ -1535,7 +1536,7 @@ Note: At least one embedding model is required for XMPro AI Agents
 if ($ConfiguredServices["otel-lgtm"]) {
     $GrafanaPort = "3001"
     $GrafanaPass = "admin"
-    $OtelLgtmHttpsPort = "3443"
+    $OtelLgtmHttpsPort = "3444"
     if (Test-Path "otel-lgtm\.env") {
         $otelEnvContent = Get-Content "otel-lgtm\.env"
         $gpLine = $otelEnvContent | Where-Object { $_ -match "^GRAFANA_PORT=" }

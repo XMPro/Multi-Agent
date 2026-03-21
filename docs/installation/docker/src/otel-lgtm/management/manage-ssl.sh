@@ -248,7 +248,7 @@ enable_ssl() {
     sleep 3
 
     if docker-compose ps 2>/dev/null | grep -q "grafana-nginx-ssl.*running"; then
-        HTTPS_PORT="3443"
+        HTTPS_PORT="3444"
         [ -f ".env" ] && HTTPS_PORT=$(grep "GRAFANA_HTTPS_PORT=" .env | cut -d'=' -f2)
         echo -e "${GREEN}✓ SSL/TLS enabled! HTTPS: https://localhost:$HTTPS_PORT${NC}"
         return 0

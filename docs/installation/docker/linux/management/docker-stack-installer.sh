@@ -946,6 +946,7 @@ CERT_SERVICES=()
 [ -f "mqtt/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("MQTT"); }
 [ -f "timescaledb/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("TimescaleDB"); }
 [ -f "ollama/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("Ollama"); }
+[ -f "otel-lgtm/certs/ca.crt" ] && { HAS_CERTS=true; CERT_SERVICES+=("OTEL LGTM"); }
 
 if [ "$HAS_CERTS" = true ]; then
     print_color "$YELLOW" "Found self-signed CA certificates for: ${CERT_SERVICES[*]}"
@@ -1205,7 +1206,7 @@ if [ "${CONFIGURED_SERVICES[otel-lgtm]:-false}" = true ]; then
     echo "  - Username: admin" >> CREDENTIALS.txt
     echo "  - Password: $GRAFANA_PASS" >> CREDENTIALS.txt
 
-    OTEL_LGTM_HTTPS_PORT="3443"
+    OTEL_LGTM_HTTPS_PORT="3444"
     if [ -f "otel-lgtm/.env" ]; then
         OTEL_LGTM_HTTPS_PORT=$(grep "GRAFANA_HTTPS_PORT=" otel-lgtm/.env | cut -d'=' -f2)
     fi

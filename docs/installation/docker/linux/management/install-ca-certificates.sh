@@ -137,6 +137,7 @@ declare -A SERVICE_CERTS=(
     ["mqtt"]="mqtt/certs/ca.crt|MQTT CA|mqtt-ca"
     ["timescaledb"]="timescaledb/certs/ca.crt|TimescaleDB CA|timescaledb-ca"
     ["ollama"]="ollama/certs/ca.crt|Ollama CA|ollama-ca"
+    ["otel_lgtm"]="otel-lgtm/certs/ca.crt|OTEL LGTM CA|otel-lgtm-ca"
 )
 
 # Arrays to track certificates

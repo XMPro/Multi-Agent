@@ -62,11 +62,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?pgAdmin password must be set}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      # Trust X-Forwarded headers from nginx reverse proxy (prevents redirect loops)
-      PGADMIN_CONFIG_SECURE_PROXY_SSL_HEADER: "\"X-Forwarded-Proto\", \"https\""
-      PGADMIN_CONFIG_PROXY_X_FOR_COUNT: 1
-      PGADMIN_CONFIG_PROXY_X_PROTO_COUNT: 1
-      PGADMIN_CONFIG_PROXY_X_HOST_COUNT: 1
+      SCRIPT_NAME: ''
     volumes:
       - ./timescaledb-data/pgadmin:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
@@ -105,7 +101,7 @@ services:
     networks:
       - timescaledb_network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider https://localhost:443/misc/ping --no-check-certificate || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/misc/ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -164,6 +160,8 @@ services:
       PGRST_SERVER_CORS_ALLOWED_ORIGINS: ${PGRST_SERVER_CORS_ALLOWED_ORIGINS:-*}
       PGRST_DB_POOL: ${PGRST_DB_POOL:-10}
       PGRST_DB_PREPARED_STATEMENTS: ${PGRST_DB_PREPARED_STATEMENTS:-true}
+      PGRST_ADMIN_SERVER_PORT: 3002
+      PGRST_SERVER_HOST: "0.0.0.0"
     ports:
       - "${POSTGREST_PORT:-3000}:3000"
     depends_on:
@@ -172,11 +170,11 @@ services:
     networks:
       - timescaledb_network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
-      interval: 30s
+      test: ["CMD", "/bin/postgrest", "--ready"]
+      interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 10
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -202,7 +200,7 @@ services:
     networks:
       - timescaledb_network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider https://localhost:443/ --no-check-certificate || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 # Default parameters
 GRAFANA_PORT="3001"
-GRAFANA_HTTPS_PORT="3443"
+GRAFANA_HTTPS_PORT="3444"
 OTEL_GRPC_PORT="4317"
 OTEL_HTTP_PORT="4318"
 ENABLE_SSL=false
@@ -193,7 +193,7 @@ if [ "$FORCE" = false ]; then
         echo -e "${GREEN}[OK] SSL/TLS will be enabled${NC}"
 
         # Ask for HTTPS port
-        read -p "Grafana HTTPS port (default: 3443): " https_port_choice
+        read -p "Grafana HTTPS port (default: 3444): " https_port_choice
         if [ -n "$https_port_choice" ]; then
             GRAFANA_HTTPS_PORT="$https_port_choice"
         fi

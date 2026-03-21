@@ -7,7 +7,7 @@
 
 param(
     [string]$Port = "3001",
-    [string]$HttpsPort = "3443",
+    [string]$HttpsPort = "3444",
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
     [ValidateSet("self-signed", "ca-provided", "")]
@@ -161,7 +161,7 @@ if ($EnableSSL) {
     Write-Host "[OK] SSL/TLS will be enabled" -ForegroundColor Green
 
     if (-not $PSBoundParameters.ContainsKey('HttpsPort') -and -not $Force) {
-        $HttpsPortChoice = Read-Host "Grafana HTTPS port (default: 3443)"
+        $HttpsPortChoice = Read-Host "Grafana HTTPS port (default: 3444)"
         if ($HttpsPortChoice) {
             $HttpsPort = $HttpsPortChoice
         }

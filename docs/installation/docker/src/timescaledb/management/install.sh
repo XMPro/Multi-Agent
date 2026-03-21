@@ -489,13 +489,18 @@ http {
         ssl_ciphers HIGH:!aNULL:!MD5;
         ssl_prefer_server_ciphers on;
 
+        # Redirect root to /browser/ (pgAdmin's own redirect breaks behind proxy)
+        location = / {
+            return 302 https://\$http_host/browser/;
+        }
+
         location / {
             proxy_pass http://pgadmin;
             proxy_set_header Host $http_host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            # Tell pgAdmin it's being accessed via HTTPS
             proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Scheme https;
             proxy_set_header X-Script-Name /;
             proxy_redirect off;
             proxy_http_version 1.1;

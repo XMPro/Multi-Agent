@@ -1,0 +1,220 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timescaledb
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      POSTGRES_DB: ${POSTGRES_DB:-timescaledb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password must be set}
+      
+      # TimescaleDB specific settings
+      TIMESCALEDB_TELEMETRY: ${TIMESCALEDB_TELEMETRY:-off}
+      
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+      
+    volumes:
+      # Data persistence
+      - ./timescaledb-data/data:/var/lib/postgresql/data
+      
+      # SSL certificates (mounted read-write so entrypoint can fix permissions)
+      - ./certs:/var/lib/postgresql/certs
+      
+      # Backup directory
+      - ./backups:/backups
+      
+      # Initialization scripts
+      - ./init:/docker-entrypoint-initdb.d:ro
+      
+      # Custom PostgreSQL configuration
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      
+      # Custom entrypoint for SSL permission fixes
+      - ./docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      
+    entrypoint: ["/docker-entrypoint.sh"]
+    
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-timescaledb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+    networks:
+      - timescaledb_network
+      - observability
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: timescaledb-pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?pgAdmin password must be set}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      SCRIPT_NAME: ''
+    volumes:
+      - ./timescaledb-data/pgadmin:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      - timescaledb
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy for pgAdmin HTTPS (only active with ssl profile)
+  pgadmin-nginx:
+    image: nginx:alpine
+    container_name: timescaledb-pgadmin-nginx
+    restart: unless-stopped
+    profiles:
+      - ssl
+    ports:
+      - "${PGADMIN_HTTPS_PORT:-5051}:443"
+    volumes:
+      - ./pgadmin/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/server.crt:/etc/nginx/ssl/server.crt:ro
+      - ./certs/server.key:/etc/nginx/ssl/server.key:ro
+    depends_on:
+      pgadmin:
+        condition: service_healthy
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/misc/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backup:
+    image: postgres:16-alpine
+    container_name: timescaledb-backup
+    restart: unless-stopped
+    environment:
+      PGHOST: timescaledb
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-timescaledb}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./backups:/backups
+      - ./management/backup.sh:/backup.sh:ro
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    networks:
+      - timescaledb_network
+    command: >
+      sh -c "
+      cp /backup.sh /usr/local/bin/backup.sh &&
+      chmod +x /usr/local/bin/backup.sh &&
+      echo '0 2 * * * /usr/local/bin/backup.sh' > /etc/crontabs/root &&
+      crond -f -l 2
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: timescaledb-postgrest
+    restart: unless-stopped
+    environment:
+      # On-premise: connects to local TimescaleDB container
+      # Tiger Cloud: override PGRST_DB_URI in .env with Timescale Cloud connection string:
+      #   postgres://tsdbadmin:<password>@<host>.tsdb.cloud.timescale.com:<port>/tsdb?sslmode=require
+      PGRST_DB_URI: ${PGRST_DB_URI:?PostgREST DB URI must be set}
+      PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS:-api}
+      PGRST_DB_ANON_ROLE: ${PGRST_DB_ANON_ROLE:-anon}
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET:?JWT secret must be set (min 32 chars)}
+      PGRST_DB_MAX_ROWS: ${PGRST_DB_MAX_ROWS:-1000}
+      PGRST_SERVER_CORS_ALLOWED_ORIGINS: ${PGRST_SERVER_CORS_ALLOWED_ORIGINS:-*}
+      PGRST_DB_POOL: ${PGRST_DB_POOL:-10}
+      PGRST_DB_PREPARED_STATEMENTS: ${PGRST_DB_PREPARED_STATEMENTS:-true}
+      PGRST_ADMIN_SERVER_PORT: 3002
+      PGRST_SERVER_HOST: "0.0.0.0"
+    ports:
+      - "${POSTGREST_PORT:-3000}:3000"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD", "/bin/postgrest", "--ready"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy for PostgREST HTTPS (only active with ssl profile)
+  postgrest-nginx:
+    image: nginx:alpine
+    container_name: timescaledb-postgrest-nginx
+    restart: unless-stopped
+    profiles:
+      - ssl
+    ports:
+      - "${POSTGREST_HTTPS_PORT:-3443}:443"
+    volumes:
+      - ./postgrest/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/server.crt:/etc/nginx/ssl/server.crt:ro
+      - ./certs/server.key:/etc/nginx/ssl/server.key:ro
+    depends_on:
+      postgrest:
+        condition: service_healthy
+    networks:
+      - timescaledb_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  timescaledb_network:
+    driver: bridge
+    name: timescaledb_network
+  observability:
+    external: true
+    name: observability

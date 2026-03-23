@@ -3,6 +3,9 @@ param(
     [string]$Password = "",
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
+    [ValidateSet("self-signed", "ca-provided", "")]
+    [string]$CertType = "",
+    [string]$MachineIPs = "",
     [switch]$Force = $false
 )
 
@@ -10,12 +13,6 @@ param(
 $CurrentLocation = Get-Location
 if ($CurrentLocation.Path.EndsWith("management")) {
     Set-Location ..
-    Write-Host "Changed from management directory to milvus directory" -ForegroundColor Gray
-} elseif (Test-Path "management") {
-    Write-Host "Already in milvus directory" -ForegroundColor Gray
-} else {
-    Write-Host "Warning: Current directory may not be correct for Milvus installation" -ForegroundColor Yellow
-    Write-Host "Expected to be in milvus directory or milvus/management directory" -ForegroundColor Yellow
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan
@@ -214,77 +211,85 @@ if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
     }
 }
 
+$UseCAProvided = $false
+$MachineIP = ""
+
 if ($EnableSSL) {
     Write-Host "SSL will be enabled for Milvus API and internal communications" -ForegroundColor Green
-    
-    # Ask for certificate type
-    Write-Host ""
-    Write-Host "Certificate Options:" -ForegroundColor White
-    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
-    Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
-    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
-    
-    if ($CertChoice -eq "2") {
-        Write-Host "CA-provided certificates selected" -ForegroundColor Green
-        Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
-        Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
-        $EnableSSL = $false
-        $UseCAProvided = $true
-    } else {
-        Write-Host "Self-signed certificates selected" -ForegroundColor Green
-        $UseCAProvided = $false
-        
-        # Ask for domain name
-        $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
-        if ($DomainChoice) {
-            $Domain = $DomainChoice
+
+    if ($CertType) {
+        if ($CertType -eq "ca-provided") {
+            Write-Host "CA-provided certificates selected (from stack installer)" -ForegroundColor Green
+            $EnableSSL = $false
+            $UseCAProvided = $true
+        } else {
+            Write-Host "Self-signed certificates selected (from stack installer)" -ForegroundColor Green
         }
-        Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
-        
-        # Detect machine IP addresses
+        $MachineIP = $MachineIPs
+    } else {
         Write-Host ""
-        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
-        $MachineIP = ""
-        try {
-            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
-            
-            if ($AllIPs.Count -gt 0) {
-                Write-Host "Detected IP addresses:" -ForegroundColor Green
-                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
-                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
-                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
-                }
-                
-                $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
-                
-                if ($IPChoice) {
-                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
-                    $MachineIPs = @()
-                    foreach ($index in $SelectedIndices) {
-                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
-                            $MachineIPs += $AllIPs[[int]$index].IPAddress
-                        }
+        Write-Host "Certificate Options:" -ForegroundColor White
+        Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+        Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
+        $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+
+        if ($CertChoice -eq "2") {
+            Write-Host "CA-provided certificates selected" -ForegroundColor Green
+            Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
+            Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
+            $EnableSSL = $false
+            $UseCAProvided = $true
+        } else {
+            Write-Host "Self-signed certificates selected" -ForegroundColor Green
+
+            $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
+            if ($DomainChoice) {
+                $Domain = $DomainChoice
+            }
+            Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+
+            Write-Host ""
+            Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+            try {
+                $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
+
+                if ($AllIPs.Count -gt 0) {
+                    Write-Host "Detected IP addresses:" -ForegroundColor Green
+                    for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                        $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
+                        Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
                     }
-                    
-                    if ($MachineIPs.Count -gt 0) {
-                        Write-Host "Selected IPs: $($MachineIPs -join ', ')" -ForegroundColor Cyan
-                        $MachineIP = $MachineIPs -join ','
+
+                    $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
+
+                    if ($IPChoice) {
+                        $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                        $SelectedIPs = @()
+                        foreach ($index in $SelectedIndices) {
+                            if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                                $SelectedIPs += $AllIPs[[int]$index].IPAddress
+                            }
+                        }
+
+                        if ($SelectedIPs.Count -gt 0) {
+                            Write-Host "Selected IPs: $($SelectedIPs -join ', ')" -ForegroundColor Cyan
+                            $MachineIP = $SelectedIPs -join ','
+                        } else {
+                            Write-Host "No valid IPs selected, skipping" -ForegroundColor Gray
+                        }
                     } else {
-                        Write-Host "No valid IPs selected, skipping" -ForegroundColor Gray
+                        Write-Host "No IPs selected (localhost/domain only)" -ForegroundColor Gray
                     }
                 } else {
-                    Write-Host "No IPs selected (localhost/domain only)" -ForegroundColor Gray
+                    Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
                 }
-            } else {
-                Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
+            } catch {
+                Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
             }
-        } catch {
-            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
         }
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
-    $UseCAProvided = $false
 }
 
 # Generate or prompt for password if not provided
@@ -508,7 +513,7 @@ Write-Host "Created user.yaml configuration file" -ForegroundColor Green
 
 # Create nginx configuration for Attu SSL
 if ($EnableSSL) {
-    Write-Host "Creating nginx configuration for Attu HTTPS..." -ForegroundColor White
+    Write-Host "Creating nginx configuration for Attu HTTPS with CORS proxy..." -ForegroundColor White
     $NginxConfig = @"
 events {
     worker_connections 1024;
@@ -519,6 +524,17 @@ http {
         server attu:3000;
     }
 
+    # Milvus HTTP API upstream for CORS proxy
+    upstream milvus {
+        server standalone:8080;
+    }
+
+    # Map to handle CORS origin dynamically
+    map `$http_origin `$cors_origin {
+        default "";
+        "~^https?://.*" `$http_origin;
+    }
+
     # Redirect HTTP to HTTPS
     server {
         listen 80;
@@ -526,7 +542,7 @@ http {
         return 301 https://`$host`$request_uri;
     }
 
-    # HTTPS server
+    # HTTPS server for Attu
     server {
         listen 443 ssl;
         server_name $Domain;
@@ -548,13 +564,57 @@ http {
             proxy_set_header Connection "upgrade";
         }
     }
+
+    # HTTPS CORS proxy for Milvus HTTP API on port 19531
+    server {
+        listen 19531 ssl;
+        server_name $Domain;
+
+        ssl_certificate /etc/nginx/ssl/server.pem;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            # Hide Milvus's built-in CORS headers to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Max-Age;
+
+            # Add our CORS headers (allows any origin dynamically)
+            add_header 'Access-Control-Allow-Origin' `$cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' '3600' always;
+
+            # Handle preflight OPTIONS requests
+            if (`$request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            # Proxy to Milvus HTTPS HTTP API
+            proxy_pass https://milvus;
+            proxy_ssl_verify off;
+            proxy_ssl_server_name on;
+            proxy_http_version 1.1;
+            proxy_set_header Host `$host;
+            proxy_set_header X-Real-IP `$remote_addr;
+            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_pass_request_headers on;
+        }
+    }
 }
 "@
     $NginxConfig | Out-File -FilePath "nginx.conf" -Encoding ASCII
-    Write-Host "Created nginx.conf for Attu HTTPS" -ForegroundColor Green
+    Write-Host "Created nginx.conf for Attu HTTPS with CORS proxy" -ForegroundColor Green
 } else {
     # Create simple nginx config without SSL
-    Write-Host "Creating nginx configuration for Attu HTTP..." -ForegroundColor White
+    Write-Host "Creating nginx configuration for Attu HTTP with CORS proxy..." -ForegroundColor White
     $NginxConfig = @"
 events {
     worker_connections 1024;
@@ -565,6 +625,18 @@ http {
         server attu:3000;
     }
 
+    # Milvus HTTP API upstream for CORS proxy
+    upstream milvus {
+        server standalone:8080;
+    }
+
+    # Map to handle CORS origin dynamically
+    map `$http_origin `$cors_origin {
+        default "";
+        "~^https?://.*" `$http_origin;
+    }
+
+    # HTTP server for Attu
     server {
         listen 80;
         server_name $Domain;
@@ -580,10 +652,46 @@ http {
             proxy_set_header Connection "upgrade";
         }
     }
+
+    # HTTP CORS proxy for Milvus HTTP API on port 19531
+    server {
+        listen 19531;
+        server_name $Domain;
+
+        location / {
+            # Hide Milvus's built-in CORS headers to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Max-Age;
+
+            # Add our CORS headers (allows any origin dynamically)
+            add_header 'Access-Control-Allow-Origin' `$cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' '3600' always;
+
+            # Handle preflight OPTIONS requests
+            if (`$request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            # Proxy to Milvus HTTP API
+            proxy_pass http://milvus;
+            proxy_http_version 1.1;
+            proxy_set_header Host `$host;
+            proxy_set_header X-Real-IP `$remote_addr;
+            proxy_set_header X-Forwarded-For `$proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_pass_request_headers on;
+        }
+    }
 }
 "@
     $NginxConfig | Out-File -FilePath "nginx.conf" -Encoding ASCII
-    Write-Host "Created nginx.conf for Attu HTTP" -ForegroundColor Green
+    Write-Host "Created nginx.conf for Attu HTTP with CORS proxy" -ForegroundColor Green
 }
 
 # Configure GPU in docker-compose.yml if enabled
@@ -662,6 +770,13 @@ Write-Host ""
 Write-Host "Installation completed successfully!" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Cyan
 
+# When called from stack installer (-Force), only configure - don't start services
+if ($Force) {
+    Write-Host ""
+    Write-Host "[OK] Milvus configuration complete (services will be started by stack installer)" -ForegroundColor Green
+    exit 0
+}
+
 # Ask if user wants to start Milvus now
 Write-Host ""
 $StartChoice = Read-Host "Start Milvus vector database now? (y/n)"
@@ -731,8 +846,6 @@ if ($EnableSSL) {
 }
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    Write-Host "Staying in milvus directory for stack installer" -ForegroundColor Gray
-} else {
+if (-not $Force) {
     Set-Location management
 }

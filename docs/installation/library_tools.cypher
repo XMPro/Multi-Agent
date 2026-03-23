@@ -1,21 +1,38 @@
 // Create Tool Library
-CREATE (tl:Library {name: "Tool Library", type: "Tool", created_date: datetime()})
+MERGE (tl:Library {name: "Tool Library", type: "Tool"})
+ON CREATE SET tl.created_date = datetime()
+ON MATCH SET tl.last_modified_date = datetime()
 
-CREATE (duckduckgo:Tool {
-    id: 'DUCKD-WSRCH-TOOL-001',
-    name: 'DuckDuckGoWebSearchTool',
-    active: true,
-    description: 'A privacy-focused web search tool that leverages DuckDuckGos search engine to retrieve relevant online information. The tool supports configurable result limits (default: 5) and content filtering through safe search (default: enabled). It handles web queries with built-in rate limiting (60 requests/minute) and timeout protection (5s connect, 10s read). For optimal results, use specific search queries and consider including time-relevant terms for current information. The tool returns structured results including titles, URLs, and snippets while maintaining user privacy. Advanced features include region-specific searching (using wt-wt format) and time-based filtering (day/week/month/year). Best used with focused, well-formed queries and appropriate safe search settings based on context. Handles errors gracefully and provides clear feedback on rate limits or connectivity issues.',
-    class_name: 'DuckDuckGoWebSearchTool',
-    created_date: datetime(),
-    last_modified_date: datetime(),
-    options: '{"maxResults": 5, "safeSearch": true}'
-})
-CREATE (tl)-[:CONTAINS]->(duckduckgo)
+MERGE (duckduckgo:Tool {id: 'DUCKD-WSRCH-TOOL-001'})
+ON CREATE SET
+    duckduckgo.name = 'DuckDuckGoWebSearchTool',
+    duckduckgo.active = true,
+    duckduckgo.author = "XMPro",
+    duckduckgo.description = 'A privacy-focused web search tool that leverages DuckDuckGos search engine to retrieve relevant online information. The tool supports configurable result limits (default: 5) and content filtering through safe search (default: enabled). It handles web queries with built-in rate limiting (60 requests/minute) and timeout protection (5s connect, 10s read). For optimal results, use specific search queries and consider including time-relevant terms for current information. The tool returns structured results including titles, URLs, and snippets while maintaining user privacy. Advanced features include region-specific searching (using wt-wt format) and time-based filtering (day/week/month/year). Best used with focused, well-formed queries and appropriate safe search settings based on context. Handles errors gracefully and provides clear feedback on rate limits or connectivity issues.',
+    duckduckgo.class_name = 'DuckDuckGoWebSearchTool',
+    duckduckgo.created_date = datetime(),
+    duckduckgo.last_modified_date = datetime(),
+    duckduckgo.options = '{"maxResults": 5, "safeSearch": true}'
+ON MATCH SET duckduckgo.last_modified_date = datetime()
+MERGE (tl)-[:CONTAINS]->(duckduckgo)
+
+MERGE (ncalc:Tool {id: 'NCALC-EXPR-TOOL-001'})
+ON CREATE SET
+    ncalc.name = 'NCalcTool',
+    ncalc.active = true,
+    ncalc.author = "XMPro",
+    ncalc.description = 'An internal mathematical and logical expression evaluation tool that accepts natural language queries and evaluates them at runtime. The tool uses an internal LLM call to translate the user query into a valid NCalc expression, then evaluates it using the NCalc engine. Supports arithmetic operators (+, -, *, /, %), comparisons (=, !=, <, >, <=, >=), logical operators (and, or, not), and a comprehensive set of mathematical functions including Abs, Ceiling, Floor, Max, Min, Pow, Round, Sign, Sqrt, Truncate, trigonometric functions (Sin, Cos, Tan, Asin, Acos, Atan), conditionals (if), and constants (Pi, e). Returns both the generated expression and its computed result. The internal LLM prompt can be overridden via the Prompt Manager using the identifier ncalc_expression_prompt. This is an internal tool hardcoded into the agent system; no external configuration is required.',
+    ncalc.class_name = 'NCalcTool',
+    ncalc.created_date = datetime(),
+    ncalc.last_modified_date = datetime(),
+    ncalc.options = ''
+ON MATCH SET ncalc.last_modified_date = datetime()
+MERGE (tl)-[:CONTAINS]->(ncalc)
 
 // Create metrics for all tools
 WITH tl
 MATCH (t:Tool)
+WHERE NOT (t)-[:HAS_METRICS]->()
 CREATE (t)-[:HAS_METRICS]->(m:Entry {
     type: 'Metric',
     context: 'Tool',
@@ -35,5 +52,6 @@ CREATE (t)-[:HAS_METRICS]->(m:Entry {
     successful_calls: 0,
     total_calls: 0,
     total_data_processed: 0,
-    total_response_time: 0
+    total_response_time: 0,
+    output_reasoning_tokens: 0
 })

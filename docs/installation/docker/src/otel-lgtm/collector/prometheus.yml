@@ -1,0 +1,45 @@
+# =================================================================
+# Prometheus Scrape Configuration
+# Scrapes metrics from infrastructure service exporters
+# =================================================================
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          app: 'prometheus'
+
+  # Neo4j metrics (Enterprise edition only - Community edition does not support Prometheus metrics)
+  # Uncomment if using Neo4j Enterprise:
+  # - job_name: 'neo4j'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets: ['neo4j-graph:2004']
+  #   metric_relabel_configs:
+  #     - source_labels: [__name__]
+  #       regex: 'neo4j_.*'
+  #       action: keep
+
+  # TimescaleDB/PostgreSQL metrics via postgres-exporter
+  - job_name: 'timescaledb'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['otel-postgres-exporter:9187']
+
+  # Mosquitto MQTT metrics via mosquitto-exporter
+  - job_name: 'mosquitto'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['otel-mosquitto-exporter:9234']
+
+  # Milvus built-in Prometheus metrics
+  - job_name: 'milvus'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['milvus-standalone:9091']

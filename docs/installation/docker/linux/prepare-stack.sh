@@ -135,7 +135,7 @@ trap cleanup EXIT
 # Copy source directories
 echo "Copying services..."
 
-SERVICES=("neo4j" "milvus" "mqtt")
+SERVICES=("neo4j" "milvus" "mqtt" "timescaledb" "ollama" "otel-lgtm")
 for SERVICE in "${SERVICES[@]}"; do
     SOURCE_PATH="$PARENT_DIR/src/$SERVICE"
     DEST_PATH="$TEMP_DIR/$SERVICE"
@@ -181,48 +181,33 @@ echo "Downloading Python packages for Neo4j watcher..."
 NEO4J_PACKAGES_DIR="$TEMP_DIR/neo4j/neo4j-packages"
 mkdir -p "$NEO4J_PACKAGES_DIR"
 
-# Check if pip is available
+# Try local pip first, fall back to Docker
+PACKAGES_DOWNLOADED=false
+
 if command -v pip3 &> /dev/null || command -v pip &> /dev/null; then
     PIP_CMD=$(command -v pip3 || command -v pip)
-    
+    print_color "$GRAY" "  Using local pip to download packages..."
     if $PIP_CMD download neo4j -d "$NEO4J_PACKAGES_DIR" &> /dev/null; then
-        PACKAGE_COUNT=$(find "$NEO4J_PACKAGES_DIR" -name "*.whl" | wc -l)
-        print_color "$GREEN" "  Downloaded $PACKAGE_COUNT Python package(s) for offline installation"
-        
-        # Create README for the packages
-        cat > "$NEO4J_PACKAGES_DIR/README.md" << 'EOF'
-# Neo4j Python Packages
-
-This directory contains Python packages required for the Neo4j watcher service.
-These packages enable the watcher to work in airgapped/offline environments.
-
-## Contents
-- neo4j Python driver
-- All dependencies required by the neo4j driver
-
-## Usage
-These packages are automatically used by the watcher when it starts.
-The watcher will install from these local packages instead of downloading from PyPI.
-
-## Updating Packages
-To update the packages, run on a machine with internet access:
-```bash
-pip3 download neo4j -d neo4j-packages --upgrade
-```
-
-EOF
-        echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')" >> "$NEO4J_PACKAGES_DIR/README.md"
-    else
-        print_color "$YELLOW" "  Failed to download Python packages"
-        print_color "$GRAY" "  Watcher will attempt online installation if deployed with internet access"
+        PACKAGES_DOWNLOADED=true
     fi
+fi
+
+# Fall back to Docker-based pip if local pip not available or failed
+if [ "$PACKAGES_DOWNLOADED" = false ]; then
+    print_color "$YELLOW" "  pip not found locally, using Docker to download packages..."
+    if docker run --rm -v "$NEO4J_PACKAGES_DIR:/packages" python:3.11-slim pip download neo4j -d /packages &> /dev/null; then
+        PACKAGES_DOWNLOADED=true
+    else
+        print_color "$YELLOW" "  Docker-based pip download also failed"
+    fi
+fi
+
+if [ "$PACKAGES_DOWNLOADED" = true ]; then
+    PACKAGE_COUNT=$(find "$NEO4J_PACKAGES_DIR" -name "*.whl" | wc -l)
+    print_color "$GREEN" "  Downloaded $PACKAGE_COUNT Python package(s) for offline installation"
 else
-    print_color "$YELLOW" "  pip not found, skipping Python package download"
-    print_color "$GRAY" "  For offline deployments, install pip to download packages:"
-    print_color "$GRAY" "    Ubuntu/Debian: sudo apt update && sudo apt install python3-pip"
-    print_color "$GRAY" "    Or try:        sudo apt install python3-pip-whl python3-setuptools-whl"
-    print_color "$GRAY" "    RHEL/CentOS:   sudo yum install python3-pip"
-    print_color "$GRAY" "  Note: pip is optional - watcher will download packages at runtime if internet is available"
+    print_color "$YELLOW" "  Failed to download Python packages"
+    print_color "$GRAY" "  Watcher will attempt online installation if deployed with internet access"
 fi
 
 # Copy management scripts
@@ -259,6 +244,7 @@ This package contains a complete Docker stack deployment for:
 - **Neo4j** - Graph database
 - **Milvus** - Vector database  
 - **MQTT** - Message broker
+- **TimescaleDB** - Time-series database
 
 ## Directory Structure
 
@@ -419,6 +405,13 @@ if [ "$OFFLINE" = true ]; then
         ["quay.io/coreos/etcd:v3.6.5"]="etcd"
         ["zilliz/attu:v2.6"]="Attu"
         ["nginx:alpine"]="Nginx"
+        ["timescale/timescaledb:latest-pg16"]="TimescaleDB"
+        ["dpage/pgadmin4:latest"]="pgAdmin"
+        ["postgres:16-alpine"]="PostgreSQL (for backups)"
+        ["ollama/ollama:latest"]="Ollama"
+        ["grafana/otel-lgtm:latest"]="OTEL LGTM (Grafana/Loki/Tempo/Mimir)"
+        ["prometheuscommunity/postgres-exporter:latest"]="PostgreSQL Exporter"
+        ["sapcc/mosquitto-exporter:latest"]="Mosquitto Exporter"
     )
     
     echo "Downloading Docker images..."

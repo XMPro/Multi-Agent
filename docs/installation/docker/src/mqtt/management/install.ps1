@@ -2,22 +2,17 @@ param(
     [string]$Username = "xmpro",
     [string]$Password = "",
     [switch]$EnableSSL = $false,
+    [string]$Domain = "localhost",
+    [ValidateSet("self-signed", "ca-provided", "")]
+    [string]$CertType = "",
+    [string]$MachineIPs = "",
     [switch]$Force = $false
 )
 
 # Ensure we're in the mqtt directory (not management subdirectory)
 $CurrentLocation = Get-Location
 if ($CurrentLocation.Path.EndsWith("management")) {
-    # If we're in the management directory, go up one level to mqtt directory
     Set-Location ..
-    Write-Host "Changed from management directory to mqtt directory" -ForegroundColor Gray
-} elseif (Test-Path "management") {
-    # If we're already in mqtt directory (has management subdirectory), stay here
-    Write-Host "Already in mqtt directory" -ForegroundColor Gray
-} else {
-    # We might be in the wrong location
-    Write-Host "Warning: Current directory may not be correct for MQTT installation" -ForegroundColor Yellow
-    Write-Host "Expected to be in mqtt directory or mqtt/management directory" -ForegroundColor Yellow
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan
@@ -92,80 +87,86 @@ if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
     }
 }
 
+$UseCAProvided = $false
+$MachineIP = ""
+
 if ($EnableSSL) {
     Write-Host "SSL will be enabled" -ForegroundColor Green
-    
-    # Ask for certificate type
-    Write-Host ""
-    Write-Host "Certificate Options:" -ForegroundColor White
-    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
-    Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
-    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
-    
-    if ($CertChoice -eq "2") {
-        Write-Host "CA-provided certificates selected" -ForegroundColor Green
-        Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
-        Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
-        $EnableSSL = $false  # Don't generate self-signed certs, wait for CA certs
-        $UseCAProvided = $true
-    } else {
-        Write-Host "Self-signed certificates selected" -ForegroundColor Green
-        $UseCAProvided = $false
-        
-        # Ask for domain name for certificate
-        Write-Host ""
-        $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
-        if ($DomainChoice) {
-            $Domain = $DomainChoice
+
+    if ($CertType) {
+        if ($CertType -eq "ca-provided") {
+            Write-Host "CA-provided certificates selected (from stack installer)" -ForegroundColor Green
+            $EnableSSL = $false
+            $UseCAProvided = $true
         } else {
-            $Domain = "localhost"
+            Write-Host "Self-signed certificates selected (from stack installer)" -ForegroundColor Green
         }
-        Write-Host "Using domain: $Domain" -ForegroundColor Cyan
-        
-        # Detect machine IP addresses
+        $MachineIP = $MachineIPs
+    } else {
         Write-Host ""
-        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
-        $MachineIP = ""
-        try {
-            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
-            
-            if ($AllIPs.Count -gt 0) {
-                Write-Host "Detected IP addresses:" -ForegroundColor Green
-                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
-                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
-                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
-                }
-                
-                $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
-                
-                if ($IPChoice) {
-                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
-                    $MachineIPs = @()
-                    foreach ($index in $SelectedIndices) {
-                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
-                            $MachineIPs += $AllIPs[[int]$index].IPAddress
-                        }
+        Write-Host "Certificate Options:" -ForegroundColor White
+        Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+        Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
+        $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+
+        if ($CertChoice -eq "2") {
+            Write-Host "CA-provided certificates selected" -ForegroundColor Green
+            Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
+            Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
+            $EnableSSL = $false
+            $UseCAProvided = $true
+        } else {
+            Write-Host "Self-signed certificates selected" -ForegroundColor Green
+
+            Write-Host ""
+            $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
+            if ($DomainChoice) {
+                $Domain = $DomainChoice
+            }
+            Write-Host "Using domain: $Domain" -ForegroundColor Cyan
+
+            Write-Host ""
+            Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+            try {
+                $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
+
+                if ($AllIPs.Count -gt 0) {
+                    Write-Host "Detected IP addresses:" -ForegroundColor Green
+                    for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                        $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
+                        Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
                     }
-                    
-                    if ($MachineIPs.Count -gt 0) {
-                        Write-Host "Selected IPs: $($MachineIPs -join ', ')" -ForegroundColor Cyan
-                        $MachineIP = $MachineIPs -join ','
+
+                    $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
+
+                    if ($IPChoice) {
+                        $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                        $SelectedIPs = @()
+                        foreach ($index in $SelectedIndices) {
+                            if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                                $SelectedIPs += $AllIPs[[int]$index].IPAddress
+                            }
+                        }
+
+                        if ($SelectedIPs.Count -gt 0) {
+                            Write-Host "Selected IPs: $($SelectedIPs -join ', ')" -ForegroundColor Cyan
+                            $MachineIP = $SelectedIPs -join ','
+                        } else {
+                            Write-Host "No valid IPs selected, skipping" -ForegroundColor Gray
+                        }
                     } else {
-                        Write-Host "No valid IPs selected, skipping" -ForegroundColor Gray
+                        Write-Host "No IPs selected (localhost/domain only)" -ForegroundColor Gray
                     }
                 } else {
-                    Write-Host "No IPs selected (localhost/domain only)" -ForegroundColor Gray
+                    Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
                 }
-            } else {
-                Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
+            } catch {
+                Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
             }
-        } catch {
-            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
         }
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
-    $UseCAProvided = $false
 }
 
 # Generate or prompt for password if not provided
@@ -225,7 +226,7 @@ persistence true
 persistence_location /mosquitto/data/
 log_dest file /mosquitto/log/mosquitto.log
 
-# Listener Configuration
+# MQTT Listener (non-SSL)
 listener 1883
 protocol mqtt
 
@@ -242,9 +243,13 @@ log_type information
 # Persistence Configuration
 autosave_interval 1800
 autosave_on_changes true
+
+# WebSocket Listener (non-SSL)
+listener 9001
+protocol websockets
 "@
     $MosquittoConf | Out-File -FilePath "config\mosquitto.conf" -Encoding ASCII
-    Write-Host "Created mosquitto.conf" -ForegroundColor Green
+    Write-Host "Created mosquitto.conf with WebSocket support" -ForegroundColor Green
 } else {
     Write-Host "mosquitto.conf already exists" -ForegroundColor Gray
 }
@@ -379,7 +384,7 @@ if ($EnableSSL) {
             
             # Update mosquitto.conf to enable SSL
             $ConfigContent = Get-Content "config\mosquitto.conf" -Raw
-            $ConfigContent += "`n`n# SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
+            $ConfigContent += "`n`n# MQTT SSL Configuration`nlistener 8883`nprotocol mqtt`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false`n`n# WebSocket SSL Configuration`nlistener 9002`nprotocol websockets`ncafile /mosquitto/certs/ca.crt`ncertfile /mosquitto/certs/server.crt`nkeyfile /mosquitto/certs/server.key`ntls_version tlsv1.2`nrequire_certificate false"
             Set-Content -Path "config\mosquitto.conf" -Value $ConfigContent
             
             # Create or update .env file for SSL
@@ -457,6 +462,13 @@ Write-Host ""
 Write-Host "Installation completed successfully!" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Cyan
 
+# When called from stack installer (-Force), only configure - don't start services
+if ($Force) {
+    Write-Host ""
+    Write-Host "[OK] MQTT configuration complete (services will be started by stack installer)" -ForegroundColor Green
+    exit 0
+}
+
 # Ask if user wants to start the broker now
 Write-Host ""
 $StartChoice = Read-Host "Start the MQTT broker now? (y/n)"
@@ -516,10 +528,6 @@ Write-Host "  - config/passwords.txt (user authentication)" -ForegroundColor Whi
 Write-Host "  - config/acl.txt (access control)" -ForegroundColor White
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    # If called with -Force (from stack installer), stay in service directory
-    Write-Host "Staying in mqtt directory for stack installer" -ForegroundColor Gray
-} else {
-    # If called manually, return to management directory
+if (-not $Force) {
     Set-Location management
 }

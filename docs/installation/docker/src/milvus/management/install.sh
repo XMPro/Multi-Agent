@@ -19,6 +19,8 @@ PASSWORD=""
 ENABLE_SSL=false
 DOMAIN="localhost"
 FORCE=false
+CERT_TYPE=""
+MACHINE_IPS_PARAM=""
 ENABLE_GPU=false
 GPU_DEVICES="0"
 
@@ -76,6 +78,14 @@ while [[ $# -gt 0 ]]; do
         --force)
             FORCE=true
             shift
+            ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IPS_PARAM="$2"
+            shift 2
             ;;
         -h|--help)
             show_usage
@@ -268,81 +278,96 @@ MACHINE_IP=""
 
 if [ "$ENABLE_SSL" = true ]; then
     print_color "$GREEN" "SSL will be enabled for Milvus API and internal communications"
-    
-    # Ask for certificate type
-    echo ""
-    print_color "$CYAN" "Certificate Options:"
-    print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
-    print_color "$GRAY" "2. Use CA-provided certificates (for production)"
-    read -p "Select certificate type (1 or 2, default: 1): " cert_choice
-    
-    if [ "$cert_choice" = "2" ]; then
-        print_color "$GREEN" "CA-provided certificates selected"
-        print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
-        print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
-        ENABLE_SSL=false
-        USE_CA_PROVIDED=true
+
+    if [ -n "$CERT_TYPE" ]; then
+        # Cert type provided by stack installer
+        if [ "$CERT_TYPE" = "ca-provided" ]; then
+            print_color "$GREEN" "CA-provided certificates selected (from stack installer)"
+            print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
+            print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+            ENABLE_SSL=false
+            USE_CA_PROVIDED=true
+        else
+            print_color "$GREEN" "Self-signed certificates selected (from stack installer)"
+        fi
+        MACHINE_IP="$MACHINE_IPS_PARAM"
     else
-        print_color "$GREEN" "Self-signed certificates selected"
-        
-        # Ask for domain name
-        read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
-        if [ -n "$domain_input" ]; then
-            DOMAIN="$domain_input"
-        fi
-        print_color "$CYAN" "SSL certificates will be generated for domain: $DOMAIN"
-        
-        # Detect machine IP addresses
+        # Interactive prompts
+        # Ask for certificate type
         echo ""
-        print_color "$CYAN" "Detecting machine IP addresses..."
-        
-        if command -v ip &> /dev/null; then
-            # Use 'ip' command (modern Linux)
-            IPS=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
-        elif command -v ifconfig &> /dev/null; then
-            # Fallback to ifconfig (older systems)
-            IPS=$(ifconfig 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+        print_color "$CYAN" "Certificate Options:"
+        print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+        print_color "$GRAY" "2. Use CA-provided certificates (for production)"
+        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+
+        if [ "$cert_choice" = "2" ]; then
+            print_color "$GREEN" "CA-provided certificates selected"
+            print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
+            print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+            ENABLE_SSL=false
+            USE_CA_PROVIDED=true
         else
-            IPS=""
-        fi
-        
-        if [ -n "$IPS" ]; then
-            print_color "$GREEN" "Detected IP addresses:"
-            i=0
-            IP_ARRAY=()
-            while IFS= read -r ip; do
-                if [ -n "$ip" ]; then
-                    echo "  [$i] $ip"
-                    IP_ARRAY+=("$ip")
-                    i=$((i+1))
-                fi
-            done <<< "$IPS"
-            
-            if [ ${#IP_ARRAY[@]} -gt 0 ]; then
-                read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
-                
-                if [ -n "$ip_choice" ]; then
-                    SELECTED_IPS=()
-                    IFS=',' read -ra INDICES <<< "$ip_choice"
-                    for index in "${INDICES[@]}"; do
-                        index=$(echo "$index" | xargs)  # Trim whitespace
-                        if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#IP_ARRAY[@]}" ]; then
-                            SELECTED_IPS+=("${IP_ARRAY[$index]}")
-                        fi
-                    done
-                    
-                    if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
-                        MACHINE_IP=$(IFS=','; echo "${SELECTED_IPS[*]}")
-                        print_color "$CYAN" "Selected IPs: $MACHINE_IP"
-                    else
-                        print_color "$GRAY" "No valid IPs selected, skipping"
-                    fi
-                else
-                    print_color "$GRAY" "No IPs selected (localhost/domain only)"
-                fi
+            print_color "$GREEN" "Self-signed certificates selected"
+
+            # Ask for domain name
+            read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
+            if [ -n "$domain_input" ]; then
+                DOMAIN="$domain_input"
             fi
-        else
-            print_color "$GRAY" "Could not detect IP addresses, skipping"
+            print_color "$CYAN" "SSL certificates will be generated for domain: $DOMAIN"
+
+            # Detect machine IP addresses
+            echo ""
+            print_color "$CYAN" "Detecting machine IP addresses..."
+
+            if command -v ip &> /dev/null; then
+                # Use 'ip' command (modern Linux)
+                IPS=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+            elif command -v ifconfig &> /dev/null; then
+                # Fallback to ifconfig (older systems)
+                IPS=$(ifconfig 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+            else
+                IPS=""
+            fi
+
+            if [ -n "$IPS" ]; then
+                print_color "$GREEN" "Detected IP addresses:"
+                i=0
+                IP_ARRAY=()
+                while IFS= read -r ip; do
+                    if [ -n "$ip" ]; then
+                        echo "  [$i] $ip"
+                        IP_ARRAY+=("$ip")
+                        i=$((i+1))
+                    fi
+                done <<< "$IPS"
+
+                if [ ${#IP_ARRAY[@]} -gt 0 ]; then
+                    read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+
+                    if [ -n "$ip_choice" ]; then
+                        SELECTED_IPS=()
+                        IFS=',' read -ra INDICES <<< "$ip_choice"
+                        for index in "${INDICES[@]}"; do
+                            index=$(echo "$index" | xargs)  # Trim whitespace
+                            if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#IP_ARRAY[@]}" ]; then
+                                SELECTED_IPS+=("${IP_ARRAY[$index]}")
+                            fi
+                        done
+
+                        if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                            MACHINE_IP=$(IFS=','; echo "${SELECTED_IPS[*]}")
+                            print_color "$CYAN" "Selected IPs: $MACHINE_IP"
+                        else
+                            print_color "$GRAY" "No valid IPs selected, skipping"
+                        fi
+                    else
+                        print_color "$GRAY" "No IPs selected (localhost/domain only)"
+                    fi
+                fi
+            else
+                print_color "$GRAY" "Could not detect IP addresses, skipping"
+            fi
         fi
     fi
 else
@@ -604,13 +629,24 @@ http {
         server attu:3000;
     }
 
+    # Milvus HTTP API upstream for CORS proxy
+    upstream milvus {
+        server standalone:8080;
+    }
+
+    # Map to handle CORS origin dynamically
+    map $http_origin $cors_origin {
+        default "";
+        "~^https?://.*" $http_origin;
+    }
+
     # Redirect HTTP to HTTPS
     server {
         listen 80;
         return 301 https://$host$request_uri;
     }
 
-    # HTTPS server
+    # HTTPS server for Attu
     server {
         listen 443 ssl;
         
@@ -631,6 +667,49 @@ http {
             proxy_set_header Connection "upgrade";
         }
     }
+
+    # HTTPS CORS proxy for Milvus HTTP API on port 19531
+    server {
+        listen 19531 ssl;
+        
+        ssl_certificate /etc/nginx/ssl/server.pem;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+        
+        location / {
+            # Hide Milvus's built-in CORS headers to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Max-Age;
+            
+            # Add our CORS headers (allows any origin dynamically)
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' '3600' always;
+            
+            # Handle preflight OPTIONS requests
+            if ($request_method = 'OPTIONS') {
+                return 204;
+            }
+            
+            # Proxy to Milvus HTTPS HTTP API
+            proxy_pass https://milvus;
+            proxy_ssl_verify off;
+            proxy_ssl_server_name on;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_pass_request_headers on;
+        }
+    }
 }
 EOF
 else
@@ -644,6 +723,18 @@ http {
         server attu:3000;
     }
 
+    # Milvus HTTP API upstream for CORS proxy
+    upstream milvus {
+        server standalone:8080;
+    }
+
+    # Map to handle CORS origin dynamically
+    map $http_origin $cors_origin {
+        default "";
+        "~^https?://.*" $http_origin;
+    }
+
+    # HTTP server for Attu
     server {
         listen 80;
         
@@ -656,6 +747,41 @@ http {
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+        }
+    }
+
+    # HTTP CORS proxy for Milvus HTTP API on port 19531
+    server {
+        listen 19531;
+        
+        location / {
+            # Hide Milvus's built-in CORS headers to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Max-Age;
+            
+            # Add our CORS headers (allows any origin dynamically)
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' '3600' always;
+            
+            # Handle preflight OPTIONS requests
+            if ($request_method = 'OPTIONS') {
+                return 204;
+            }
+            
+            # Proxy to Milvus HTTP API
+            proxy_pass http://milvus;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_pass_request_headers on;
         }
     }
 }
@@ -709,13 +835,15 @@ echo "  Username: $USERNAME"
 print_color "$YELLOW" "  Password: $PASSWORD"
 if [ "$ENABLE_SSL" = true ]; then
     echo "  gRPC API: localhost:19530 (TLS encrypted)"
-    echo "  HTTP API: localhost:8080 (HTTPS)"
+    echo "  HTTP API (Internal): localhost:8080 (HTTPS)"
+    print_color "$GREEN" "  HTTP API (CORS-enabled): https://localhost:19531 (for web apps)"
     echo "  Attu Web UI: https://localhost:8001 (HTTPS)"
     print_color "$GRAY" "  Attu HTTP Redirect: http://localhost:8002 -> https://localhost:8001"
     echo "  Domain: $DOMAIN"
 else
     echo "  gRPC API: localhost:19530 (unencrypted)"
-    echo "  HTTP API: localhost:8080 (HTTP)"
+    echo "  HTTP API (Internal): localhost:8080 (HTTP)"
+    print_color "$GREEN" "  HTTP API (CORS-enabled): http://localhost:19531 (for web apps)"
     echo "  Attu Web UI: http://localhost:8002"
 fi
 echo "  MinIO Console: http://localhost:9001"

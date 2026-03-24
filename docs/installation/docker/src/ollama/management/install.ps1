@@ -155,21 +155,31 @@ if ($GPUDriver -eq "none") {
         try {
             $GPU = Get-WmiObject Win32_VideoController | Where-Object { $_.Name -like "*AMD*" -or $_.Name -like "*Radeon*" }
             if ($GPU) {
-                Write-Host "[OK] AMD GPU detected" -ForegroundColor Green
-                Write-Host "⚠ AMD GPU support requires ROCm drivers" -ForegroundColor Yellow
-                $DetectedGPU = "amd"
+                Write-Host "[OK] AMD GPU detected: $($GPU.Name)" -ForegroundColor Green
+                Write-Host ""
+                Write-Host "[WARN] AMD ROCm GPU passthrough is NOT supported in Docker Desktop on Windows." -ForegroundColor Yellow
+                Write-Host "  Docker Desktop only supports NVIDIA GPU passthrough via the NVIDIA Container Toolkit." -ForegroundColor Gray
+                Write-Host "  The ROCm Docker image (ollama/ollama:rocm) only works on Linux hosts with native Docker." -ForegroundColor Gray
+                Write-Host ""
+                Write-Host "  Recommendation: Install Ollama natively on Windows from https://ollama.com/download" -ForegroundColor Cyan
+                Write-Host "  Native Ollama will auto-detect your AMD GPU via DirectML and provide GPU acceleration." -ForegroundColor Cyan
+                Write-Host "  Then point your configuration to http://localhost:11434 instead of the Docker container." -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "  Continuing with CPU-only Docker mode..." -ForegroundColor Gray
+                # AMD GPU detected but not usable in Docker on Windows - fall back to CPU
+                $DetectedGPU = "none"
             }
         } catch {
             # No AMD GPU
         }
     }
-    
+
     if ($DetectedGPU -eq "none") {
-        Write-Host "No GPU detected - will use CPU only" -ForegroundColor Gray
-        Write-Host "⚠ CPU-only mode will be slower for model inference" -ForegroundColor Yellow
+        Write-Host "Docker Ollama will use CPU only" -ForegroundColor Gray
+        Write-Host "  CPU-only mode will be slower for model inference" -ForegroundColor Yellow
     }
-    
-    # Ask user to confirm GPU selection
+
+    # Ask user to confirm GPU selection (only for NVIDIA on Windows)
     if ($DetectedGPU -ne "none") {
         Write-Host ""
         $GPUChoice = Read-Host "Use detected $DetectedGPU GPU? (y/n, default: y)"
@@ -178,21 +188,6 @@ if ($GPUDriver -eq "none") {
             Write-Host "GPU support disabled by user" -ForegroundColor Gray
         } else {
             $GPUDriver = $DetectedGPU
-
-            # For AMD, prompt for optional GFX version override
-            if ($GPUDriver -eq "amd") {
-                Write-Host ""
-                Write-Host "Some older AMD GPUs require a GFX version override to work with ROCm." -ForegroundColor Gray
-                Write-Host "If unsure, press Enter to skip (most modern GPUs don't need this)." -ForegroundColor Gray
-                Write-Host "To check your GPU's GFX version, run: rocminfo | grep gfx" -ForegroundColor Gray
-                $GfxChoice = Read-Host "HSA_OVERRIDE_GFX_VERSION (e.g. 10.3.0, or press Enter to skip)"
-                if ($GfxChoice) {
-                    $HsaGfxOverride = $GfxChoice
-                    Write-Host "[OK] GFX version override set to: $HsaGfxOverride" -ForegroundColor Green
-                } else {
-                    Write-Host "GFX version override not set" -ForegroundColor Gray
-                }
-            }
         }
     }
 } else {
@@ -402,25 +397,8 @@ $envContent | Set-Content ".env"
 Write-Host "[OK] Updated .env with configuration" -ForegroundColor Green
 
 # Update docker-compose.yml based on GPU type
-if ($GPUDriver -eq "amd") {
-    Write-Host "Configuring AMD ROCm support in docker-compose.yml..." -ForegroundColor White
-
-    # AMD ROCm device passthrough (/dev/kfd, /dev/dri) only works on Linux
-    # On Windows, Docker Desktop runs containers in WSL2 - AMD GPU passthrough is not supported
-    if ($env:OS -eq "Windows_NT") {
-        Write-Host "[WARN] AMD ROCm GPU passthrough is not supported on Windows Docker Desktop" -ForegroundColor Yellow
-        Write-Host "  The ROCm image will be used but GPU acceleration may not be available" -ForegroundColor Gray
-        Write-Host "  For GPU support, run on Linux with native Docker and ROCm drivers" -ForegroundColor Gray
-    } else {
-        # Linux: inject device passthrough
-        $composeContent = Get-Content "docker-compose.yml" -Raw
-        $amdDevicesConfig = "`n    devices:`n      - /dev/kfd:/dev/kfd`n      - /dev/dri:/dev/dri`n    group_add:`n      - video`n      - render"
-        $composeContent = $composeContent -replace '(container_name: ollama)(?![\w-])', "`$1$amdDevicesConfig"
-        $composeContent | Set-Content "docker-compose.yml"
-        Write-Host "[OK] AMD ROCm device passthrough configured in docker-compose.yml" -ForegroundColor Green
-    }
-
-} elseif ($GPUDriver -eq "nvidia") {
+# Note: AMD ROCm is not offered on Windows - GPU detection falls back to CPU-only
+if ($GPUDriver -eq "nvidia") {
     Write-Host "Configuring NVIDIA GPU support in docker-compose.yml..." -ForegroundColor White
 
     # Insert deploy block with GPU reservations before the logging section of the ollama service
@@ -567,20 +545,8 @@ try {
     if ($healthy) {
         Write-Host "[OK] Ollama service is running and healthy" -ForegroundColor Green
 
-        # Verify GPU access if GPU is enabled
-        if ($GPUDriver -eq "amd") {
-            Write-Host ""
-            Write-Host "Verifying AMD GPU access..." -ForegroundColor Cyan
-            Start-Sleep -Seconds 3
-            docker exec ollama rocm-smi 2>$null | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "[OK] AMD GPU accessible via ROCm in container" -ForegroundColor Green
-            } else {
-                Write-Host "⚠ AMD GPU not accessible in container" -ForegroundColor Yellow
-                Write-Host "  AMD ROCm on Windows requires WSL2 with ROCm drivers installed" -ForegroundColor Gray
-                Write-Host "  See: https://rocm.docs.amd.com/en/latest/deploy/windows/quick_start.html" -ForegroundColor Gray
-            }
-        } elseif ($GPUDriver -eq "nvidia") {
+        # Verify GPU access if GPU is enabled (only NVIDIA is supported in Docker on Windows)
+        if ($GPUDriver -eq "nvidia") {
             Write-Host ""
             Write-Host "Verifying NVIDIA GPU access..." -ForegroundColor Cyan
             Start-Sleep -Seconds 3

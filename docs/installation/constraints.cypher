@@ -198,10 +198,6 @@ CREATE INDEX artifact_type_created_date_idx IF NOT EXISTS FOR (a:Artifact) ON (a
 CREATE INDEX artifact_type_id_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type, a.id);
 CREATE INDEX artifact_type_status_idx IF NOT EXISTS FOR (a:Artifact) ON (a.type, a.status);
 
-// -------------------- Conversation --------------------
-CREATE CONSTRAINT conversation_id_unique IF NOT EXISTS FOR (c:Conversation) REQUIRE c.conversation_id IS UNIQUE;
-CREATE INDEX conversation_id_idx IF NOT EXISTS FOR (c:Conversation) ON (c.conversation_id);
-
 // -------------------- Decision --------------------
 CREATE CONSTRAINT decision_id_unique IF NOT EXISTS FOR (d:Decision) REQUIRE d.decision_id IS UNIQUE;
 CREATE INDEX decision_communication_type_idx IF NOT EXISTS FOR (d:Decision) ON (d.communication_type);
@@ -269,11 +265,6 @@ CREATE INDEX objective_function_active_idx IF NOT EXISTS FOR (of:ObjectiveFuncti
 CREATE INDEX objective_function_created_date_idx IF NOT EXISTS FOR (of:ObjectiveFunction) ON (of.created_date);
 CREATE INDEX objective_function_type_idx IF NOT EXISTS FOR (of:ObjectiveFunction) ON (of.type);
 
-// -------------------- Plan --------------------
-CREATE CONSTRAINT plan_id_unique IF NOT EXISTS FOR (p:Plan) REQUIRE p.plan_id IS UNIQUE;
-CREATE INDEX plan_active_idx IF NOT EXISTS FOR (p:Plan) ON (p.active);
-CREATE INDEX plan_status_idx IF NOT EXISTS FOR (p:Plan) ON (p.status);
-
 // -------------------- Prompt --------------------
 CREATE CONSTRAINT prompt_name_unique IF NOT EXISTS FOR (p:Prompt) REQUIRE p.name IS UNIQUE;
 CREATE CONSTRAINT prompt_id_version_unique IF NOT EXISTS FOR (p:Prompt) REQUIRE (p.id, p.version) IS UNIQUE;
@@ -302,7 +293,6 @@ CREATE INDEX team_name IF NOT EXISTS FOR (t:Team) ON (t.team_name);
 CREATE INDEX team_team_id_name_index IF NOT EXISTS FOR (t:Team) ON (t.team_id, t.team_name);
 
 // -------------------- Tool --------------------
-CREATE CONSTRAINT tool_name_unique IF NOT EXISTS FOR (t:Tool) REQUIRE t.name IS UNIQUE;
 CREATE CONSTRAINT tool_id_unique IF NOT EXISTS FOR (t:Tool) REQUIRE t.id IS UNIQUE;
 CREATE INDEX tool_active_name IF NOT EXISTS FOR (t:Tool) ON (t.active, t.name);
 CREATE INDEX tool_class_active IF NOT EXISTS FOR (t:Tool) ON (t.class_name, t.active);
@@ -311,7 +301,6 @@ CREATE INDEX tool_id IF NOT EXISTS FOR (t:Tool) ON (t.id);
 CREATE INDEX tool_active_class_name IF NOT EXISTS FOR (t:Tool) ON (t.active, t.class_name, t.name);
 
 // -------------------- Action --------------------
-CREATE CONSTRAINT action_name_unique IF NOT EXISTS FOR (a:Action) REQUIRE a.name IS UNIQUE;
 CREATE CONSTRAINT action_id_unique IF NOT EXISTS FOR (a:Action) REQUIRE a.id IS UNIQUE;
 CREATE INDEX action_id IF NOT EXISTS FOR (a:Action) ON (a.id);
 CREATE INDEX action_name IF NOT EXISTS FOR (a:Action) ON (a.name);

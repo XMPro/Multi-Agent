@@ -19,6 +19,8 @@ PASSWORD=""
 ENABLE_SSL=false
 DOMAIN="localhost"
 FORCE=false
+CERT_TYPE=""
+MACHINE_IPS_PARAM=""
 
 # Function to print colored output
 print_color() {
@@ -64,6 +66,14 @@ while [[ $# -gt 0 ]]; do
         --force)
             FORCE=true
             shift
+            ;;
+        --cert-type)
+            CERT_TYPE="$2"
+            shift 2
+            ;;
+        --machine-ips)
+            MACHINE_IPS_PARAM="$2"
+            shift 2
             ;;
         -h|--help)
             show_usage
@@ -143,81 +153,96 @@ MACHINE_IP=""
 
 if [ "$ENABLE_SSL" = true ]; then
     print_color "$GREEN" "SSL will be enabled"
-    
-    # Ask for certificate type
-    echo ""
-    print_color "$CYAN" "Certificate Options:"
-    print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
-    print_color "$GRAY" "2. Use CA-provided certificates (for production)"
-    read -p "Select certificate type (1 or 2, default: 1): " cert_choice
-    
-    if [ "$cert_choice" = "2" ]; then
-        print_color "$GREEN" "CA-provided certificates selected"
-        print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
-        print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
-        ENABLE_SSL=false
-        USE_CA_PROVIDED=true
+
+    if [ -n "$CERT_TYPE" ]; then
+        # Cert type provided by stack installer
+        if [ "$CERT_TYPE" = "ca-provided" ]; then
+            print_color "$GREEN" "CA-provided certificates selected (from stack installer)"
+            print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
+            print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+            ENABLE_SSL=false
+            USE_CA_PROVIDED=true
+        else
+            print_color "$GREEN" "Self-signed certificates selected (from stack installer)"
+        fi
+        MACHINE_IP="$MACHINE_IPS_PARAM"
     else
-        print_color "$GREEN" "Self-signed certificates selected"
-        
-        # Ask for domain name
-        read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
-        if [ -n "$domain_input" ]; then
-            DOMAIN="$domain_input"
-        fi
-        print_color "$CYAN" "Using domain: $DOMAIN"
-        
-        # Detect machine IP addresses
+        # Interactive prompts
+        # Ask for certificate type
         echo ""
-        print_color "$CYAN" "Detecting machine IP addresses..."
-        
-        if command -v ip &> /dev/null; then
-            # Use 'ip' command (modern Linux)
-            IPS=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
-        elif command -v ifconfig &> /dev/null; then
-            # Fallback to ifconfig (older systems)
-            IPS=$(ifconfig 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+        print_color "$CYAN" "Certificate Options:"
+        print_color "$GRAY" "1. Generate self-signed certificates (for development/testing)"
+        print_color "$GRAY" "2. Use CA-provided certificates (for production)"
+        read -p "Select certificate type (1 or 2, default: 1): " cert_choice
+
+        if [ "$cert_choice" = "2" ]; then
+            print_color "$GREEN" "CA-provided certificates selected"
+            print_color "$CYAN" "You can install them after setup using: ./management/manage-ssl.sh install-ca"
+            print_color "$YELLOW" "SSL will be configured but not enabled until certificates are installed"
+            ENABLE_SSL=false
+            USE_CA_PROVIDED=true
         else
-            IPS=""
-        fi
-        
-        if [ -n "$IPS" ]; then
-            print_color "$GREEN" "Detected IP addresses:"
-            i=0
-            IP_ARRAY=()
-            while IFS= read -r ip; do
-                if [ -n "$ip" ]; then
-                    echo "  [$i] $ip"
-                    IP_ARRAY+=("$ip")
-                    i=$((i+1))
-                fi
-            done <<< "$IPS"
-            
-            if [ ${#IP_ARRAY[@]} -gt 0 ]; then
-                read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
-                
-                if [ -n "$ip_choice" ]; then
-                    SELECTED_IPS=()
-                    IFS=',' read -ra INDICES <<< "$ip_choice"
-                    for index in "${INDICES[@]}"; do
-                        index=$(echo "$index" | xargs)  # Trim whitespace
-                        if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#IP_ARRAY[@]}" ]; then
-                            SELECTED_IPS+=("${IP_ARRAY[$index]}")
-                        fi
-                    done
-                    
-                    if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
-                        MACHINE_IP=$(IFS=','; echo "${SELECTED_IPS[*]}")
-                        print_color "$CYAN" "Selected IPs: $MACHINE_IP"
-                    else
-                        print_color "$GRAY" "No valid IPs selected, skipping"
-                    fi
-                else
-                    print_color "$GRAY" "No IPs selected (localhost/domain only)"
-                fi
+            print_color "$GREEN" "Self-signed certificates selected"
+
+            # Ask for domain name
+            read -p "Enter domain name for SSL certificate (default: localhost): " domain_input
+            if [ -n "$domain_input" ]; then
+                DOMAIN="$domain_input"
             fi
-        else
-            print_color "$GRAY" "Could not detect IP addresses, skipping"
+            print_color "$CYAN" "Using domain: $DOMAIN"
+
+            # Detect machine IP addresses
+            echo ""
+            print_color "$CYAN" "Detecting machine IP addresses..."
+
+            if command -v ip &> /dev/null; then
+                # Use 'ip' command (modern Linux)
+                IPS=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+            elif command -v ifconfig &> /dev/null; then
+                # Fallback to ifconfig (older systems)
+                IPS=$(ifconfig 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' || true)
+            else
+                IPS=""
+            fi
+
+            if [ -n "$IPS" ]; then
+                print_color "$GREEN" "Detected IP addresses:"
+                i=0
+                IP_ARRAY=()
+                while IFS= read -r ip; do
+                    if [ -n "$ip" ]; then
+                        echo "  [$i] $ip"
+                        IP_ARRAY+=("$ip")
+                        i=$((i+1))
+                    fi
+                done <<< "$IPS"
+
+                if [ ${#IP_ARRAY[@]} -gt 0 ]; then
+                    read -p "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip: " ip_choice
+
+                    if [ -n "$ip_choice" ]; then
+                        SELECTED_IPS=()
+                        IFS=',' read -ra INDICES <<< "$ip_choice"
+                        for index in "${INDICES[@]}"; do
+                            index=$(echo "$index" | xargs)  # Trim whitespace
+                            if [[ "$index" =~ ^[0-9]+$ ]] && [ "$index" -lt "${#IP_ARRAY[@]}" ]; then
+                                SELECTED_IPS+=("${IP_ARRAY[$index]}")
+                            fi
+                        done
+
+                        if [ ${#SELECTED_IPS[@]} -gt 0 ]; then
+                            MACHINE_IP=$(IFS=','; echo "${SELECTED_IPS[*]}")
+                            print_color "$CYAN" "Selected IPs: $MACHINE_IP"
+                        else
+                            print_color "$GRAY" "No valid IPs selected, skipping"
+                        fi
+                    else
+                        print_color "$GRAY" "No IPs selected (localhost/domain only)"
+                    fi
+                fi
+            else
+                print_color "$GRAY" "Could not detect IP addresses, skipping"
+            fi
         fi
     fi
 else
@@ -250,6 +275,7 @@ cat > .env << EOF
 MQTT_PORT=1883
 MQTT_SSL_PORT=8883
 MQTT_WS_PORT=9002
+MQTT_WSS_PORT=9003
 
 # MQTT Authentication
 MQTT_USERNAME=$USERNAME
@@ -272,7 +298,7 @@ persistence true
 persistence_location /mosquitto/data/
 log_dest file /mosquitto/log/mosquitto.log
 
-# Listener Configuration
+# MQTT Listener (non-SSL)
 listener 1883
 protocol mqtt
 
@@ -289,9 +315,13 @@ log_type information
 # Persistence
 autosave_interval 1800
 autosave_on_changes true
+
+# WebSocket Listener (non-SSL)
+listener 9001
+protocol websockets
 EOF
 
-print_color "$GREEN" "Created mosquitto.conf"
+print_color "$GREEN" "Created mosquitto.conf with WebSocket support"
 
 # Create ACL
 cat > config/acl.txt << EOF
@@ -389,9 +419,18 @@ if [ "$ENABLE_SSL" = true ]; then
         if [ "$ENABLE_SSL" = true ]; then
             cat >> config/mosquitto.conf << EOF
 
-# SSL Configuration
+# MQTT SSL Configuration
 listener 8883
 protocol mqtt
+cafile /mosquitto/certs/ca.crt
+certfile /mosquitto/certs/server.crt
+keyfile /mosquitto/certs/server.key
+tls_version tlsv1.2
+require_certificate false
+
+# WebSocket SSL Configuration
+listener 9002
+protocol websockets
 cafile /mosquitto/certs/ca.crt
 certfile /mosquitto/certs/server.crt
 keyfile /mosquitto/certs/server.key
@@ -401,7 +440,7 @@ EOF
             
             # Update .env
             sed -i 's/ENABLE_SSL=false/ENABLE_SSL=true/' .env
-            print_color "$GREEN" "SSL configuration enabled"
+            print_color "$GREEN" "SSL configuration enabled (MQTT + WebSocket)"
         fi
     fi
 fi

@@ -3,22 +3,16 @@ param(
     [string]$Password = "",
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
+    [ValidateSet("self-signed", "ca-provided", "")]
+    [string]$CertType = "",
+    [string]$MachineIPs = "",
     [switch]$Force = $false
 )
 
 # Ensure we're in the neo4j directory (not management subdirectory)
 $CurrentLocation = Get-Location
 if ($CurrentLocation.Path.EndsWith("management")) {
-    # If we're in the management directory, go up one level to neo4j directory
     Set-Location ..
-    Write-Host "Changed from management directory to neo4j directory" -ForegroundColor Gray
-} elseif (Test-Path "management") {
-    # If we're already in neo4j directory (has management subdirectory), stay here
-    Write-Host "Already in neo4j directory" -ForegroundColor Gray
-} else {
-    # We might be in the wrong location
-    Write-Host "Warning: Current directory may not be correct for Neo4j installation" -ForegroundColor Yellow
-    Write-Host "Expected to be in neo4j directory or neo4j/management directory" -ForegroundColor Yellow
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan
@@ -109,82 +103,90 @@ if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
     }
 }
 
+$UseCAProvided = $false
+$MachineIP = ""
+
 if ($EnableSSL) {
-    $EnableSSL = $true
     Write-Host "SSL will be enabled for both Browser UI (HTTPS) and Bolt protocol (TLS)" -ForegroundColor Green
-    
-    # Ask for certificate type
-    Write-Host ""
-    Write-Host "Certificate Options:" -ForegroundColor White
-    Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
-    Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
-    $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
-    
-    if ($CertChoice -eq "2") {
-        Write-Host "CA-provided certificates selected" -ForegroundColor Green
-        Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
-        Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
-        $EnableSSL = $false  # Don't generate self-signed certs, wait for CA certs
-        $UseCAProvided = $true
-    } else {
-        Write-Host "Self-signed certificates selected" -ForegroundColor Green
-        $UseCAProvided = $false
-        
-        # Ask for domain name
-        $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
-        if ($DomainChoice) {
-            $Domain = $DomainChoice
+
+    # Use CertType param if provided (from stack installer), otherwise prompt
+    if ($CertType) {
+        if ($CertType -eq "ca-provided") {
+            Write-Host "CA-provided certificates selected (from stack installer)" -ForegroundColor Green
+            $EnableSSL = $false
+            $UseCAProvided = $true
+        } else {
+            Write-Host "Self-signed certificates selected (from stack installer)" -ForegroundColor Green
         }
-        Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
-        
-        # Detect machine IP addresses
+        $MachineIP = $MachineIPs
+    } else {
+        # Ask for certificate type interactively
         Write-Host ""
-        Write-Host "Detecting machine IP addresses..." -ForegroundColor White
-        try {
-            $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
-            
-            if ($AllIPs.Count -gt 0) {
-                Write-Host "Detected IP addresses:" -ForegroundColor Green
-                for ($i = 0; $i -lt $AllIPs.Count; $i++) {
-                    $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
-                    Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
-                }
-                
-                Write-Host ""
-                $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
-                
-                if ($IPChoice) {
-                    $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
-                    $MachineIPs = @()
-                    foreach ($index in $SelectedIndices) {
-                        if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
-                            $MachineIPs += $AllIPs[[int]$index].IPAddress
-                        }
+        Write-Host "Certificate Options:" -ForegroundColor White
+        Write-Host "1. Generate self-signed certificates (for development/testing)" -ForegroundColor Gray
+        Write-Host "2. Use CA-provided certificates (for production)" -ForegroundColor Gray
+        $CertChoice = Read-Host "Select certificate type (1 or 2, default: 1)"
+
+        if ($CertChoice -eq "2") {
+            Write-Host "CA-provided certificates selected" -ForegroundColor Green
+            Write-Host "You can install them after setup using: .\management\manage-ssl.ps1 install-ca" -ForegroundColor Cyan
+            Write-Host "SSL will be configured but not enabled until certificates are installed" -ForegroundColor Yellow
+            $EnableSSL = $false
+            $UseCAProvided = $true
+        } else {
+            Write-Host "Self-signed certificates selected" -ForegroundColor Green
+
+            # Ask for domain name
+            $DomainChoice = Read-Host "Enter domain name for SSL certificate (default: localhost)"
+            if ($DomainChoice) {
+                $Domain = $DomainChoice
+            }
+            Write-Host "SSL certificates will be generated for domain: $Domain" -ForegroundColor White
+
+            # Detect machine IP addresses
+            Write-Host ""
+            Write-Host "Detecting machine IP addresses..." -ForegroundColor White
+            try {
+                $AllIPs = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\.' -and ($_.PrefixOrigin -eq 'Dhcp' -or $_.PrefixOrigin -eq 'Manual') }
+
+                if ($AllIPs.Count -gt 0) {
+                    Write-Host "Detected IP addresses:" -ForegroundColor Green
+                    for ($i = 0; $i -lt $AllIPs.Count; $i++) {
+                        $adapter = Get-NetAdapter -InterfaceIndex $AllIPs[$i].InterfaceIndex
+                        Write-Host "  [$i] $($AllIPs[$i].IPAddress) - $($adapter.InterfaceDescription)" -ForegroundColor White
                     }
-                    
-                    if ($MachineIPs.Count -gt 0) {
-                        Write-Host "Selected IPs: $($MachineIPs -join ', ')" -ForegroundColor Cyan
-                        $MachineIP = $MachineIPs -join ','
+
+                    Write-Host ""
+                    $IPChoice = Read-Host "Enter IP numbers to include (comma-separated, e.g., '0,1') or press Enter to skip"
+
+                    if ($IPChoice) {
+                        $SelectedIndices = $IPChoice -split ',' | ForEach-Object { $_.Trim() }
+                        $SelectedIPs = @()
+                        foreach ($index in $SelectedIndices) {
+                            if ($index -match '^\d+$' -and [int]$index -lt $AllIPs.Count) {
+                                $SelectedIPs += $AllIPs[[int]$index].IPAddress
+                            }
+                        }
+
+                        if ($SelectedIPs.Count -gt 0) {
+                            Write-Host "Selected IPs: $($SelectedIPs -join ', ')" -ForegroundColor Cyan
+                            $MachineIP = $SelectedIPs -join ','
+                        } else {
+                            Write-Host "No valid IPs selected" -ForegroundColor Gray
+                        }
                     } else {
-                        $MachineIP = ""
-                        Write-Host "No valid IPs selected" -ForegroundColor Gray
+                        Write-Host "IP addresses not included (localhost/domain only)" -ForegroundColor Gray
                     }
                 } else {
-                    $MachineIP = ""
-                    Write-Host "IP addresses not included (localhost/domain only)" -ForegroundColor Gray
+                    Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
                 }
-            } else {
-                $MachineIP = ""
-                Write-Host "Could not detect IP addresses, skipping" -ForegroundColor Gray
+            } catch {
+                Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
             }
-        } catch {
-            $MachineIP = ""
-            Write-Host "Could not detect IP addresses: $($_.Exception.Message)" -ForegroundColor Gray
         }
     }
 } else {
     Write-Host "SSL will be disabled (unencrypted connections only)" -ForegroundColor Yellow
-    $UseCAProvided = $false
 }
 
 # Generate or prompt for password if not provided
@@ -465,6 +467,13 @@ Write-Host ""
 Write-Host "Installation completed successfully!" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Cyan
 
+# When called from stack installer (-Force), only configure - don't start services
+if ($Force) {
+    Write-Host ""
+    Write-Host "[OK] Neo4j configuration complete (services will be started by stack installer)" -ForegroundColor Green
+    exit 0
+}
+
 # Ask if user wants to start Neo4j now
 Write-Host ""
 $StartChoice = Read-Host "Start Neo4j database now? (y/n)"
@@ -543,10 +552,6 @@ if ($EnableSSL) {
 }
 
 # Return to appropriate directory based on how script was called
-if ($Force) {
-    # If called with -Force (from stack installer), stay in service directory
-    Write-Host "Staying in neo4j directory for stack installer" -ForegroundColor Gray
-} else {
-    # If called manually, return to management directory
+if (-not $Force) {
     Set-Location management
 }

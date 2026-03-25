@@ -7,6 +7,7 @@ services:
       - "${MQTT_PORT:-1883}:1883"         # MQTT
       - "${MQTT_SSL_PORT:-8883}:8883"     # MQTT SSL/TLS
       - "${MQTT_WS_PORT:-9002}:9001"      # WebSockets
+      - "${MQTT_WSS_PORT:-9003}:9002"     # WebSockets SSL
     volumes:
       # Configuration
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
@@ -28,6 +29,7 @@ services:
       start_period: 30s
     networks:
       - mqtt-network
+      - observability
     logging:
       driver: "json-file"
       options:
@@ -38,3 +40,6 @@ networks:
   mqtt-network:
     driver: bridge
     name: mqtt-network
+  observability:
+    external: true
+    name: observability

@@ -409,9 +409,16 @@ For general topics (processes, parts, procedures, asset groups), respond natural
 ## Available Actions:
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -509,9 +516,16 @@ Provide your decision as 'Yes' for a plan adjustment is needed or 'No' if the cu
 ## Available Actions
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -584,14 +598,20 @@ Provide a brief explanation for your decision, focusing on:
 ## Objective Functions
 {objective_function}
 
+## Planning Scope
+Planning is ONLY concerned with discrete, executable actions listed under each agent's Available Actions. Routine duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, and observation — are handled automatically by the agent's operational cycle (ORPA) and are NOT plannable. Do not include them as sub-goals or components of the plan.
+
+If the goal does not require any Available Actions to be executed, state that explicitly — the correct outcome is that no actionable plan is needed.
+
 ## Response
 Your response should include:
 1. A brief restatement of the main objective
-2. Identification of key components or sub-goals
+2. Identification of key components or sub-goals that require Available Actions to accomplish
 3. Any implicit or explicit constraints
 4. Potential challenges or considerations
-5. How different team members' capabilities might be leveraged to achieve the goal
+5. How different team members' capabilities and Available Actions might be leveraged to achieve the goal
 6. How the goal relates to the objective functions and their measures
+7. If no Available Actions are warranted by the current goal and conditions, state clearly that no actionable plan is required
 
 Provide your analysis in a clear, structured format.",
     reserved_fields: ["goal", "team_capabilities", "objective_function"],
@@ -620,9 +640,16 @@ Provide your analysis in a clear, structured format.",
 ## Available Actions
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -867,9 +894,16 @@ Reasoning: {decision_reasoning}
 ## Available Actions
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -1085,7 +1119,13 @@ prompt_id: "XMAGS-TASKBREAKDOWN-PROMPT-001",
 ## Objective Function
 {objective_function}
 
-## Instructions 
+## Instructions
+
+**PLANNING SCOPE:**
+- Tasks may ONLY use Available Actions listed under each agent. Tools referenced in agent profiles (e.g. data stream tools, calculation tools) are sensing instruments used by the agent's operational cycle (ORPA) — they are NOT actions and MUST NOT appear in task action lists.
+- Routine operational duties (monitoring, reporting, health scoring, observation, communication) are handled automatically by ORPA and MUST NOT be broken down into tasks.
+- If a PDDL step describes monitoring or observation activity rather than an executable Available Action, that step has NO corresponding task — skip it.
+- If NO PDDL steps map to Available Actions, return an empty task list. Do not fabricate tasks.
 
 For each task, specify:
 1. A clear description of the task
@@ -1094,13 +1134,14 @@ For each task, specify:
 4. The specific actions required to complete the task
 5. The impact of the task on objective function measures
 
-IMPORTANT: For each task, you MUST include specific actions from the agent's \"Available Actions\" list that would be used to accomplish the PDDL action. Each PDDL action must be translated into one or more concrete actions from the agent's available actions.
+IMPORTANT: For each task, you MUST include specific actions from the agent's \"Available Actions\" list that would be used to accomplish the PDDL action. Each PDDL action must be translated into the single most appropriate concrete action from the agent's available actions.
 
 For example:
 - If a PDDL action is \"calibrate-forecasting-model\", you must specify which of the agent's available actions (such as \"update_digital_twin\" or \"create_work_order\") would be used to accomplish this.
 - If a PDDL action is \"schedule-maintenance\", you must include the \"schedule_maintenance\" action and any other relevant actions from the agent's available actions list.
 
 DO NOT leave the Actions section empty or with [- None]. Every task must have at least one specific action listed from the agent's Available Actions.
+**CRITICAL: Each task must use exactly ONE action - the most appropriate action from the Available Actions list for accomplishing the PDDL step at this point in time. Do not use multiple actions per task.**
 
 REMINDER: Only use actions from the Available Actions list. Do not invent or suggest new actions.
 

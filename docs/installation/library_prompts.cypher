@@ -1354,7 +1354,7 @@ Return only the raw expression with no explanation, formatting, or additional te
     internal_name: "communication_decision_prompt",
     prompt: "Analyze the following reflection and determine if this information should be communicated to other agents:
 
-## Reflection: 
+## Reflection:
 {content}
 
 ## Memory Metadata:
@@ -1363,55 +1363,43 @@ Return only the raw expression with no explanation, formatting, or additional te
 - Contributing Memories: {contributing_memories_count}
 - Confidence: {confidence}
 
-## Current Team: 
+## Current Team:
 {team}
-
+{routing_context}
 ## Communication Decision Framework
 
-### DEFAULT POSITION: DO NOT SHARE
-This reflection should remain internal unless you can demonstrate clear operational necessity for team communication.
+Your agent has organizational rules that define mandatory communication obligations (listed in your system prompt). These rules specify WHO you report to, WHAT you report, and WHEN.
 
-### STEP 1: Operational Necessity Test
-Can you answer YES to ALL of these questions?
-- Does this reflection contain findings that would change how other agents perform their specific roles?
+### STEP 1: Organizational Obligation Check
+Review your organizational rules. Does this reflection contain information that triggers any of your mandatory reporting obligations? Examples:
+- Constraint status changes that must be reported to specific agents
+- Threshold breaches that require alerts to the team or operator
+- Health score changes that signal mode transitions
+- Safety events that require immediate escalation
+
+If this reflection triggers a mandatory reporting obligation, you MUST share. Identify the target agent(s) from your organizational rules.
+
+### STEP 2: Operational Value Assessment
+If no mandatory obligation is triggered, evaluate whether sharing would still provide operational value:
 - Would other agents make different decisions or take different actions based on this information?
-- Is this information NOT available to other agents through their normal monitoring and reporting procedures?
-- Does this require immediate coordination or input from multiple agents beyond existing protocols?
-- Would withholding this information create a specific operational risk or missed opportunity?
+- Does this information reveal risks, patterns, or opportunities that other agents cannot detect independently?
+- Would withholding this information create a specific operational risk?
 
-If you cannot answer YES to ALL questions above, DO NOT SHARE.
+If the reflection is routine and does not trigger obligations or provide operational value beyond what other agents already observe, DO NOT SHARE.
 
-### STEP 2: Content Significance Assessment
-Evaluate the metadata in context:
-- Do the importance, confidence, and surprise scores collectively indicate this contains exceptional insights?
-- Does the content reveal patterns, risks, or opportunities that are outside normal operational expectations?
-- Is this information actionable by other agents in ways that improve team performance?
-- Does this represent a deviation from standard operations that requires team awareness?
-
-If the metadata indicates routine or expected operational content, DO NOT SHARE.
-
-### STEP 3: Communication Channel Validation
-Before sharing, confirm:
-- Are existing escalation procedures insufficient for handling this information?
-- Would formal communication channels (alerts, notifications, reports) be inappropriate?
-- Do specific agents need this information for their specialized functions?
-- Would team-wide communication be more effective than existing protocols?
-
-If existing channels are adequate, DO NOT SHARE.
-
-### DECISION REQUIREMENT
-To justify sharing, you must demonstrate that:
-1. ALL operational necessity questions are answered YES
-2. Content significance clearly exceeds routine operations
-3. Existing communication channels are insufficient
+### STEP 3: Communication Type Validation
+Before sharing, confirm the communication type is appropriate:
+- Use Direct communication when specific agents need this information based on your organizational rules
+- Use Team communication only when the information affects the entire team's operating context
+- Respect any communication type restrictions listed in your routing constraints
 
 ## Response Format
 SHARE_DECISION: [Yes/No]
 COMMUNICATION_TYPE: [Direct/Team] (only if SHARE_DECISION is Yes)
-TARGET_AGENTS: [List specific agent IDs] (only if SHARE_DECISION is Yes)
+TARGET_AGENTS: [List specific agent IDs from your organizational rules] (only if SHARE_DECISION is Yes)
 AGENT_RESPONSES: [AgentID1:Yes, AgentID2:No, ...] (only if SHARE_DECISION is Yes)
-JUSTIFICATION: [If No: Explain which necessity test failed or why existing channels are adequate. If Yes: Demonstrate how all three steps justify communication, citing specific operational value and agent actions enabled.]",
-    reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence"],
+JUSTIFICATION: [If No: State which organizational rules were checked and why none were triggered. If Yes: Cite the specific organizational rule that requires this communication and identify the target agent(s).]",
+    reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence", "routing_context"],
     category: "memory_cycle",
     tags: ["reflection", "communication", "team"],
     description: "Determines if a reflection should be shared with other agents in the team."

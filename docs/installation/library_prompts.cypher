@@ -460,9 +460,10 @@ Carefully analyze the information provided to determine if the current plan shou
 
 **Recommend NO CHANGE if:**
 - Measures are within acceptable thresholds (even if not meeting targets)
-- Current plan tasks directly address the primary performance issues
-- No significant adaptation factors or new goals present
+- Current plan already has tasks that address the identified violations — do NOT replan for the same violations the current plan is designed to handle. A plan needs time to execute before its effectiveness can be judged.
+- No significant NEW adaptation factors beyond what the current plan already addresses
 - Current plan validity and initial assessment support continuation
+- IMPORTANT: If the current plan has tasks addressing the same measures that appear in the adaptation factors, the plan is working as intended. Do NOT recommend a new plan just because violations persist — the plan exists to address them.
 
 **Recommend PLAN ADJUSTMENT if:**
 - Few measures exceed thresholds but current plan structure remains sound
@@ -1125,7 +1126,8 @@ prompt_id: "XMAGS-TASKBREAKDOWN-PROMPT-001",
 - Tasks may ONLY use Available Actions listed under each agent. Tools referenced in agent profiles (e.g. data stream tools, calculation tools) are sensing instruments used by the agent's operational cycle (ORPA) — they are NOT actions and MUST NOT appear in task action lists.
 - Routine operational duties (monitoring, reporting, health scoring, observation, communication) are handled automatically by ORPA and MUST NOT be broken down into tasks.
 - If a PDDL step describes monitoring or observation activity rather than an executable Available Action, that step has NO corresponding task — skip it.
-- If NO PDDL steps map to Available Actions, return an empty task list. Do not fabricate tasks.
+- If NO PDDL steps map to Available Actions by name, return an empty task list. Do not fabricate tasks.
+- IMPORTANT: Evaluate each PDDL step independently. If one PDDL action is invalid or cannot be executed due to agent constraints, still create tasks for the OTHER valid PDDL actions. Do not reject all tasks because one is invalid.
 
 For each task, specify:
 1. A clear description of the task

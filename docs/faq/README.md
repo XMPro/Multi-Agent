@@ -21,6 +21,9 @@ Frequently asked questions organised by audience and topic. Each file is maintai
 | "Why a team of agents, not one AI?" | [architecture.md → Team Design](./architecture.md#why-do-agents-need-a-team-why-not-one-powerful-ai) |
 | "When to use agents vs Data Streams?" | [architecture.md → Capabilities](./architecture.md#should-agents-be-used-for-event-detection) |
 | "What can't agents do?" | [architecture.md → Capabilities](./architecture.md#can-an-agent-build-its-own-predictive-model-from-historical-data) |
+| "What does a cognitive agent look like?" | [architecture.md → Concepts](./architecture.md#what-does-the-anatomy-of-a-cognitive-agent-look-like) |
+| "How does agent memory work?" | [architecture.md → Concepts](./architecture.md#how-does-agent-memory-work-where-does-the-intelligence-reside) |
+| "How do agents agree on decisions?" | [architecture.md → Concepts](./architecture.md#how-do-agents-reach-consensus-on-decisions-that-span-multiple-domains) |
 | "Profile vs Instance?" | [architecture.md → Concepts](./architecture.md#what-is-the-difference-between-a-profile-and-an-instance) |
 | "Setup, databases, prerequisites" | [technical.md](./technical.md) |
 | "Monitoring and troubleshooting" | [technical.md → Troubleshooting](./technical.md#troubleshooting) |

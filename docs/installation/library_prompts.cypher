@@ -409,9 +409,16 @@ For general topics (processes, parts, procedures, asset groups), respond natural
 ## Available Actions:
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -453,9 +460,10 @@ Carefully analyze the information provided to determine if the current plan shou
 
 **Recommend NO CHANGE if:**
 - Measures are within acceptable thresholds (even if not meeting targets)
-- Current plan tasks directly address the primary performance issues
-- No significant adaptation factors or new goals present
+- Current plan already has tasks that address the identified violations — do NOT replan for the same violations the current plan is designed to handle. A plan needs time to execute before its effectiveness can be judged.
+- No significant NEW adaptation factors beyond what the current plan already addresses
 - Current plan validity and initial assessment support continuation
+- IMPORTANT: If the current plan has tasks addressing the same measures that appear in the adaptation factors, the plan is working as intended. Do NOT recommend a new plan just because violations persist — the plan exists to address them.
 
 **Recommend PLAN ADJUSTMENT if:**
 - Few measures exceed thresholds but current plan structure remains sound
@@ -509,9 +517,16 @@ Provide your decision as 'Yes' for a plan adjustment is needed or 'No' if the cu
 ## Available Actions
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -584,14 +599,20 @@ Provide a brief explanation for your decision, focusing on:
 ## Objective Functions
 {objective_function}
 
+## Planning Scope
+Planning is ONLY concerned with discrete, executable actions listed under each agent's Available Actions. Routine duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, and observation — are handled automatically by the agent's operational cycle (ORPA) and are NOT plannable. Do not include them as sub-goals or components of the plan.
+
+If the goal does not require any Available Actions to be executed, state that explicitly — the correct outcome is that no actionable plan is needed.
+
 ## Response
 Your response should include:
 1. A brief restatement of the main objective
-2. Identification of key components or sub-goals
+2. Identification of key components or sub-goals that require Available Actions to accomplish
 3. Any implicit or explicit constraints
 4. Potential challenges or considerations
-5. How different team members' capabilities might be leveraged to achieve the goal
+5. How different team members' capabilities and Available Actions might be leveraged to achieve the goal
 6. How the goal relates to the objective functions and their measures
+7. If no Available Actions are warranted by the current goal and conditions, state clearly that no actionable plan is required
 
 Provide your analysis in a clear, structured format.",
     reserved_fields: ["goal", "team_capabilities", "objective_function"],
@@ -620,9 +641,16 @@ Provide your analysis in a clear, structured format.",
 ## Available Actions
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -867,9 +895,16 @@ Reasoning: {decision_reasoning}
 ## Available Actions
 {available_actions}
 
+**PLANNING SCOPE:**
+- Planning is ONLY concerned with executing Available Actions listed above
+- Routine operational duties described in the agent's role — such as continuous monitoring, periodic reporting, health scoring, sensing, observation, and communication — are handled automatically by the agent's operational cycle (ORPA) and MUST NOT appear as planned actions
+- Tools referenced in the agent's profile (e.g. data stream tools, calculation tools) are sensing instruments used by the ORPA cycle — they are NOT actions and MUST NOT be used in the plan
+- If the current goal and conditions do not warrant executing any Available Actions, the correct outcome is NO plan or NO tasks
+
 **AVAILABLE ACTIONS ENFORCEMENT:**
 - Every action in your PDDL domain MUST have an exact name match in the Available Actions list above
 - Do not create generic actions like 'execute-setpoint' or 'calibrate-model'
+- Do not create monitoring, observation, or sensing actions — these are not plannable
 - Do not rename actions to be \"domain-specific\"
 - If an Available Action doesn't fit your domain needs, you cannot use it - find a different approach
 - The PDDL domain actions must be a subset of Available Actions, not an interpretation of them
@@ -1085,7 +1120,14 @@ prompt_id: "XMAGS-TASKBREAKDOWN-PROMPT-001",
 ## Objective Function
 {objective_function}
 
-## Instructions 
+## Instructions
+
+**PLANNING SCOPE:**
+- Tasks may ONLY use Available Actions listed under each agent. Tools referenced in agent profiles (e.g. data stream tools, calculation tools) are sensing instruments used by the agent's operational cycle (ORPA) — they are NOT actions and MUST NOT appear in task action lists.
+- Routine operational duties (monitoring, reporting, health scoring, observation, communication) are handled automatically by ORPA and MUST NOT be broken down into tasks.
+- If a PDDL step describes monitoring or observation activity rather than an executable Available Action, that step has NO corresponding task — skip it.
+- If NO PDDL steps map to Available Actions by name, return an empty task list. Do not fabricate tasks.
+- IMPORTANT: Evaluate each PDDL step independently. If one PDDL action is invalid or cannot be executed due to agent constraints, still create tasks for the OTHER valid PDDL actions. Do not reject all tasks because one is invalid.
 
 For each task, specify:
 1. A clear description of the task
@@ -1094,13 +1136,14 @@ For each task, specify:
 4. The specific actions required to complete the task
 5. The impact of the task on objective function measures
 
-IMPORTANT: For each task, you MUST include specific actions from the agent's \"Available Actions\" list that would be used to accomplish the PDDL action. Each PDDL action must be translated into one or more concrete actions from the agent's available actions.
+IMPORTANT: For each task, you MUST include specific actions from the agent's \"Available Actions\" list that would be used to accomplish the PDDL action. Each PDDL action must be translated into the single most appropriate concrete action from the agent's available actions.
 
 For example:
 - If a PDDL action is \"calibrate-forecasting-model\", you must specify which of the agent's available actions (such as \"update_digital_twin\" or \"create_work_order\") would be used to accomplish this.
 - If a PDDL action is \"schedule-maintenance\", you must include the \"schedule_maintenance\" action and any other relevant actions from the agent's available actions list.
 
 DO NOT leave the Actions section empty or with [- None]. Every task must have at least one specific action listed from the agent's Available Actions.
+**CRITICAL: Each task must use exactly ONE action - the most appropriate action from the Available Actions list for accomplishing the PDDL step at this point in time. Do not use multiple actions per task.**
 
 REMINDER: Only use actions from the Available Actions list. Do not invent or suggest new actions.
 
@@ -1313,7 +1356,7 @@ Return only the raw expression with no explanation, formatting, or additional te
     internal_name: "communication_decision_prompt",
     prompt: "Analyze the following reflection and determine if this information should be communicated to other agents:
 
-## Reflection: 
+## Reflection:
 {content}
 
 ## Memory Metadata:
@@ -1322,55 +1365,43 @@ Return only the raw expression with no explanation, formatting, or additional te
 - Contributing Memories: {contributing_memories_count}
 - Confidence: {confidence}
 
-## Current Team: 
+## Current Team:
 {team}
-
+{routing_context}
 ## Communication Decision Framework
 
-### DEFAULT POSITION: DO NOT SHARE
-This reflection should remain internal unless you can demonstrate clear operational necessity for team communication.
+Your agent has organizational rules that define mandatory communication obligations (listed in your system prompt). These rules specify WHO you report to, WHAT you report, and WHEN.
 
-### STEP 1: Operational Necessity Test
-Can you answer YES to ALL of these questions?
-- Does this reflection contain findings that would change how other agents perform their specific roles?
+### STEP 1: Organizational Obligation Check
+Review your organizational rules. Does this reflection contain information that triggers any of your mandatory reporting obligations? Examples:
+- Constraint status changes that must be reported to specific agents
+- Threshold breaches that require alerts to the team or operator
+- Health score changes that signal mode transitions
+- Safety events that require immediate escalation
+
+If this reflection triggers a mandatory reporting obligation, you MUST share. Identify the target agent(s) from your organizational rules.
+
+### STEP 2: Operational Value Assessment
+If no mandatory obligation is triggered, evaluate whether sharing would still provide operational value:
 - Would other agents make different decisions or take different actions based on this information?
-- Is this information NOT available to other agents through their normal monitoring and reporting procedures?
-- Does this require immediate coordination or input from multiple agents beyond existing protocols?
-- Would withholding this information create a specific operational risk or missed opportunity?
+- Does this information reveal risks, patterns, or opportunities that other agents cannot detect independently?
+- Would withholding this information create a specific operational risk?
 
-If you cannot answer YES to ALL questions above, DO NOT SHARE.
+If the reflection is routine and does not trigger obligations or provide operational value beyond what other agents already observe, DO NOT SHARE.
 
-### STEP 2: Content Significance Assessment
-Evaluate the metadata in context:
-- Do the importance, confidence, and surprise scores collectively indicate this contains exceptional insights?
-- Does the content reveal patterns, risks, or opportunities that are outside normal operational expectations?
-- Is this information actionable by other agents in ways that improve team performance?
-- Does this represent a deviation from standard operations that requires team awareness?
-
-If the metadata indicates routine or expected operational content, DO NOT SHARE.
-
-### STEP 3: Communication Channel Validation
-Before sharing, confirm:
-- Are existing escalation procedures insufficient for handling this information?
-- Would formal communication channels (alerts, notifications, reports) be inappropriate?
-- Do specific agents need this information for their specialized functions?
-- Would team-wide communication be more effective than existing protocols?
-
-If existing channels are adequate, DO NOT SHARE.
-
-### DECISION REQUIREMENT
-To justify sharing, you must demonstrate that:
-1. ALL operational necessity questions are answered YES
-2. Content significance clearly exceeds routine operations
-3. Existing communication channels are insufficient
+### STEP 3: Communication Type Validation
+Before sharing, confirm the communication type is appropriate:
+- Use Direct communication when specific agents need this information based on your organizational rules
+- Use Team communication only when the information affects the entire team's operating context
+- Respect any communication type restrictions listed in your routing constraints
 
 ## Response Format
 SHARE_DECISION: [Yes/No]
 COMMUNICATION_TYPE: [Direct/Team] (only if SHARE_DECISION is Yes)
-TARGET_AGENTS: [List specific agent IDs] (only if SHARE_DECISION is Yes)
+TARGET_AGENTS: [List specific agent IDs from your organizational rules] (only if SHARE_DECISION is Yes)
 AGENT_RESPONSES: [AgentID1:Yes, AgentID2:No, ...] (only if SHARE_DECISION is Yes)
-JUSTIFICATION: [If No: Explain which necessity test failed or why existing channels are adequate. If Yes: Demonstrate how all three steps justify communication, citing specific operational value and agent actions enabled.]",
-    reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence"],
+JUSTIFICATION: [If No: State which organizational rules were checked and why none were triggered. If Yes: Cite the specific organizational rule that requires this communication and identify the target agent(s).]",
+    reserved_fields: ["content", "team", "importance", "surprise_score", "contributing_memories_count", "confidence", "routing_context"],
     category: "memory_cycle",
     tags: ["reflection", "communication", "team"],
     description: "Determines if a reflection should be shared with other agents in the team."

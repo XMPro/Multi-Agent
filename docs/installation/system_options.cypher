@@ -144,13 +144,13 @@ ON CREATE SET
   }',
   so.config_memory_retrieval = '{
     "weights": {
-        "similarity_weight": 0.4,
-        "importance_weight": 0.3,
-        "surprise_weight": 0.2,
+        "similarity_weight": 0.3,
+        "importance_weight": 0.35,
+        "surprise_weight": 0.25,
         "recency_weight": 0.1
     },
     "type_weights": {
-        "observation_weight": 0.6,
+        "observation_weight": 0.8,
         "reflection_weight": 1.2,
         "plan_weight": 0.5,
         "decision_weight": 0.9,
@@ -357,13 +357,13 @@ ON MATCH SET
   }',
   so.config_memory_retrieval = '{
     "weights": {
-        "similarity_weight": 0.4,
-        "importance_weight": 0.3,
-        "surprise_weight": 0.2,
+        "similarity_weight": 0.3,
+        "importance_weight": 0.35,
+        "surprise_weight": 0.25,
         "recency_weight": 0.1
     },
     "type_weights": {
-        "observation_weight": 0.6,
+        "observation_weight": 0.8,
         "reflection_weight": 1.2,
         "plan_weight": 0.5,
         "decision_weight": 0.9,

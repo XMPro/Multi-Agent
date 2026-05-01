@@ -51,4 +51,13 @@ Proposes a three-layer world model stack required for industrial autonomy. AI la
 
 ---
 
+### Assurance-Burden Mismatch: File-Based vs Parametric Agent-Definition Architectures in Industrial OT
+**Date**: April 2026 · [PDF](2026.04.30_Parametric_vs_File_Based_Agent_Architectures.pdf)
+
+Argues that the file-based agent-definition pattern now standard across horizontal AI tooling (Anthropic Skills, OpenAI Codex Skills, Cursor rules, GitHub Copilot instructions, AGENTS.md) is structurally mismatched with the assurance requirements of industrial operational technology. Marshals 2025–2026 empirical evidence — attack success rates of 11.6–33.5% across production agent frameworks, 13.4% of marketplace skills containing critical-severity issues, and four production CVEs including one (CVE-2025-59536, CVSS 8.7) triggering RCE on repository open — to establish the file-based primitive as a production attack surface. Maps six independent OT regulatory frameworks (IEC 62443-4-1, NERC CIP-010, 21 CFR Part 11, GAMP 5, IEC 61511, EU AI Act Annex IV) onto four convergent control objectives — unique identification, change control, status accounting, and audit — and shows that unstructured markdown satisfies none natively, while typed, schema-validated parametric manifests with deterministic content hashes satisfy all four by construction and align with established OT primitives (PI Points, IEC 61131-3 function blocks, ISA-88 batch recipes, ISO 14224 equipment classes). Closes with recommendations for OEMs, regulators, practitioners, and standards bodies on selecting an appropriate primitive before file-based patterns become the default architectural inheritance of industrial AI.
+
+**Related docs**: [Profiles vs Instances](../docs/concepts/profiles-vs-instances.md) · [Prompt Injection](../docs/concepts/prompt-injection.md) · [Regulatory Compliance and Audit Trail](../docs/responsible-ai/regulatory-compliance-audit-trail.md) · [Compliance Mapping](../docs/responsible-ai/compliance-mapping.md) · [Responsible AI Policies](../docs/responsible-ai/policies.md) · [Deontic Principles](../docs/concepts/deontic-principles.md)
+
+---
+
 *For academic research foundations that inform the MAGS architecture, see [docs/research-foundations/](../docs/research-foundations/README.md).*

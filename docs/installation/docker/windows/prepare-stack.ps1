@@ -387,6 +387,11 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Description = "PostgreSQL (for backups)"
             },
             @{
+                Primary = "postgrest/postgrest:latest"
+                Fallbacks = @("postgrest/postgrest:v12.2.3", "postgrest/postgrest:v12.2.0")
+                Description = "PostgREST"
+            },
+            @{
                 Primary = "ollama/ollama:latest"
                 Fallbacks = @("ollama/ollama:0.5.7", "ollama/ollama:0.5.6")
                 Description = "Ollama"

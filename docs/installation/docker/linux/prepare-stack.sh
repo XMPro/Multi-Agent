@@ -408,6 +408,7 @@ if [ "$OFFLINE" = true ]; then
         ["timescale/timescaledb:latest-pg16"]="TimescaleDB"
         ["dpage/pgadmin4:latest"]="pgAdmin"
         ["postgres:16-alpine"]="PostgreSQL (for backups)"
+        ["postgrest/postgrest:latest"]="PostgREST"
         ["ollama/ollama:latest"]="Ollama"
         ["grafana/otel-lgtm:latest"]="OTEL LGTM (Grafana/Loki/Tempo/Mimir)"
         ["prometheuscommunity/postgres-exporter:latest"]="PostgreSQL Exporter"

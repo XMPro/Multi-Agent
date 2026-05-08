@@ -1,0 +1,32 @@
+# =================================================================
+# Hybrid deployment compose file
+# Selected by .env via:  COMPOSE_FILE=docker-compose.hybrid.yml
+#
+# Ollama runs natively on the host (with OLLAMA_HOST=0.0.0.0:11434).
+# Only the nginx HTTPS reverse proxy runs in Docker. nginx terminates
+# HTTPS on the published port and forwards plain HTTP to the host's
+# native Ollama via host.docker.internal.
+# =================================================================
+services:
+  nginx-ssl:
+    image: nginx:alpine
+    container_name: ollama-nginx-ssl
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_HTTPS_PORT:-11443}:443"
+    volumes:
+      - ./nginx/nginx.hybrid.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null --no-check-certificate https://localhost:443/api/version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -93,6 +93,23 @@ This setup provides instructions and scripts for deploying Ollama as a local Lar
 - Manual updates required
 - OS-specific configurations
 
+### Option 3: Hybrid (Native Ollama + Docker nginx for HTTPS)
+
+Install Ollama natively on the host and run only the nginx reverse proxy in Docker. The Docker container terminates HTTPS on port 11443 and forwards plain HTTP to the host's native Ollama on port 11434. This is a complete deployment path on its own — you do **not** need a prior Docker or native install.
+
+**Advantages:**
+- Native GPU performance (no Docker GPU passthrough needed)
+- Models live on the host filesystem — no Docker volume management
+- Simple Ollama upgrades via the official installer
+- HTTPS termination handled by a single nginx container — small footprint, easy to redeploy
+
+**Disadvantages:**
+- Two moving parts (host service + container) instead of one
+- Native Ollama must be configured to listen on a host-accessible interface (`0.0.0.0`), which has firewall implications
+- Container reaches the host via `host.docker.internal` — supported on Docker Desktop for Windows/macOS by default; Linux requires the explicit `host-gateway` mapping shown below
+
+See the [Hybrid Deployment](#hybrid-deployment) section below for the full procedure.
+
 ---
 
 ## Docker Deployment
@@ -218,6 +235,251 @@ ollama --version
 **Default Installation Path:**
 - Application: `/Applications/Ollama.app`
 - Models: `~/.ollama/models/`
+
+---
+
+## Hybrid Deployment
+
+This is a complete from-scratch deployment. You will install Ollama natively on the host and run a single nginx container in Docker that terminates HTTPS on port 11443 and proxies plain HTTP to the native Ollama on port 11434.
+
+### Recommended: use the installer
+
+The interactive installer at `management/install.ps1` (Windows) and `management/install.sh` (Linux) supports hybrid mode out of the box. Running it is the easiest path:
+
+**Windows:**
+
+```powershell
+cd C:\Docker\ollama
+.\management\install.ps1
+```
+
+When prompted, choose **2) Hybrid**. The installer will:
+
+- Verify native Ollama is installed (you'll be told to install it from <https://ollama.com/download> if missing).
+- Set `OLLAMA_HOST=0.0.0.0:11434` in your User environment, prompt you to restart the Ollama tray app, and verify the new binding.
+- Generate the hybrid `docker-compose.yml` and `nginx/nginx.conf` for you.
+- Generate self-signed SSL certificates (or accept CA-provided ones).
+- Start the nginx HTTPS proxy and verify it can reach your native Ollama.
+
+**Linux:**
+
+```bash
+cd ~/docker/ollama
+./management/install.sh
+```
+
+When prompted, choose **2) Hybrid**. The installer will:
+
+- Verify native Ollama is installed (you'll be told to install it via `curl -fsSL https://ollama.com/install.sh | sh` if missing).
+- Write a systemd override at `/etc/systemd/system/ollama.service.d/override.conf` setting `OLLAMA_HOST=0.0.0.0:11434`, then `systemctl daemon-reload && systemctl restart ollama`.
+- Generate the hybrid `docker-compose.yml` and `nginx/nginx.conf`.
+- Generate self-signed SSL certificates.
+- Start the nginx HTTPS proxy and verify it can reach your native Ollama.
+
+You can also pass the mode as a parameter to skip the prompt:
+
+```powershell
+.\management\install.ps1 -DeploymentMode hybrid
+```
+
+```bash
+./management/install.sh --deployment-mode hybrid
+```
+
+The remainder of this section is the **manual procedure** that the installer automates — useful as reference or if you prefer to set things up by hand.
+
+---
+
+
+```
+┌──────────────────────────────────────┐
+│  Client (HTTPS)                      │
+└─────────────────┬────────────────────┘
+                  │ https://<host>:11443
+┌─────────────────▼────────────────────┐
+│  nginx-ssl container                 │
+│  (Docker: ollama-nginx-ssl)          │
+└─────────────────┬────────────────────┘
+                  │ http://host.docker.internal:11434
+┌─────────────────▼────────────────────┐
+│  Ollama (native on host OS)          │
+│  Listens on 0.0.0.0:11434            │
+└──────────────────────────────────────┘
+```
+
+### Prerequisites
+
+- Docker Desktop installed and running (for Windows/macOS) or Docker Engine (Linux)
+- 8GB RAM minimum (16GB+ recommended)
+- 20GB+ free disk space (models can be large)
+- GPU drivers if you want native GPU acceleration (NVIDIA, AMD ROCm, or Apple Metal)
+
+### Step 1 — Install Ollama natively on the host
+
+Follow the platform-specific instructions in the [Native Installation](#native-installation) section above to install Ollama on Windows, Linux, or macOS. Once installed, verify:
+
+```powershell
+ollama --version
+```
+
+Do **not** start pulling models yet — first configure the listening interface (Step 2), because models pulled before that change are still accessible afterwards but the verification commands later assume Ollama is reachable from Docker.
+
+### Step 2 — Make native Ollama reachable from Docker
+
+By default Ollama binds only to `127.0.0.1:11434`, which Docker containers cannot reach. Set `OLLAMA_HOST` so Ollama listens on all host interfaces.
+
+**Windows (PowerShell):**
+
+```powershell
+[Environment]::SetEnvironmentVariable("OLLAMA_HOST", "0.0.0.0:11434", "User")
+```
+
+Then quit the Ollama tray icon and relaunch it (or restart the Ollama service). Verify:
+
+```powershell
+curl http://localhost:11434/api/version
+netstat -ano | findstr 11434
+```
+
+The first should return JSON with the Ollama version. The second should show `0.0.0.0:11434  LISTENING` (not `127.0.0.1:11434`). If you still see `127.0.0.1`, the env var did not take effect — confirm with `[Environment]::GetEnvironmentVariable("OLLAMA_HOST", "User")` and fully relaunch Ollama.
+
+**Linux (systemd):**
+
+```bash
+sudo systemctl edit ollama
+```
+
+Add:
+
+```ini
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+```
+
+Then:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+curl http://localhost:11434/api/version
+ss -tlnp | grep 11434
+```
+
+**macOS:** Set the env var in your shell profile (`~/.zshrc` or `~/.bash_profile`):
+
+```bash
+export OLLAMA_HOST=0.0.0.0:11434
+```
+
+Then restart the Ollama menubar app.
+
+> **Security note:** `0.0.0.0` exposes Ollama on every host interface, including any LAN you are connected to. If only Docker should reach it, restrict access at the firewall — for example, allow inbound to TCP 11434 only from the Docker bridge subnet (typically `172.16.0.0/12` on Docker Desktop). On Windows: New-NetFirewallRule with `-RemoteAddress 172.16.0.0/12`.
+
+### Step 3 — Pull the models you need (natively)
+
+Pull the embedding and inference models you intend to use. Models live under `~/.ollama/models/` on the host, not in any Docker volume.
+
+```powershell
+ollama pull nomic-embed-text
+ollama pull llama3.2:3b
+```
+
+See the [Native Installation - Direct Commands](#native-installation---direct-commands) section for more model commands.
+
+### Step 4 — Set up the Docker stack directory
+
+The repo ships parallel hybrid files alongside the Docker-mode ones — you don't need to author the compose or nginx config from scratch:
+
+```
+ollama/
+  docker-compose.yml             ← Docker mode
+  docker-compose.hybrid.yml      ← Hybrid mode (this file)
+  nginx/
+    nginx.conf                   ← Docker mode
+    nginx.hybrid.conf            ← Hybrid mode (this file)
+  certs/                         ← (created here)
+  management/
+```
+
+Copy or extract the `ollama/` directory to your deployment location:
+
+- Windows: `C:\Docker\ollama\`
+- Linux/macOS: `~/docker/ollama/`
+
+```powershell
+cd C:\Docker\ollama
+mkdir certs -ErrorAction SilentlyContinue
+```
+
+### Step 5 — Create the .env file
+
+The `.env` tells docker-compose which compose file to use (via the `COMPOSE_FILE` variable, which is one of [Docker Compose's built-in CLI environment variables](https://docs.docker.com/compose/environment-variables/envvars/#compose_file)). Create `.env` in the deployment directory with this content:
+
+```
+COMPOSE_FILE=docker-compose.hybrid.yml
+OLLAMA_HTTPS_PORT=11443
+OLLAMA_DOMAIN=localhost
+```
+
+After this, every `docker-compose ...` command in this directory will operate on `docker-compose.hybrid.yml` automatically — no `-f` flag needed.
+
+`docker-compose.hybrid.yml` mounts `nginx/nginx.hybrid.conf` into the container as `/etc/nginx/nginx.conf` (so the same file path works inside the container as the Docker-mode setup), and adds `extra_hosts: host.docker.internal:host-gateway` so the container can reach the host. No edits required.
+
+### Step 6 — Generate self-signed certificates
+
+The nginx container expects three files in `./certs/`: `server.crt`, `server.key`, and `ca.crt`. Generate them with a one-shot Docker run (no need to install OpenSSL on the host):
+
+```powershell
+cd C:\Docker\ollama
+docker run --rm -v ${PWD}\certs:/certs -w /certs alpine/openssl `
+    req -x509 -nodes -newkey rsa:4096 -days 365 `
+    -keyout server.key -out server.crt `
+    -subj "/CN=localhost" `
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+
+docker run --rm -v ${PWD}\certs:/certs -w /certs alpine sh -c "cp server.crt ca.crt"
+```
+
+(Linux/macOS: same commands, replace `${PWD}` with `$(pwd)`.)
+
+For production, replace these self-signed certificates with CA-issued ones — copy your issued `server.crt`, `server.key`, and `ca.crt` into `./certs/` and skip this step.
+
+### Step 7 — Bring the proxy up
+
+```powershell
+docker-compose up -d
+docker-compose logs -f nginx-ssl
+```
+
+Watch for nginx starting cleanly with no error lines. Press `Ctrl+C` to detach from the log follower once it looks quiet.
+
+### Step 8 — Verify end-to-end
+
+```powershell
+curl -k https://localhost:11443/api/version
+curl -k https://localhost:11443/api/tags
+```
+
+The first call proves nginx can reach the native Ollama. The second lists the models you pulled in Step 3. Both should return JSON.
+
+### Troubleshooting
+
+**502 Bad Gateway from nginx:**
+
+```powershell
+docker exec ollama-nginx-ssl wget -qO- http://host.docker.internal:11434/api/version
+```
+
+- Returns JSON → nginx config issue; re-check the `upstream` block in `nginx/nginx.conf`.
+- Connection refused / timeout → the container cannot reach the host's Ollama. Either `OLLAMA_HOST=0.0.0.0:11434` did not take effect (restart Ollama after setting the env var, see Step 2) or your firewall is blocking the Docker bridge subnet.
+
+**`host.docker.internal` does not resolve:**
+
+This name is provided automatically on Docker Desktop. On Linux Docker Engine, the `extra_hosts: host.docker.internal:host-gateway` line in `docker-compose.yml` (Step 5) handles it — confirm that line is present.
+
+**Certificate warnings in the browser / curl:**
+
+Self-signed certificates from Step 7 will trigger warnings. Either accept the warning, install `ca.crt` to your OS trust store, or replace with CA-issued certificates.
 
 ---
 

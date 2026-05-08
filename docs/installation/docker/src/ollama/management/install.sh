@@ -1,8 +1,12 @@
 #!/bin/bash
 # =================================================================
 # Ollama Installation Script for Linux
-# Description: Interactive installation wizard for Ollama Docker deployment
-# Version: 1.0.0
+# Description: Interactive installation wizard for Ollama
+#              Supports two deployment modes:
+#                docker  - Ollama runs in a Docker container (default)
+#                hybrid  - Ollama runs natively on the host; only nginx
+#                          HTTPS proxy runs in Docker
+# Version: 1.1.0
 # =================================================================
 
 # Color definitions
@@ -24,6 +28,7 @@ AUTO_START=false
 FORCE=false
 CERT_TYPE=""
 MACHINE_IPS_PARAM=""
+DEPLOYMENT_MODE=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -64,6 +69,10 @@ while [[ $# -gt 0 ]]; do
             MACHINE_IPS_PARAM="$2"
             shift 2
             ;;
+        --deployment-mode)
+            DEPLOYMENT_MODE="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
@@ -71,13 +80,19 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate deployment mode if provided
+if [ -n "$DEPLOYMENT_MODE" ] && [ "$DEPLOYMENT_MODE" != "docker" ] && [ "$DEPLOYMENT_MODE" != "hybrid" ]; then
+    echo "Invalid --deployment-mode: $DEPLOYMENT_MODE (must be 'docker' or 'hybrid')"
+    exit 1
+fi
+
 # Ensure we're in the ollama directory (not management subdirectory)
 if [[ $(basename "$PWD") == "management" ]]; then
     cd ..
 fi
 
 echo -e "${CYAN}==================================================================${NC}"
-echo -e "${CYAN}Ollama Docker Installation Script${NC}"
+echo -e "${CYAN}Ollama Installation Script (Docker / Hybrid)${NC}"
 echo -e "${CYAN}==================================================================${NC}"
 echo ""
 
@@ -99,6 +114,118 @@ fi
 echo -e "${GREEN}[OK] Docker Compose is available${NC}"
 
 echo ""
+
+# Deployment Mode Selection
+if [ -z "$DEPLOYMENT_MODE" ]; then
+    echo -e "${CYAN}Deployment Mode:${NC}"
+    echo -e "  1) Docker  - Ollama runs in a Docker container (default)"
+    echo -e "  2) Hybrid  - Ollama runs natively on the host; only nginx HTTPS proxy in Docker"
+    echo ""
+    echo -e "${GRAY}  Choose Hybrid if Ollama is already installed natively (the canonical Linux${NC}"
+    echo -e "${GRAY}  install via curl ... | sh + systemd), or if you prefer to manage Ollama and${NC}"
+    echo -e "${GRAY}  its models outside Docker (e.g. for cleaner GPU access).${NC}"
+    echo ""
+    read -p "Select deployment mode (1 or 2, default: 1): " mode_choice
+    if [ "$mode_choice" = "2" ]; then
+        DEPLOYMENT_MODE="hybrid"
+    else
+        DEPLOYMENT_MODE="docker"
+    fi
+fi
+echo -e "${GREEN}[OK] Deployment mode: $DEPLOYMENT_MODE${NC}"
+echo ""
+
+# Hybrid mode pre-flight: verify native Ollama is installed and listening on 0.0.0.0
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${CYAN}Hybrid Mode Pre-flight Checks${NC}"
+    echo -e "${GRAY}==================================================================${NC}"
+
+    # Check Ollama is installed natively
+    if ! command -v ollama &> /dev/null; then
+        echo -e "${RED}[ERROR] Native Ollama not found on the host.${NC}"
+        echo ""
+        echo -e "${YELLOW}Hybrid mode requires Ollama to be installed natively.${NC}"
+        echo -e "${YELLOW}Install steps:${NC}"
+        echo -e "  1. Run: ${CYAN}curl -fsSL https://ollama.com/install.sh | sh${NC}"
+        echo -e "  2. Verify: ${CYAN}ollama --version${NC}"
+        echo -e "  3. Confirm the systemd service is active: ${CYAN}systemctl status ollama${NC}"
+        echo -e "  4. Re-run this installer."
+        echo ""
+        exit 1
+    fi
+    OLLAMA_VERSION_OUTPUT=$(ollama --version 2>&1)
+    echo -e "${GREEN}[OK] Native Ollama found: ${OLLAMA_VERSION_OUTPUT}${NC}"
+
+    # Configure systemd override to bind Ollama to all interfaces
+    OVERRIDE_DIR="/etc/systemd/system/ollama.service.d"
+    OVERRIDE_FILE="$OVERRIDE_DIR/override.conf"
+
+    NEEDS_RESTART=false
+    if [ ! -f "$OVERRIDE_FILE" ] || ! grep -q 'OLLAMA_HOST=0.0.0.0:11434' "$OVERRIDE_FILE" 2>/dev/null; then
+        echo -e "${GRAY}Configuring systemd override to set OLLAMA_HOST=0.0.0.0:11434...${NC}"
+        if ! sudo mkdir -p "$OVERRIDE_DIR"; then
+            echo -e "${RED}[ERROR] Could not create $OVERRIDE_DIR (need sudo).${NC}"
+            exit 1
+        fi
+        echo -e "[Service]\nEnvironment=\"OLLAMA_HOST=0.0.0.0:11434\"" | sudo tee "$OVERRIDE_FILE" > /dev/null
+        echo -e "${GREEN}[OK] systemd override written: $OVERRIDE_FILE${NC}"
+        sudo systemctl daemon-reload
+        NEEDS_RESTART=true
+    else
+        echo -e "${GREEN}[OK] systemd override already configured${NC}"
+    fi
+
+    if [ "$NEEDS_RESTART" = true ]; then
+        echo -e "${GRAY}Restarting ollama.service...${NC}"
+        if ! sudo systemctl restart ollama; then
+            echo -e "${RED}[ERROR] Failed to restart ollama.service${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}[OK] ollama.service restarted${NC}"
+    fi
+
+    # Verify Ollama is reachable
+    echo -e "${GRAY}Verifying native Ollama is reachable...${NC}"
+    MAX_WAIT=30
+    WAITED=0
+    OLLAMA_READY=false
+    while [ $WAITED -lt $MAX_WAIT ]; do
+        if curl -sf "http://localhost:11434/api/version" > /dev/null 2>&1; then
+            OLLAMA_READY=true
+            break
+        fi
+        sleep 2
+        WAITED=$((WAITED + 2))
+        echo -n "."
+    done
+    echo ""
+    if [ "$OLLAMA_READY" = false ]; then
+        echo -e "${RED}[ERROR] Native Ollama is not responding on http://localhost:11434.${NC}"
+        echo -e "${YELLOW}  - Check the service:  systemctl status ollama${NC}"
+        echo -e "${YELLOW}  - Check the journal:  journalctl -u ollama -n 50${NC}"
+        echo -e "${YELLOW}  - Test manually:      curl http://localhost:11434/api/version${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[OK] Native Ollama is responding on port 11434${NC}"
+
+    # Verify Ollama is bound to 0.0.0.0 (not 127.0.0.1) so the container can reach it
+    if command -v ss &> /dev/null; then
+        LISTEN_LINE=$(ss -tlnp 2>/dev/null | grep ':11434' | head -1)
+    elif command -v netstat &> /dev/null; then
+        LISTEN_LINE=$(netstat -tln 2>/dev/null | grep ':11434' | head -1)
+    else
+        LISTEN_LINE=""
+    fi
+    if [ -n "$LISTEN_LINE" ] && echo "$LISTEN_LINE" | grep -q '127\.0\.0\.1:11434'; then
+        echo -e "${RED}[ERROR] Ollama is bound to 127.0.0.1:11434, not 0.0.0.0:11434.${NC}"
+        echo -e "${YELLOW}  Docker containers cannot reach 127.0.0.1 on the host.${NC}"
+        echo -e "${YELLOW}  Confirm the override file exists: cat $OVERRIDE_FILE${NC}"
+        echo -e "${YELLOW}  Then: sudo systemctl daemon-reload && sudo systemctl restart ollama${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[OK] Ollama is bound to all interfaces (Docker can reach it via host.docker.internal)${NC}"
+    echo ""
+fi
 
 # Check if Ollama container is already running
 echo -e "${GRAY}Checking existing Ollama containers...${NC}"
@@ -156,7 +283,13 @@ fi
 
 echo ""
 
-# GPU Detection
+# GPU Detection (Docker mode only — native Ollama handles its own GPU)
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}Skipping Docker GPU detection (native Ollama handles GPU directly)${NC}"
+    GPU_DRIVER="none"
+    DETECTED_GPU="none"
+    echo ""
+else
 echo -e "${GRAY}Detecting GPU configuration...${NC}"
 DETECTED_GPU="none"
 
@@ -236,6 +369,7 @@ else
 fi
 
 echo ""
+fi # end Docker-mode GPU detection
 
 # Port configuration
 read -p "HTTP API port (default: 11434): " port_choice
@@ -257,11 +391,19 @@ echo -e "${GRAY}HTTP API will be accessible on port: $PORT${NC}"
 echo ""
 
 # SSL Configuration
+# In hybrid mode SSL is mandatory — otherwise the Docker container has no purpose
+# (clients would talk to native Ollama directly on port 11434).
+GENERATE_SSL=false
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${CYAN}Hybrid mode: SSL is enabled automatically (the nginx container exists to provide HTTPS)${NC}"
+    ENABLE_SSL=true
+    ssl_choice="y"
+else
 echo -e "${CYAN}SSL/TLS Configuration:${NC}"
 echo -e "${GRAY}Ollama uses Nginx reverse proxy for HTTPS support${NC}"
 read -p "Enable SSL/TLS encryption? (y/n, default: n): " ssl_choice
+fi
 
-GENERATE_SSL=false
 if [[ "$ssl_choice" =~ ^[Yy]$ ]]; then
     ENABLE_SSL=true
     echo -e "${GREEN}[OK] SSL/TLS will be enabled${NC}"
@@ -382,41 +524,56 @@ fi
 
 echo ""
 
-# Create .env file from template
+# Create .env file
 echo -e "${GRAY}Creating configuration files...${NC}"
 
-if [ ! -f ".env.template" ]; then
-    echo -e "${RED}[ERROR] .env.template not found!${NC}"
-    echo -e "${YELLOW}Please ensure you're running this script from the ollama directory${NC}"
-    exit 1
-fi
-
-# Copy template to .env
-cp .env.template .env
-echo -e "${GREEN}[OK] Created .env file from template${NC}"
-
-# Update .env file with configuration
-sed -i "s/OLLAMA_PORT=.*/OLLAMA_PORT=$PORT/" .env
-sed -i "s/OLLAMA_HTTPS_PORT=.*/OLLAMA_HTTPS_PORT=$HTTPS_PORT/" .env
-sed -i "s/OLLAMA_ENABLE_SSL=.*/OLLAMA_ENABLE_SSL=$ENABLE_SSL/" .env
-sed -i "s/OLLAMA_DOMAIN=.*/OLLAMA_DOMAIN=$DOMAIN/" .env
-sed -i "s/OLLAMA_GPU_DRIVER=.*/OLLAMA_GPU_DRIVER=$GPU_DRIVER/" .env
-
-# Set Docker image based on GPU type
-if [ "$GPU_DRIVER" = "amd" ]; then
-    sed -i "s|OLLAMA_IMAGE=.*|OLLAMA_IMAGE=ollama/ollama:rocm|" .env
-    echo -e "${GREEN}[OK] Configured to use ROCm image (ollama/ollama:rocm)${NC}"
-    sed -i "s|HSA_OVERRIDE_GFX_VERSION=.*|HSA_OVERRIDE_GFX_VERSION=$HSA_GFX_OVERRIDE|" .env
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    # Hybrid mode: write a minimal .env with only the keys the hybrid compose actually uses.
+    # COMPOSE_FILE makes docker-compose pick the hybrid compose by default — no -f flag needed.
+    cat > .env <<EOF
+# =================================================================
+# Ollama Hybrid Deployment Configuration
+# Native Ollama runs on the host; only nginx HTTPS proxy runs in Docker.
+# =================================================================
+COMPOSE_FILE=docker-compose.hybrid.yml
+OLLAMA_HTTPS_PORT=$HTTPS_PORT
+OLLAMA_DOMAIN=$DOMAIN
+EOF
+    echo -e "${GREEN}[OK] Wrote hybrid .env (COMPOSE_FILE=docker-compose.hybrid.yml)${NC}"
 else
-    sed -i "s|OLLAMA_IMAGE=.*|OLLAMA_IMAGE=ollama/ollama:latest|" .env
-fi
+    # Docker mode: derive .env from .env.template
+    if [ ! -f ".env.template" ]; then
+        echo -e "${RED}[ERROR] .env.template not found!${NC}"
+        echo -e "${YELLOW}Please ensure you're running this script from the ollama directory${NC}"
+        exit 1
+    fi
 
-# Add COMPOSE_PROFILES if SSL is enabled
-if [ "$ENABLE_SSL" = true ]; then
-    echo "COMPOSE_PROFILES=ssl" >> .env
-fi
+    cp .env.template .env
+    echo -e "${GREEN}[OK] Created .env file from template${NC}"
 
-echo -e "${GREEN}[OK] Updated .env with configuration${NC}"
+    # Update .env file with configuration
+    sed -i "s/OLLAMA_PORT=.*/OLLAMA_PORT=$PORT/" .env
+    sed -i "s/OLLAMA_HTTPS_PORT=.*/OLLAMA_HTTPS_PORT=$HTTPS_PORT/" .env
+    sed -i "s/OLLAMA_ENABLE_SSL=.*/OLLAMA_ENABLE_SSL=$ENABLE_SSL/" .env
+    sed -i "s/OLLAMA_DOMAIN=.*/OLLAMA_DOMAIN=$DOMAIN/" .env
+    sed -i "s/OLLAMA_GPU_DRIVER=.*/OLLAMA_GPU_DRIVER=$GPU_DRIVER/" .env
+
+    # Set Docker image based on GPU type
+    if [ "$GPU_DRIVER" = "amd" ]; then
+        sed -i "s|OLLAMA_IMAGE=.*|OLLAMA_IMAGE=ollama/ollama:rocm|" .env
+        echo -e "${GREEN}[OK] Configured to use ROCm image (ollama/ollama:rocm)${NC}"
+        sed -i "s|HSA_OVERRIDE_GFX_VERSION=.*|HSA_OVERRIDE_GFX_VERSION=$HSA_GFX_OVERRIDE|" .env
+    else
+        sed -i "s|OLLAMA_IMAGE=.*|OLLAMA_IMAGE=ollama/ollama:latest|" .env
+    fi
+
+    # Add COMPOSE_PROFILES if SSL is enabled
+    if [ "$ENABLE_SSL" = true ]; then
+        echo "COMPOSE_PROFILES=ssl" >> .env
+    fi
+
+    echo -e "${GREEN}[OK] Updated .env with configuration${NC}"
+fi
 
 # Update docker-compose.yml based on GPU type
 if [ "$GPU_DRIVER" = "amd" ]; then
@@ -460,6 +617,22 @@ elif [ "$GPU_DRIVER" = "nvidia" ]; then
 
     mv docker-compose.yml.tmp docker-compose.yml
     echo -e "${GREEN}[OK] NVIDIA GPU support enabled in docker-compose.yml${NC}"
+fi
+
+# Hybrid mode: verify the parallel hybrid compose + nginx config exist.
+# These are committed parallel files (not generated) — selected by COMPOSE_FILE in .env.
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    if [ ! -f "docker-compose.hybrid.yml" ]; then
+        echo -e "${RED}[ERROR] docker-compose.hybrid.yml is missing.${NC}"
+        echo -e "${YELLOW}  Re-extract the source ZIP — this file ships alongside docker-compose.yml.${NC}"
+        exit 1
+    fi
+    if [ ! -f "nginx/nginx.hybrid.conf" ]; then
+        echo -e "${RED}[ERROR] nginx/nginx.hybrid.conf is missing.${NC}"
+        echo -e "${YELLOW}  Re-extract the source ZIP — this file ships alongside nginx/nginx.conf.${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[OK] Hybrid compose and nginx config present (selected via COMPOSE_FILE in .env)${NC}"
 fi
 
 echo ""
@@ -524,86 +697,120 @@ if [ "$FORCE" = true ]; then
     exit 0
 fi
 
-# Ask if user wants to start Ollama now
+# Ask if user wants to start the service now
 echo ""
-read -p "Start Ollama service now? (y/n, default: y): " start_choice
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    read -p "Start nginx HTTPS proxy now? (y/n, default: y): " start_choice
+else
+    read -p "Start Ollama service now? (y/n, default: y): " start_choice
+fi
 if [[ "$start_choice" =~ ^[Nn]$ ]]; then
     echo ""
     echo -e "${CYAN}==================================================================${NC}"
     echo -e "${GREEN}Configuration Complete!${NC}"
     echo -e "${CYAN}==================================================================${NC}"
     echo ""
-    echo -e "${GRAY}To start Ollama later, run:${NC}"
+    echo -e "${GRAY}To start later, run:${NC}"
     echo -e "${GRAY}  docker-compose up -d${NC}"
     echo ""
     exit 0
 fi
 
-# Start Docker containers
-echo -e "${GRAY}Starting Ollama service...${NC}"
-echo -e "${GRAY}This may take a minute...${NC}"
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    # Hybrid mode: only nginx-ssl needs to start. Native Ollama is already running.
+    echo -e "${GRAY}Starting nginx HTTPS proxy...${NC}"
+    docker-compose up -d
 
-docker-compose up -d
-
-# Wait for health check
-echo -e "${GRAY}Waiting for Ollama to become healthy...${NC}"
-MAX_WAIT=60
-WAITED=0
-HEALTHY=false
-
-while [ $WAITED -lt $MAX_WAIT ]; do
-    sleep 2
-    WAITED=$((WAITED + 2))
-    
-    if curl -sf "http://localhost:$PORT/api/version" > /dev/null 2>&1; then
-        HEALTHY=true
-        break
-    fi
-    
-    echo -n "."
-done
-
-echo ""
-
-if [ "$HEALTHY" = true ]; then
-    echo -e "${GREEN}[OK] Ollama service is running and healthy${NC}"
-
-    # Verify GPU access if GPU is enabled
-    if [ "$GPU_DRIVER" = "amd" ]; then
-        echo ""
-        echo -e "${CYAN}Verifying AMD GPU access...${NC}"
-        sleep 3
-        if docker exec ollama rocm-smi &> /dev/null 2>&1; then
-            echo -e "${GREEN}[OK] AMD GPU accessible via ROCm in container${NC}"
-        else
-            echo -e "${YELLOW}⚠ AMD GPU not accessible in container${NC}"
-            echo -e "${GRAY}  Verify ROCm drivers are installed and user is in render/video groups${NC}"
-            echo -e "${GRAY}  Run: sudo usermod -a -G render,video \$USER && sudo reboot${NC}"
+    echo -e "${GRAY}Waiting for nginx to become ready...${NC}"
+    MAX_WAIT=30
+    WAITED=0
+    HEALTHY=false
+    while [ $WAITED -lt $MAX_WAIT ]; do
+        sleep 2
+        WAITED=$((WAITED + 2))
+        if curl -sfk "https://localhost:$HTTPS_PORT/api/version" > /dev/null 2>&1; then
+            HEALTHY=true
+            break
         fi
-    elif [ "$GPU_DRIVER" = "nvidia" ]; then
-        echo ""
-        echo -e "${CYAN}Verifying NVIDIA GPU access...${NC}"
-        sleep 3
-        if docker exec ollama nvidia-smi &> /dev/null 2>&1; then
-            echo -e "${GREEN}[OK] NVIDIA GPU accessible in container${NC}"
-        else
-            echo -e "${YELLOW}⚠ NVIDIA GPU not accessible in container${NC}"
-            echo -e "${GRAY}  Verify nvidia-container-toolkit is installed${NC}"
-        fi
-    fi
+        echo -n "."
+    done
+    echo ""
 
-    # Start nginx-ssl if SSL is enabled
-    if [ "$ENABLE_SSL" = true ]; then
-        echo -e "${GRAY}Starting nginx-ssl service...${NC}"
-        docker-compose up -d nginx-ssl 2>&1 > /dev/null
-        sleep 3
-        echo -e "${GREEN}[OK] nginx-ssl service started${NC}"
+    if [ "$HEALTHY" = true ]; then
+        echo -e "${GREEN}[OK] nginx HTTPS proxy is running and reaching native Ollama${NC}"
+    else
+        echo -e "${YELLOW}⚠ nginx started but HTTPS health check timed out${NC}"
+        echo -e "${GRAY}  Probe from inside the container to find the cause:${NC}"
+        echo -e "${GRAY}    docker exec ollama-nginx-ssl wget -qO- http://host.docker.internal:11434/api/version${NC}"
+        echo -e "${GRAY}  See logs: docker-compose logs nginx-ssl${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠ Ollama service started but health check timed out${NC}"
-    echo -e "${GRAY}  Check logs with: docker-compose logs ollama${NC}"
-    if [ "$ENABLE_SSL" = true ]; then
-        echo -e "${GRAY}  nginx-ssl will start once ollama becomes healthy${NC}"
+    # Docker mode: full Ollama-in-container startup with health check
+    echo -e "${GRAY}Starting Ollama service...${NC}"
+    echo -e "${GRAY}This may take a minute...${NC}"
+
+    docker-compose up -d
+
+    # Wait for health check
+    echo -e "${GRAY}Waiting for Ollama to become healthy...${NC}"
+    MAX_WAIT=60
+    WAITED=0
+    HEALTHY=false
+
+    while [ $WAITED -lt $MAX_WAIT ]; do
+        sleep 2
+        WAITED=$((WAITED + 2))
+
+        if curl -sf "http://localhost:$PORT/api/version" > /dev/null 2>&1; then
+            HEALTHY=true
+            break
+        fi
+
+        echo -n "."
+    done
+
+    echo ""
+
+    if [ "$HEALTHY" = true ]; then
+        echo -e "${GREEN}[OK] Ollama service is running and healthy${NC}"
+
+        # Verify GPU access if GPU is enabled
+        if [ "$GPU_DRIVER" = "amd" ]; then
+            echo ""
+            echo -e "${CYAN}Verifying AMD GPU access...${NC}"
+            sleep 3
+            if docker exec ollama rocm-smi &> /dev/null 2>&1; then
+                echo -e "${GREEN}[OK] AMD GPU accessible via ROCm in container${NC}"
+            else
+                echo -e "${YELLOW}⚠ AMD GPU not accessible in container${NC}"
+                echo -e "${GRAY}  Verify ROCm drivers are installed and user is in render/video groups${NC}"
+                echo -e "${GRAY}  Run: sudo usermod -a -G render,video \$USER && sudo reboot${NC}"
+            fi
+        elif [ "$GPU_DRIVER" = "nvidia" ]; then
+            echo ""
+            echo -e "${CYAN}Verifying NVIDIA GPU access...${NC}"
+            sleep 3
+            if docker exec ollama nvidia-smi &> /dev/null 2>&1; then
+                echo -e "${GREEN}[OK] NVIDIA GPU accessible in container${NC}"
+            else
+                echo -e "${YELLOW}⚠ NVIDIA GPU not accessible in container${NC}"
+                echo -e "${GRAY}  Verify nvidia-container-toolkit is installed${NC}"
+            fi
+        fi
+
+        # Start nginx-ssl if SSL is enabled
+        if [ "$ENABLE_SSL" = true ]; then
+            echo -e "${GRAY}Starting nginx-ssl service...${NC}"
+            docker-compose up -d nginx-ssl 2>&1 > /dev/null
+            sleep 3
+            echo -e "${GREEN}[OK] nginx-ssl service started${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠ Ollama service started but health check timed out${NC}"
+        echo -e "${GRAY}  Check logs with: docker-compose logs ollama${NC}"
+        if [ "$ENABLE_SSL" = true ]; then
+            echo -e "${GRAY}  nginx-ssl will start once ollama becomes healthy${NC}"
+        fi
     fi
 fi
 
@@ -626,8 +833,15 @@ echo -e "${CYAN}Model Downloads:${NC}"
 echo -e "${GRAY}Ollama requires at least one embedding model to function properly${NC}"
 echo ""
 echo -e "${GRAY}Download models using:${NC}"
-echo -e "${GRAY}  docker exec ollama ollama pull nomic-embed-text:latest${NC}"
-echo -e "${GRAY}  docker exec ollama ollama pull llama3.2:3b${NC}"
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}  ollama pull nomic-embed-text:latest${NC}"
+    echo -e "${GRAY}  ollama pull llama3.2:3b${NC}"
+    echo ""
+    echo -e "${GRAY}(Hybrid mode: models are managed natively, not via docker exec)${NC}"
+else
+    echo -e "${GRAY}  docker exec ollama ollama pull nomic-embed-text:latest${NC}"
+    echo -e "${GRAY}  docker exec ollama ollama pull llama3.2:3b${NC}"
+fi
 echo ""
 echo -e "${GRAY}List available models: https://ollama.com/library${NC}"
 echo ""
@@ -638,58 +852,98 @@ echo ""
 
 # Display connection information
 echo -e "${CYAN}Connection Information:${NC}"
-echo -e "${GRAY}  HTTP API:  http://localhost:$PORT${NC}"
-for ip in "${MACHINE_IPS[@]}"; do
-    echo -e "${GRAY}             http://$ip:$PORT${NC}"
-done
-
-if [ "$ENABLE_SSL" = true ]; then
-    echo -e "${GRAY}  HTTPS API: https://localhost:$HTTPS_PORT${NC}"
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}  HTTP API:  http://localhost:11434  (native Ollama on host, not via Docker)${NC}"
+    echo -e "${GRAY}  HTTPS API: https://localhost:$HTTPS_PORT  (via nginx Docker container)${NC}"
     for ip in "${MACHINE_IPS[@]}"; do
         echo -e "${GRAY}             https://$ip:$HTTPS_PORT${NC}"
     done
     echo ""
     echo -e "${YELLOW}  CA Certificate: certs/ca.crt (distribute to clients)${NC}"
+else
+    echo -e "${GRAY}  HTTP API:  http://localhost:$PORT${NC}"
+    for ip in "${MACHINE_IPS[@]}"; do
+        echo -e "${GRAY}             http://$ip:$PORT${NC}"
+    done
+
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}  HTTPS API: https://localhost:$HTTPS_PORT${NC}"
+        for ip in "${MACHINE_IPS[@]}"; do
+            echo -e "${GRAY}             https://$ip:$HTTPS_PORT${NC}"
+        done
+        echo ""
+        echo -e "${YELLOW}  CA Certificate: certs/ca.crt (distribute to clients)${NC}"
+    fi
 fi
 
 echo ""
-echo -e "${GRAY}GPU Support: $GPU_DRIVER${NC}"
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}Deployment: Hybrid (native Ollama + Docker nginx)${NC}"
+else
+    echo -e "${GRAY}GPU Support: $GPU_DRIVER${NC}"
+fi
 echo ""
 
 # Display firewall configuration
 echo -e "${CYAN}Firewall Configuration:${NC}"
 echo -e "${GRAY}To allow external access, configure your firewall:${NC}"
 echo ""
-echo -e "${GRAY}For ufw:${NC}"
-echo -e "${GRAY}  sudo ufw allow $PORT/tcp${NC}"
-if [ "$ENABLE_SSL" = true ]; then
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}For ufw:${NC}"
     echo -e "${GRAY}  sudo ufw allow $HTTPS_PORT/tcp${NC}"
-fi
-echo -e "${GRAY}  sudo ufw reload${NC}"
-echo ""
-echo -e "${GRAY}For firewalld:${NC}"
-echo -e "${GRAY}  sudo firewall-cmd --permanent --add-port=$PORT/tcp${NC}"
-if [ "$ENABLE_SSL" = true ]; then
+    echo -e "${GRAY}  sudo ufw reload${NC}"
+    echo ""
+    echo -e "${GRAY}For firewalld:${NC}"
     echo -e "${GRAY}  sudo firewall-cmd --permanent --add-port=$HTTPS_PORT/tcp${NC}"
+    echo -e "${GRAY}  sudo firewall-cmd --reload${NC}"
+    echo ""
+    echo -e "${GRAY}Note: native Ollama listens on 0.0.0.0:11434 already. To restrict that to${NC}"
+    echo -e "${GRAY}      Docker only (recommended), allow inbound 11434 only from the Docker${NC}"
+    echo -e "${GRAY}      bridge subnet (typically 172.16.0.0/12).${NC}"
+else
+    echo -e "${GRAY}For ufw:${NC}"
+    echo -e "${GRAY}  sudo ufw allow $PORT/tcp${NC}"
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}  sudo ufw allow $HTTPS_PORT/tcp${NC}"
+    fi
+    echo -e "${GRAY}  sudo ufw reload${NC}"
+    echo ""
+    echo -e "${GRAY}For firewalld:${NC}"
+    echo -e "${GRAY}  sudo firewall-cmd --permanent --add-port=$PORT/tcp${NC}"
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}  sudo firewall-cmd --permanent --add-port=$HTTPS_PORT/tcp${NC}"
+    fi
+    echo -e "${GRAY}  sudo firewall-cmd --reload${NC}"
 fi
-echo -e "${GRAY}  sudo firewall-cmd --reload${NC}"
 echo ""
 
 # Test commands
 echo -e "${CYAN}Test Commands:${NC}"
-echo -e "${GRAY}  curl http://localhost:$PORT/api/version${NC}"
-if [ "$ENABLE_SSL" = true ]; then
-    echo -e "${GRAY}  curl -k https://localhost:$HTTPS_PORT/api/version${NC}"
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}  curl http://localhost:11434/api/version    (direct to native Ollama)${NC}"
+    echo -e "${GRAY}  curl -k https://localhost:$HTTPS_PORT/api/version    (via nginx HTTPS proxy)${NC}"
+else
+    echo -e "${GRAY}  curl http://localhost:$PORT/api/version${NC}"
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}  curl -k https://localhost:$HTTPS_PORT/api/version${NC}"
+    fi
 fi
 echo ""
 
 # Management commands
 echo -e "${CYAN}Management Commands:${NC}"
-echo -e "${GRAY}  Status:  ./management/manage-ollama.sh status${NC}"
-echo -e "${GRAY}  Logs:    ./management/manage-ollama.sh logs${NC}"
-echo -e "${GRAY}  Models:  ./management/pull-models.sh${NC}"
-if [ "$ENABLE_SSL" = true ]; then
-    echo -e "${GRAY}  SSL:     ./management/manage-ssl.sh status${NC}"
+if [ "$DEPLOYMENT_MODE" = "hybrid" ]; then
+    echo -e "${GRAY}  nginx logs:    docker-compose logs -f nginx-ssl${NC}"
+    echo -e "${GRAY}  nginx status:  docker-compose ps${NC}"
+    echo -e "${GRAY}  Models:        ollama list  /  ollama pull <name>  (native commands)${NC}"
+    echo -e "${GRAY}  SSL:           ./management/manage-ssl.sh status${NC}"
+else
+    echo -e "${GRAY}  Status:  ./management/manage-ollama.sh status${NC}"
+    echo -e "${GRAY}  Logs:    ./management/manage-ollama.sh logs${NC}"
+    echo -e "${GRAY}  Models:  ./management/pull-models.sh${NC}"
+    if [ "$ENABLE_SSL" = true ]; then
+        echo -e "${GRAY}  SSL:     ./management/manage-ssl.sh status${NC}"
+    fi
 fi
 echo ""
 echo -e "${CYAN}==================================================================${NC}"

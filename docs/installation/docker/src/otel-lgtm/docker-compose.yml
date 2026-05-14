@@ -25,6 +25,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       # Enable logging for components (set to true for verbose)
       - ENABLE_LOGS_ALL=${ENABLE_LOGS_ALL:-false}
+      # Bearer token consumed by bearertokenauth extension in otelcol-config.yaml.
+      # Agents must send `Authorization: Bearer <this>` on OTLP requests.
+      - OTEL_INGEST_TOKEN=${OTEL_INGEST_TOKEN:?OTEL_INGEST_TOKEN must be set in .env}
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/health > /dev/null || exit 1"]
       interval: 30s
@@ -87,7 +90,10 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Nginx reverse proxy for Grafana HTTPS (optional - enabled with ssl profile)
+  # Nginx reverse proxy for HTTPS — fronts both Grafana and the OTLP receivers
+  # (optional — enabled with the `ssl` compose profile).
+  # Plain ports 4317/4318 on the otel-lgtm container remain exposed; nginx adds
+  # TLS-wrapped variants on OTEL_HTTPS_PORT (HTTP) and OTEL_GRPCS_PORT (gRPC).
   grafana-nginx-ssl:
     image: nginx:alpine
     container_name: otel-grafana-nginx-ssl
@@ -96,6 +102,8 @@ services:
       - ssl
     ports:
       - "${GRAFANA_HTTPS_PORT:-3444}:443"
+      - "${OTEL_HTTPS_PORT:-4319}:4319"   # OTLP HTTP over TLS -> otel-lgtm:4318
+      - "${OTEL_GRPCS_PORT:-4327}:4327"   # OTLP gRPC over TLS -> otel-lgtm:4317
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certs/server.crt:/etc/nginx/certs/server.crt:ro

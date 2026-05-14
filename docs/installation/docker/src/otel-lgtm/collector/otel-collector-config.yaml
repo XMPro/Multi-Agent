@@ -4,14 +4,27 @@
 # from infrastructure services (Neo4j, TimescaleDB, MQTT, Milvus)
 # =================================================================
 
+extensions:
+  # Bearer-token auth for OTLP ingest. Agents must send
+  # `Authorization: Bearer <OTEL_INGEST_TOKEN>` on every OTLP request.
+  # The token is sourced from the OTEL_INGEST_TOKEN env var (see docker-compose.yml).
+  bearertokenauth:
+    scheme: "Bearer"
+    tokens:
+      - "${env:OTEL_INGEST_TOKEN}"
+
 receivers:
   # OTLP receiver for agent traces, metrics, and logs
   otlp:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
+        auth:
+          authenticator: bearertokenauth
       http:
         endpoint: 0.0.0.0:4318
+        auth:
+          authenticator: bearertokenauth
 
   # Prometheus receiver to scrape infrastructure service metrics
   prometheus:
@@ -67,6 +80,7 @@ exporters:
     endpoint: http://localhost:3100/otlp
 
 service:
+  extensions: [bearertokenauth]
   pipelines:
     metrics:
       receivers: [otlp, prometheus]

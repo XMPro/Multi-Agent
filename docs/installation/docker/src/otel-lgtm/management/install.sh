@@ -19,9 +19,12 @@ GRAFANA_PORT="3001"
 GRAFANA_HTTPS_PORT="3444"
 OTEL_GRPC_PORT="4317"
 OTEL_HTTP_PORT="4318"
+OTEL_HTTPS_PORT="4319"
+OTEL_GRPCS_PORT="4327"
 ENABLE_SSL=false
 DOMAIN="localhost"
 GRAFANA_PASSWORD=""
+INGEST_TOKEN=""
 AUTO_START=false
 FORCE=false
 CERT_TYPE=""
@@ -66,12 +69,36 @@ while [[ $# -gt 0 ]]; do
             MACHINE_IPS_PARAM="$2"
             shift 2
             ;;
+        --ingest-token)
+            INGEST_TOKEN="$2"
+            shift 2
+            ;;
+        --otel-https-port)
+            OTEL_HTTPS_PORT="$2"
+            shift 2
+            ;;
+        --otel-grpcs-port)
+            OTEL_GRPCS_PORT="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
             ;;
     esac
 done
+
+# Generate a cryptographically random 32-byte (64 hex char) bearer token if none supplied.
+if [ -z "$INGEST_TOKEN" ]; then
+    if command -v openssl &> /dev/null; then
+        INGEST_TOKEN=$(openssl rand -hex 32)
+    elif [ -r /dev/urandom ]; then
+        INGEST_TOKEN=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+    else
+        echo -e "${RED}[ERROR] Cannot generate ingest token: openssl and /dev/urandom both unavailable${NC}"
+        exit 1
+    fi
+fi
 
 # Ensure we're in the otel-lgtm directory (not management subdirectory)
 if [[ $(basename "$PWD") == "management" ]]; then
@@ -348,9 +375,12 @@ sed -i "s/GRAFANA_PORT=.*/GRAFANA_PORT=$GRAFANA_PORT/" .env
 sed -i "s/GRAFANA_HTTPS_PORT=.*/GRAFANA_HTTPS_PORT=$GRAFANA_HTTPS_PORT/" .env
 sed -i "s/OTEL_GRPC_PORT=.*/OTEL_GRPC_PORT=$OTEL_GRPC_PORT/" .env
 sed -i "s/OTEL_HTTP_PORT=.*/OTEL_HTTP_PORT=$OTEL_HTTP_PORT/" .env
+sed -i "s/OTEL_HTTPS_PORT=.*/OTEL_HTTPS_PORT=$OTEL_HTTPS_PORT/" .env
+sed -i "s/OTEL_GRPCS_PORT=.*/OTEL_GRPCS_PORT=$OTEL_GRPCS_PORT/" .env
 sed -i "s/OTEL_LGTM_ENABLE_SSL=.*/OTEL_LGTM_ENABLE_SSL=$ENABLE_SSL/" .env
 sed -i "s/OTEL_LGTM_DOMAIN=.*/OTEL_LGTM_DOMAIN=$DOMAIN/" .env
 sed -i "s/GRAFANA_ADMIN_PASSWORD=.*/GRAFANA_ADMIN_PASSWORD=$GRAFANA_PASSWORD/" .env
+sed -i "s/OTEL_INGEST_TOKEN=.*/OTEL_INGEST_TOKEN=$INGEST_TOKEN/" .env
 
 # Try to read credentials from other service .env files
 # TimescaleDB
@@ -526,6 +556,8 @@ done
 
 if [ "$ENABLE_SSL" = true ]; then
     echo -e "${GRAY}  Grafana HTTPS: https://localhost:$GRAFANA_HTTPS_PORT${NC}"
+    echo -e "${GRAY}  OTLP HTTPS:    https://localhost:$OTEL_HTTPS_PORT${NC}"
+    echo -e "${GRAY}  OTLP gRPC TLS: localhost:$OTEL_GRPCS_PORT${NC}"
     for ip in "${MACHINE_IPS[@]}"; do
         echo -e "${GRAY}                 https://$ip:$GRAFANA_HTTPS_PORT${NC}"
     done
@@ -539,9 +571,19 @@ echo -e "${GRAY}  Username: admin${NC}"
 echo -e "${GRAY}  Password: $GRAFANA_PASSWORD${NC}"
 
 echo ""
+echo -e "${CYAN}OTLP Ingest Token (agents must send this):${NC}"
+echo -e "${YELLOW}  $INGEST_TOKEN${NC}"
+echo -e "${GRAY}  Stored in: .env (OTEL_INGEST_TOKEN). Rotate by editing and restarting otel-lgtm.${NC}"
+
+echo ""
 echo -e "${CYAN}OpenTelemetry SDK Configuration:${NC}"
-echo -e "${GRAY}  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:$OTEL_HTTP_PORT${NC}"
+if [ "$ENABLE_SSL" = true ]; then
+    echo -e "${GRAY}  OTEL_EXPORTER_OTLP_ENDPOINT=https://localhost:$OTEL_HTTPS_PORT${NC}"
+else
+    echo -e "${GRAY}  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:$OTEL_HTTP_PORT${NC}"
+fi
 echo -e "${GRAY}  OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf${NC}"
+echo -e "${GRAY}  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer%20$INGEST_TOKEN${NC}"
 
 echo ""
 
@@ -555,6 +597,8 @@ echo -e "${GRAY}  sudo ufw allow $OTEL_GRPC_PORT/tcp${NC}"
 echo -e "${GRAY}  sudo ufw allow $OTEL_HTTP_PORT/tcp${NC}"
 if [ "$ENABLE_SSL" = true ]; then
     echo -e "${GRAY}  sudo ufw allow $GRAFANA_HTTPS_PORT/tcp${NC}"
+    echo -e "${GRAY}  sudo ufw allow $OTEL_HTTPS_PORT/tcp${NC}"
+    echo -e "${GRAY}  sudo ufw allow $OTEL_GRPCS_PORT/tcp${NC}"
 fi
 echo -e "${GRAY}  sudo ufw reload${NC}"
 echo ""

@@ -1,6 +1,6 @@
 services:
   otel-lgtm:
-    image: grafana/otel-lgtm:latest
+    image: grafana/otel-lgtm:0.27.1
     container_name: otel-lgtm
     restart: unless-stopped
     ports:
@@ -14,6 +14,11 @@ services:
       - ./collector/otel-collector-config.yaml:/otel-lgtm/otelcol-config.yaml:ro
       # Custom Prometheus scrape configuration for infrastructure metrics
       - ./collector/prometheus.yml:/otel-lgtm/prometheus.yaml:ro
+      # Grafana custom.ini overrides (parquet-buffer workaround for unified-storage init race in Grafana 13.0.1).
+      # Mounted at ${CWD}/conf/custom.ini — Grafana's binary picks this up because the otel-lgtm
+      # entrypoint runs `./bin/grafana server` from /otel-lgtm/grafana with no --config flag, so its
+      # setHomePath() resolves HomePath to CWD and loads conf/custom.ini if present.
+      - ./grafana-custom.ini:/otel-lgtm/grafana/conf/custom.ini:ro
     environment:
       # Grafana admin credentials
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}

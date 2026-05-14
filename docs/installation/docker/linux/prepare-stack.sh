@@ -410,7 +410,7 @@ if [ "$OFFLINE" = true ]; then
         ["postgres:16-alpine"]="PostgreSQL (for backups)"
         ["postgrest/postgrest:latest"]="PostgREST"
         ["ollama/ollama:latest"]="Ollama"
-        ["grafana/otel-lgtm:latest"]="OTEL LGTM (Grafana/Loki/Tempo/Mimir)"
+        ["grafana/otel-lgtm:0.27.1"]="OTEL LGTM (Grafana/Loki/Tempo/Mimir)"
         ["prometheuscommunity/postgres-exporter:latest"]="PostgreSQL Exporter"
         ["sapcc/mosquitto-exporter:latest"]="Mosquitto Exporter"
     )

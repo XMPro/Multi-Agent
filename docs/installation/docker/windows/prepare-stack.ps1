@@ -397,8 +397,8 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 Description = "Ollama"
             },
             @{
-                Primary = "grafana/otel-lgtm:latest"
-                Fallbacks = @()
+                Primary = "grafana/otel-lgtm:0.27.1"
+                Fallbacks = @("grafana/otel-lgtm:0.25.0")
                 Description = "OTEL LGTM (Grafana/Loki/Tempo/Mimir)"
             },
             @{

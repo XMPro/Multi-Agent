@@ -1,7 +1,11 @@
 # =================================================================
 # Ollama Installation Script for Windows
-# Description: Interactive installation wizard for Ollama Docker deployment
-# Version: 1.0.0
+# Description: Interactive installation wizard for Ollama
+#              Supports two deployment modes:
+#                docker  - Ollama runs in a Docker container (default)
+#                hybrid  - Ollama runs natively on the host; only nginx
+#                          HTTPS proxy runs in Docker
+# Version: 1.1.0
 # =================================================================
 
 param(
@@ -16,7 +20,9 @@ param(
     [string]$GPUDriver = "none",
     [string]$HsaGfxOverride = "",
     [switch]$AutoStart = $false,
-    [switch]$Force = $false
+    [switch]$Force = $false,
+    [ValidateSet("docker", "hybrid", "")]
+    [string]$DeploymentMode = ""
 )
 
 # Ensure we're in the ollama directory (not management subdirectory)
@@ -26,7 +32,7 @@ if ($CurrentLocation.Path.EndsWith("management")) {
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan
-Write-Host "Ollama Docker Installation Script" -ForegroundColor Cyan
+Write-Host "Ollama Installation Script (Docker / Hybrid)" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -52,6 +58,106 @@ try {
 }
 
 Write-Host ""
+
+# Deployment Mode Selection
+if (-not $DeploymentMode) {
+    Write-Host "Deployment Mode:" -ForegroundColor Cyan
+    Write-Host "  1) Docker  - Ollama runs in a Docker container (default)" -ForegroundColor White
+    Write-Host "  2) Hybrid  - Ollama runs natively on the host; only nginx HTTPS proxy in Docker" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Choose Hybrid if you have a GPU that's awkward to pass through to Docker" -ForegroundColor Gray
+    Write-Host "  (e.g. AMD on Windows), if Ollama is already installed natively, or if you" -ForegroundColor Gray
+    Write-Host "  prefer to manage Ollama and its models outside Docker." -ForegroundColor Gray
+    Write-Host ""
+    $ModeChoice = Read-Host "Select deployment mode (1 or 2, default: 1)"
+    if ($ModeChoice -eq "2") {
+        $DeploymentMode = "hybrid"
+    } else {
+        $DeploymentMode = "docker"
+    }
+}
+Write-Host "[OK] Deployment mode: $DeploymentMode" -ForegroundColor Green
+Write-Host ""
+
+# Hybrid mode pre-flight: verify native Ollama is installed and listening on 0.0.0.0
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "Hybrid Mode Pre-flight Checks" -ForegroundColor Cyan
+    Write-Host "==================================================================" -ForegroundColor Gray
+
+    # Check Ollama is installed natively
+    $OllamaCmd = Get-Command ollama -ErrorAction SilentlyContinue
+    if (-not $OllamaCmd) {
+        Write-Host "[ERROR] Native Ollama not found on the host." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Hybrid mode requires Ollama to be installed natively on Windows." -ForegroundColor Yellow
+        Write-Host "Install steps:" -ForegroundColor Yellow
+        Write-Host "  1. Download the Windows installer from https://ollama.com/download" -ForegroundColor White
+        Write-Host "  2. Run OllamaSetup.exe and complete the installer." -ForegroundColor White
+        Write-Host "  3. Verify by running: ollama --version" -ForegroundColor White
+        Write-Host "  4. Re-run this installer." -ForegroundColor White
+        Write-Host ""
+        exit 1
+    }
+    $OllamaVersionOutput = & ollama --version 2>&1
+    Write-Host "[OK] Native Ollama found: $OllamaVersionOutput" -ForegroundColor Green
+
+    # Set OLLAMA_HOST so the native server binds to all interfaces (reachable from Docker)
+    $CurrentOllamaHost = [Environment]::GetEnvironmentVariable("OLLAMA_HOST", "User")
+    if ($CurrentOllamaHost -ne "0.0.0.0:11434") {
+        Write-Host "Setting OLLAMA_HOST=0.0.0.0:11434 (User scope)..." -ForegroundColor White
+        [Environment]::SetEnvironmentVariable("OLLAMA_HOST", "0.0.0.0:11434", "User")
+        Write-Host "[OK] OLLAMA_HOST set" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "[ACTION REQUIRED] You must restart Ollama for this env var to take effect:" -ForegroundColor Yellow
+        Write-Host "  1. Right-click the Ollama icon in the system tray and choose Quit." -ForegroundColor White
+        Write-Host "  2. Re-launch Ollama from the Start menu." -ForegroundColor White
+        Write-Host ""
+        Read-Host "Press Enter once Ollama has been restarted"
+    } else {
+        Write-Host "[OK] OLLAMA_HOST already set to 0.0.0.0:11434" -ForegroundColor Green
+    }
+
+    # Verify Ollama is reachable on the configured host:port
+    Write-Host "Verifying native Ollama is reachable..." -ForegroundColor White
+    $MaxWait = 30
+    $Waited = 0
+    $OllamaReady = $false
+    while ($Waited -lt $MaxWait) {
+        try {
+            $resp = Invoke-WebRequest -Uri "http://localhost:11434/api/version" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue
+            if ($resp.StatusCode -eq 200) {
+                $OllamaReady = $true
+                break
+            }
+        } catch {
+            # still starting
+        }
+        Start-Sleep -Seconds 2
+        $Waited += 2
+        Write-Host "." -NoNewline -ForegroundColor Gray
+    }
+    Write-Host ""
+    if (-not $OllamaReady) {
+        Write-Host "[ERROR] Native Ollama is not responding on http://localhost:11434." -ForegroundColor Red
+        Write-Host "  - Confirm Ollama is running (system tray icon present)." -ForegroundColor Yellow
+        Write-Host "  - Confirm OLLAMA_HOST=0.0.0.0:11434 is set, then fully restart Ollama." -ForegroundColor Yellow
+        Write-Host "  - Test with: curl http://localhost:11434/api/version" -ForegroundColor Yellow
+        exit 1
+    }
+    Write-Host "[OK] Native Ollama is responding on port 11434" -ForegroundColor Green
+
+    # Verify Ollama is bound to 0.0.0.0 (not 127.0.0.1) so the container can reach it
+    $ListenLine = netstat -ano | Select-String ":11434\s" | Select-String "LISTENING" | Select-Object -First 1
+    if ($ListenLine -and $ListenLine.Line -match "127\.0\.0\.1:11434") {
+        Write-Host "[ERROR] Ollama is bound to 127.0.0.1:11434, not 0.0.0.0:11434." -ForegroundColor Red
+        Write-Host "  Docker containers cannot reach 127.0.0.1 on the host." -ForegroundColor Yellow
+        Write-Host "  Confirm OLLAMA_HOST is set, then fully quit and relaunch Ollama:" -ForegroundColor Yellow
+        Write-Host "    [Environment]::GetEnvironmentVariable('OLLAMA_HOST', 'User')" -ForegroundColor Gray
+        exit 1
+    }
+    Write-Host "[OK] Ollama is bound to all interfaces (Docker can reach it via host.docker.internal)" -ForegroundColor Green
+    Write-Host ""
+}
 
 # Check if Ollama container is already running
 Write-Host "Checking existing Ollama containers..." -ForegroundColor White
@@ -125,7 +231,13 @@ if ($FreeSpaceGB -lt 20) {
 
 Write-Host ""
 
-# GPU Detection
+# GPU Detection (Docker mode only — native Ollama handles its own GPU)
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "Skipping Docker GPU detection (native Ollama handles GPU directly)" -ForegroundColor Gray
+    $GPUDriver = "none"
+    $DetectedGPU = "none"
+    Write-Host ""
+} else {
 Write-Host "Detecting GPU configuration..." -ForegroundColor White
 $DetectedGPU = "none"
 
@@ -196,6 +308,7 @@ if ($GPUDriver -eq "none") {
 }
 
 Write-Host ""
+} # end Docker-mode GPU detection
 
 # Port configuration
 if (-not $PSBoundParameters.ContainsKey('Port')) {
@@ -224,7 +337,12 @@ Write-Host "HTTP API will be accessible on port: $Port" -ForegroundColor White
 Write-Host ""
 
 # SSL Configuration
-if (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
+# In hybrid mode SSL is mandatory — otherwise the Docker container has no purpose
+# (clients would talk to native Ollama directly on port 11434).
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "Hybrid mode: SSL is enabled automatically (the nginx container exists to provide HTTPS)" -ForegroundColor Cyan
+    $EnableSSL = $true
+} elseif (-not $PSBoundParameters.ContainsKey('EnableSSL')) {
     Write-Host "SSL/TLS Configuration:" -ForegroundColor Cyan
     Write-Host "Ollama uses Nginx reverse proxy for HTTPS support" -ForegroundColor Gray
     $SSLChoice = Read-Host "Enable SSL/TLS encryption? (y/n, default: n)"
@@ -358,43 +476,60 @@ if (-not $EnableSSL) {
 
 Write-Host ""
 
-# Create .env file from template
+# Create .env file
 Write-Host "Creating configuration files..." -ForegroundColor White
 
-if (-not (Test-Path ".env.template")) {
-    Write-Host "[ERROR] .env.template not found!" -ForegroundColor Red
-    Write-Host "Please ensure you're running this script from the ollama directory" -ForegroundColor Yellow
-    exit 1
-}
-
-# Copy template to .env
-Copy-Item ".env.template" ".env" -Force
-Write-Host "[OK] Created .env file from template" -ForegroundColor Green
-
-# Update .env file with configuration
-$envContent = Get-Content ".env"
-$envContent = $envContent -replace "OLLAMA_PORT=.*", "OLLAMA_PORT=$Port"
-$envContent = $envContent -replace "OLLAMA_HTTPS_PORT=.*", "OLLAMA_HTTPS_PORT=$HttpsPort"
-$envContent = $envContent -replace "OLLAMA_ENABLE_SSL=.*", "OLLAMA_ENABLE_SSL=$($EnableSSL.ToString().ToLower())"
-$envContent = $envContent -replace "OLLAMA_DOMAIN=.*", "OLLAMA_DOMAIN=$Domain"
-$envContent = $envContent -replace "OLLAMA_GPU_DRIVER=.*", "OLLAMA_GPU_DRIVER=$GPUDriver"
-
-# Set Docker image based on GPU type
-if ($GPUDriver -eq "amd") {
-    $envContent = $envContent -replace "OLLAMA_IMAGE=.*", "OLLAMA_IMAGE=ollama/ollama:rocm"
-    Write-Host "[OK] Configured to use ROCm image (ollama/ollama:rocm)" -ForegroundColor Green
-    $envContent = $envContent -replace "HSA_OVERRIDE_GFX_VERSION=.*", "HSA_OVERRIDE_GFX_VERSION=$HsaGfxOverride"
+if ($DeploymentMode -eq "hybrid") {
+    # Hybrid mode: write a minimal .env with only the keys the hybrid compose actually uses.
+    # COMPOSE_FILE makes docker-compose pick the hybrid compose by default — no -f flag needed
+    # for any management commands.
+    $envContent = @"
+# =================================================================
+# Ollama Hybrid Deployment Configuration
+# Native Ollama runs on the host; only nginx HTTPS proxy runs in Docker.
+# =================================================================
+COMPOSE_FILE=docker-compose.hybrid.yml
+OLLAMA_HTTPS_PORT=$HttpsPort
+OLLAMA_DOMAIN=$Domain
+"@
+    $envContent | Set-Content ".env" -Encoding ASCII
+    Write-Host "[OK] Wrote hybrid .env (COMPOSE_FILE=docker-compose.hybrid.yml)" -ForegroundColor Green
 } else {
-    $envContent = $envContent -replace "OLLAMA_IMAGE=.*", "OLLAMA_IMAGE=ollama/ollama:latest"
-}
+    # Docker mode: derive .env from .env.template
+    if (-not (Test-Path ".env.template")) {
+        Write-Host "[ERROR] .env.template not found!" -ForegroundColor Red
+        Write-Host "Please ensure you're running this script from the ollama directory" -ForegroundColor Yellow
+        exit 1
+    }
 
-# Add COMPOSE_PROFILES if SSL is enabled
-if ($EnableSSL) {
-    $envContent += "`nCOMPOSE_PROFILES=ssl"
-}
+    Copy-Item ".env.template" ".env" -Force
+    Write-Host "[OK] Created .env file from template" -ForegroundColor Green
 
-$envContent | Set-Content ".env"
-Write-Host "[OK] Updated .env with configuration" -ForegroundColor Green
+    # Update .env file with configuration
+    $envContent = Get-Content ".env"
+    $envContent = $envContent -replace "OLLAMA_PORT=.*", "OLLAMA_PORT=$Port"
+    $envContent = $envContent -replace "OLLAMA_HTTPS_PORT=.*", "OLLAMA_HTTPS_PORT=$HttpsPort"
+    $envContent = $envContent -replace "OLLAMA_ENABLE_SSL=.*", "OLLAMA_ENABLE_SSL=$($EnableSSL.ToString().ToLower())"
+    $envContent = $envContent -replace "OLLAMA_DOMAIN=.*", "OLLAMA_DOMAIN=$Domain"
+    $envContent = $envContent -replace "OLLAMA_GPU_DRIVER=.*", "OLLAMA_GPU_DRIVER=$GPUDriver"
+
+    # Set Docker image based on GPU type
+    if ($GPUDriver -eq "amd") {
+        $envContent = $envContent -replace "OLLAMA_IMAGE=.*", "OLLAMA_IMAGE=ollama/ollama:rocm"
+        Write-Host "[OK] Configured to use ROCm image (ollama/ollama:rocm)" -ForegroundColor Green
+        $envContent = $envContent -replace "HSA_OVERRIDE_GFX_VERSION=.*", "HSA_OVERRIDE_GFX_VERSION=$HsaGfxOverride"
+    } else {
+        $envContent = $envContent -replace "OLLAMA_IMAGE=.*", "OLLAMA_IMAGE=ollama/ollama:latest"
+    }
+
+    # Add COMPOSE_PROFILES if SSL is enabled
+    if ($EnableSSL) {
+        $envContent += "`nCOMPOSE_PROFILES=ssl"
+    }
+
+    $envContent | Set-Content ".env"
+    Write-Host "[OK] Updated .env with configuration" -ForegroundColor Green
+}
 
 # Update docker-compose.yml based on GPU type
 # Note: AMD ROCm is not offered on Windows - GPU detection falls back to CPU-only
@@ -422,6 +557,22 @@ if ($GPUDriver -eq "nvidia") {
     }
     ($result -join "`n") | Set-Content "docker-compose.yml" -NoNewline
     Write-Host "[OK] NVIDIA GPU support enabled in docker-compose.yml" -ForegroundColor Green
+}
+
+# Hybrid mode: verify the parallel hybrid compose + nginx config exist.
+# These are committed parallel files (not generated) — selected by COMPOSE_FILE in .env.
+if ($DeploymentMode -eq "hybrid") {
+    if (-not (Test-Path "docker-compose.hybrid.yml")) {
+        Write-Host "[ERROR] docker-compose.hybrid.yml is missing." -ForegroundColor Red
+        Write-Host "  Re-extract the source ZIP — this file ships alongside docker-compose.yml." -ForegroundColor Yellow
+        exit 1
+    }
+    if (-not (Test-Path "nginx/nginx.hybrid.conf")) {
+        Write-Host "[ERROR] nginx/nginx.hybrid.conf is missing." -ForegroundColor Red
+        Write-Host "  Re-extract the source ZIP — this file ships alongside nginx/nginx.conf." -ForegroundColor Yellow
+        exit 1
+    }
+    Write-Host "[OK] Hybrid compose and nginx config present (selected via COMPOSE_FILE in .env)" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -495,88 +646,137 @@ if ($Force) {
     exit 0
 }
 
-# Ask if user wants to start Ollama now
+# Ask if user wants to start the service now
 Write-Host ""
-$StartChoice = Read-Host "Start Ollama service now? (y/n, default: y)"
+$StartPrompt = if ($DeploymentMode -eq "hybrid") { "Start nginx HTTPS proxy now? (y/n, default: y)" } else { "Start Ollama service now? (y/n, default: y)" }
+$StartChoice = Read-Host $StartPrompt
 if ($StartChoice -eq "n" -or $StartChoice -eq "N") {
     Write-Host ""
     Write-Host "==================================================================" -ForegroundColor Cyan
     Write-Host "Configuration Complete!" -ForegroundColor Green
     Write-Host "==================================================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "To start Ollama later, run:" -ForegroundColor Gray
+    Write-Host "To start later, run:" -ForegroundColor Gray
     Write-Host "  docker-compose up -d" -ForegroundColor Gray
     Write-Host ""
     exit 0
 }
 
-# Start Docker containers
-Write-Host "Starting Ollama service..." -ForegroundColor White
-Write-Host "This may take a minute..." -ForegroundColor Gray
+if ($DeploymentMode -eq "hybrid") {
+    # Hybrid mode: only nginx-ssl needs to start. Native Ollama is already running.
+    Write-Host "Starting nginx HTTPS proxy..." -ForegroundColor White
 
-try {
-    docker-compose up -d
-    
-    # Wait for health check
-    Write-Host "Waiting for Ollama to become healthy..." -ForegroundColor Gray
-    $maxWait = 60
-    $waited = 0
-    $healthy = $false
-    
-    while ($waited -lt $maxWait) {
-        Start-Sleep -Seconds 2
-        $waited += 2
-        
-        try {
-            $response = Invoke-WebRequest -Uri "http://localhost:$Port/api/version" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue
-            if ($response.StatusCode -eq 200) {
-                $healthy = $true
-                break
+    try {
+        docker-compose up -d
+
+        # Wait for nginx to start serving HTTPS
+        Write-Host "Waiting for nginx to become ready..." -ForegroundColor Gray
+        $maxWait = 30
+        $waited = 0
+        $healthy = $false
+
+        while ($waited -lt $maxWait) {
+            Start-Sleep -Seconds 2
+            $waited += 2
+
+            try {
+                # -k to skip cert verification on self-signed certs
+                $response = Invoke-WebRequest -Uri "https://localhost:$HttpsPort/api/version" -TimeoutSec 2 -UseBasicParsing -SkipCertificateCheck -ErrorAction SilentlyContinue
+                if ($response.StatusCode -eq 200) {
+                    $healthy = $true
+                    break
+                }
+            } catch {
+                # still starting
             }
-        } catch {
-            # Still waiting
-        }
-        
-        Write-Host "." -NoNewline -ForegroundColor Gray
-    }
-    
-    Write-Host ""
-    
-    if ($healthy) {
-        Write-Host "[OK] Ollama service is running and healthy" -ForegroundColor Green
 
-        # Verify GPU access if GPU is enabled (only NVIDIA is supported in Docker on Windows)
-        if ($GPUDriver -eq "nvidia") {
-            Write-Host ""
-            Write-Host "Verifying NVIDIA GPU access..." -ForegroundColor Cyan
-            Start-Sleep -Seconds 3
-            docker exec ollama nvidia-smi 2>$null | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "[OK] NVIDIA GPU accessible in container" -ForegroundColor Green
-            } else {
-                Write-Host "⚠ NVIDIA GPU not accessible in container" -ForegroundColor Yellow
-                Write-Host "  Verify nvidia-container-toolkit is installed" -ForegroundColor Gray
+            Write-Host "." -NoNewline -ForegroundColor Gray
+        }
+
+        Write-Host ""
+
+        if ($healthy) {
+            Write-Host "[OK] nginx HTTPS proxy is running and reaching native Ollama" -ForegroundColor Green
+        } else {
+            Write-Host "⚠ nginx started but HTTPS health check timed out" -ForegroundColor Yellow
+            Write-Host "  Probe from inside the container to find the cause:" -ForegroundColor Gray
+            Write-Host "    docker exec ollama-nginx-ssl wget -qO- http://host.docker.internal:11434/api/version" -ForegroundColor Gray
+            Write-Host "  See logs: docker-compose logs nginx-ssl" -ForegroundColor Gray
+        }
+    } catch {
+        Write-Host "[ERROR] Failed to start nginx-ssl: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Check logs: docker-compose logs nginx-ssl" -ForegroundColor Yellow
+        exit 1
+    }
+} else {
+    # Docker mode: full Ollama-in-container startup with health check
+    Write-Host "Starting Ollama service..." -ForegroundColor White
+    Write-Host "This may take a minute..." -ForegroundColor Gray
+
+    try {
+        docker-compose up -d
+
+        # Wait for health check
+        Write-Host "Waiting for Ollama to become healthy..." -ForegroundColor Gray
+        $maxWait = 60
+        $waited = 0
+        $healthy = $false
+
+        while ($waited -lt $maxWait) {
+            Start-Sleep -Seconds 2
+            $waited += 2
+
+            try {
+                $response = Invoke-WebRequest -Uri "http://localhost:$Port/api/version" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue
+                if ($response.StatusCode -eq 200) {
+                    $healthy = $true
+                    break
+                }
+            } catch {
+                # Still waiting
+            }
+
+            Write-Host "." -NoNewline -ForegroundColor Gray
+        }
+
+        Write-Host ""
+
+        if ($healthy) {
+            Write-Host "[OK] Ollama service is running and healthy" -ForegroundColor Green
+
+            # Verify GPU access if GPU is enabled (only NVIDIA is supported in Docker on Windows)
+            if ($GPUDriver -eq "nvidia") {
+                Write-Host ""
+                Write-Host "Verifying NVIDIA GPU access..." -ForegroundColor Cyan
+                Start-Sleep -Seconds 3
+                docker exec ollama nvidia-smi 2>$null | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "[OK] NVIDIA GPU accessible in container" -ForegroundColor Green
+                } else {
+                    Write-Host "⚠ NVIDIA GPU not accessible in container" -ForegroundColor Yellow
+                    Write-Host "  Verify nvidia-container-toolkit is installed" -ForegroundColor Gray
+                }
+            }
+
+            # Start nginx-ssl if SSL is enabled
+            if ($EnableSSL) {
+                Write-Host "Starting nginx-ssl service..." -ForegroundColor Gray
+                docker-compose up -d nginx-ssl 2>&1 | Out-Null
+                Start-Sleep -Seconds 3
+                Write-Host "[OK] nginx-ssl service started" -ForegroundColor Green
+            }
+        } else {
+            Write-Host "⚠ Ollama service started but health check timed out" -ForegroundColor Yellow
+            Write-Host "  Check logs with: docker-compose logs ollama" -ForegroundColor Gray
+            if ($EnableSSL) {
+                Write-Host "  nginx-ssl will start once ollama becomes healthy" -ForegroundColor Gray
             }
         }
-
-        # Start nginx-ssl if SSL is enabled
-        if ($EnableSSL) {
-            Write-Host "Starting nginx-ssl service..." -ForegroundColor Gray
-            docker-compose up -d nginx-ssl 2>&1 | Out-Null
-            Start-Sleep -Seconds 3
-            Write-Host "[OK] nginx-ssl service started" -ForegroundColor Green
-        }
-    } else {
-        Write-Host "⚠ Ollama service started but health check timed out" -ForegroundColor Yellow
-        Write-Host "  Check logs with: docker-compose logs ollama" -ForegroundColor Gray
-        if ($EnableSSL) {
-            Write-Host "  nginx-ssl will start once ollama becomes healthy" -ForegroundColor Gray
-        }
+    } catch {
+        Write-Host "[ERROR] Failed to start Ollama service: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Check logs with: docker-compose logs ollama" -ForegroundColor Yellow
+        exit 1
     }
-} catch {
-    Write-Host "[ERROR] Failed to start Ollama service: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "Check logs with: docker-compose logs ollama" -ForegroundColor Yellow
-    exit 1
 }
 
 Write-Host ""
@@ -601,8 +801,15 @@ Write-Host "Model Downloads:" -ForegroundColor Cyan
 Write-Host "Ollama requires at least one embedding model to function properly" -ForegroundColor White
 Write-Host ""
 Write-Host "Download models using:" -ForegroundColor White
-Write-Host "  docker exec ollama ollama pull nomic-embed-text:latest" -ForegroundColor Gray
-Write-Host "  docker exec ollama ollama pull llama3.2:3b" -ForegroundColor Gray
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "  ollama pull nomic-embed-text:latest" -ForegroundColor Gray
+    Write-Host "  ollama pull llama3.2:3b" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "(Hybrid mode: models are managed natively, not via docker exec)" -ForegroundColor Gray
+} else {
+    Write-Host "  docker exec ollama ollama pull nomic-embed-text:latest" -ForegroundColor Gray
+    Write-Host "  docker exec ollama ollama pull llama3.2:3b" -ForegroundColor Gray
+}
 Write-Host ""
 Write-Host "List available models: https://ollama.com/library" -ForegroundColor Gray
 Write-Host ""
@@ -613,15 +820,9 @@ Write-Host ""
 
 # Display connection information
 Write-Host "Connection Information:" -ForegroundColor Cyan
-Write-Host "  HTTP API:  http://localhost:$Port" -ForegroundColor White
-if ($MachineIPs.Count -gt 0) {
-    foreach ($IP in $MachineIPs) {
-        Write-Host "             http://${IP}:$Port" -ForegroundColor White
-    }
-}
-
-if ($EnableSSL) {
-    Write-Host "  HTTPS API: https://localhost:$HttpsPort" -ForegroundColor White
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "  HTTP API:  http://localhost:11434  (native Ollama on host, not via Docker)" -ForegroundColor White
+    Write-Host "  HTTPS API: https://localhost:$HttpsPort  (via nginx Docker container)" -ForegroundColor White
     if ($MachineIPs.Count -gt 0) {
         foreach ($IP in $MachineIPs) {
             Write-Host "             https://${IP}:$HttpsPort" -ForegroundColor White
@@ -629,37 +830,79 @@ if ($EnableSSL) {
     }
     Write-Host ""
     Write-Host "  CA Certificate: certs\ca.crt (distribute to clients)" -ForegroundColor Yellow
+} else {
+    Write-Host "  HTTP API:  http://localhost:$Port" -ForegroundColor White
+    if ($MachineIPs.Count -gt 0) {
+        foreach ($IP in $MachineIPs) {
+            Write-Host "             http://${IP}:$Port" -ForegroundColor White
+        }
+    }
+
+    if ($EnableSSL) {
+        Write-Host "  HTTPS API: https://localhost:$HttpsPort" -ForegroundColor White
+        if ($MachineIPs.Count -gt 0) {
+            foreach ($IP in $MachineIPs) {
+                Write-Host "             https://${IP}:$HttpsPort" -ForegroundColor White
+            }
+        }
+        Write-Host ""
+        Write-Host "  CA Certificate: certs\ca.crt (distribute to clients)" -ForegroundColor Yellow
+    }
 }
 
 Write-Host ""
-Write-Host "GPU Support: $GPUDriver" -ForegroundColor White
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "Deployment: Hybrid (native Ollama + Docker nginx)" -ForegroundColor White
+} else {
+    Write-Host "GPU Support: $GPUDriver" -ForegroundColor White
+}
 Write-Host ""
 
 # Display firewall configuration
 Write-Host "Firewall Configuration:" -ForegroundColor Cyan
 Write-Host "To allow external access, configure Windows Firewall:" -ForegroundColor White
 Write-Host ""
-Write-Host "  New-NetFirewallRule -DisplayName 'Ollama HTTP' -Direction Inbound -LocalPort $Port -Protocol TCP -Action Allow" -ForegroundColor Gray
-if ($EnableSSL) {
+if ($DeploymentMode -eq "hybrid") {
     Write-Host "  New-NetFirewallRule -DisplayName 'Ollama HTTPS' -Direction Inbound -LocalPort $HttpsPort -Protocol TCP -Action Allow" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  Note: native Ollama listens on 0.0.0.0:11434 already. To restrict that to" -ForegroundColor Gray
+    Write-Host "        Docker only (recommended), allow inbound 11434 only from the Docker" -ForegroundColor Gray
+    Write-Host "        bridge subnet (typically 172.16.0.0/12)." -ForegroundColor Gray
+} else {
+    Write-Host "  New-NetFirewallRule -DisplayName 'Ollama HTTP' -Direction Inbound -LocalPort $Port -Protocol TCP -Action Allow" -ForegroundColor Gray
+    if ($EnableSSL) {
+        Write-Host "  New-NetFirewallRule -DisplayName 'Ollama HTTPS' -Direction Inbound -LocalPort $HttpsPort -Protocol TCP -Action Allow" -ForegroundColor Gray
+    }
 }
 Write-Host ""
 
 # Test commands
 Write-Host "Test Commands:" -ForegroundColor Cyan
-Write-Host "  curl http://localhost:$Port/api/version" -ForegroundColor Gray
-if ($EnableSSL) {
-    Write-Host "  curl -k https://localhost:$HttpsPort/api/version" -ForegroundColor Gray
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "  curl http://localhost:11434/api/version    (direct to native Ollama)" -ForegroundColor Gray
+    Write-Host "  curl -k https://localhost:$HttpsPort/api/version    (via nginx HTTPS proxy)" -ForegroundColor Gray
+} else {
+    Write-Host "  curl http://localhost:$Port/api/version" -ForegroundColor Gray
+    if ($EnableSSL) {
+        Write-Host "  curl -k https://localhost:$HttpsPort/api/version" -ForegroundColor Gray
+    }
 }
 Write-Host ""
 
 # Management commands
 Write-Host "Management Commands:" -ForegroundColor Cyan
-Write-Host "  Status:  .\management\manage-ollama.ps1 status" -ForegroundColor Gray
-Write-Host "  Logs:    .\management\manage-ollama.ps1 logs" -ForegroundColor Gray
-Write-Host "  Models:  .\management\pull-models.ps1" -ForegroundColor Gray
-if ($EnableSSL) {
-    Write-Host "  SSL:     .\management\manage-ssl.ps1 status" -ForegroundColor Gray
+if ($DeploymentMode -eq "hybrid") {
+    Write-Host "  nginx logs:    docker-compose logs -f nginx-ssl" -ForegroundColor Gray
+    Write-Host "  nginx status:  docker-compose ps" -ForegroundColor Gray
+    Write-Host "  Models:        ollama list  /  ollama pull <name>  (native commands)" -ForegroundColor Gray
+    Write-Host "  SSL:           .\management\manage-ssl.ps1 status" -ForegroundColor Gray
+} else {
+    Write-Host "  Status:  .\management\manage-ollama.ps1 status" -ForegroundColor Gray
+    Write-Host "  Logs:    .\management\manage-ollama.ps1 logs" -ForegroundColor Gray
+    Write-Host "  Models:  .\management\pull-models.ps1" -ForegroundColor Gray
+    if ($EnableSSL) {
+        Write-Host "  SSL:     .\management\manage-ssl.ps1 status" -ForegroundColor Gray
+    }
 }
 Write-Host ""
 Write-Host "==================================================================" -ForegroundColor Cyan

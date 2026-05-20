@@ -71,9 +71,13 @@ docs/installation/docker/
     │   └── management/
     │       └── (similar scripts)
     ├── ollama/
-    │   ├── docker-compose.yml
+    │   ├── docker-compose.yml         # Default: Ollama-in-Docker
+    │   ├── docker-compose.hybrid.yml  # Alternative: native Ollama on host + nginx in Docker
+    │   ├── nginx/
+    │   │   ├── nginx.conf             # Used by docker-compose.yml
+    │   │   └── nginx.hybrid.conf      # Used by docker-compose.hybrid.yml
     │   └── management/
-    │       └── (similar scripts)
+    │       └── (similar scripts; install.ps1/.sh prompt for deployment mode)
     └── otel-lgtm/
         ├── docker-compose.yml
         ├── collector/
@@ -110,6 +114,17 @@ docs/installation/docker/
 - Docker Engine support
 - Distribution-specific certificate installation (Ubuntu/Debian/RHEL/CentOS)
 - Systemd service integration
+
+### Ollama deployment modes
+
+Ollama is the only service with two supported deployment shapes — pick one when running the Ollama installer:
+
+| Mode | What runs in Docker | What runs on the host | When to choose it |
+|------|--------------------|----------------------|-------------------|
+| **Docker** (default) | Ollama + optional nginx HTTPS proxy | Nothing | Default for clean GPU passthrough on Linux (NVIDIA Container Toolkit) or CPU-only setups. |
+| **Hybrid** | nginx HTTPS proxy only | Ollama (native install) | When Docker GPU passthrough is awkward (notably AMD GPUs on Windows), when Ollama is already installed natively, or when you want models managed outside Docker. |
+
+The installer (`src/ollama/management/install.ps1` or `install.sh`) prompts for the mode interactively, or accepts `-DeploymentMode hybrid` / `--deployment-mode hybrid`. See [src/ollama/ollama_readme.md](src/ollama/ollama_readme.md#hybrid-deployment) for the full hybrid procedure.
 
 ## Workflow Overview
 

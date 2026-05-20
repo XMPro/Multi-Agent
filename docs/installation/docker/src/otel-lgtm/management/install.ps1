@@ -8,15 +8,26 @@
 param(
     [string]$Port = "3001",
     [string]$HttpsPort = "3444",
+    [string]$OtelHttpsPort = "4319",
+    [string]$OtelGrpcsPort = "4327",
     [switch]$EnableSSL = $false,
     [string]$Domain = "localhost",
     [ValidateSet("self-signed", "ca-provided", "")]
     [string]$CertType = "",
     [string]$MachineIPsParam = "",
     [string]$Password = "",
+    [string]$IngestToken = "",
     [switch]$AutoStart = $false,
     [switch]$Force = $false
 )
+
+# Generate a cryptographically random 32-byte (64 hex char) bearer token if none supplied.
+if ([string]::IsNullOrWhiteSpace($IngestToken)) {
+    $rngBytes = New-Object byte[] 32
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($rngBytes) } finally { $rng.Dispose() }
+    $IngestToken = -join ($rngBytes | ForEach-Object { $_.ToString('x2') })
+}
 
 # Ensure we're in the otel-lgtm directory (not management subdirectory)
 $CurrentLocation = Get-Location
@@ -284,9 +295,12 @@ Write-Host "[OK] Created .env file from template" -ForegroundColor Green
 $envContent = Get-Content ".env"
 $envContent = $envContent -replace "GRAFANA_PORT=.*", "GRAFANA_PORT=$Port"
 $envContent = $envContent -replace "GRAFANA_HTTPS_PORT=.*", "GRAFANA_HTTPS_PORT=$HttpsPort"
+$envContent = $envContent -replace "OTEL_HTTPS_PORT=.*", "OTEL_HTTPS_PORT=$OtelHttpsPort"
+$envContent = $envContent -replace "OTEL_GRPCS_PORT=.*", "OTEL_GRPCS_PORT=$OtelGrpcsPort"
 $envContent = $envContent -replace "OTEL_LGTM_ENABLE_SSL=.*", "OTEL_LGTM_ENABLE_SSL=$($EnableSSL.ToString().ToLower())"
 $envContent = $envContent -replace "OTEL_LGTM_DOMAIN=.*", "OTEL_LGTM_DOMAIN=$Domain"
 $envContent = $envContent -replace "GRAFANA_ADMIN_PASSWORD=.*", "GRAFANA_ADMIN_PASSWORD=$Password"
+$envContent = $envContent -replace "OTEL_INGEST_TOKEN=.*", "OTEL_INGEST_TOKEN=$IngestToken"
 
 # Try to read credentials from other service .env files
 if (Test-Path "..\timescaledb\.env") {
@@ -475,6 +489,8 @@ if ($MachineIPs.Count -gt 0) {
 
 if ($EnableSSL) {
     Write-Host "  Grafana HTTPS: https://localhost:$HttpsPort" -ForegroundColor White
+    Write-Host "  OTLP HTTPS:    https://localhost:$OtelHttpsPort" -ForegroundColor White
+    Write-Host "  OTLP gRPC TLS: localhost:$OtelGrpcsPort" -ForegroundColor White
     if ($MachineIPs.Count -gt 0) {
         foreach ($IP in $MachineIPs) {
             Write-Host "                 https://${IP}:$HttpsPort" -ForegroundColor White
@@ -490,9 +506,19 @@ Write-Host "  Username: admin" -ForegroundColor White
 Write-Host "  Password: $Password" -ForegroundColor White
 
 Write-Host ""
+Write-Host "OTLP Ingest Token (agents must send this):" -ForegroundColor Cyan
+Write-Host "  $IngestToken" -ForegroundColor Yellow
+Write-Host "  Stored in: .env (OTEL_INGEST_TOKEN). Rotate by editing and restarting otel-lgtm." -ForegroundColor Gray
+
+Write-Host ""
 Write-Host "OpenTelemetry SDK Configuration:" -ForegroundColor Cyan
-Write-Host "  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318" -ForegroundColor White
+if ($EnableSSL) {
+    Write-Host "  OTEL_EXPORTER_OTLP_ENDPOINT=https://localhost:$OtelHttpsPort" -ForegroundColor White
+} else {
+    Write-Host "  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318" -ForegroundColor White
+}
 Write-Host "  OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf" -ForegroundColor White
+Write-Host "  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer%20$IngestToken" -ForegroundColor White
 
 Write-Host ""
 
@@ -505,6 +531,8 @@ Write-Host "  New-NetFirewallRule -DisplayName 'OTLP gRPC' -Direction Inbound -L
 Write-Host "  New-NetFirewallRule -DisplayName 'OTLP HTTP' -Direction Inbound -LocalPort 4318 -Protocol TCP -Action Allow" -ForegroundColor Gray
 if ($EnableSSL) {
     Write-Host "  New-NetFirewallRule -DisplayName 'Grafana HTTPS' -Direction Inbound -LocalPort $HttpsPort -Protocol TCP -Action Allow" -ForegroundColor Gray
+    Write-Host "  New-NetFirewallRule -DisplayName 'OTLP HTTPS' -Direction Inbound -LocalPort $OtelHttpsPort -Protocol TCP -Action Allow" -ForegroundColor Gray
+    Write-Host "  New-NetFirewallRule -DisplayName 'OTLP gRPC TLS' -Direction Inbound -LocalPort $OtelGrpcsPort -Protocol TCP -Action Allow" -ForegroundColor Gray
 }
 Write-Host ""
 

@@ -74,7 +74,7 @@ function Test-Docker {
         docker version | Out-Null
         return $true
     } catch {
-        Write-Host "✗ Docker is not available!" -ForegroundColor Red
+        Write-Host "[X] Docker is not available!" -ForegroundColor Red
         Write-Host "Please ensure Docker Desktop is running." -ForegroundColor Yellow
         return $false
     }
@@ -112,12 +112,12 @@ function Generate-SSLCertificates {
     # Create certs directory if it doesn't exist
     if (-not (Test-Path "certs")) {
         New-Item -ItemType Directory -Force -Path "certs" | Out-Null
-        Write-Host "✓ Created certs directory" -ForegroundColor Green
+        Write-Host "[OK] Created certs directory" -ForegroundColor Green
     }
     
     # Check if certificates already exist
     if ((Test-Path "certs\server.crt") -and -not $Force) {
-        Write-Host "⚠ Certificates already exist!" -ForegroundColor Yellow
+        Write-Host "[!] Certificates already exist!" -ForegroundColor Yellow
         $Overwrite = Read-Host "Overwrite existing certificates? (y/n)"
         if ($Overwrite -ne "Y" -and $Overwrite -ne "y") {
             Write-Host "Certificate generation cancelled" -ForegroundColor Yellow
@@ -133,7 +133,7 @@ function Generate-SSLCertificates {
         if ($MachineIPs.Count -gt 0) {
             Write-Host "Detected IPs:" -ForegroundColor Gray
             foreach ($IP in $MachineIPs) {
-                Write-Host "  • $IP" -ForegroundColor Gray
+                Write-Host "  - $IP" -ForegroundColor Gray
             }
         }
         
@@ -187,21 +187,21 @@ subjectAltName = $SANString
         # Verify certificates were created
         if ((Test-Path "certs\server.crt") -and (Test-Path "certs\server.key") -and (Test-Path "certs\ca.crt")) {
             Write-Host ""
-            Write-Host "✓ SSL certificates generated successfully!" -ForegroundColor Green
+            Write-Host "[OK] SSL certificates generated successfully!" -ForegroundColor Green
             Write-Host ""
             Write-Host "Certificate Details:" -ForegroundColor Cyan
             Write-Host "  Domain: $Domain" -ForegroundColor White
             Write-Host "  Valid for: $ValidDays days" -ForegroundColor White
             Write-Host "  Subject Alternative Names:" -ForegroundColor White
             foreach ($Entry in $SANEntries) {
-                Write-Host "    • $Entry" -ForegroundColor Gray
+                Write-Host "    - $Entry" -ForegroundColor Gray
             }
             Write-Host ""
             Write-Host "Files created:" -ForegroundColor Cyan
-            Write-Host "  • certs\ca.crt (CA Certificate - distribute to clients)" -ForegroundColor White
-            Write-Host "  • certs\ca.key (CA Private Key - keep secure!)" -ForegroundColor White
-            Write-Host "  • certs\server.crt (Server Certificate)" -ForegroundColor White
-            Write-Host "  • certs\server.key (Server Private Key)" -ForegroundColor White
+            Write-Host "  - certs\ca.crt (CA Certificate - distribute to clients)" -ForegroundColor White
+            Write-Host "  - certs\ca.key (CA Private Key - keep secure!)" -ForegroundColor White
+            Write-Host "  - certs\server.crt (Server Certificate)" -ForegroundColor White
+            Write-Host "  - certs\server.key (Server Private Key)" -ForegroundColor White
             Write-Host ""
             Write-Host "Next steps:" -ForegroundColor Cyan
             Write-Host "  1. Enable SSL: .\management\manage-ssl.ps1 enable" -ForegroundColor Gray
@@ -209,11 +209,11 @@ subjectAltName = $SANString
             Write-Host ""
             return $true
         } else {
-            Write-Host "✗ Certificate files not created properly" -ForegroundColor Red
+            Write-Host "[X] Certificate files not created properly" -ForegroundColor Red
             return $false
         }
     } catch {
-        Write-Host "✗ SSL certificate generation failed: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "[X] SSL certificate generation failed: $($_.Exception.Message)" -ForegroundColor Red
         return $false
     }
 }
@@ -233,7 +233,7 @@ function Install-CACertificates {
     # Create certs directory if it doesn't exist
     if (-not (Test-Path "certs")) {
         New-Item -ItemType Directory -Force -Path "certs" | Out-Null
-        Write-Host "✓ Created certs directory" -ForegroundColor Green
+        Write-Host "[OK] Created certs directory" -ForegroundColor Green
     }
     
     try {
@@ -248,18 +248,18 @@ function Install-CACertificates {
         # Copy server certificates
         Copy-Item -Path $ServerCertPath -Destination "certs\server.crt" -Force
         Copy-Item -Path $ServerKeyPath -Destination "certs\server.key" -Force
-        Write-Host "✓ Server certificates installed" -ForegroundColor Green
+        Write-Host "[OK] Server certificates installed" -ForegroundColor Green
         
         # Copy CA certificate if provided
         if ($CACertPath -and (Test-Path $CACertPath)) {
             Copy-Item -Path $CACertPath -Destination "certs\ca.crt" -Force
-            Write-Host "✓ CA certificate installed" -ForegroundColor Green
+            Write-Host "[OK] CA certificate installed" -ForegroundColor Green
         }
         
         # Copy CA private key if provided
         if ($CAKeyPath -and (Test-Path $CAKeyPath)) {
             Copy-Item -Path $CAKeyPath -Destination "certs\ca.key" -Force
-            Write-Host "✓ CA private key installed" -ForegroundColor Green
+            Write-Host "[OK] CA private key installed" -ForegroundColor Green
         }
         
         # Validate certificates using Docker OpenSSL
@@ -270,9 +270,9 @@ function Install-CACertificates {
         $KeyModulus = docker run --rm -v "${PWD}\certs:/certs" -w /certs alpine/openssl rsa -noout -modulus -in server.key 2>$null | docker run --rm -i alpine/openssl md5
         
         if ($CertModulus -eq $KeyModulus) {
-            Write-Host "✓ Certificate and key match" -ForegroundColor Green
+            Write-Host "[OK] Certificate and key match" -ForegroundColor Green
         } else {
-            Write-Host "⚠ Warning: Certificate and key may not match" -ForegroundColor Yellow
+            Write-Host "[!] Warning: Certificate and key may not match" -ForegroundColor Yellow
         }
         
         # Check certificate expiration
@@ -281,7 +281,7 @@ function Install-CACertificates {
         Write-Host $CertInfo -ForegroundColor Gray
         
         Write-Host ""
-        Write-Host "✓ CA-provided certificates installed successfully!" -ForegroundColor Green
+        Write-Host "[OK] CA-provided certificates installed successfully!" -ForegroundColor Green
         Write-Host ""
         Write-Host "Next steps:" -ForegroundColor Cyan
         Write-Host "  1. Enable SSL: .\management\manage-ssl.ps1 enable" -ForegroundColor Gray
@@ -289,7 +289,7 @@ function Install-CACertificates {
         
         return $true
     } catch {
-        Write-Host "✗ Certificate installation failed: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "[X] Certificate installation failed: $($_.Exception.Message)" -ForegroundColor Red
         return $false
     }
 }
@@ -301,7 +301,7 @@ function Enable-SSL {
     
     # Check if certificates exist
     if (-not (Test-Path "certs\server.crt") -or -not (Test-Path "certs\server.key")) {
-        Write-Host "✗ SSL certificates not found!" -ForegroundColor Red
+        Write-Host "[X] SSL certificates not found!" -ForegroundColor Red
         Write-Host "Generate certificates first:" -ForegroundColor Yellow
         Write-Host "  .\management\manage-ssl.ps1 generate" -ForegroundColor Gray
         Write-Host "Or install CA-provided certificates:" -ForegroundColor Yellow
@@ -324,7 +324,7 @@ function Enable-SSL {
         $envContent = $envContent -replace "OLLAMA_ENABLE_SSL=.*", "OLLAMA_ENABLE_SSL=true"
         
         $envContent | Set-Content ".env"
-        Write-Host "✓ Updated .env configuration" -ForegroundColor Green
+        Write-Host "[OK] Updated .env configuration" -ForegroundColor Green
     }
     
     # Start nginx-ssl service
@@ -338,7 +338,7 @@ function Enable-SSL {
     $NginxContainer = $Containers | Where-Object { $_.Service -eq "nginx-ssl" }
     
     if ($NginxContainer -and $NginxContainer.State -eq "running") {
-        Write-Host "✓ nginx-ssl service is running" -ForegroundColor Green
+        Write-Host "[OK] nginx-ssl service is running" -ForegroundColor Green
         
         # Get HTTPS port from .env
         $HttpsPort = "11443"
@@ -351,7 +351,7 @@ function Enable-SSL {
         }
         
         Write-Host ""
-        Write-Host "✓ SSL/TLS enabled successfully!" -ForegroundColor Green
+        Write-Host "[OK] SSL/TLS enabled successfully!" -ForegroundColor Green
         Write-Host ""
         Write-Host "HTTPS Endpoint:" -ForegroundColor Cyan
         Write-Host "  https://localhost:$HttpsPort" -ForegroundColor White
@@ -371,7 +371,7 @@ function Enable-SSL {
         
         return $true
     } else {
-        Write-Host "✗ Failed to start nginx-ssl service" -ForegroundColor Red
+        Write-Host "[X] Failed to start nginx-ssl service" -ForegroundColor Red
         Write-Host "Check logs: docker-compose logs nginx-ssl" -ForegroundColor Yellow
         return $false
     }
@@ -392,10 +392,10 @@ function Disable-SSL {
         $envContent = $envContent -replace "COMPOSE_PROFILES=ssl", "# COMPOSE_PROFILES=ssl"
         $envContent = $envContent -replace "OLLAMA_ENABLE_SSL=true", "OLLAMA_ENABLE_SSL=false"
         $envContent | Set-Content ".env"
-        Write-Host "✓ Updated .env configuration" -ForegroundColor Green
+        Write-Host "[OK] Updated .env configuration" -ForegroundColor Green
     }
     
-    Write-Host "✓ SSL/TLS disabled" -ForegroundColor Green
+    Write-Host "[OK] SSL/TLS disabled" -ForegroundColor Green
     Write-Host ""
     Write-Host "Ollama is now accessible via HTTP only" -ForegroundColor White
     Write-Host ""
@@ -414,13 +414,13 @@ function Show-SSLStatus {
     $NginxContainer = $Containers | Where-Object { $_.Service -eq "nginx-ssl" }
     
     if ($OllamaContainer) {
-        $status = if ($OllamaContainer.State -eq "running") { "✓ Running" } else { "✗ Stopped" }
+        $status = if ($OllamaContainer.State -eq "running") { "[OK] Running" } else { "[X] Stopped" }
         $color = if ($OllamaContainer.State -eq "running") { "Green" } else { "Red" }
         Write-Host "  Ollama: $status" -ForegroundColor $color
     }
     
     if ($NginxContainer) {
-        $status = if ($NginxContainer.State -eq "running") { "✓ Running" } else { "✗ Stopped" }
+        $status = if ($NginxContainer.State -eq "running") { "[OK] Running" } else { "[X] Stopped" }
         $color = if ($NginxContainer.State -eq "running") { "Green" } else { "Red" }
         Write-Host "  nginx-ssl: $status" -ForegroundColor $color
     } else {
@@ -434,9 +434,9 @@ function Show-SSLStatus {
     $certFiles = @("certs\ca.crt", "certs\server.crt", "certs\server.key")
     foreach ($file in $certFiles) {
         if (Test-Path $file) {
-            Write-Host "  ✓ $file" -ForegroundColor Green
+            Write-Host "  [OK] $file" -ForegroundColor Green
         } else {
-            Write-Host "  ✗ $file (not found)" -ForegroundColor Red
+            Write-Host "  [X] $file (not found)" -ForegroundColor Red
         }
     }
     
@@ -493,7 +493,7 @@ function Renew-Certificates {
     Write-Host ""
     
     if (-not (Test-Path "certs\server.crt")) {
-        Write-Host "✗ No existing certificates found to renew" -ForegroundColor Red
+        Write-Host "[X] No existing certificates found to renew" -ForegroundColor Red
         return $false
     }
     
@@ -504,7 +504,7 @@ function Renew-Certificates {
     Copy-Item "certs\*.crt" $BackupDir -ErrorAction SilentlyContinue
     Copy-Item "certs\*.key" $BackupDir -ErrorAction SilentlyContinue
     
-    Write-Host "✓ Backed up existing certificates to: $BackupDir" -ForegroundColor Green
+    Write-Host "[OK] Backed up existing certificates to: $BackupDir" -ForegroundColor Green
     Write-Host ""
     
     # Get domain from existing certificate
@@ -524,11 +524,11 @@ function Renew-Certificates {
         if ($NginxContainer -and $NginxContainer.State -eq "running") {
             Write-Host "Restarting nginx-ssl service..." -ForegroundColor Gray
             docker-compose restart nginx-ssl 2>&1 | Out-Null
-            Write-Host "✓ nginx-ssl service restarted" -ForegroundColor Green
+            Write-Host "[OK] nginx-ssl service restarted" -ForegroundColor Green
         }
         
         Write-Host ""
-        Write-Host "✓ Certificates renewed successfully!" -ForegroundColor Green
+        Write-Host "[OK] Certificates renewed successfully!" -ForegroundColor Green
         Write-Host ""
     }
     

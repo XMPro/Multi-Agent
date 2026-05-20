@@ -222,6 +222,9 @@ For support or questions: [support@xmpro.com](mailto:support@xmpro.com)
 - [Utility Functions for Industrial Multi-Agent Systems](research/Utility_Function_Paper_Nov25.pdf) — November 2025
 - [Senior Manager's Guide to MAGS](research/2025.10.22_Senior%20Managers%20Guide%20to%20MAGS.pdf) — October 2025
 - [IP Protection for Industrial Agentic Systems](research/2026.02.02_IP_Protection_for_Industrial_Agentic_Systems.pdf) — February 2026
+- [The 3-Layer Industrial World Model Stack](research/2026.03.19_Three_Layer_World_Model_for_Industrial_Operations.pdf) — March 2026
+- [Assurance-Burden Mismatch: File-Based vs Parametric Agent-Definition Architectures](research/2026.04.30_Parametric_vs_File_Based_Agent_Architectures.pdf) — April 2026
+- [The Cognitive Decision Loop: A Governed Architecture for Industrial AI Agents](research/2026.05.20_The_Cognitive_Decision_Loop.pdf) — May 2026
 
 → [Full research index with descriptions](research/README.md)
 

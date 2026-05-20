@@ -60,4 +60,13 @@ Argues that the file-based agent-definition pattern now standard across horizont
 
 ---
 
+### The Cognitive Decision Loop: A Governed Architecture for Industrial AI Agents
+**Date**: May 2026 · [PDF](2026.05.20_The_Cognitive_Decision_Loop.pdf)
+
+Introduces the Cognitive Decision Loop, an Observe–Reflect–Plan–Act (ORPA) architecture for industrial AI agents that separates model-internal reasoning from agent control. Argues that reasoning-focused LLMs improve inference inside the model but do not supply the system-level properties industrial agents need — governed decision-making under operational constraints — and that treating a better reasoning model as equivalent to a better operational agent is a category error. The loop combines fact-based operational observations, multi-dimensional scored gating (importance, surprise, confidence, source trust), significance-gated reflection, confidence-calibrated conditional planning, multi-agent consensus over scored signals, provenance-oriented Decision Traces, and bounded actuation enforced at the dispatch boundary. It situates the design in three lineages — operator decision theory (OODA, recognition-primed decision-making, dual-process theory, predictive processing), Park et al.'s generative-agent memory–reflection–planning pattern, and industrial AI governance (PROV-O, NIST AI RMF, ISO/IEC 42001, IEC 62443/61511) — and extends the generative-agent pattern from believability toward traceability, configurability, and bounded action. Uses XMPro MAGS as a reference implementation, treating LLMs as configurable cognitive services inside a governed loop rather than as the architecture itself, with reasoning posture set per-agent, and proposes decision artifacts (not just final outputs) as the unit of evaluation for industrial agents.
+
+**Related docs**: [ORPA Cycle](../docs/concepts/orpa-cycle.md) · [Decision Traces](../docs/concepts/decision-traces.md) · [Observations, Reflections and Memories](../docs/concepts/observations-reflections-memories.md) · [Memory Significance](../docs/cognitive-intelligence/memory-significance.md) · [Planning Approaches](../docs/concepts/planning-approaches.md) · [Consensus Mechanisms](../docs/concepts/consensus-mechanisms.md) · [Objective Functions](../docs/concepts/objective-functions.md) · [Human-in-the-Loop](../docs/responsible-ai/human-in-the-loop.md)
+
+---
+
 *For academic research foundations that inform the MAGS architecture, see [docs/research-foundations/](../docs/research-foundations/README.md).*

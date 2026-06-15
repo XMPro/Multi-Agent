@@ -213,25 +213,34 @@ if (Test-Path "otel-lgtm") {
     Write-Host ""
     Write-Host "Stopping OTEL LGTM..." -ForegroundColor White
     Set-Location "otel-lgtm"
-    try {
-        if ($RemoveVolumes) {
-            docker-compose --profile ssl down -v
-        } else {
-            docker-compose --profile ssl down
-        }
+    # Skip if never configured. The folder is always present (copied from src/), but a
+    # service is only "installed" once its install writes a .env. Without it, `down`
+    # fails interpolating the mandatory OTEL_INGEST_TOKEN=${...:?} and reports a false
+    # failure, so skip when no .env exists.
+    if (-not (Test-Path ".env")) {
+        Write-Host "OTEL LGTM not configured (no .env), skipping" -ForegroundColor Yellow
+        Set-Location ..
+    } else {
+        try {
+            if ($RemoveVolumes) {
+                docker-compose --profile ssl down -v
+            } else {
+                docker-compose --profile ssl down
+            }
 
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "OTEL LGTM stopped successfully" -ForegroundColor Green
-            $StoppedServices += "OTEL LGTM"
-        } else {
-            Write-Host "Failed to stop OTEL LGTM (exit code: $LASTEXITCODE)" -ForegroundColor Red
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "OTEL LGTM stopped successfully" -ForegroundColor Green
+                $StoppedServices += "OTEL LGTM"
+            } else {
+                Write-Host "Failed to stop OTEL LGTM (exit code: $LASTEXITCODE)" -ForegroundColor Red
+                $FailedServices += "OTEL LGTM"
+            }
+        } catch {
+            Write-Host "Error stopping OTEL LGTM: $($_.Exception.Message)" -ForegroundColor Red
             $FailedServices += "OTEL LGTM"
         }
-    } catch {
-        Write-Host "Error stopping OTEL LGTM: $($_.Exception.Message)" -ForegroundColor Red
-        $FailedServices += "OTEL LGTM"
+        Set-Location ..
     }
-    Set-Location ..
 }
 
 # Summary

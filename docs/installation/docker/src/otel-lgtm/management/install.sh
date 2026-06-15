@@ -165,6 +165,12 @@ for dir in certs nginx collector otel-lgtm-data; do
     fi
 done
 
+# The grafana/otel-lgtm container writes to /data as a non-root user. On Docker Desktop
+# (Windows/Mac) bind-mount ownership is masked, but on native Linux the root-owned host
+# dir blocks writes and the container fails to start. Make it world-writable, matching the
+# convention used by the neo4j/milvus/mqtt service installers.
+chmod -R 777 otel-lgtm-data 2>/dev/null || true
+
 echo ""
 
 # Port configuration

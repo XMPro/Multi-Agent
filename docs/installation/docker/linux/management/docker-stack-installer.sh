@@ -1122,27 +1122,39 @@ if [ "${CONFIGURED_SERVICES[timescaledb]:-false}" = true ]; then
         TIMESCALEDB_DB=$(grep "^POSTGRES_DB=" timescaledb/.env | cut -d= -f2)
         TIMESCALEDB_USER=$(grep "^POSTGRES_USER=" timescaledb/.env | cut -d= -f2)
         TIMESCALEDB_PASS=$(grep "^POSTGRES_PASSWORD=" timescaledb/.env | cut -d= -f2)
-        
+        PGADMIN_EMAIL=$(grep "^PGADMIN_EMAIL=" timescaledb/.env | cut -d= -f2 || true)
+        PGADMIN_PASS=$(grep "^PGADMIN_PASSWORD=" timescaledb/.env | cut -d= -f2 || true)
+
         echo "Database: ${TIMESCALEDB_DB:-timescaledb}" >> CREDENTIALS.txt
         echo "Username: ${TIMESCALEDB_USER:-postgres}" >> CREDENTIALS.txt
         echo "Password: ${TIMESCALEDB_PASS:-check .env file}" >> CREDENTIALS.txt
         echo "" >> CREDENTIALS.txt
     fi
-    
+
     echo "Access URLs:" >> CREDENTIALS.txt
     echo "  - PostgreSQL: localhost:5432" >> CREDENTIALS.txt
     echo "  - Connection String: postgresql://<username>:<password>@localhost:5432/<database>" >> CREDENTIALS.txt
-    
+
     # Check if SSL is enabled
     if grep -q "ENABLE_SSL=true" timescaledb/.env 2>/dev/null && [ -f "timescaledb/certs/ca.crt" ]; then
         echo "" >> CREDENTIALS.txt
+        echo "  - pgAdmin Web UI (HTTPS): https://localhost:5051" >> CREDENTIALS.txt
+        echo "  - pgAdmin Web UI (HTTP redirect): http://localhost:5050" >> CREDENTIALS.txt
         echo "  - SSL Connection String: postgresql://<username>:<password>@localhost:5432/<database>?sslmode=require" >> CREDENTIALS.txt
         echo "" >> CREDENTIALS.txt
         echo "SSL Certificate:" >> CREDENTIALS.txt
         echo "  - CA Certificate: timescaledb/certs/ca.crt" >> CREDENTIALS.txt
         echo "  - Server Certificate: timescaledb/certs/server.crt" >> CREDENTIALS.txt
         echo "  - Server Key: timescaledb/certs/server.key" >> CREDENTIALS.txt
+    else
+        echo "" >> CREDENTIALS.txt
+        echo "  - pgAdmin Web UI: http://localhost:5050" >> CREDENTIALS.txt
     fi
+
+    echo "" >> CREDENTIALS.txt
+    echo "pgAdmin Web UI:" >> CREDENTIALS.txt
+    echo "  - Email: ${PGADMIN_EMAIL:-admin@example.com}" >> CREDENTIALS.txt
+    echo "  - Password: ${PGADMIN_PASS:-check .env file}" >> CREDENTIALS.txt
 fi
 
 # Collect Ollama credentials

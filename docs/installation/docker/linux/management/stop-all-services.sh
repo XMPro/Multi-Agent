@@ -131,7 +131,17 @@ for SERVICE in "${SERVICES[@]}"; do
             cd ..
             continue
         fi
-        
+
+        # Skip services that were never configured. The service folders are always present
+        # (copied from src/), but a service is only "installed" once its install.sh writes a
+        # .env. Without it, `docker compose down` fails interpolating mandatory ${VAR:?...}
+        # values (e.g. otel-lgtm's OTEL_INGEST_TOKEN), which would abort this script.
+        if [ ! -f ".env" ]; then
+            print_color "$YELLOW" "$SERVICE not configured (no .env), skipping"
+            cd ..
+            continue
+        fi
+
         # Stop the service (use --profile ssl to also stop SSL nginx containers)
         COMPOSE_CMD="docker-compose --profile ssl"
         if [ "$REMOVE_VOLUMES" = true ]; then

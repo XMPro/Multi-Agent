@@ -695,6 +695,15 @@ fi
 # Set proper permissions for data directories
 echo "Setting directory permissions..."
 chmod -R 755 backups 2>/dev/null || true
+# pgAdmin runs as uid 5050 and must own its data dir. On Docker Desktop (Windows/Mac)
+# bind-mount ownership is masked, so this is never an issue there. On native Linux the
+# host dir is root/sudo-owned, pgAdmin cannot write /var/lib/pgadmin, the container never
+# becomes healthy, and `docker compose up` aborts on the pgadmin-nginx service_healthy
+# dependency before the installer finishes. Give uid 5050 ownership (fall back to 777).
+if ! chown -R 5050:5050 timescaledb-data/pgadmin 2>/dev/null; then
+    sudo chown -R 5050:5050 timescaledb-data/pgadmin 2>/dev/null \
+        || chmod -R 777 timescaledb-data/pgadmin 2>/dev/null || true
+fi
 print_color "$GREEN" "Directory permissions configured"
 
 # SSL Certificate setup

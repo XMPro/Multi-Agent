@@ -34,19 +34,27 @@ if (-not (Test-Path $InstallPath)) {
 
 Set-Location $InstallPath
 
-# Verify expected folders exist
-$ExpectedFolders = @("neo4j", "milvus", "mqtt", "timescaledb", "ollama", "otel-lgtm")
-$MissingFolders = @()
+# Services to stop: folder name -> display name
+$Services = [ordered]@{
+    "neo4j"       = "Neo4j"
+    "milvus"      = "Milvus"
+    "mqtt"        = "MQTT"
+    "timescaledb" = "TimescaleDB"
+    "ollama"      = "Ollama"
+    "otel-lgtm"   = "OTEL LGTM"
+}
 
-foreach ($folder in $ExpectedFolders) {
+# Verify expected folders exist
+$MissingFolders = @()
+foreach ($folder in $Services.Keys) {
     if (-not (Test-Path $folder)) {
         $MissingFolders += $folder
     }
 }
 
-if ($MissingFolders.Count -eq $ExpectedFolders.Count) {
+if ($MissingFolders.Count -eq $Services.Count) {
     Write-Host "No service folders found in: $InstallPath" -ForegroundColor Red
-    Write-Host "Expected folders: $($ExpectedFolders -join ', ')" -ForegroundColor Yellow
+    Write-Host "Expected folders: $($Services.Keys -join ', ')" -ForegroundColor Yellow
     exit 1
 }
 
@@ -78,169 +86,49 @@ Write-Host "====================" -ForegroundColor Gray
 $StoppedServices = @()
 $FailedServices = @()
 
-# Stop Neo4j
-if (Test-Path "neo4j") {
-    Write-Host ""
-    Write-Host "Stopping Neo4j..." -ForegroundColor White
-    Set-Location "neo4j"
-    try {
-        if ($RemoveVolumes) {
-            docker-compose --profile ssl down -v
-        } else {
-            docker-compose --profile ssl down
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Neo4j stopped successfully" -ForegroundColor Green
-            $StoppedServices += "Neo4j"
-        } else {
-            Write-Host "Failed to stop Neo4j (exit code: $LASTEXITCODE)" -ForegroundColor Red
-            $FailedServices += "Neo4j"
-        }
-    } catch {
-        Write-Host "Error stopping Neo4j: $($_.Exception.Message)" -ForegroundColor Red
-        $FailedServices += "Neo4j"
-    }
-    Set-Location ..
-}
+foreach ($folder in $Services.Keys) {
+    $name = $Services[$folder]
 
-# Stop Milvus
-if (Test-Path "milvus") {
-    Write-Host ""
-    Write-Host "Stopping Milvus..." -ForegroundColor White
-    Set-Location "milvus"
-    try {
-        if ($RemoveVolumes) {
-            docker-compose --profile ssl down -v
-        } else {
-            docker-compose --profile ssl down
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Milvus stopped successfully" -ForegroundColor Green
-            $StoppedServices += "Milvus"
-        } else {
-            Write-Host "Failed to stop Milvus (exit code: $LASTEXITCODE)" -ForegroundColor Red
-            $FailedServices += "Milvus"
-        }
-    } catch {
-        Write-Host "Error stopping Milvus: $($_.Exception.Message)" -ForegroundColor Red
-        $FailedServices += "Milvus"
+    if (-not (Test-Path $folder)) {
+        Write-Host "$name directory not found, skipping" -ForegroundColor Yellow
+        continue
     }
-    Set-Location ..
-}
 
-# Stop MQTT
-if (Test-Path "mqtt") {
     Write-Host ""
-    Write-Host "Stopping MQTT..." -ForegroundColor White
-    Set-Location "mqtt"
-    try {
-        if ($RemoveVolumes) {
-            docker-compose --profile ssl down -v
-        } else {
-            docker-compose --profile ssl down
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "MQTT stopped successfully" -ForegroundColor Green
-            $StoppedServices += "MQTT"
-        } else {
-            Write-Host "Failed to stop MQTT (exit code: $LASTEXITCODE)" -ForegroundColor Red
-            $FailedServices += "MQTT"
-        }
-    } catch {
-        Write-Host "Error stopping MQTT: $($_.Exception.Message)" -ForegroundColor Red
-        $FailedServices += "MQTT"
-    }
-    Set-Location ..
-}
+    Write-Host "Stopping $name..." -ForegroundColor White
+    Set-Location $folder
 
-# Stop TimescaleDB
-if (Test-Path "timescaledb") {
-    Write-Host ""
-    Write-Host "Stopping TimescaleDB..." -ForegroundColor White
-    Set-Location "timescaledb"
-    try {
-        if ($RemoveVolumes) {
-            docker-compose --profile ssl down -v
-        } else {
-            docker-compose --profile ssl down
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "TimescaleDB stopped successfully" -ForegroundColor Green
-            $StoppedServices += "TimescaleDB"
-        } else {
-            Write-Host "Failed to stop TimescaleDB (exit code: $LASTEXITCODE)" -ForegroundColor Red
-            $FailedServices += "TimescaleDB"
-        }
-    } catch {
-        Write-Host "Error stopping TimescaleDB: $($_.Exception.Message)" -ForegroundColor Red
-        $FailedServices += "TimescaleDB"
-    }
-    Set-Location ..
-}
-
-# Stop Ollama
-if (Test-Path "ollama") {
-    Write-Host ""
-    Write-Host "Stopping Ollama..." -ForegroundColor White
-    Set-Location "ollama"
-    try {
-        if ($RemoveVolumes) {
-            docker-compose --profile ssl down -v
-        } else {
-            docker-compose --profile ssl down
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Ollama stopped successfully" -ForegroundColor Green
-            $StoppedServices += "Ollama"
-        } else {
-            Write-Host "Failed to stop Ollama (exit code: $LASTEXITCODE)" -ForegroundColor Red
-            $FailedServices += "Ollama"
-        }
-    } catch {
-        Write-Host "Error stopping Ollama: $($_.Exception.Message)" -ForegroundColor Red
-        $FailedServices += "Ollama"
-    }
-    Set-Location ..
-}
-
-# Stop OTEL LGTM
-if (Test-Path "otel-lgtm") {
-    Write-Host ""
-    Write-Host "Stopping OTEL LGTM..." -ForegroundColor White
-    Set-Location "otel-lgtm"
-    # Skip if never configured. The folder is always present (copied from src/), but a
-    # service is only "installed" once its install writes a .env. Without it, `down`
-    # fails interpolating the mandatory OTEL_INGEST_TOKEN=${...:?} and reports a false
-    # failure, so skip when no .env exists.
+    # Skip services that were never configured. The service folders are always present
+    # (copied from src/), but a service is only "installed" once its install writes a
+    # .env. Without it, `docker-compose down` fails interpolating mandatory ${VAR:?...}
+    # values (e.g. otel-lgtm's OTEL_INGEST_TOKEN) and reports a false failure.
     if (-not (Test-Path ".env")) {
-        Write-Host "OTEL LGTM not configured (no .env), skipping" -ForegroundColor Yellow
+        Write-Host "$name not configured (no .env), skipping" -ForegroundColor Yellow
         Set-Location ..
-    } else {
-        try {
-            if ($RemoveVolumes) {
-                docker-compose --profile ssl down -v
-            } else {
-                docker-compose --profile ssl down
-            }
-
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "OTEL LGTM stopped successfully" -ForegroundColor Green
-                $StoppedServices += "OTEL LGTM"
-            } else {
-                Write-Host "Failed to stop OTEL LGTM (exit code: $LASTEXITCODE)" -ForegroundColor Red
-                $FailedServices += "OTEL LGTM"
-            }
-        } catch {
-            Write-Host "Error stopping OTEL LGTM: $($_.Exception.Message)" -ForegroundColor Red
-            $FailedServices += "OTEL LGTM"
-        }
-        Set-Location ..
+        continue
     }
+
+    # Stop the service (use --profile ssl to also stop SSL nginx containers)
+    try {
+        if ($RemoveVolumes) {
+            docker-compose --profile ssl down -v
+        } else {
+            docker-compose --profile ssl down
+        }
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "$name stopped successfully" -ForegroundColor Green
+            $StoppedServices += $name
+        } else {
+            Write-Host "Failed to stop $name (exit code: $LASTEXITCODE)" -ForegroundColor Red
+            $FailedServices += $name
+        }
+    } catch {
+        Write-Host "Error stopping ${name}: $($_.Exception.Message)" -ForegroundColor Red
+        $FailedServices += $name
+    }
+
+    Set-Location ..
 }
 
 # Summary

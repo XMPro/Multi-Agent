@@ -3,3 +3,5 @@ dist/
 neo4j-packages/
 !neo4j-packages/README.md
 tmp/
+# macOS Finder metadata
+.DS_Store

@@ -1,6 +1,6 @@
 # How are MAGS Agents Trained?
 
-MAGS (Multi-Agent Generative Systems) agents operate differently from traditional AI systems that require training on historical datasets. Instead of traditional training, MAGS agents acquire their capabilities through several complementary approaches, with [Agent Profiles](agent_architecture.md#agent-profile) playing a central role in their configuration and operation.
+MAGS (Multi-Agent Generative Systems) agents operate differently from traditional AI systems that require training on historical datasets. Instead of traditional training, MAGS agents acquire their capabilities through several complementary approaches, with [Agent Profiles](../architecture/agent_architecture.md#agent-profile) playing a central role in their configuration and operation.
 
 ## Agent Profiles
 

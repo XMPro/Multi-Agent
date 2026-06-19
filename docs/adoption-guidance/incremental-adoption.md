@@ -1884,7 +1884,7 @@ Successful MAGS adoption requires a **disciplined, incremental approach** that b
 - [Govern Phase](02-govern-phase.md) - Governance implementation
 - [Build Phase](03-build-phase.md) - Implementation guidance
 - [Operate Phase](04-operate-phase.md) - Operational excellence
-- [Migration Playbook](migration-playbook.md) - Migration strategies
+- [Migration Playbook](../decision-guides/migration-playbook.md) - Migration strategies
 
 ### Decision Guides
 - [When Not to Use MAGS](../decision-guides/when-not-to-use-mags.md) - Appropriate use cases

@@ -848,7 +848,7 @@ This architecture enables MAGS to deliver sophisticated business process intelli
 - [Business Process Intelligence](business-process-intelligence.md)
 - [LLM Utility Layer](llm-utility-layer.md)
 - [Data Architecture](data-architecture.md)
-- [Agent Architecture](agent-architecture.md)
+- [Agent Architecture](agent_architecture.md)
 - [Design Patterns](../design-patterns/README.md)
 
 ---

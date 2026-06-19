@@ -778,7 +778,7 @@ Safety-critical operations require specialized MAGS configurations that prioriti
 - [Explainability](../responsible-ai/explainability.md) - Transparent decisions
 
 ### Adoption Framework
-- [Risk Mitigation Strategies](../adoption-framework/risk-mitigation-strategies.md) - Risk management
+- [Risk Mitigation Strategies](../adoption-guidance/risk-mitigation-strategies.md) - Risk management
 - [Govern Phase](../adoption-framework/02-govern-phase.md) - Governance implementation
 
 ### Decision Guides

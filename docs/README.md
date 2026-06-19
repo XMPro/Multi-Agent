@@ -33,7 +33,7 @@ While these diagrams cover different aspects of the system, they all contribute 
 
 ## Glossary
 
-[`Glossary.md`](docs/Glossary.md) is a comprehensive document that defines key terms, concepts, and acronyms used throughout the XMPro AI Agents project. It covers:
+[`Glossary.md`](Glossary.md) is a comprehensive document that defines key terms, concepts, and acronyms used throughout the XMPro AI Agents project. It covers:
 
 - Fundamental concepts in generative AI
 - Multi-Agent system architectures

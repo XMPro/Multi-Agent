@@ -22,7 +22,7 @@ This folder contains detailed explanations of various concepts, including but no
 
 1. [Why XMPro MAGS Part 1](whymags.md): This article examines the technical details of XMPro's approach and compares it to other agent frameworks in the market.
 2. [Why XMPro MAGS Part 2](whymagspt2.md): This article expands on part 1 and explains XMPro's Inter-Agent Interoperability approach for other agent frameworks.
-3. [APEX AgentOps for MAGS](agentopsapex.dm): How to scale MAGS using APEX for AgentOps
+3. [APEX AgentOps for MAGS](agentopsapex.md): How to scale MAGS using APEX for AgentOps
 4. [Agent Communication](agent-messaging.md): How to interact with MAGS agents through chat and observations.
 5. [Agent Training](agent_training.md): A comprehensive explanation of how MAGS agents acquire and develop their capabilities.
 6. [Agent Types](agent_types.md): An overview of the different types of agents in our Multi-Agent Generative Systems (MAGS) and their roles in industrial applications.

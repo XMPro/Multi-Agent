@@ -226,5 +226,3 @@ Each AuditEntry node contains the following information:
 - `change`: Description of the action or change made (e.g., "Deactivated prompt")
 - `user`: The user who performed the action
 - `timestamp`: The date and time when the action occurred
-
-For more detailed information on our prompt library implementation please refer to the [Prompt Manager and Library](../technical-details/prompt_manager.md).

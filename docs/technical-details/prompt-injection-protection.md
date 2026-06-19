@@ -7,7 +7,6 @@ This document details XMPro's MAGS implementation of prompt injection protection
 ## Secure User Interfaces
 
 ### Prompt Administration Interface
-![Prompt Administration UI](images/prompt_administration.png)
 - Centralized management of all system prompts
 - Role-based access control
 - Version control and audit logging
@@ -106,6 +105,5 @@ Protection mechanisms:
 
 ## Related Documentation
 - [Agent Architecture](../architecture/agent_architecture.md)
-- [Prompt Management](prompt_manager.md)
 - [Agent Messaging](../concepts/agent-messaging.md)
 - [Memory Cycle Instantiation](memory_cycle_instantiation.md)

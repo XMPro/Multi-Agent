@@ -173,7 +173,7 @@ The installation scripts handle:
 - GPU: NVIDIA (CUDA) or AMD (ROCm) optional
 
 **Installation Steps:**
-1. Download Ollama for Windows from https://ollama.ai
+1. Download Ollama for Windows from https://ollama.com
 2. Run the installer (OllamaSetup.exe)
 3. Ollama runs as a background service automatically
 4. Open PowerShell and verify: `ollama --version`
@@ -193,7 +193,7 @@ The installation scripts handle:
 
 ```bash
 # Download and install Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
+curl -fsSL https://ollama.com/install.sh | sh
 
 # Verify installation
 ollama --version
@@ -222,9 +222,9 @@ sudo systemctl status ollama
 
 ```bash
 # Download and install Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
+curl -fsSL https://ollama.com/install.sh | sh
 
-# Or download from https://ollama.ai and install the .dmg
+# Or download from https://ollama.com and install the .dmg
 
 # Verify installation
 ollama --version
@@ -1313,14 +1313,14 @@ docker exec -it ollama ollama --version
 ### Native Installation
 
 **Windows:**
-1. Download latest installer from https://ollama.ai
+1. Download latest installer from https://ollama.com
 2. Run installer (will upgrade existing installation)
 3. Verify: `ollama --version`
 
 **Linux:**
 ```bash
 # Re-run install script
-curl -fsSL https://ollama.ai/install.sh | sh
+curl -fsSL https://ollama.com/install.sh | sh
 
 # Restart service
 sudo systemctl restart ollama
@@ -1330,7 +1330,7 @@ ollama --version
 ```
 
 **macOS:**
-1. Download latest .dmg from https://ollama.ai
+1. Download latest .dmg from https://ollama.com
 2. Replace existing application
 3. Verify: `ollama --version`
 

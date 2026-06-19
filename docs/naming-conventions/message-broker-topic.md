@@ -120,4 +120,4 @@ This topic structure, based on UNS principles, was designed with the following c
 
 By following this UNS-based convention, we ensure clear, consistent, and efficient communication within our Multi-Agent System while maintaining alignment with broader industry practices.
 
-For more information on Unified Namespace (UNS) concepts, you can refer to this [introduction to UNS](https://www.rtautomation.com/rtas-blog/unified-namespace/).
+For more information on Unified Namespace (UNS) concepts, you can refer to this [introduction to UNS](https://www.rtautomation.com/rtas-blog/what-is-unified-namespace/).

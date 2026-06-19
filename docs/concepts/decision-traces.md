@@ -325,11 +325,6 @@ The **DecisionGraph** is part of the XMPro AO Platform—a hybrid ontology syste
 - [Decision Traces Provenance](../../../xmpro-ao-platform/docs/design/25-Decision-Traces-Provenance.md)
 - [Examples](../../../xmpro-ao-platform/examples/decision-traces/)
 
-**ObsidianFiles (Team Documentation):**
-- [Executive Summary](../../../ObsidianFiles/01-Executive-Summary.md)
-- [Technical Architecture](../../../ObsidianFiles/02-Technical-Architecture.md)
-- [FAQ](../../../ObsidianFiles/07-FAQ.md)
-
 ---
 
 *Decision traces transform MAGS from an agent framework into a decision intelligence platform—capturing organizational knowledge that compounds over time.*

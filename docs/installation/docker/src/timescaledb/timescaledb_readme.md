@@ -408,10 +408,10 @@ docker-compose up -d
 
 ## Additional Resources
 
-- [TimescaleDB Documentation](https://docs.timescale.com/)
+- [TimescaleDB Documentation](https://www.tigerdata.com/docs/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [TimescaleDB Best Practices](https://docs.timescale.com/timescaledb/latest/how-to-guides/)
-- [Time-Series Data Management](https://docs.timescale.com/timescaledb/latest/overview/core-concepts/)
+- [TimescaleDB Best Practices](https://www.tigerdata.com/docs/timescaledb/latest/how-to-guides)
+- [Time-Series Data Management](https://www.tigerdata.com/docs/timescaledb/latest/overview/core-concepts)
 
 ## Support
 

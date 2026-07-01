@@ -1208,6 +1208,17 @@ Username: $Neo4jUser
 Password: $Neo4jPass
 
 "@
+
+        # Pre-computed Basic-auth token for the App Designer 'neo4j_neo4j_https' variable
+        # (base64 of username:password). Paste this value straight into App Designer.
+        if ($Neo4jPass -and $Neo4jPass -ne "(check Neo4j .env file)") {
+            $Neo4jHttpsToken = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("${Neo4jUser}:${Neo4jPass}"))
+            $CredentialsContent += @"
+App Designer variable 'neo4j_neo4j_https' (base64 of username:password):
+  $Neo4jHttpsToken
+
+"@
+        }
     }
     
     $CredentialsContent += @"

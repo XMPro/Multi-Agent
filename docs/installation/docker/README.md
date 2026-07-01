@@ -428,6 +428,10 @@ The installer automatically creates a **CREDENTIALS.txt** file containing:
 
 **IMPORTANT: Keep this file secure and do not commit it to version control!**
 
+### Configure XMPro
+
+With the stack running, follow the [Post-Installation Configuration](../post-install-configuration.md) run sheet to create the Stream Designer and App Designer variables that connect the deployed MAGS stream and app to this stack. `CREDENTIALS.txt` supplies every secret value, including the pre-computed `neo4j_neo4j_https` Basic-auth token for App Designer.
+
 ## Troubleshooting
 
 ### Common Issues

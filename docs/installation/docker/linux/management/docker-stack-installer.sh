@@ -1012,6 +1012,14 @@ if [ "${CONFIGURED_SERVICES[neo4j]:-false}" = true ]; then
         echo "Username: ${NEO4J_USER:-neo4j}" >> CREDENTIALS.txt
         echo "Password: ${NEO4J_PASS:-check .env file}" >> CREDENTIALS.txt
         echo "" >> CREDENTIALS.txt
+        # Pre-computed Basic-auth token for the App Designer 'neo4j_neo4j_https' variable
+        # (base64 of username:password). Paste this value straight into App Designer.
+        if [ -n "$NEO4J_PASS" ]; then
+            NEO4J_HTTPS_TOKEN=$(printf '%s:%s' "${NEO4J_USER:-neo4j}" "$NEO4J_PASS" | base64 | tr -d '\n')
+            echo "App Designer variable 'neo4j_neo4j_https' (base64 of username:password):" >> CREDENTIALS.txt
+            echo "  $NEO4J_HTTPS_TOKEN" >> CREDENTIALS.txt
+            echo "" >> CREDENTIALS.txt
+        fi
     fi
     
     echo "Access URLs:" >> CREDENTIALS.txt

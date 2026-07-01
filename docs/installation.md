@@ -160,3 +160,5 @@ Remember to regularly review and update your agent profiles to ensure they remai
 ## Next Steps
 
 After completing the installation, access the prompt administration page and ensure the system prompts are using the models providers and models you have enabled.
+
+Then follow the [Post-Installation Configuration](installation/post-install-configuration.md) run sheet to create the Stream Designer and App Designer variables that connect the deployed MAGS stream and app to your infrastructure (Neo4j, MQTT, TimescaleDB, vector database, Ollama).

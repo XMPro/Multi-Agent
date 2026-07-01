@@ -492,7 +492,8 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 }
                 
                 # Build argument list properly - combine all into single array
-                $SaveArgs = @("save", "-o", $ImagesArchivePath) + $SuccessfulDownloads
+                # Wrap path in escaped quotes to handle spaces in directory names
+                $SaveArgs = @("save", "-o", "`"$ImagesArchivePath`"") + $SuccessfulDownloads
                 
                 $SaveProcess = Start-Process -FilePath "docker" `
                     -ArgumentList $SaveArgs `
@@ -520,6 +521,78 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
             Write-Host "WARNING: $($FailedDownloads.Count) image(s) failed - will download during install" -ForegroundColor Yellow
         }
         
+        # Pull and bundle Ollama models for offline use
+        Write-Host ""
+        Write-Host "Downloading Ollama models for offline use..." -ForegroundColor White
+        Write-Host "  nomic-embed-text:latest  (~274 MB) - embedding model (required)" -ForegroundColor Gray
+        Write-Host "  llama3.1:8b              (~5 GB)   - recommended chat model" -ForegroundColor Gray
+        Write-Host "  qwen2.5:14b              (~9 GB)   - high-performance chat model" -ForegroundColor Gray
+        Write-Host "  mistral-nemo:12b         (~7 GB)   - alternative chat model" -ForegroundColor Gray
+        Write-Host "  (This will take a while)" -ForegroundColor Gray
+
+        $OllamaModels = @(
+            "nomic-embed-text:latest",
+            "llama3.1:8b",
+            "qwen2.5:14b",
+            "mistral-nemo:12b"
+        )
+
+        $TempVolumeName    = "ollama-model-prep-$(Get-Random)"
+        $TempContainerName = "ollama-model-prep-$(Get-Random)"
+        # Use a temp path without spaces to avoid Docker volume mount issues
+        $TempModelsOutputDir = Join-Path $env:TEMP "ollama-models-out-$(Get-Random)"
+        New-Item -ItemType Directory -Force -Path $TempModelsOutputDir | Out-Null
+
+        try {
+            Write-Host "  Starting temporary Ollama container..." -ForegroundColor Gray
+            docker run -d --name $TempContainerName -v "${TempVolumeName}:/root/.ollama" ollama/ollama:latest 2>&1 | Out-Null
+            Start-Sleep -Seconds 5
+
+            $ModelsPulled = @()
+            foreach ($Model in $OllamaModels) {
+                Write-Host "  Pulling $Model..." -ForegroundColor White
+                docker exec $TempContainerName ollama pull $Model
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "  [OK] $Model" -ForegroundColor Green
+                    $ModelsPulled += $Model
+                } else {
+                    Write-Host "  [WARN] Failed to pull $Model - skipping" -ForegroundColor Yellow
+                }
+            }
+
+            if ($ModelsPulled.Count -gt 0) {
+                Write-Host "  Exporting models to archive..." -ForegroundColor White
+                # Export via alpine into temp path (no spaces)
+                docker run --rm `
+                    -v "${TempVolumeName}:/data" `
+                    -v "${TempModelsOutputDir}:/output" `
+                    alpine sh -c "cd /data && tar cf /output/ollama-models.tar ."
+
+                $TempModelsArchive = Join-Path $TempModelsOutputDir "ollama-models.tar"
+                $ModelsArchivePath = Join-Path $OutputPath "ollama-models.tar"
+
+                if (Test-Path $TempModelsArchive) {
+                    Move-Item -Path $TempModelsArchive -Destination $ModelsArchivePath -Force
+                    $ModelsInfo = Get-Item $ModelsArchivePath
+                    $ModelsSizeGB = [math]::Round($ModelsInfo.Length / 1GB, 2)
+                    Write-Host "  [OK] Models archive created: $ModelsSizeGB GB ($($ModelsPulled.Count) models)" -ForegroundColor Green
+                } else {
+                    Write-Host "  [WARN] Models archive not created - models will need to be pulled on target" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "  [WARN] No models pulled - skipping models archive" -ForegroundColor Yellow
+            }
+        } catch {
+            Write-Host "  [WARN] Model download failed: $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "  Models will need to be pulled on the target machine" -ForegroundColor Gray
+        } finally {
+            docker rm -f $TempContainerName 2>&1 | Out-Null
+            docker volume rm $TempVolumeName 2>&1 | Out-Null
+            if (Test-Path $TempModelsOutputDir) {
+                Remove-Item $TempModelsOutputDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
         # Download Docker Desktop installer
         Write-Host "Downloading Docker Desktop..." -ForegroundColor White
         
@@ -592,6 +665,24 @@ This package was created using **Docker** and contains everything needed for off
         $OfflineInstructions += @"
 
 4. **docker-stack-installer.ps1** - Main installation script (copy separately)
+"@
+
+        $HasModelsArchive = Test-Path (Join-Path $OutputPath "ollama-models.tar")
+        if ($HasModelsArchive) {
+            $ModelsInfo = Get-Item (Join-Path $OutputPath "ollama-models.tar")
+            $ModelsSizeGB = [math]::Round($ModelsInfo.Length / 1GB, 2)
+            $OfflineInstructions += @"
+
+5. **ollama-models.tar** - Pre-downloaded Ollama models ($ModelsSizeGB GB)
+   - ``nomic-embed-text:latest`` - embedding model (required for vector search)
+   - ``llama3.1:8b``             - recommended chat model (good for most hardware)
+   - ``qwen2.5:14b``             - high-performance chat model (needs more RAM/GPU)
+   - ``mistral-nemo:12b``        - alternative chat model
+   - Models are **automatically restored** by the installer - no manual step required
+"@
+        }
+
+        $OfflineInstructions += @"
 
 ## Offline Installation Steps
 
@@ -628,20 +719,39 @@ You should see all the required images listed.
 3. Run the installer (extracts to current directory):
 
 ``````powershell
-.\docker-stack-installer.ps1
+.\docker-stack-installer.ps1 -Domain <HOSTNAME> -EnableSSL
 ``````
+
+Replace ``<HOSTNAME>`` with the target machine's hostname or IP address.
 
 4. The installer will:
    - Extract ``$ZipName`` to the current directory
    - Move the ZIP file to an ``archive/`` folder
    - Configure all services
+   - **Automatically restore Ollama models** from ``ollama-models.tar`` (if Ollama was selected)
 5. Follow the interactive prompts to configure each service
+
+### Step 4: Choose Your Ollama Model (after install)
+
+All three chat models are pre-loaded. Choose based on available hardware:
+
+| Model | VRAM / RAM needed | Speed |
+|---|---|---|
+| ``llama3.1:8b`` | ~8 GB | Fast |
+| ``mistral-nemo:12b`` | ~12 GB | Medium |
+| ``qwen2.5:14b`` | ~14 GB | Slower but more capable |
+
+Verify loaded models:
+``````powershell
+docker exec ollama ollama list
+``````
 
 ---
 Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 Package Type: Offline Deployment
 Images Included: $($SuccessfulDownloads.Count)
 Missing Images: $($FailedDownloads.Count)
+Ollama Models Included: $(if ($HasModelsArchive) { "Yes (nomic-embed-text, llama3.1:8b, qwen2.5:14b, mistral-nemo:12b)" } else { "No - pull manually after install" })
 "@
         
         $OfflineInstructionsPath = Join-Path $OutputPath "OFFLINE-INSTALLATION-INSTRUCTIONS.md"

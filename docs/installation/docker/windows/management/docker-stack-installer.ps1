@@ -934,6 +934,41 @@ if ($ConfiguredServices["ollama"]) {
         docker-compose up -d
     }
     Set-Location ..
+
+    # Restore pre-bundled Ollama models if available (offline deployments)
+    $ModelsArchivePath = Join-Path $InstallPath "ollama-models.tar"
+    if (-not (Test-Path $ModelsArchivePath)) {
+        $ModelsArchivePath = Join-Path $InstallPath "archive\ollama-models.tar"
+    }
+    if (Test-Path $ModelsArchivePath) {
+        Write-Host ""
+        Write-Host "Restoring pre-bundled Ollama models..." -ForegroundColor White
+        Write-Host "  This may take several minutes..." -ForegroundColor Gray
+
+        # Wait for Ollama container to be ready before restoring
+        $OllamaReady = $false
+        for ($i = 0; $i -lt 12; $i++) {
+            try {
+                docker exec ollama ollama list 2>&1 | Out-Null
+                if ($LASTEXITCODE -eq 0) { $OllamaReady = $true; break }
+            } catch {}
+            Start-Sleep -Seconds 5
+        }
+
+        if ($OllamaReady) {
+            docker cp $ModelsArchivePath "ollama:/tmp/ollama-models.tar"
+            docker exec ollama sh -c "cd /root/.ollama && tar xf /tmp/ollama-models.tar && rm /tmp/ollama-models.tar"
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "  [OK] Models restored successfully" -ForegroundColor Green
+                Write-Host "  Available models:" -ForegroundColor White
+                docker exec ollama ollama list
+            } else {
+                Write-Host "  [WARN] Model restore failed - pull models manually after install" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "  [WARN] Ollama not ready - pull models manually after install" -ForegroundColor Yellow
+        }
+    }
 } else {
     Write-Host ""
     Write-Host "Skipping Ollama startup (not selected)" -ForegroundColor Yellow
@@ -1656,6 +1691,73 @@ $CredentialsFilePath = Join-Path $InstallPath "CREDENTIALS.txt"
 $CredentialsContent | Out-File -FilePath $CredentialsFilePath -Encoding UTF8
 Write-Host "Credentials file created: CREDENTIALS.txt" -ForegroundColor Green
 Write-Host "Location: $CredentialsFilePath" -ForegroundColor White
+
+# Generate XMPro Variables Table
+Write-Host ""
+Write-Host "Generating XMPro Variables Table..." -ForegroundColor White
+Write-Host "====================================" -ForegroundColor Gray
+
+$XmproVars = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+# MQTT Variables
+if ($ConfiguredServices["mqtt"]) {
+    $mqttPort     = if ($MqttSSLEnabled) { "9003" } else { "9002" }
+    $mqttProtocol = if ($MqttSSLEnabled) { "wss://" } else { "ws://" }
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $Domain;        VariableName = "mqtt_host" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $MqttPass;      VariableName = "mqtt_password" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $mqttPort;      VariableName = "mqtt_port" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $mqttProtocol;  VariableName = "mqtt_protocol" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $MqttUser;      VariableName = "mqtt_username" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = "FALSE";        VariableName = "mqtt_usetsl" })
+}
+
+# Neo4j Variables
+if ($ConfiguredServices["neo4j"]) {
+    $neo4jDbType     = if ($Neo4jSSLEnabled) { "neo4j-https" } else { "neo4j-bolt" }
+    $neo4jUri        = if ($Neo4jSSLEnabled) { "neo4j+s://${Domain}:7687" } else { "neo4j://${Domain}:7687" }
+    $neo4jHttpsUri   = if ($Neo4jSSLEnabled) { "https://${Domain}:7473/db/neo4j/query/v2" } else { "http://${Domain}:7474/db/neo4j/query/v2" }
+    $neo4jHttpsCreds = "${Neo4jUser}:${Neo4jPass}"
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = "neo4j";           VariableName = "neo4j_database" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $neo4jDbType;      VariableName = "neo4j_dbtype" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $neo4jHttpsCreds;  VariableName = "neo4j_https_creds" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $neo4jHttpsUri;    VariableName = "neo4j_https_uri" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $Neo4jPass;        VariableName = "neo4j_password" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $neo4jUri;         VariableName = "neo4j_uri" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $Neo4jUser;        VariableName = "neo4j_user" })
+}
+
+# TimescaleDB (SQL) Variables
+if ($ConfiguredServices["timescaledb"]) {
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $TimescaleDBUser;   VariableName = "SQL Login" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $TimescaleDBPass;   VariableName = "SQL Password" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $Domain.ToUpper();  VariableName = "SQL Server" })
+}
+
+# Milvus (Vector DB) Variables
+if ($ConfiguredServices["milvus"]) {
+    $vectorDbType = if ($MilvusSSLEnabled) { "milvus-https" } else { "milvus" }
+    $vectorDbUrl  = if ($MilvusSSLEnabled) { "https://${Domain}:19531" } else { "http://${Domain}:19531" }
+    $vectorApiKey = "${MilvusUser}:${MilvusPass}"
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $vectorApiKey;  VariableName = "vector_api_key" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = "default";      VariableName = "vector_db_name" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $vectorDbUrl;   VariableName = "vector_db_url" })
+    $XmproVars.Add([PSCustomObject]@{ CompanyId = ""; Value = $vectorDbType;  VariableName = "vectordbtype" })
+}
+
+if ($XmproVars.Count -gt 0) {
+    Write-Host ""
+    Write-Host "XMPro Variables:" -ForegroundColor Cyan
+    $XmproVars | Format-Table -AutoSize
+
+    $XmproVarsPath = Join-Path $InstallPath "XMPRO_VARIABLES.txt"
+    $header = "CompanyId`tValue`tVariableName"
+    $rows   = $XmproVars | ForEach-Object { "$($_.CompanyId)`t$($_.Value)`t$($_.VariableName)" }
+    @($header) + $rows | Out-File -FilePath $XmproVarsPath -Encoding UTF8
+    Write-Host "XMPro Variables saved to: XMPRO_VARIABLES.txt" -ForegroundColor Green
+    Write-Host "Location: $XmproVarsPath" -ForegroundColor White
+} else {
+    Write-Host "No XMPro variable data available - no services were configured." -ForegroundColor Yellow
+}
 
 Write-Host ""
 Write-Host "Installation completed!" -ForegroundColor Green

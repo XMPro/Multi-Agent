@@ -22,19 +22,23 @@ XMPro MAGS is built on robust messaging protocols, making it suitable for indust
 
 The use of these protocols ensures that MAGS can operate effectively in large-scale industrial deployments. It can handle high-volume data streams and maintain communication integrity even in unstable network conditions. This infrastructure is particularly valuable in environments where real-time data processing and agent communication are critical for operations.
 
-### Dual-Database Approach for Enhanced Cognition
+### Hybrid Database Approach for Enhanced Cognition
 
-MAGS employs two specialized databases to improve its cognitive capabilities:
+MAGS employs a [three-database hybrid architecture](../technical-details/timeseries-storage.md), with each store optimized for what it does best:
 
-1. **Vector Database**:
+1. **TimeSeries Database (TimescaleDB / InfluxDB 3)**:
+   - The source of truth for all content, scores, metrics, and audit history
+   - Purpose-built for high-volume, time-ordered writes and time-based analytics
+
+2. **Vector Database**:
    - Enables efficient semantic similarity searches
    - Supports advanced AI operations and retrieval-augmented generation (RAG)
 
-2. **Graph Database (Neo4j)**:
-   - Represents complex relationships between entities
+3. **Graph Database (Neo4j)**:
+   - Holds lightweight reference nodes and the relationships between entities
    - Facilitates nuanced reasoning about interconnected data
 
-This dual-database system allows MAGS to process and understand complex data relationships more effectively than systems using simpler database structures. The Vector Database enables quick retrieval of semantically similar information, while the Graph Database provides context and relational understanding. Together, they enable MAGS to make more informed decisions based on a comprehensive understanding of the data landscape.
+This hybrid system allows MAGS to process and understand complex data relationships more effectively than systems using simpler database structures. The TimeSeries Database is the durable record of what happened, the Vector Database enables quick retrieval of semantically similar information, and the Graph Database provides context and relational understanding. Together, they enable MAGS to make more informed decisions based on a comprehensive understanding of the data landscape.
 
 ### Integrated Memory Cycle
 

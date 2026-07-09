@@ -26,7 +26,13 @@ XMPro MAGS is built on a robust, industrial-grade architecture that sets it apar
 
 ### 2. Advanced Data Management
 
-XMPro MAGS employs a sophisticated dual-database approach, combining the strengths of vector and graph databases to offer unparalleled data management capabilities.
+XMPro MAGS employs a sophisticated [three-database hybrid approach](../technical-details/timeseries-storage.md), combining the strengths of time-series, vector, and graph databases to offer unparalleled data management capabilities.
+
+#### TimeSeries Database
+
+- The source of truth for all agent content, scores, metrics, and audit history
+- Purpose-built for high-volume, time-ordered writes and time-based analytics
+- Ideal for durable audit trails, decision provenance, and long-term trend analysis in industrial workflows
 
 #### Vector Database
 
@@ -36,11 +42,11 @@ XMPro MAGS employs a sophisticated dual-database approach, combining the strengt
 
 #### Graph Database
 
-- Manages structured relationships between entities
+- Manages structured relationships between entities (lightweight references, not bulk content)
 - Represents complex interdependencies between agents, tasks, and decisions
 - Facilitates relational and temporal context mapping for informed decision-making
 
-> This dual-database architecture allows XMPro MAGS to efficiently handle both unstructured and structured data, enabling deep relational analysis and nuanced context-aware decision-making that traditional frameworks struggle to achieve.
+> This hybrid architecture allows XMPro MAGS to efficiently handle temporal, unstructured, and structured data together, enabling deep relational analysis and nuanced context-aware decision-making that traditional frameworks struggle to achieve.
 
 ### 3. Cognitive Decision-Making Capabilities
 
@@ -91,7 +97,7 @@ XMPro MAGS incorporates advanced machine learning techniques to ensure continuou
 
 #### Adaptive Knowledge Representation
 
-- Dynamically updates vector and graph databases with new information
+- Dynamically updates the time-series, vector, and graph databases with new information
 - Allows for evolving understanding of industrial processes and relationships
 - Supports transfer learning across different domains and applications
 

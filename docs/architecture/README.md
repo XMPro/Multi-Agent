@@ -49,7 +49,7 @@ graph TD
 - Agent Instances
 - Memory Cycle
 - MQTT Manager
-- Database Manager (Neo4j and Vector Database)
+- Database Manager (TimeSeries, Graph, and Vector databases — see [TimeSeries Storage](../technical-details/timeseries-storage.md))
 - Language Model
 - Prompt Manager
 - Planning Strategies
@@ -86,8 +86,9 @@ graph TD
     MC[MemoryCycle] --> |Uses| LM[Language Model]
     MC --> |Uses| DBM[Database Manager]
     MC --> |Communicates via| MQTT[MQTT Manager]
-    DBM --> |Interfaces with| Neo4j[Neo4j Database]
-    DBM --> |Interfaces with| VDB[Vector Database]
+    DBM --> |Source of truth| TS[TimeSeries Database]
+    DBM --> |References + relationships| Neo4j[Graph Database]
+    DBM --> |Embeddings| VDB[Vector Database]
     MC --> |Uses| EM[Embedding Model]
     MC --> |Guided by| PM[Prompt Manager]
     MC --> |Plans with| PS[Planning Strategies]

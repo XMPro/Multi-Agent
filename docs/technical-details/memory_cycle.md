@@ -20,7 +20,9 @@ graph TB
     VectorDBAbstract[AbstractVector Base Class]
     
     MQTT[Message Broker/MQTT]
-    Neo4j[(Neo4j Graph Database)]
+    Saga[DatabaseWriteSaga]
+    TS[(TimeSeries DB<br/>Source of Truth)]
+    Neo4j[(Graph DB<br/>References + Relationships)]
     LLM[Language Model]
     
     MQTT -->|Receives Input| Agent
@@ -35,11 +37,12 @@ graph TB
     RAGProcessor -->|3 Queries Vector DB| VectorDBAbstract
     RAGProcessor -->|4 Returns Context| MC
     
-    ObsM -->|Stores| Neo4j
-    ObsM -->|Vectorizes & Stores| VectorDBAbstract
-    RefM -->|Stores| Neo4j
-    RefM -->|Vectorizes & Stores| VectorDBAbstract
-    Plan -->|Stores| Neo4j
+    ObsM -->|Writes via| Saga
+    RefM -->|Writes via| Saga
+    Plan -->|Writes via| Saga
+    Saga -->|1 Full content| TS
+    Saga -->|2 Embedding| VectorDBAbstract
+    Saga -->|3 Lightweight reference + checksum| Neo4j
     
     MC -->|Generates Responses| LLM
     LLM -->|Enhanced with RAG Context| MC
@@ -70,8 +73,8 @@ graph TB
     classDef vectorDB fill:#ff9,stroke:#333,stroke-width:2px
     classDef collection fill:#9cf,stroke:#333,stroke-width:2px
     
-    class Agent,MC,ObsM,RefM,Plan mainComponent
-    class Neo4j database
+    class Agent,MC,ObsM,RefM,Plan,Saga mainComponent
+    class Neo4j,TS database
     class EmbeddingModel,RAGProcessor ragComponent
     class MQTT,LLM external
     class VectorDBAbstract,Milvus,Qdrant,MongoDB vectorDB
@@ -83,7 +86,7 @@ graph TB
 ### 1. Initialization & Setup
 
 The Memory Cycle initializes with several key components:
-- Database Manager (Neo4j and Vector DBs)
+- Database Manager (TimeSeries, Graph, and Vector DBs — see [TimeSeries Storage & Hybrid Database Architecture](timeseries-storage.md))
 - Language Model integration
 - Message Broker (MQTT/DDS)
 - OpenTelemetry for tracing/metrics
@@ -115,10 +118,10 @@ When a new observation is triggered:
 3. Importance score is calculated:
    - Uses LLM to evaluate importance (0-1 scale)
    - Considers agent goals and current context
-4. Memory is stored:
-   - Vector representation in chosen Vector DB
-   - Relationship data in Neo4j
-   - Additional metadata and metrics
+4. Memory is stored via the DatabaseWriteSaga:
+   - Full content, scores, and metrics in the TimeSeries DB (source of truth)
+   - Vector representation in the chosen Vector DB
+   - Lightweight reference node (id, timeseries_id, checksum) and relationships in the Graph DB
 ```
 
 ```mermaid
@@ -128,6 +131,7 @@ sequenceDiagram
     participant EM as Embedding Model
     participant VDB as Vector DB
     participant LLM
+    participant TS as TimeSeries
     participant Neo4j
     
     Input->>MC: New Observation
@@ -149,13 +153,14 @@ sequenceDiagram
     end
     
     rect rgb(200, 230, 255)
-        Note over MC,Neo4j: Importance & Storage
+        Note over MC,Neo4j: Importance & Storage (Saga)
         MC->>LLM: Calculate Importance
         LLM-->>MC: Return Score (0-1)
+        MC->>TS: 1. Store full content + scores + metrics
         par Store in Vector DB
-            MC->>VDB: Store Vector Representation
-        and Store in Graph DB
-            MC->>Neo4j: Store Relationships & Metadata
+            MC->>VDB: 2. Store Vector Representation
+        and Store reference in Graph DB
+            MC->>Neo4j: 3. Store lightweight reference + relationships + checksum
         end
     end
 ```
@@ -188,6 +193,7 @@ sequenceDiagram
     participant T as Trigger System
     participant MC as Memory Cycle
     participant VDB as Vector Database
+    participant TS as TimeSeries
     participant Neo4j
     participant EM as Embedding Model
     participant LLM
@@ -198,8 +204,10 @@ sequenceDiagram
     
     rect rgb(200, 230, 255)
         Note over MC,Neo4j: Memory Collection Phase
-        MC->>Neo4j: Fetch Recent Memories
-        Neo4j-->>MC: Return Memory Records
+        MC->>Neo4j: Fetch recent memory references (ids + relationships)
+        Neo4j-->>MC: Return references
+        MC->>TS: Fetch full memory content by id
+        TS-->>MC: Return Memory Records
         MC->>MC: Apply Time Decay
         MC->>EM: Generate Memory Embeddings
         EM->>VDB: Query Similar Memories
@@ -223,12 +231,13 @@ sequenceDiagram
     end
     
     rect rgb(230, 200, 255)
-        Note over MC,Neo4j: Storage
+        Note over MC,Neo4j: Storage (Saga)
+        MC->>TS: Store full reflection content + metrics
         par Store in Vector DB
             MC->>EM: Generate Embedding
             EM->>VDB: Store Vector
-        and Store in Graph DB
-            MC->>Neo4j: Store Reflection
+        and Store reference in Graph DB
+            MC->>Neo4j: Store lightweight reference + checksum
             MC->>Neo4j: Create Memory Links
         end
     end
@@ -266,6 +275,7 @@ sequenceDiagram
     participant Plan as PlanningSystem
     participant LLM
     participant Neo4j
+    participant TS as TimeSeries
     participant VDB as Vector DB
     participant Agent as Other Agents
     participant MB as Message Broker
@@ -298,8 +308,10 @@ sequenceDiagram
             MC->>PlanA: ShouldTriggerPlanningAsync
         end
 
-        PlanA->>Neo4j: Get Current Plan
-        Neo4j-->>PlanA: Return Plan Details
+        PlanA->>Neo4j: Get current plan reference (timeseries_id)
+        Neo4j-->>PlanA: Return reference
+        PlanA->>TS: Fetch full plan (PDDL, tasks) by id
+        TS-->>PlanA: Return Plan Details
         PlanA->>VDB: Query Similar Memories
         VDB-->>PlanA: Return Relevant Context
         PlanA->>LLM: Evaluate Planning Need
@@ -314,7 +326,8 @@ sequenceDiagram
             Plan->>Plan: SelectPlanningMethod
             Plan->>LLM: Generate/Adjust Plan
             LLM-->>Plan: Return PDDL Plan
-            Plan->>Neo4j: Store Plan & Tasks
+            Plan->>TS: Store plan artifact, tasks & actions (content)
+            Plan->>Neo4j: Store lightweight plan/task/action references
             Plan->>MB: PublishNewPlan or PublishUpdatedPlan
             MB-->>Agent: Notify Plan Changes
         end
@@ -358,15 +371,30 @@ For each memory operation:
 
 ### 6. Storage & Persistence
 
-```plaintext
-Dual Storage Strategy:
-1. Neo4j Graph Database:
-   - Relationship data
-   - Temporal connections
-   - Metadata and metrics
-   - Planning linkages
+MAGS uses a **three-database hybrid architecture**. Every write spanning more than one
+store goes through the `DatabaseWriteSaga`, which writes the TimeSeries source of truth
+first, then the Vector embedding and the lightweight Graph reference, and finally verifies
+checksums across all three. See [TimeSeries Storage & Hybrid Database Architecture](timeseries-storage.md)
+for the full detail.
 
-2. Vector Database:
+```plaintext
+Three-Database Hybrid Strategy:
+1. TimeSeries Database (Source of Truth):
+   - Full content (prompts, responses, summaries, key points, PDDL)
+   - Significance and confidence scores
+   - Performance metrics and token usage
+   - Complete audit history
+   - Tables: mags_memory_records, mags_conversation_entries,
+     mags_decision_records, mags_plan_artifacts, ...
+
+2. Graph Database (References + Relationships):
+   - Lightweight reference nodes (id, type, timeseries_id, checksum)
+   - Relationships and traversal (conversation threading, plan hierarchies,
+     RELATED_TO / HAS_ENTRY / NEXT links)
+   - Agent / team / profile configuration
+   - NOT full content — that lives in the TimeSeries DB
+
+3. Vector Database:
    - Semantic embeddings
    - Fast similarity search
    - Collections separated by:
@@ -374,6 +402,11 @@ Dual Storage Strategy:
      * General knowledge
      * Different memory types
 ```
+
+> **Retrieving content:** the Graph and Vector stores return record **ids**; the full
+> content is then fetched from the TimeSeries DB by id. See
+> [Agent Messaging Protocol](../concepts/agent-messaging.md#retrieving-content) for
+> concrete retrieval queries.
 
 ### 7. Metrics & Monitoring
 

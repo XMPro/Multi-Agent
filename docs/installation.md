@@ -29,11 +29,15 @@ This guide provides detailed instructions for setting up the XMPro AI Agents sys
 
 ## Setup Steps
 
-### 1. Neo4j Configuration
+### 1. TimeSeries Database Configuration
+
+Provision a TimescaleDB (or InfluxDB 3) instance and supply its connection details in the agent's `timeseries` configuration. The MAGS schema (tables, hypertables, indexes, and the Saga repair queue) is created automatically on first startup via `InitializeSchemaAsync()` — no manual DDL is required. For a container-based deployment (including the optional PostgREST REST layer), see the [TimescaleDB deployment guide](installation/docker/src/timescaledb/timescaledb_readme.md). Background on what is stored and why is in [TimeSeries Storage & Hybrid Database Architecture](technical-details/timeseries-storage.md).
+
+### 2. Neo4j Configuration
 
 Run the Cypher commands found in `installation/constraints.cypher` to create the necessary constraints and indexes for the database.
 
-### 2. System Options Installation
+### 3. System Options Installation
 
 Execute the Cypher commands found in `installation/system_options.cypher` to set up system options. Before running:
 
@@ -42,15 +46,15 @@ Execute the Cypher commands found in `installation/system_options.cypher` to set
     - All available options are: `Anthropic`, `AWSBedrock`, `AzureOpenAI`, `Google`, `Ollama`, `OpenAI`
 - Edit the `rag_schema` to match your RAG collection schemas. Each collection can have a different schema.
 
-### 3. Prompt Library Installation
+### 4. Prompt Library Installation
 
 Execute the Cypher commands found in `installation/library_prompts.cypher` to set up the system prompts.
 
-### 4. Tools Library Installation
+### 5. Tools Library Installation
 
 Execute the Cypher commands found in `installation/library_tools.cypher` to set up the tool options. 
 
-### 5. Agent Profiles
+### 6. Agent Profiles
 
 Agent profiles are essential components of the XMPro AI Agents system, defining the characteristics, capabilities, and behavior of each agent. They serve as templates for creating agent instances.
 

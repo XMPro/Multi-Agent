@@ -18,7 +18,7 @@ The long-term memory system in MAGS stores five main types of information:
 4. Decisions: Documentation of past decision-making processes
 5. Actions: History of completed operations
 
-This structured approach helps agents learn from past experiences and apply that knowledge to new situations. We use a combination of graph and vector databases to store this information, which allows agents to find relevant memories quickly and understand the relationships between different pieces of information.
+This structured approach helps agents learn from past experiences and apply that knowledge to new situations. We use a combination of time-series, graph, and vector databases to store this information: the time-series database holds the full content and history, the vector database lets agents find relevant memories quickly, and the graph database captures the relationships between different pieces of information.
 
 ## How MAGS Processes and Uses Memories
 

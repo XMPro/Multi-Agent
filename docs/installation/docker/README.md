@@ -447,6 +447,29 @@ With the stack running, follow the [Post-Installation Configuration](../post-ins
 - Windows: Run PowerShell as Administrator
 - Linux: Ensure user is in docker group: `sudo usermod -aG docker $USER`
 
+**Windows Defender causing database containers to crash (etcd/Neo4j/TimescaleDB slow fsync, Milvus self-terminating):**
+
+On Windows, Defender's real-time protection scans every file write by default, including writes made inside WSL2 by Docker Desktop. Databases that fsync on every transaction (etcd, which Milvus depends on for coordination; Neo4j's transaction log; TimescaleDB/Postgres WAL) are especially sensitive to this, since AV scanning can turn a normally sub-millisecond fsync into a multi-second stall. For Milvus specifically, a stalled etcd fsync can cause its internal lease keepalives to time out, which Milvus treats as a fatal loss of its etcd session — the `milvus-standalone` container will log `"not a primary lessor"` in Milvus's logs / `"failed to revoke lease"` in etcd's own logs, and exit, repeating until it exhausts its `restart: on-failure:5` policy and stays down.
+
+Microsoft and Docker both document this and recommend excluding Docker Desktop/WSL2 paths from real-time scanning:
+- [Docker Desktop – Windows Defender exclusions](https://docs.docker.com/desktop/troubleshoot-and-support/troubleshoot/topics/#allow-docker-desktop-to-run-only-after-users-log-in)
+- [Docker Desktop – Windows containers best practices (file system performance)](https://docs.docker.com/desktop/troubleshoot-and-support/troubleshoot/topics/#file-sharing-performance)
+- [Microsoft – Configure Microsoft Defender Antivirus exclusions](https://learn.microsoft.com/en-us/defender-endpoint/configure-exclusions-microsoft-defender-antivirus)
+- [Microsoft – WSL file system performance and exclusion guidance](https://learn.microsoft.com/en-us/windows/wsl/filesystems#file-storage-and-performance-across-file-systems)
+
+Add exclusions for the Docker Desktop/WSL2 install paths and the stack's data directory before first deployment:
+
+```powershell
+Add-MpPreference -ExclusionPath "C:\ProgramData\DockerDesktop"
+Add-MpPreference -ExclusionPath "$env:LOCALAPPDATA\Docker\wsl"
+Add-MpPreference -ExclusionPath "\\wsl$\docker-desktop-data"
+Add-MpPreference -ExclusionPath "<install directory, e.g. C:\Docker>"
+```
+
+Verify with `Get-MpPreference | Select-Object -ExpandProperty ExclusionPath`, then recreate any containers that were already running so they pick up a clean state: `docker compose down` followed by `docker compose up -d` in the affected service's folder.
+
+Note: these exclusions reduce AV interference with the stack's own data writes but do not fully rule out I/O contention from other causes (WSL2 CPU/memory limits in `.wslconfig`, disk contention from other workloads on the host, or startup-burst contention when many services cold-start together). If `docker logs <etcd container> --since <window>` still shows `"apply request took too long"` or `"slow fdatasync"` warnings with the stack idle (not mid-startup) after adding exclusions, investigate host resource allocation next.
+
 **SSL certificate issues:**
 - Use `manage-ssl status` to check certificates
 - Verify CA certificates are installed on client machines

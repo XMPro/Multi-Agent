@@ -185,7 +185,9 @@ Remember, this glossary is a living document. Your input and expertise help make
 
 ### D
 
-**Database Manager**: A component that handles all database operations including memory storage, retrieval, and management across different database types.
+**Database Manager**: A component that handles all database operations including memory storage, retrieval, and management across the hybrid architecture's TimeSeries, Graph, and Vector databases.
+
+**DatabaseWriteSaga**: The Saga-pattern component that coordinates writes across the hybrid databases — writing the TimeSeries source of truth first, then the Vector and Graph references, then verifying checksums across stores and queueing any mismatches for repair. See [TimeSeries Storage & Hybrid Database Architecture](technical-details/timeseries-storage.md).
 
 **DataStreams**: XMPro's visual, no-code platform for creating real-time data processing pipelines that serve as the foundation for MAGS agent deployment, providing the separation of control between agent reasoning and execution.
 
@@ -519,6 +521,10 @@ Remember, this glossary is a living document. Your input and expertise help make
 **Telemetry Flusher**: A component responsible for ensuring telemetry data is properly sent to monitoring systems.
 
 **Telemetry Setup**: Configuration and initialization of telemetry collection across the system.
+
+**TimeSeries Database**: The source-of-truth store in the hybrid architecture, holding the full content, scores, metrics, and audit history of memories, conversations, decisions, and plans. Optimized for high-volume, time-ordered writes and time-based analytics; implemented on TimescaleDB (PostgreSQL) or InfluxDB 3. See [TimeSeries Storage & Hybrid Database Architecture](technical-details/timeseries-storage.md).
+
+**TimeSeries Database Type**: Enumeration of supported time-series databases (TimescaleDB, InfluxDB 3).
 
 **Token Probability**: Statistical information about token likelihood in language model responses.
 

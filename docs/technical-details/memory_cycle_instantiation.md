@@ -7,7 +7,7 @@ The agent instantiation process in XMPro MAGS (Multi-Agent System) involves seve
 1. **Memory Cycle Factory**: Responsible for creating and configuring the MemoryCycle instance.
 2. **Memory Cycle**: The core component managing an agent's cognitive processes.
 3. **Message Broker**: Handles message based communication for the agent.
-4. **Database Manager**: Manages interactions with Neo4j and vector databases.
+4. **Database Manager**: Manages interactions with the TimeSeries (source of truth), Graph, and Vector databases. See [TimeSeries Storage & Hybrid Database Architecture](timeseries-storage.md).
 5. **Language Model**: Provides natural language processing capabilities.
 6. **Open Telemetry**: Configures telemetry for monitoring and logging.
 
@@ -70,8 +70,9 @@ graph TD
     MC --> |Plans with| PSF[Planning Strategy Factory]
     MC --> |Guided by| PM[Prompt Manager]
     MC --> |Uses| TL[Tool Library]
-    DBM --> |Interfaces with| Neo4j[Neo4j Database]
-    DBM --> |Interfaces with| VDB[Vector Database]
+    DBM --> |Source of truth| TS[TimeSeries Database]
+    DBM --> |References + relationships| Neo4j[Graph Database]
+    DBM --> |Embeddings| VDB[Vector Database]
     PSF --> |Creates| PS[Planning Strategies]
 ```
 
@@ -81,8 +82,10 @@ The process begins by setting up various configuration dictionaries with the set
 
 | Config                | For                                  |
 |-----------------------|--------------------------------------|
-| `neo4jConfig`         | For Neo4j database connection        |
+| `graphDbConfig`       | For the graph database connection (Neo4j, Memgraph, etc.) |
 | `vectorDbConfig`      | For vector database configuration    |
+| `timeSeriesDbConfig`  | For the TimeSeries database (source of truth) connection |
+| `tripleStoreConfig`   | For the optional TripleStore (semantic features); may be null |
 | `embeddingConfig`     | For embedding model configuration    |
 | `languagemodelConfig` | For language model configuration     |
 | `messageBrokerConfig` | For message broker communication configuration |
@@ -97,8 +100,10 @@ The `MemoryCycleFactory.CreateMemoryCycle()` method is called with these configu
 var config = SetupConfiguration();
 
 memoryCycle = MemoryCycleFactory.CreateMemoryCycle(
-    (Dictionary<string, object>)config["neo4jConfig"],
+    (Dictionary<string, object>)config["graphDbConfig"],
     (Dictionary<string, object>)config["vectorDbConfig"],
+    (Dictionary<string, object>)config["timeSeriesDbConfig"],
+    (Dictionary<string, object>)config["tripleStoreConfig"], // optional; may be null
     (Dictionary<string, object>)config["embeddingConfig"],
     (Dictionary<string, object>)config["languagemodelConfig"],
     (Dictionary<string, object>)config["messageBrokerConfig"],
@@ -113,15 +118,16 @@ The `CreateMemoryCycle` method performs the following steps:
 |---------------------------------|-------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | 1. Initialize ServiceCollection | a. Configure telemetry        | - Set up telemetry and adds default logging |
 |                                 | b. Build ServiceProvider      | - Create the ServiceProvider |
-| 2. Initialize Components        | a. Create Neo4jConnectionPool | - Set up connection pool for Neo4j graph database |
-|                                 | b. Initialize vector database | - Set up the required vector database |
-|                                 | c. Initialize embedding model | - Set up the required embedding |
-|                                 | d. Initialize LanguageModel   | - Set up all language models (These are created on demand within the code when needed) |
-|                                 | e. Create DatabaseManager     | - Set up manager for database operations |
-|                                 | f. Load SystemOptions         | - Load system-wide options |
-|                                 | g. Initialize Message Broker     | - Set up manager for message broker communications |
-|                                 | h. Initialize GlobalExceptionHandler | - Set up global exception handling |
-|                                 | i. Initialize ToolLibrary     | - Set up library for agent tools |
+| 2. Initialize Components        | a. Create graph connection pool | - Set up connection pool for the graph database |
+|                                 | b. Initialize TimeSeries database | - Connect and create the schema via `InitializeSchemaAsync()` (idempotent) |
+|                                 | c. Initialize vector database | - Set up the required vector database |
+|                                 | d. Initialize embedding model | - Set up the required embedding |
+|                                 | e. Initialize LanguageModel   | - Set up all language models (These are created on demand within the code when needed) |
+|                                 | f. Create DatabaseManager     | - Set up manager for database operations |
+|                                 | g. Load SystemOptions         | - Load system-wide options |
+|                                 | h. Initialize Message Broker     | - Set up manager for message broker communications |
+|                                 | i. Initialize GlobalExceptionHandler | - Set up global exception handling |
+|                                 | j. Initialize ToolLibrary     | - Set up library for agent tools |
 | 3. Register Services            | a. Add singletons             | - Register Database Manager, Language Model, Message Broker, Open Telemetry Setup, Prompt Manager, Planning Strategy Factory, Tool Library, Plan Adapter Detector as singletons |
 |                                 | b. Register strategies        | - Register planning strategies and optimization algorithms |
 | 4. Create MemoryCycle Instance  | Return new MemoryCycle        | - Create and return a new MemoryCycle instance with all initialized components |

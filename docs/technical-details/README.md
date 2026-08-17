@@ -10,7 +10,8 @@ This folder contains in-depth technical explanations and specifications for vari
 5. [Open Telemetry Tracing Guide](open_telemetry_tracing_guide.md)
 6. [Prompt Injection Protection](prompt-injection-protection.md)
 7. [Prompt Manager and Library](https://xmpro.github.io/Blueprints-Accelerators-Patterns/metablocks/admin-prompt/)
-8. [Vector Database](vector_database.md)
+8. [TimeSeries Storage & Hybrid Database Architecture](timeseries-storage.md)
+9. [Vector Database](vector_database.md)
 
 ### Agent Status Monitoring and Error Handling
 
@@ -31,7 +32,7 @@ This information is crucial for understanding how agent health and performance a
 - The complete memory creation process for both observations and reflections
 - Implementation details of Retrieval-Augmented Generation (RAG)
 - Integration with the planning system
-- Dual storage strategy using Neo4j and vector databases
+- Three-database hybrid storage strategy (TimeSeries source of truth, Graph references, Vector embeddings)
 - Comprehensive metrics and monitoring approach
 
 This document is essential for understanding how agents process information, make decisions, and maintain their knowledge base. It includes detailed diagrams and explanations of the data flow between components.
@@ -89,6 +90,18 @@ This document provides a comprehensive overview of our Prompt Management System.
 - User interface components
 
 This information is crucial for understanding how prompts are created, stored, managed, and accessed within our system.
+
+### TimeSeries Storage & Hybrid Database Architecture
+
+[timeseries-storage.md](timeseries-storage.md) explains the three-database hybrid architecture that underpins MAGS storage. It covers:
+
+- Why content is split across TimeSeries, Graph, and Vector databases
+- What is stored where, including the full list of `mags_*` TimeSeries tables
+- The Saga write path (TimeSeries first, then references, then checksum verification)
+- How to retrieve content — the two-step hybrid read pattern, with SQL and optional PostgREST examples
+- Configuration and storage management (compression, continuous aggregates, retention)
+
+This document is essential reading if you consume agent content directly (the source of truth moved from the Graph DB to the TimeSeries DB).
 
 ### Vector Database
 

@@ -101,7 +101,7 @@ MAGS includes two main [types of agents](../concepts/agent_types.md) (with a hyb
 
 Agents learn through:
 - [Continuous memory cycles](../technical-details/memory_cycle_instantiation.md) (Observation, Reflection, Planning, Action)
-- Experience accumulation in vector and graph databases
+- Experience accumulation in the time-series, vector, and graph databases
 - Feedback loops from outcomes and interactions
 - Integration of new information into their knowledge base
 
@@ -111,9 +111,10 @@ Agents learn through:
 
 ### What databases does MAGS use?
 
-MAGS employs a dual-database approach:
+MAGS employs a [three-database hybrid architecture](../technical-details/timeseries-storage.md):
+- [TimeSeries Database](../technical-details/timeseries-storage.md) (TimescaleDB or InfluxDB 3) — the source of truth for all content, metrics, and audit history
 - [Vector Database](../technical-details/vector_database.md) for semantic similarity searches
-- Graph Database (Neo4j) for complex relationship mapping
+- Graph Database (Neo4j, Memgraph, and others) for lightweight references and complex relationship mapping
 - Combined approach for enhanced cognitive capabilities
 
 ### What monitoring capabilities are available?
@@ -133,6 +134,7 @@ Monitoring is implemented through:
 
 Key prerequisites include:
 - Licensed XMPro installation
+- TimeSeries Database (TimescaleDB or InfluxDB 3)
 - Neo4j Graph Database
 - Milvus or Qdrant Vector Database
 - MQTT Broker

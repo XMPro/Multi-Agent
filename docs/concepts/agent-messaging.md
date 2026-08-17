@@ -130,17 +130,20 @@ The agent sends two types of responses:
    }
    ```
 
-   > **Important**: The final response contains only metadata. To retrieve the actual conversation content, you must query the graph database using the conversation_id. See [Graph Database Queries](#graph-database-queries) below.
+   > **Important**: The final response contains only metadata. To retrieve the actual conversation content, query the **TimeSeries database** using the conversation_id. See [Retrieving Content](#retrieving-content) below.
 
-### Graph Database Queries
+### Retrieving Content
 
-To get the conversation details after receiving the final response:
+> **Architecture note (breaking change):** MAGS uses a [three-database hybrid architecture](../technical-details/timeseries-storage.md). The **TimeSeries DB is the source of truth** for all content — prompts, responses, summaries, key points, PDDL, metrics. The Graph DB now holds only **lightweight reference nodes** (id, type, `timeseries_id`, `checksum`) and the relationships between them. Older documentation and clients that read `prompt` / `response` / `reply` fields directly off Graph nodes will get `NULL` — those fields moved to the TimeSeries DB.
 
-```cypher
-MATCH (c:Artifact {type: 'Conversation', id: $conversationId})-[:HAS_ENTRY]->(start:Entry)
-MATCH path = (start)-[:NEXT*0..]->(e:Entry)
-RETURN e.reply as reply, e.prompt as prompt, e.response as response, e.summary as summary, e.user_query as user_query, e.timestamp as timestamp
-ORDER BY e.timestamp ASC
+To get the conversation details after receiving the final response, query the TimeSeries DB by `conversation_id`:
+
+```sql
+SELECT entry_id, prompt, reply, response, summary, user_query, time,
+       total_token_usage, response_time
+FROM mags_conversation_entries
+WHERE conversation_id = :conversation_id
+ORDER BY time ASC;
 ```
 
 This returns the complete conversation history including:
@@ -149,8 +152,17 @@ This returns the complete conversation history including:
 - Original user queries
 - Timestamps
 - Performance metrics (token usage, response times)
-- Tool usage information
-- Any observations triggered by the conversation
+
+If you need the exact threaded order or want to pull related artifacts, first get the ordered entry references from the Graph DB, then fetch content from the TimeSeries DB by `entry_id`:
+
+```cypher
+MATCH (c:Artifact {type: 'Conversation', id: $conversationId})-[:HAS_ENTRY]->(start:Entry)
+MATCH path = (start)-[:NEXT*0..]->(e:Entry)
+RETURN e.entry_id AS entry_id, e.summary AS summary, e.timestamp AS timestamp
+ORDER BY e.timestamp ASC
+```
+
+> A read-only REST API over the TimeSeries DB is also available via PostgREST when you expose the relevant tables through an `api` view. See [TimeSeries Storage](../technical-details/timeseries-storage.md#optional-rest-access-via-postgrest).
 
 ### Example Conversation Flow
 
@@ -167,7 +179,7 @@ Here's a typical chat interaction sequence:
 sequenceDiagram
     participant C as Client
     participant A as Agent
-    participant DB as Graph Database
+    participant TS as TimeSeries DB
     
     Note over C,A: Step 1: Initialize Conversation
     C->>A: chat/new (with new conversation_id)
@@ -179,16 +191,16 @@ sequenceDiagram
     A->>C: progress update (75%)
     A->>C: chat response (metadata only)
     
-    Note over C,DB: Step 3: Retrieve Response
-    C->>DB: Query conversation details
-    DB->>C: Complete conversation history
+    Note over C,TS: Step 3: Retrieve Response
+    C->>TS: Query conversation content by conversation_id
+    TS->>C: Complete conversation history
     
     Note over C,A: Step 4: Continue Conversation
     C->>A: next message (same conversation_id)
     A->>C: progress update
     A->>C: chat response (metadata only)
-    C->>DB: Query updated conversation
-    DB->>C: Updated conversation history
+    C->>TS: Query updated conversation
+    TS->>C: Updated conversation history
 ```
 
 ### Important Notes
@@ -233,12 +245,16 @@ When an observation is triggered, you'll receive a metadata message:
 }
 ```
 
-To retrieve the actual reflection content, query the graph database:
+To retrieve the actual observation content, query the TimeSeries DB by `memory_id` (the `observation_id` from the message):
 
-```cypher
-MATCH (m:Memory {id: $observationId})
-RETURN m
+```sql
+SELECT memory_id, memory_type, summary, key_points, actionable_insights,
+       importance, surprise, confidence_score, total_token_usage, time
+FROM mags_memory_records
+WHERE memory_id = :observation_id;
 ```
+
+> The Graph DB `Memory` node for this id holds only `id`, `type`, `timeseries_id`, and `checksum` — use it for relationship traversal, not content.
 
 ### 2. Receiving Reflection Results
 
@@ -256,11 +272,13 @@ When a reflection is triggered, you'll receive a metadata message:
 }
 ```
 
-To retrieve the actual reflection content, query the graph database:
+To retrieve the actual reflection content, query the TimeSeries DB by `memory_id` (the `reflection_id` from the message):
 
-```cypher
-MATCH (m:Memory {id: $reflectionId})
-RETURN m
+```sql
+SELECT memory_id, memory_type, summary, key_points, actionable_insights,
+       importance, surprise, confidence_score, total_token_usage, time
+FROM mags_memory_records
+WHERE memory_id = :reflection_id;
 ```
 
 ## Planning
@@ -335,17 +353,30 @@ The agent sends several types of plan-related messages:
 }
 ```
 
-As with conversations, observations and reflections, to get the complete plan details, query the graph database:
+Plans are stored across both stores: the Graph DB holds the plan → task → action **hierarchy** with a `timeseries_id` on each node, and the TimeSeries DB holds the **content** (PDDL, full task and action detail, metrics).
+
+First get the structure and the `timeseries_id`s from the Graph DB:
 
 ```cypher
 MATCH (p:Artifact {type: 'Plan', active: true, agent_id: $agentId})
 OPTIONAL MATCH (p)-[:HAS_TASK]->(t:Entry {type: 'Task'})
 WHERE t.status <> 'Cancelled' OR t.status IS NULL
 OPTIONAL MATCH (t)-[:HAS_ACTION]->(a:Entry {type: 'Action'})
-RETURN p, 
- t,
- collect(a) as actions
- ```
+RETURN p.timeseries_id AS plan_id,
+       t.timeseries_id AS task_id, t.status AS task_status,
+       collect(a.timeseries_id) AS action_ids
+```
+
+Then fetch the heavy content from the TimeSeries DB by those ids — the PDDL document from `mags_plan_artifacts`, and task/action detail from `mags_plan_tasks` and `mags_plan_actions`:
+
+```sql
+SELECT plan_id, pddl_domain, pddl_problem, pddl_plan,
+       objective_function_score, confidence_score, total_token_usage, time
+FROM mags_plan_artifacts
+WHERE plan_id = :plan_id
+ORDER BY time DESC
+LIMIT 1;
+```
 
 ## Error Responses
 
@@ -366,10 +397,10 @@ If something goes wrong, you'll receive an error message:
 
 ## Important Notes
 
-1. Both chat responses, observation and reflection results return only metadata through the message broker
-2. The actual content must be retrieved from the graph database using the provided Ids
+1. Chat responses, observation and reflection results return only metadata through the message broker
+2. The actual content is retrieved from the **TimeSeries database** using the provided Ids (the Graph DB holds only lightweight references and relationships — see [TimeSeries Storage & Hybrid Database Architecture](../technical-details/timeseries-storage.md))
 3. This pattern allows for:
    - Efficient real-time messaging
-   - Complete content storage and retrieval
-   - Historical querying and analysis
-   - Complex relationship tracking between conversations, observation and reflections
+   - Complete content storage and retrieval (source of truth in TimeSeries)
+   - Historical querying and time-based analytics
+   - Complex relationship tracking (in the Graph DB) between conversations, observations and reflections

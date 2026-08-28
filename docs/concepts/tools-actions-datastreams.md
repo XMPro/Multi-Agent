@@ -2,30 +2,36 @@
 
 ## The One-Sentence Version
 
-A **tool** is a capability the agent has. An **action** is a step in a plan that uses a tool. A **data stream** is information flowing to the agent from the outside world.
+A **tool** is how the agent gets information **in**. An **action** is a step in a plan and the only way anything goes **out**. A **data stream** is information flowing to the agent from the outside world, without being asked for.
+
+**Tools bring data in. Actions send everything out.** If you remember one thing from this page, that is it.
 
 ---
 
 ## The Analogy: A Chef in a Kitchen
 
-**Tools** are the equipment in the kitchen:
-- A knife (can cut things)
-- An oven (can heat things)
-- A thermometer (can measure temperature)
-- A phone (can call suppliers)
+**Tools** are how the chef finds things out:
+- A thermometer (what temperature is the meat?)
+- A scale (how much flour is left?)
+- Phoning the supplier to **ask** whether cream is in stock
 
-**Actions** are the steps in a recipe:
-- "Dice the onions" (uses the knife tool)
-- "Preheat oven to 180°C" (uses the oven tool)
-- "Check internal temperature" (uses the thermometer tool)
-- "Order more flour" (uses the phone tool)
+**Actions** are the steps in the recipe, the things that change something:
+- "Dice the onions"
+- "Set the oven to 180°C"
+- "Place an order for 20kg of flour"
 
-**Data streams** are information arriving at the kitchen:
+**Data streams** are information arriving unasked:
 - The timer beeping (the oven is done)
 - A delivery arriving (ingredients from the supplier)
 - A customer order coming in (new demand)
 
-The chef doesn't "use" the timer beeping — it happens TO the chef. The chef USES the knife to dice onions. And "dice the onions" is a step in the recipe, not the knife itself.
+Three things to notice, and the middle one is where people go wrong:
+
+- The chef doesn't "use" the timer beeping. It happens TO the chef.
+- **A thermometer tells you the temperature. It does not change it.** Turning the oven up is an action, and there is no "oven tool" underneath it. Reaching for the supplier's phone number is a tool; placing the order is an action.
+- "Dice the onions" is a step in the recipe, not a piece of equipment.
+
+**Tools tell the chef what is going on. Actions change what is going on.**
 
 ---
 
@@ -43,18 +49,32 @@ A tool is a **reusable capability** that an agent can invoke. It's the mechanism
 
 **Types of tools in MAGS:**
 
-| Tool Type | Direction | Example |
-|-----------|-----------|---------|
-| **Streaming** (receive) | Data flows TO the agent | Listen to sensor readings |
-| **Request** (send/receive) | Agent sends request, gets response | Query a database, write a setpoint |
-| **Built-in internal** (compute) | Agent invokes, result returned immediately | NCalc mathematical expression evaluation |
+| Tool Type | How data arrives | Example |
+|-----------|------------------|---------|
+| **Streaming** (receive) | **Pushed.** The agent listens; data arrives on a schedule or a trigger | Listen to sensor readings |
+| **Request** (send/receive) | **Pulled.** The agent asks a question and gets data back | Query a database, retrieve the last 4 hours of history |
+| **Built-in internal** (compute) | Neither. Invoked in-process, result returned immediately | NCalc mathematical expression evaluation |
+
+> ⚠️ **Every tool brings data IN. A tool never writes to an external system.**
+>
+> **"Send/receive" means send a *request*, receive a *response*.** It does not mean the agent sends
+> data out. A request tool is a read: the send is the question, the receive is the answer. That name
+> is the most common source of confusion on this page, and misreading it is how a write path ends up
+> filed as a tool.
+>
+> **Anything that changes the state of an external system is an action**, never a tool: writing a
+> setpoint, setting a flag, triggering a sequence. If it leaves a mark outside the agent, it is an
+> action.
+>
+> This matters beyond naming. **A write filed as a tool sits outside the constraints that gate
+> writes.** It is not mislabelled, it is unguarded.
 
 > **Built-in internal tools** are hardcoded into the MAGS agent framework and require no database entry, external API, or agent profile configuration. The [NCalc Tool](../integration-execution/ncalc-tool.md) is the primary example: it accepts a natural language query, translates it to a deterministic mathematical expression, evaluates it, and returns both the expression and the result. This guarantees accurate arithmetic without relying on the LLM to perform calculations.
 
 **Tool properties:**
 - Name and description
 - Mode (streaming or request)
-- Addresses (where to send/receive)
+- Addresses (where to listen, or where to send the request)
 - Expected data structure
 - Timeout and window settings
 
@@ -62,30 +82,33 @@ A tool is a **reusable capability** that an agent can invoke. It's the mechanism
 
 ### Actions: What the Agent DOES in a Plan
 
-An action is a **specific step in a plan** that may use one or more tools to accomplish its purpose.
+An action is a **specific step in a plan**. It is the only thing that changes the state of an external system, and it is dispatched to an XMPro Data Stream, which performs the change.
 
 | What It Is | What It Isn't |
 |-----------|--------------|
-| A step in a plan with a specific goal | A tool (the mechanism) |
+| A step in a plan with a specific goal | A tool (which only brings data in) |
 | Created as part of planning | Defined in advance like a tool |
 | Has a trigger, a purpose, and constraints | Just a capability |
+| **The only way anything leaves the agent** | A way of reading data |
 
 **The relationship:**
 ```
 Plan: "Respond to feed composition change"
   │
-  ├── Action 1: "Read current process state"
-  │   └── Uses tool: DCS_Tag_Stream (streaming mode)
+  ├── Reads process state
+  │   └── Via tool: DCS_Tag_Stream (streaming mode, data arrives)
   │
-  ├── Action 2: "Analyse separation performance"
-  │   └── Uses tool: RAG_Query (to retrieve process knowledge)
+  ├── Reads process knowledge
+  │   └── Via tool: RAG_Query (request mode, agent asks and gets an answer)
   │
-  ├── Action 3: "Propose setpoint change"
-  │   └── Uses tool: Agent_Message_Send (to send proposal to Guardian)
+  ├── Action 1: "Propose setpoint change to the Guardian"
+  │   └── Goes OUT as an action
   │
-  └── Action 4: "Write approved setpoint"
-      └── Uses tool: DCS_SP_Write (to write to controller)
+  └── Action 2: "Write approved setpoint TC3106 to 81°C"
+      └── Goes OUT as an action, dispatched to a Data Stream that writes to the controller
 ```
+
+Note the asymmetry: **reading is done through tools, and every outgoing step is an action.** There is no write tool sitting under Action 2.
 
 **Action properties:**
 - Which agent performs it
@@ -94,7 +117,7 @@ Plan: "Respond to feed composition change"
 - What constraints apply
 - Whether it needs human approval
 
-**Key insight**: Actions are the "what" and "why." Tools are the "how." The same tool (DCS_SP_Write) might be used in many different actions (write reflux setpoint, write temperature setpoint, revert to safe setpoint).
+**Key insight**: Actions are the "what" and "why." Tools are the "how" for **getting information in**. An action that writes does not reach for a write tool, because none exists: it is dispatched to a Data Stream, and that Data Stream performs the write.
 
 ### Data Streams: What Flows TO the Agent
 
@@ -131,28 +154,39 @@ Data Stream: "DCS process measurements flowing at 10-second intervals"
 EXTERNAL WORLD                    AGENT                         PLAN
 ──────────────                    ─────                         ────
 
+                    IN, always through a tool
+
 Sensors ──────→ Data Stream ──→ Tool (streaming) ──→ Observation
                                                          │
-DCS ←─────────────────────────── Tool (request) ←── Action: "Write SP"
+Historian ────────────────────→ Tool (request)  ──→ Observation
                                                          │
-Knowledge Base ←─────────────── Tool (request) ←── Action: "Query RAG"
+Knowledge Base ───────────────→ Tool (request)  ──→ Observation
                                                          │
-Other Agents ←───────────────── Tool (send) ←────── Action: "Send proposal"
+                    OUT, always as an action              │
+                                                         │
+DCS ←───────────── Data Stream ←──────────────────── Action: "Write SP"
+                                                         │
+Other Agents ←──────────────────────────────────── Action: "Send proposal"
 ```
 
-**Data flows IN** via data streams (passive — the agent receives).
-**Actions flow OUT** via tools (active — the agent does something).
-**Tools are the bridge** between the agent and the external world in both directions.
+**Data flows IN through tools** (streaming pushes, request pulls). The agent reads.
+**Everything flows OUT as an action**, dispatched to a Data Stream that performs it.
+**Tools are the inbound half only.** There is no outbound tool.
 
 ---
 
 ## Common Mistakes
 
-### Mistake 1: Defining Actions as Tools
+### Mistake 1: Filing a Write as a Tool
 
 ❌ "Tool: Adjust Reflux Setpoint"
+❌ "Tool: DCS_SP_Write"
 
-"Adjust Reflux Setpoint" is an action (a step in a plan), not a tool. The tool is "DCS_SP_Write" — a generic capability to write a setpoint to any controller. The action specifies WHICH controller, WHAT value, and WHY.
+**Both are wrong, and the second is the more dangerous** because it looks like a properly generic capability. **There is no write tool.** Tools bring data in; anything going out is an action.
+
+✅ "Action: Write TC3106 to 81°C", dispatched to a Data Stream that performs the write. The action specifies WHICH controller, WHAT value, and WHY, and it carries the constraints that gate it.
+
+**Why this one matters more than the others.** The constraints that govern what an agent may change look at actions. A write filed as a tool is not merely in the wrong table: it sits outside the gates, so an operating-mode or authority check never sees it.
 
 ### Mistake 2: Confusing Data Streams with Tool Requests
 
@@ -178,9 +212,11 @@ Data collection via streaming is passive — the data arrives whether the agent 
 
 | Aspect | Tool | Action | Data Stream |
 |--------|------|--------|-------------|
-| **What** | A capability | A plan step | A flow of information |
-| **Direction** | Both (send and receive) | Outward (agent does something) | Inward (data arrives) |
+| **What** | A capability for getting data in | A plan step that changes something | A flow of information |
+| **Direction** | **Inward only.** Pushed (streaming) or pulled (request) | **Outward.** The only way anything leaves the agent | Inward (data arrives) |
 | **Created** | Once (configuration) | Per plan (dynamic) | Once (configuration) |
-| **Reusable** | Yes — used by many actions | No — specific to one plan step | Yes — feeds many observations |
-| **Example** | DCS_SP_Write | "Write TC3106 to 81°C" | OPC-UA sensor readings |
-| **Analogy** | Kitchen knife | "Dice the onions" | Delivery truck arriving |
+| **Reusable** | Yes — many observations use it | No — specific to one plan step | Yes — feeds many observations |
+| **Example** | DCS_Tag_Read, RAG_Query | "Write TC3106 to 81°C" | OPC-UA sensor readings |
+| **Analogy** | Thermometer, or asking the supplier a question | "Turn the oven to 180°C" | Delivery truck arriving |
+
+> **The one line to remember:** tools bring data **in**, actions send everything **out**. "Send/receive" on a request tool means send a *question*, receive an *answer*.

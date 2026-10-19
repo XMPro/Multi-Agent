@@ -135,13 +135,13 @@ Each request $r$ is authorized against the execution state immediately before it
 
 $$
 \begin{aligned}
-\operatorname{allow}(r, s) ={}& [r \in \mathcal{A}_0(c)] \land [\operatorname{auth}(s) = \text{act}] \land [\operatorname{age}(r) \le \tau] \\
-&\land [\operatorname{target}(r) \in T] \land [\operatorname{value}(r) \in R(\operatorname{target}(r))] \\
-&\land [\operatorname{lim}(r, s) = \text{pass}],
+\mathrm{allow}(r, s) ={}& [r \in \mathcal{A}_0(c)] \land [\mathrm{auth}(s) = \text{act}] \land [\mathrm{age}(r) \le \tau] \\
+&\land [\mathrm{target}(r) \in T] \land [\mathrm{value}(r) \in R(\mathrm{target}(r))] \\
+&\land [\mathrm{lim}(r, s) = \text{pass}],
 \end{aligned}
 $$
 
-where $T$ is the set of targets agents may write to, $R$ the permitted range for each target, $\tau$ the maximum request age, and $\operatorname{lim}(r, s) = \text{pass}$ exactly when every required $g_k$ is defined and satisfied on sufficiently current inputs. Any false term refuses the request, records the refusal and notifies the operator.
+where $T$ is the set of targets agents may write to, $R$ the permitted range for each target, $\tau$ the maximum request age, and $\mathrm{lim}(r, s) = \text{pass}$ exactly when every required $g_k$ is defined and satisfied on sufficiently current inputs. Any false term refuses the request, records the refusal and notifies the operator.
 
 The authority states *advise* and *act* govern only the agents' permission to write. Some deployments call them open and closed loop, which should not be confused with the topology of the plant's control loops.
 

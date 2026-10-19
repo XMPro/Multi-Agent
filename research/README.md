@@ -78,4 +78,13 @@ Addresses the skeptical objection that software agents cannot genuinely "observe
 
 ---
 
+### Deterministic Where It Counts: Goals, Envelopes, and Evidence for Language-Model Agents in Industrial Operations
+**Date**: October 2026 · *Working paper* · [PDF](2026.10.19_Deterministic_Where_It_Counts.pdf)
+
+Answers the growing request for "deterministic" AI agents in regulated and safety-critical industries. The paper separates three properties the word bundles (reproducible output, a reproducible decision about whether a proposed action is allowed, and a decision that can be reconstructed) and shows that a hosted language model need not provide the first. It argues that utility and objective functions over measured plant values fix how success is judged, so the model can propose different plans but cannot redefine success, and it specifies the decision envelope that makes the decision to act reproducible: an input envelope that validates and classifies observations, an action envelope that authorizes each request against current state at execution and again at application, and binding rules held as computable policy rather than prompt text. It proposes a five-test assurance protocol, states design requirements informed by a petrochemical deployment, locates the current MAGS enforcement boundary, and relates the account to the draft EU GMP Annex 22 and its 2026 revision discussion. Engineering companion to the governed decision-making and reasoning papers.
+
+**Related docs**: [Deterministic industrial agents](../docs/integration-execution/deterministic-industrial-agents.md) · [Objective Functions](../docs/concepts/objective-functions.md) · [Deontic Principles](../docs/concepts/deontic-principles.md) · [Decision Traces](../docs/concepts/decision-traces.md) · [Human-in-the-Loop](../docs/responsible-ai/human-in-the-loop.md) · [Regulatory Compliance and Audit Trail](../docs/responsible-ai/regulatory-compliance-audit-trail.md)
+
+---
+
 *For academic research foundations that inform the MAGS architecture, see [docs/research-foundations/](../docs/research-foundations/README.md).*

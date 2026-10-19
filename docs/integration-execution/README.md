@@ -6,6 +6,8 @@ Integration & Execution is the fourth and final category of the [15 business pro
 
 Grounded in 50+ years of research from time series analysis (Box & Jenkins 1970) through modern observability practices, Integration & Execution provides the data ingestion, tool orchestration, and monitoring infrastructure essential for production-grade multi-agent systems—capabilities that distinguish action-capable intelligent systems from purely analytical systems.
 
+For where determinism is engineered around a language model (the goal, the input envelope, the action gate and the decision record), see [Deterministic industrial agents](deterministic-industrial-agents.md).
+
 ---
 
 ## The Three Integration Capabilities

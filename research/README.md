@@ -87,4 +87,13 @@ Answers the growing request for "deterministic" AI agents in regulated and safet
 
 ---
 
+### Decision Card
+**Date**: October 2026 · *Template* · [PDF](2026.10.20_Decision_Card.pdf)
+
+A two-page card for recording one operational decision before any agent is designed, from the article "Decision Engineering Comes Before Agent Design" (van Schalkwyk, October 2026). Page 1 is a blank template: the decision written as a question with allowed answers, then six sections covering the decision problem, the kinds of each part (rule, estimation, optimization, reasoning, coordination, reserved for people), authority, coordination, assurance and operating regime, with a rigor level of Basic, Enhanced or High. Page 2 is an illustrative worked example for pharmaceutical deviation triage, including the path an event takes when an input is missing. The example is not a validated procedure.
+
+**Related docs**: [Deterministic industrial agents](../docs/integration-execution/deterministic-industrial-agents.md) · [Decision Making](../docs/concepts/decision-making.md) · [Decision Traces](../docs/concepts/decision-traces.md) · [Team Composition](../docs/best-practices/team-composition.md)
+
+---
+
 *For academic research foundations that inform the MAGS architecture, see [docs/research-foundations/](../docs/research-foundations/README.md).*

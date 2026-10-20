@@ -423,6 +423,50 @@ Analogical Transfer in MAGS:
 
 ---
 
+### 1987-2006 - Cognitive Architectures: Integrating Methods in One Agent
+
+**Allen Newell, John Laird and Paul Rosenbloom** - Soar (1987); **John Anderson** - ACT-R (2004); **James Albus** - Real-time Control System (1991); **Nicholas Cassimatis, Erik Mueller and Patrick Winston** - "Achieving human-level intelligence through integrated systems and research" (2006)
+
+**Key Insight**: Memory, attention, learning and reasoning have to work together in one agent that keeps running. Soar and ACT-R organise behaviour as a repeated decision cycle: working memory is matched against long-term knowledge, one option is selected, and the result changes working memory for the next cycle. In 2006 Cassimatis, Mueller and Winston argued that search, probabilistic models, theorem proving, production systems and neural networks each solve problems the others cannot, so a capable system has to integrate them.
+
+**Key Principles**:
+
+**Decision Cycle over Memory** (Soar, ACT-R):
+- Working memory holds the current situation
+- Long-term memory holds knowledge and experience
+- Each cycle selects one next step
+- The result feeds the next cycle
+
+**Integration across Methods** (Cassimatis, Mueller and Winston):
+- No single method covers every subproblem
+- Each method keeps the part it does reliably
+- Human cognition is the reference design, used for functional ideas
+
+**Layered Control** (Albus, RCS):
+- Developed at the US National Institute of Standards and Technology (NIST), starting with automated manufacturing
+- Each level combines sensing, world modelling, value judgement and behaviour generation
+- Higher levels plan over longer horizons; lower levels act faster over narrower scope
+- Each level has defined authority
+
+**Why This Matters**:
+- ORPA is a decision cycle in this tradition, so the research foundation should say so
+- The integration argument predates language models, and the models have not removed it
+- RCS is a precedent for bounded, layered autonomy in industrial operations
+
+**MAGS Application**:
+- [ORPA cycle](../concepts/orpa-cycle.md): a continuing decision cycle over working context and persistent memory
+- The language model interprets evidence and drafts plans; deterministic calculations, optimisers, rules and the control system each keep their own part
+- Agents reason over minutes to days, DataStreams perform deterministic integration, and PLC, DCS and SIS layers keep real-time control and protection
+
+**Boundary**:
+- The 2006 programme aimed at general, human-level intelligence
+- MAGS aims at governed decisions inside a bounded industrial domain, under explicit objectives, constraints and authority
+- A similar-looking cycle does not inherit Soar's or ACT-R's validation
+
+**Impact**: Places ORPA in an established line of cognitive architectures, and grounds the design choice to use the language model as one component among several
+
+---
+
 ## Core Theoretical Concepts
 
 ### Memory Systems Architecture
@@ -1270,8 +1314,19 @@ Metacognitive Monitoring:
 - Dunning, D., Johnson, K., Ehrlinger, J., & Kruger, J. (2003). "Why people fail to recognize their own incompetence". Current Directions in Psychological Science, 12(3), 83-87
 
 **Cognitive Architectures**:
+- Laird, J. E., Newell, A., & Rosenbloom, P. S. (1987). "SOAR: An architecture for general intelligence". Artificial Intelligence, 33(1), 1-64
+- Newell, A. (1990). "Unified Theories of Cognition". Harvard University Press
+- Albus, J. S. (1991). "Outline for a theory of intelligence". IEEE Transactions on Systems, Man, and Cybernetics, 21(3), 473-509
 - Anderson, J. R. (1996). "ACT: A simple theory of complex cognition". American Psychologist, 51(4), 355-365
+- Albus, J. S., & Meystel, A. M. (2001). "Engineering of Mind: An Introduction to the Science of Intelligent Systems". Wiley
+- Anderson, J. R., Bothell, D., Byrne, M. D., Douglass, S., Lebiere, C., & Qin, Y. (2004). "An integrated theory of the mind". Psychological Review, 111(4), 1036-1060
+- Cassimatis, N. L., Mueller, E. T., & Winston, P. H. (2006). "Achieving human-level intelligence through integrated systems and research: Introduction to this special issue". AI Magazine, 27(2), 12-14
+- Langley, P. (2006). "Cognitive architectures and general intelligent systems". AI Magazine, 27(2)
+- Jones, R. M., & Wray, R. E. (2006). "Comparative analysis of frameworks for knowledge-intensive intelligent agents". AI Magazine, 27(2)
+- Schlenoff, C., Albus, J., Messina, E., Barbera, A. J., Madhavan, R., & Balakirsky, S. (2006). "Using 4D/RCS to address AI knowledge integration". AI Magazine, 27(2)
 - Laird, J. E. (2012). "The Soar Cognitive Architecture". MIT Press
+- Laird, J. E., Lebiere, C., & Rosenbloom, P. S. (2017). "A standard model of the mind". AI Magazine, 38(4), 13-26
+- Sumers, T. R., Yao, S., Narasimhan, K., & Griffiths, T. L. (2024). "Cognitive architectures for language agents". Transactions on Machine Learning Research
 
 ---
 

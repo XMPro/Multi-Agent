@@ -72,6 +72,28 @@ graph LR
 
 ---
 
+### Cognitive Architectures
+
+**Decision Cycles** (Soar, Laird, Newell and Rosenbloom, 1987; ACT-R, Anderson et al., 2004):
+- Working memory is matched against long-term knowledge
+- One next step is selected each cycle
+- The result changes working memory for the next cycle
+- ORPA is a decision cycle in this tradition; its differences are event-driven triggers, significance-gated reflection and a language model doing interpretation and plan drafting
+
+**Layered Control** (Albus, Real-time Control System, 1991):
+- Each level senses, models, evaluates and acts over its own time horizon
+- Higher levels plan; lower levels act faster, closer to the equipment
+- MAGS agents plan, DataStreams execute deterministically, and control and safety systems keep real-time authority
+
+**Integration across Methods** (Cassimatis, Mueller and Winston, 2006):
+- No single AI method covers every subproblem, so capable systems integrate several
+- In MAGS the language model is one component beside calculations, optimisers, rules and the control system
+- That programme aimed at human-level intelligence; MAGS aims at governed decisions in a bounded industrial domain
+
+See [Cognitive Science: Cognitive Architectures](../research-foundations/cognitive-science.md#1987-2006---cognitive-architectures-integrating-methods-in-one-agent).
+
+---
+
 ## Phase 1: Observe
 
 ### Purpose
@@ -754,6 +776,11 @@ Act: MaintenancePlan-789
 - Neisser, U. (1976). "Cognition and Reality"
 - Schön, D. A. (1983). "The Reflective Practitioner"
 - Kahneman, D. (2011). "Thinking, Fast and Slow"
+- Laird, J. E., Newell, A., & Rosenbloom, P. S. (1987). "SOAR: An architecture for general intelligence". Artificial Intelligence, 33(1), 1-64
+- Albus, J. S. (1991). "Outline for a theory of intelligence". IEEE Transactions on Systems, Man, and Cybernetics, 21(3), 473-509
+- Anderson, J. R., et al. (2004). "An integrated theory of the mind". Psychological Review, 111(4), 1036-1060
+- Cassimatis, N. L., Mueller, E. T., & Winston, P. H. (2006). "Achieving human-level intelligence through integrated systems and research". AI Magazine, 27(2), 12-14
+- Sumers, T. R., Yao, S., Narasimhan, K., & Griffiths, T. L. (2024). "Cognitive architectures for language agents". Transactions on Machine Learning Research
 - Gupta, J. & Koratana, A. (2024). "How do you build a context graph?" - Context graphs and decision traces
 
 ---

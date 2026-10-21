@@ -7,9 +7,11 @@ XMPro research and technical papers on Multi-Agent Generative Systems. These pap
 ## Papers
 
 ### Neuroscience-Inspired Cognitive Architecture for Multi-Agent Systems
-**Date**: September 2025 · [PDF](2025.9.9_Neuroscience-Inspired%20Cognitive%20Architecture%20for%20Multi-Agent%20Systems.pdf)
+**Date**: September 2025, revised October 2026 · [PDF](2025.9.9_Neuroscience-Inspired%20Cognitive%20Architecture%20for%20Multi-Agent%20Systems.pdf)
 
 Explores how principles from neuroscience and cognitive science inform the design of the MAGS cognitive architecture — including memory encoding, reflection, and the observe-reflect-plan-act (ORPA) cycle. Provides the theoretical grounding for how MAGS agents store, retrieve, and reason from experience over time.
+
+The October 2026 revision adds a decision-theoretic layer based on Warren Powell's Sequential Decision Analytics. A new section reads the four ORPA stages as elements of Powell's universal model for sequential decisions, places ORPA as a hybrid of policy function approximations and a governed direct lookahead, treats language-model output as exogenous information inside a deterministic policy, and describes bounded learning through a belief state over action effects. The neuroscientific foundations are unchanged in substance.
 
 **Related docs**: [ORPA Cycle](../docs/concepts/orpa-cycle.md) · [Memory Systems](../docs/concepts/memory-systems.md) · [Cognitive Intelligence](../docs/cognitive-intelligence/README.md) · [Research Foundations: Cognitive Science](../docs/research-foundations/cognitive-science.md)
 
